@@ -1,0 +1,291 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Inter:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
+All colors MUST be HSL.
+*/
+
+@font-face {
+  font-family: 'fusiona';
+  src: url('/fonts/fusiona.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+/* Optional subtle glowing animation */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 6s ease-in-out infinite;
+}
+
+@layer base {
+  :root {
+    /* Core colors - Black background, Blue text, Grey accents */
+    --background: 0 0% 5%;
+    --foreground: 217 91% 60%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 217 91% 60%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 217 91% 60%;
+
+    /* Blue primary theme - #0096c7 */
+    --primary: 193 100% 39%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 193 100% 55%;
+    --primary-dark: 193 100% 30%;
+
+    /* Grey secondary */
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 70%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 0 0% 12%;
+    --accent-foreground: 217 91% 60%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 193 100% 39%;
+
+    /* Custom gradients and effects - Black primary */
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 8%), hsl(0 0% 15%), hsl(193 100% 39%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 96%));
+    --gradient-dark: linear-gradient(135deg, hsl(0 0% 3%), hsl(0 0% 8%));
+    --gradient-mesh: conic-gradient(from 230.29deg at 51.63% 52.16%, hsl(0 0% 8% / 0.2) 0deg, hsl(0 0% 15% / 0.1) 67.5deg, hsl(0 0% 8% / 0.3) 198.75deg, hsl(193 100% 39% / 0.15) 251.25deg, hsl(0 0% 8% / 0.2) 301.88deg, hsl(0 0% 15% / 0.1) 360deg);
+    
+    /* Advanced shadows with black tint */
+    --shadow-primary: 0 10px 30px -10px hsl(0 0% 8% / 0.3);
+    --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.1);
+    --shadow-elegant: 0 20px 40px -10px hsl(0 0% 8% / 0.2);
+    --shadow-glow: 0 0 40px hsl(0 0% 8% / 0.3);
+    --shadow-inner: inset 0 2px 4px 0 hsl(0 0% 0% / 0.05);
+    
+    /* Glass morphism effects */
+    --glass-bg: hsla(0, 0%, 100%, 0.1);
+    --glass-border: hsla(0, 0%, 100%, 0.2);
+    --glass-blur: blur(10px);
+
+    /* Enhanced animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-spring: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark theme with blue accents */
+    --background: 0 0% 5%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 193 100% 39%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 193 100% 55%;
+    --primary-dark: 193 100% 30%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 80%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 95%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 95%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 193 100% 39%;
+
+    /* Dark theme gradients and effects */
+    --gradient-hero: linear-gradient(135deg, hsl(193 100% 39%), hsl(193 100% 50%), hsl(193 100% 60%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 8%), hsl(0 0% 5%));
+    --gradient-dark: linear-gradient(135deg, hsl(0 0% 3%), hsl(0 0% 8%));
+    --gradient-mesh: conic-gradient(from 230.29deg at 51.63% 52.16%, hsl(193 100% 39% / 0.3) 0deg, hsl(193 100% 50% / 0.2) 67.5deg, hsl(193 100% 39% / 0.4) 198.75deg, hsl(193 100% 60% / 0.25) 251.25deg, hsl(193 100% 39% / 0.3) 301.88deg, hsl(193 100% 50% / 0.2) 360deg);
+    
+    --shadow-primary: 0 10px 30px -10px hsl(193 100% 39% / 0.4);
+    --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
+    --shadow-elegant: 0 20px 40px -10px hsl(193 100% 39% / 0.3);
+    --shadow-glow: 0 0 40px hsl(193 100% 39% / 0.4);
+    
+    --glass-bg: hsla(0, 0%, 100%, 0.05);
+    --glass-border: hsla(0, 0%, 100%, 0.1);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border transition-colors duration-300;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter Tight', 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
+  /* Smooth transitions for all interactive elements */
+  a, button, input, textarea, select {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}
+.clip-hex {
+  clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%);
+}@media (max-width: 500px) {
+  h1 {
+    font-size: 32px;
+  }
+  p {
+    font-size: 15px !important;
+    line-height: 24px !important;
+  }
+  button {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
+}
+.perspective {
+  perspective: 1000px;
+}
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+.group-hover\\:rotate-y-180:hover {
+  transform: rotateY(180deg);
+}
+.absolute > .rotate-y-180 {
+  backface-visibility: hidden;
+}
+
+/* 🌍 Global Hero Section Adjustments */
+section[class*="hero"], 
+section[class*="Hero"], 
+section[class*="HeroSection"], 
+section[class*="hero-section"], 
+section[class*="hero_"] {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+
+/* ✅ Responsive fixes for mobile */
+/* 🌍 Universal hero section layout */
+section[class*="hero"],
+section[class*="Hero"],
+section[class*="HeroSection"],
+section[class*="hero-section"],
+section[class*="hero_"] {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+
+/* ✅ Mobile fixes for hero sections (below 620px) */
+@media (max-width: 620px) {
+  section[class*="hero"],
+  section[class*="Hero"],
+  section[class*="HeroSection"],
+  section[class*="hero-section"],
+  section[class*="hero_"] {
+    /* Account for fixed navbar */
+    padding-top: 35rem; /* pushes content below header */
+    padding-bottom: 33rem;
+    min-height: calc(100vh - 40px);
+    justify-content: flex-start; /* moves content up slightly for better balance */
+  }
+}
+
+
+body {
+  scroll-padding-top: 70px; /* matches navbar height */
+}
+
+/* overlay.css */
+
+
+
+@media (min-width: 1024px) { 
+  .overlay-bg {
+    background-size: 55% !important;
+  }
+}
+
+@media (min-width: 500px) { 
+  .overlay-bg {
+    background-size: 55% !important;
+  }
+}
+
+@media (max-width: 500px) {
+  .mobile-padding {
+    padding-top: 5rem; /* 40px */
+    
+  }
+  .mobile-p{
+    font-size: 13px !important;
+  }
+}
