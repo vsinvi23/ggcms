@@ -1,0 +1,55 @@
+Why PostgreSQL is the right call here (keep it)
+
+  1. Relational integrity is load-bearing. Articles and courses
+  join against users (creator, reviewer), categories, sections,
+  lessons, enrollments, attachments, and workflow_events. Emulating
+   FK constraints in MongoDB is boilerplate you'd write and
+  maintain yourself — and you'd likely just end up with a soft-join
+   pattern that gives you none of the guarantees.
+  2. Status/workflow queries need real filters. The admin panel
+  filters by status, reviewer_id, created_by_id, category_id,
+  course_type, and full-text search — often combined. MongoDB can
+  handle this, but PostgreSQL's query planner does it better with
+  less index-tuning work, and GORM's filter helpers already express
+   it cleanly.
+  3. The versioning snapshot you just built is a perfect relational
+   pattern. has_pending_draft, published_version, snapshot columns,
+   workflow_events with FK to users — all of this is naturally
+  expressed as a set of joined tables. In MongoDB you'd either
+  embed the snapshot in the document (workable) or reference a
+  separate document (loses atomicity).
+  4. The Body field is just TEXT. The main reason people reach for
+  MongoDB is flexible, deeply nested document structure. Your body
+  is stored as a plain text/JSON blob in a single column — you're
+  not querying inside it. That eliminates the primary advantage of
+  document storage.
+
+  ---
+  When MongoDB does make sense (what you already use it for)
+
+  Your codebase already uses MongoDB for exactly the right things —
+   unstructured, user-generated, high-volume data with no
+  relational needs:
+
+  ┌────────────────────────────┬────────────────────────────────┐
+  │         Collection         │         Why Mongo fits         │
+  ├────────────────────────────┼────────────────────────────────┤
+  │ review_comments + replies  │ Variable depth, no FK needed   │
+  ├────────────────────────────┼────────────────────────────────┤
+  │ analytics_events           │ Write-heavy, schema-flexible   │
+  ├────────────────────────────┼────────────────────────────────┤
+  │ reactions / notes /        │ Per-user blobs, no joins       │
+  │ highlights                 │                                │
+  ├────────────────────────────┼────────────────────────────────┤
+  │ favourites                 │ Simple toggle documents        │
+  ├────────────────────────────┼────────────────────────────────┤
+  │ audit_logs                 │ Append-only, schema varies by  │
+  │                            │ action                         │
+  └────────────────────────────┴────────────────────────────────┘
+
+  ---
+  Short answer: The split you have — Postgres for structured CMS
+  content, Mongo for engagement/analytics — is the correct
+  architecture. Moving articles/courses to Mongo would trade real
+  FK safety and clean query filters for document flexibility you
+  don't actually need, since the body is already a blob.

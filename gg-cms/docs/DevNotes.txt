@@ -1,0 +1,35 @@
+
+
+nvm use 20
+nvm use 24
+node -v
+
+docker run --name gfg-postgres -e POSTGRES_DB=gfg_udemy -e POSTGRES_USER=strapi_admin -e POSTGRES_PASSWORD=StrongPassword123 -p 5432:5432 -d postgres:15
+
+docker volume create gfg-postgres-data
+
+docker run --name gfg-postgres -e POSTGRES_DB=gfg_udemy -e POSTGRES_USER=strapi_admin -e POSTGRES_PASSWORD=StrongPassword123 -v gfg-postgres-data:/var/lib/postgresql/data -p 5432:5432 -d postgres:15
+
+docker stop gfg-postgres
+docker start gfg-postgres
+
+docker compose up -d
+
+
+
+Admin Portal: http://localhost:1337/admin
+user: mayankrajjaiswal@gmail.com
+Pass: Hsbc12Hsbc
+
+User: author@test.com
+User: reviewer@test.com
+User: editor@test.com
+
+
+Dev Team:
+git clone repo
+cd backend
+docker compose up -d
+cd cms-backend
+npm install
+npm run develop
