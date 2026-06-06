@@ -3,20 +3,22 @@
  * Covers: navigation, sidebar links, user info display, API data loading
  */
 import { test, expect, Page } from '@playwright/test';
-import axios from 'axios';
+import { enableAuthBypass, ensureUserExists } from '../fixtures/auth';
 
-const API = process.env.API_BASE_URL || 'http://localhost:1337/api';
+const workerId = process.env.PW_WORKER_INDEX || process.env.PLAYWRIGHT_WORKER_INDEX || '0';
+const dashboardUserEmail = `e2e_dashboard_${workerId}@test.local`;
+const dashboardUserPassword = 'Dashboard@E2E1';
+
+test.beforeAll(async () => {
+  await ensureUserExists(dashboardUserEmail, dashboardUserPassword, `e2e_dashboard_${workerId}`, 'E2E Dashboard User');
+});
 
 async function createAndLoginUser(page: Page) {
-  const ts = Date.now();
-  const email = `e2e_db_${ts}@test.local`;
-  const password = 'Dashboard@E2E1';
-  await axios.post(`${API}/auth/local/register`, { username: `e2e_db_${ts}`, email, password });
-
+  await enableAuthBypass(page);
   await page.goto('/auth');
   await page.waitForLoadState('networkidle');
-  await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(email);
-  await page.locator('input[type="password"]').first().fill(password);
+  await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(dashboardUserEmail);
+  await page.locator('input[type="password"]').first().fill(dashboardUserPassword);
   await page.locator('button[type="submit"]').first().click();
   await page.waitForURL((url) => !url.pathname.includes('/auth'), { timeout: 15_000 });
 }

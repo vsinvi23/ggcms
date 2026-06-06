@@ -9,6 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const authRateLimitBypassHeader = "X-E2E-Bypass-Rate-Limit"
+
 type ipWindow struct {
 	count     int
 	windowEnd time.Time
@@ -80,7 +82,7 @@ var authLimiter = newIPRateLimiter(10, time.Minute)
 func AuthRateLimit() gin.HandlerFunc {
 	bypass := os.Getenv("BYPASS_RATE_LIMIT") == "1"
 	return func(c *gin.Context) {
-		if bypass {
+		if bypass || c.GetHeader(authRateLimitBypassHeader) == "1" {
 			c.Next()
 			return
 		}

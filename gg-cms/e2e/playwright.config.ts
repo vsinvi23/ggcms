@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+process.env.BYPASS_RATE_LIMIT = process.env.BYPASS_RATE_LIMIT || '1';
+
 export default defineConfig({
   testDir: './specs',
   fullyParallel: false, // run sequentially to avoid token conflicts
@@ -11,6 +13,9 @@ export default defineConfig({
 
   use: {
     baseURL: process.env.FRONTEND_URL || 'http://localhost:8081',
+    env: {
+      BYPASS_RATE_LIMIT: '1',
+    },
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',

@@ -4,32 +4,28 @@
  */
 import { test, expect, Page } from '@playwright/test';
 import axios from 'axios';
+import { authBypassHeaders, enableAuthBypass, ensureUserExists } from '../fixtures/auth';
 
 const API = process.env.API_BASE_URL || 'http://localhost:1337/api';
+const workerId = process.env.PW_WORKER_INDEX || process.env.PLAYWRIGHT_WORKER_INDEX || '0';
+const notifUserEmail = `e2e_notif_${workerId}@test.local`;
+const notifUserPassword = 'Notif@E2E123';
 
-let userEmail: string;
-let userPassword: string;
 let userJwt: string;
 let userId: string;
 
 test.beforeAll(async () => {
-  const ts = Date.now();
-  userEmail = `e2e_notif_${ts}@test.local`;
-  userPassword = 'Notif@E2E123';
-  const reg = await axios.post(`${API}/auth/local/register`, {
-    username: `e2e_notif_${ts}`,
-    email: userEmail,
-    password: userPassword,
-  });
-  userJwt = reg.data.jwt;
-  userId = String(reg.data.user?.id);
+  const ensured = await ensureUserExists(notifUserEmail, notifUserPassword, `e2e_notif_${workerId}`, 'E2E Notification User');
+  userJwt = ensured.jwt ?? '';
+  userId = String(ensured.user?.id ?? '');
 });
 
 async function loginUser(page: Page) {
+  await enableAuthBypass(page);
   await page.goto('/auth');
   await page.waitForLoadState('networkidle');
-  await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(userEmail);
-  await page.locator('input[type="password"]').first().fill(userPassword);
+  await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(notifUserEmail);
+  await page.locator('input[type="password"]').first().fill(notifUserPassword);
   await page.locator('button[type="submit"]').first().click();
   await page.waitForURL((url) => !url.pathname.includes('/auth'), { timeout: 15_000 });
 }
@@ -41,7 +37,7 @@ async function seedNotification(message: string = 'Test notification') {
       identifier: process.env.SEED_ADMIN_EMAIL || 'admin@cms.local',
       password: process.env.SEED_ADMIN_PASSWORD || 'Admin@CMS2024!',
     },
-    { validateStatus: () => true },
+    { headers: authBypassHeaders, validateStatus: () => true },
   );
   const adminJwt = adminLogin.data.jwt;
   if (!adminJwt) return null;

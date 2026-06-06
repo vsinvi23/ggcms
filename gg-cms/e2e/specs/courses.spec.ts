@@ -3,25 +3,18 @@
  * Covers: list, create course, add section, enroll
  */
 import { test, expect, Page } from '@playwright/test';
-import axios from 'axios';
+import { enableAuthBypass, ensureUserExists } from '../fixtures/auth';
 
-const API = process.env.API_BASE_URL || 'http://localhost:1337/api';
-
-let userEmail: string;
-let userPassword: string;
+const workerId = process.env.PW_WORKER_INDEX || process.env.PLAYWRIGHT_WORKER_INDEX || '0';
+const courseUserEmail = `e2e_courses_${workerId}@test.local`;
+const courseUserPassword = 'Courses@E2E1';
 
 test.beforeAll(async () => {
-  const ts = Date.now();
-  userEmail = `e2e_courses_${ts}@test.local`;
-  userPassword = 'Courses@E2E1';
-  await axios.post(`${API}/auth/local/register`, {
-    username: `e2e_courses_${ts}`,
-    email: userEmail,
-    password: userPassword,
-  });
+  await ensureUserExists(courseUserEmail, courseUserPassword, `e2e_courses_${workerId}`, 'E2E Courses User');
 });
 
 async function loginUser(page: Page) {
+  await enableAuthBypass(page);
   await page.goto('/auth');
   await page.waitForLoadState('networkidle');
   await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(userEmail);

@@ -58,6 +58,11 @@ fi
 
 PORT="${SERVER_PORT:-1337}"
 
+# Automatically bypass auth rate limiting for local dev/test runs by default.
+# Set BYPASS_RATE_LIMIT=0 to disable this behavior when you want to validate the limiter.
+BYPASS_RATE_LIMIT="${BYPASS_RATE_LIMIT:-1}"
+export BYPASS_RATE_LIMIT
+
 # ── Databases ────────────────────────────────────────────────────────────────
 if $START_DB; then
   section "Starting databases"

@@ -17,13 +17,13 @@ NC='\033[0m' # No Color
 
 # Configuration
 PROJECT_ROOT=$(pwd)
-BACKEND_DIR="$PROJECT_ROOT/backend/cms-backend"
+BACKEND_DIR="$PROJECT_ROOT/backend/go-cms"
 FRONTEND_DIR="$PROJECT_ROOT/frontend/react-ui"
-DB_NAME="gfg_udemy"
-DB_USER="strapi_admin"
-DB_PASSWORD="your_password"
+DB_NAME="go_cms"
+DB_USER="go_cms_user"
+DB_PASSWORD="${POSTGRES_PASSWORD:-go_cms_pass}"
 DB_PORT="5432"
-BACKEND_PORT="1337"
+BACKEND_PORT="8000"
 FRONTEND_PORT="5173"
 
 ###############################################################################
@@ -54,10 +54,11 @@ print_info() {
 
 check_command() {
     if ! command -v $1 &> /dev/null; then
-        print_error "$1 is not installed"
-        exit 1
+        print_warning "$1 is not installed (will try via Docker)"
+        return 1
     fi
     print_success "$1 is installed"
+    return 0
 }
 
 ###############################################################################
@@ -68,17 +69,22 @@ preflight_checks() {
     print_header "Pre-flight Checks"
     
     # Check required commands
-    check_command "node"
-    check_command "npm"
-    check_command "psql"
+    check_command "node" || true
+    check_command "npm" || true
+    check_command "docker" || {
+        print_error "Docker is required"
+        exit 1
+    }
     
     # Check Node version
-    NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
-    if [ "$NODE_VERSION" -lt 18 ]; then
-        print_error "Node.js version 18+ required (found: $(node -v))"
-        exit 1
+    if command -v node &> /dev/null; then
+        NODE_VERSION=$(node -v | cut -d'v' -f2 | cut -d'.' -f1)
+        if [ "$NODE_VERSION" -lt 18 ]; then
+            print_error "Node.js version 18+ required (found: $(node -v))"
+            exit 1
+        fi
+        print_success "Node.js version OK ($(node -v))"
     fi
-    print_success "Node.js version OK ($(node -v))"
     
     echo ""
 }
@@ -88,52 +94,46 @@ preflight_checks() {
 ###############################################################################
 
 setup_database() {
-    print_header "Database Setup"
+    print_header "Database Setup (Docker)"
     
-    # Check if PostgreSQL is running
-    if ! pg_isready -q; then
-        print_warning "PostgreSQL is not running. Starting..."
-        sudo systemctl start postgresql || {
-            print_error "Failed to start PostgreSQL"
-            print_info "Try running: sudo systemctl start postgresql"
-            exit 1
-        }
-    fi
-    print_success "PostgreSQL is running"
-    
-    # Check if database exists
-    if psql -lqt | cut -d \| -f 1 | grep -qw $DB_NAME; then
-        print_warning "Database '$DB_NAME' already exists"
-    else
-        print_info "Creating database '$DB_NAME'..."
-        sudo -u postgres psql -c "CREATE DATABASE $DB_NAME;" || {
-            print_error "Failed to create database"
-            exit 1
-        }
-        print_success "Database created"
-    fi
-    
-    # Check if user exists
-    if sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" | grep -q 1; then
-        print_warning "User '$DB_USER' already exists"
-    else
-        print_info "Creating user '$DB_USER'..."
-        sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';" || {
-            print_error "Failed to create user"
-            exit 1
-        }
-        sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
-        sudo -u postgres psql -c "ALTER DATABASE $DB_NAME OWNER TO $DB_USER;"
-        print_success "User created and privileges granted"
-    fi
-    
-    # Test connection
-    print_info "Testing database connection..."
-    PGPASSWORD=$DB_PASSWORD psql -h localhost -U $DB_USER -d $DB_NAME -c "SELECT 1;" > /dev/null || {
-        print_error "Database connection test failed"
+    # Start Docker Compose services
+    print_info "Starting Docker Compose services (postgres + mongo)..."
+    docker compose up -d postgres mongodb || {
+        print_error "Failed to start Docker Compose services"
         exit 1
     }
-    print_success "Database connection test passed"
+    
+    # Wait for postgres to be healthy
+    print_info "Waiting for PostgreSQL to be ready..."
+    sleep 5
+    max_retries=30
+    retry_count=0
+    
+    while [ $retry_count -lt $max_retries ]; do
+        if docker compose exec -T postgres pg_isready -U go_cms_user -d go_cms &>/dev/null; then
+            print_success "PostgreSQL is running and healthy"
+            break
+        fi
+        retry_count=$((retry_count + 1))
+        if [ $retry_count -eq $max_retries ]; then
+            print_error "PostgreSQL failed to start after $max_retries attempts"
+            exit 1
+        fi
+        sleep 2
+    done
+    
+    # Test connection via docker
+    print_info "Testing PostgreSQL connection via Docker..."
+    docker compose exec -T postgres psql -U go_cms_user -d go_cms -c "SELECT 1;" > /dev/null || {
+        print_error "PostgreSQL connection test failed"
+        exit 1
+    }
+    print_success "PostgreSQL connection test passed"
+    
+    # Wait for MongoDB
+    print_info "Waiting for MongoDB to be ready..."
+    sleep 3
+    print_success "MongoDB is available"
     
     echo ""
 }
@@ -143,64 +143,52 @@ setup_database() {
 ###############################################################################
 
 setup_backend() {
-    print_header "Backend Setup (Strapi)"
+    print_header "Backend Setup (Go CMS)"
     
     cd "$BACKEND_DIR"
+    
+    # Check if go.mod exists
+    if [ ! -f go.mod ]; then
+        print_error "go.mod not found. This doesn't appear to be a Go project."
+        exit 1
+    fi
+    
+    print_info "Go project detected"
     
     # Check if .env exists
     if [ ! -f .env ]; then
         print_warning ".env file not found. Creating from template..."
         
-        # Generate secrets
-        JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
-        ADMIN_JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
-        API_TOKEN_SALT=$(node -e "console.log(require('crypto').randomBytes(16).toString('base64'))")
-        TRANSFER_TOKEN_SALT=$(node -e "console.log(require('crypto').randomBytes(16).toString('base64'))")
-        APP_KEYS=$(node -e "console.log(Array(4).fill(null).map(() => require('crypto').randomBytes(16).toString('base64')).join(','))")
-        
-        # Create .env file
+        # Create .env file for Go backend
         cat > .env << EOF
 # Server
 HOST=0.0.0.0
 PORT=$BACKEND_PORT
 
-# Secrets
-APP_KEYS=$APP_KEYS
-API_TOKEN_SALT=$API_TOKEN_SALT
-ADMIN_JWT_SECRET=$ADMIN_JWT_SECRET
-JWT_SECRET=$JWT_SECRET
-TRANSFER_TOKEN_SALT=$TRANSFER_TOKEN_SALT
+# Database (PostgreSQL)
+DB_HOST=postgres
+DB_PORT=$DB_PORT
+DB_NAME=$DB_NAME
+DB_USER=$DB_USER
+DB_PASSWORD=$DB_PASSWORD
+DB_SSLMODE=disable
 
-# Database
-DATABASE_CLIENT=postgres
-DATABASE_HOST=localhost
-DATABASE_PORT=$DB_PORT
-DATABASE_NAME=$DB_NAME
-DATABASE_USERNAME=$DB_USER
-DATABASE_PASSWORD=$DB_PASSWORD
-DATABASE_SSL=false
-
-# Node Environment
-NODE_ENV=development
+# Environment
+GO_ENV=development
+DEBUG=true
 EOF
-        print_success ".env file created with secure secrets"
+        print_success ".env file created"
     else
         print_success ".env file already exists"
     fi
     
-    # Install dependencies
-    print_info "Installing backend dependencies..."
-    npm install || {
-        print_error "Failed to install backend dependencies"
-        exit 1
+    # Check if dependencies are available (go mod tidy)
+    print_info "Checking Go dependencies..."
+    go mod tidy || {
+        print_warning "go mod tidy failed (Go might not be installed)"
     }
-    print_success "Backend dependencies installed"
     
-    # Build admin panel
-    print_info "Building admin panel..."
-    npm run build || {
-        print_warning "Admin panel build failed (this is OK for first-time setup)"
-    }
+    print_success "Backend Go project ready"
     
     echo ""
 }
@@ -248,28 +236,19 @@ EOF
 start_services() {
     print_header "Starting Services"
     
-    # Start backend
-    print_info "Starting backend server (Strapi)..."
-    cd "$BACKEND_DIR"
+    # Docker Compose services are already running
+    print_success "Docker Compose services (PostgreSQL, MongoDB) are running"
     
-    # Check if port is in use
-    if lsof -Pi :$BACKEND_PORT -sTCP:LISTEN -t >/dev/null ; then
+    # Check if backend port is in use
+    if lsof -Pi :$BACKEND_PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
         print_warning "Port $BACKEND_PORT is already in use"
         print_info "Backend might already be running"
-    else
-        print_info "Run: cd backend/cms-backend && npm run develop"
     fi
     
-    # Start frontend
-    print_info "Starting frontend server (Vite)..."
-    cd "$FRONTEND_DIR"
-    
-    # Check if port is in use
-    if lsof -Pi :$FRONTEND_PORT -sTCP:LISTEN -t >/dev/null ; then
+    # Check if frontend port is in use
+    if lsof -Pi :$FRONTEND_PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
         print_warning "Port $FRONTEND_PORT is already in use"
         print_info "Frontend might already be running"
-    else
-        print_info "Run: cd frontend/react-ui && npm run dev"
     fi
     
     echo ""
@@ -284,32 +263,29 @@ display_info() {
     
     echo -e "${GREEN}✓ Development environment setup complete!${NC}"
     echo ""
-    echo -e "${BLUE}Database Information:${NC}"
-    echo "  - Host: localhost:$DB_PORT"
-    echo "  - Database: $DB_NAME"
-    echo "  - User: $DB_USER"
+    echo -e "${BLUE}Docker Services:${NC}"
+    echo "  - PostgreSQL: postgres://go_cms_user:go_cms_pass@localhost:5432/go_cms"
+    echo "  - MongoDB: mongodb://go_cms_user:go_cms_pass@localhost:27017/go_cms"
     echo ""
-    echo -e "${BLUE}Backend (Strapi):${NC}"
-    echo "  - API URL: http://localhost:$BACKEND_PORT"
-    echo "  - Admin Panel: http://localhost:$BACKEND_PORT/admin"
-    echo "  - Health Check: http://localhost:$BACKEND_PORT/_health"
-    echo "  - Start Command: cd backend/cms-backend && npm run develop"
+    echo -e "${BLUE}Backend (Go):${NC}"
+    echo "  - API Port: $BACKEND_PORT"
+    echo "  - Location: ./backend/go-cms"
+    echo "  - Start Command: cd backend/go-cms && go run cmd/main.go"
     echo ""
     echo -e "${BLUE}Frontend (React):${NC}"
     echo "  - URL: http://localhost:$FRONTEND_PORT"
+    echo "  - Location: ./frontend/react-ui"
     echo "  - Start Command: cd frontend/react-ui && npm run dev"
     echo ""
     echo -e "${YELLOW}Next Steps:${NC}"
-    echo "  1. Start backend: cd backend/cms-backend && npm run develop"
+    echo "  1. Start backend: cd backend/go-cms && go run cmd/main.go"
     echo "  2. Start frontend: cd frontend/react-ui && npm run dev"
-    echo "  3. Open http://localhost:$BACKEND_PORT/admin and create admin user"
-    echo "  4. Open http://localhost:$FRONTEND_PORT to access the app"
+    echo "  3. View database via pgAdmin: docker compose --profile tools up -d"
     echo ""
-    echo -e "${BLUE}Useful Commands:${NC}"
-    echo "  - Backend logs: cd backend/cms-backend && npm run develop"
-    echo "  - Frontend logs: cd frontend/react-ui && npm run dev"
-    echo "  - Database backup: pg_dump -U $DB_USER $DB_NAME > backup.sql"
-    echo "  - Database restore: psql -U $DB_USER $DB_NAME < backup.sql"
+    echo -e "${BLUE}Docker Commands:${NC}"
+    echo "  - View logs: docker compose logs -f"
+    echo "  - Stop services: docker compose down"
+    echo "  - Clean up: docker compose down -v"
     echo ""
 }
 

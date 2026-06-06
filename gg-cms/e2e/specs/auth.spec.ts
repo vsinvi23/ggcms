@@ -3,9 +3,14 @@
  * Covers: registration, login, logout, protected route redirect, invalid credentials
  */
 import { test, expect } from '@playwright/test';
-import axios from 'axios';
+import { enableAuthBypass, ensureUserExists } from '../fixtures/auth';
 
-const API = process.env.API_BASE_URL || 'http://localhost:1337/api';
+const authEmail = process.env.E2E_AUTH_EMAIL || 'e2e_auth_user@test.local';
+const authPassword = process.env.E2E_AUTH_PASSWORD || 'AuthE2E@123';
+
+test.beforeAll(async () => {
+  await ensureUserExists(authEmail, authPassword, 'e2e_auth_user', 'E2E Auth User');
+});
 
 test.describe('Authentication', () => {
   test('home page loads without auth', async ({ page }) => {
@@ -54,25 +59,17 @@ test.describe('Authentication', () => {
   });
 
   test('valid credentials redirect to dashboard', async ({ page }) => {
-    const ts = Date.now();
-    const email = `e2e_login_${ts}@test.local`;
-    const password = 'LoginE2E@123';
+    await ensureUserExists(authEmail, authPassword, 'e2e_auth_user', 'E2E Auth User');
 
-    // Register via API
-    await axios.post(`${API}/auth/local/register`, {
-      username: `e2e_login_${ts}`,
-      email,
-      password,
-    });
-
+    await enableAuthBypass(page);
     await page.goto('/auth');
     await page.waitForLoadState('networkidle');
 
     const emailInput = page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first();
     const passwordInput = page.locator('input[type="password"]').first();
 
-    await emailInput.fill(email);
-    await passwordInput.fill(password);
+    await emailInput.fill(authEmail);
+    await passwordInput.fill(authPassword);
 
     await page.locator('button[type="submit"]').first().click();
 
@@ -82,17 +79,14 @@ test.describe('Authentication', () => {
   });
 
   test('after login, dashboard is accessible', async ({ page }) => {
-    const ts = Date.now();
-    const email = `e2e_dash_${ts}@test.local`;
-    const password = 'DashE2E@123';
+    await ensureUserExists(authEmail, authPassword, 'e2e_auth_user', 'E2E Auth User');
 
-    await axios.post(`${API}/auth/local/register`, { username: `e2e_dash_${ts}`, email, password });
-
+    await enableAuthBypass(page);
     await page.goto('/auth');
     await page.waitForLoadState('networkidle');
 
-    await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(email);
-    await page.locator('input[type="password"]').first().fill(password);
+    await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(authEmail);
+    await page.locator('input[type="password"]').first().fill(authPassword);
     await page.locator('button[type="submit"]').first().click();
 
     await page.waitForURL((url) => !url.pathname.includes('/auth'), { timeout: 15_000 });
@@ -105,17 +99,14 @@ test.describe('Authentication', () => {
   });
 
   test('sessionStorage contains JWT after login', async ({ page }) => {
-    const ts = Date.now();
-    const email = `e2e_storage_${ts}@test.local`;
-    const password = 'StorageE2E@123';
+    await ensureUserExists(authEmail, authPassword, 'e2e_auth_user', 'E2E Auth User');
 
-    await axios.post(`${API}/auth/local/register`, { username: `e2e_storage_${ts}`, email, password });
-
+    await enableAuthBypass(page);
     await page.goto('/auth');
     await page.waitForLoadState('networkidle');
 
-    await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(email);
-    await page.locator('input[type="password"]').first().fill(password);
+    await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(authEmail);
+    await page.locator('input[type="password"]').first().fill(authPassword);
     await page.locator('button[type="submit"]').first().click();
 
     await page.waitForURL((url) => !url.pathname.includes('/auth'), { timeout: 15_000 });

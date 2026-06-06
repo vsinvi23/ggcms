@@ -3,31 +3,24 @@
  * Covers: list, create, view, edit, submit for review
  */
 import { test, expect, Page } from '@playwright/test';
-import axios from 'axios';
+import { enableAuthBypass, ensureUserExists } from '../fixtures/auth';
 
-const API = process.env.API_BASE_URL || 'http://localhost:1337/api';
+const workerId = process.env.PW_WORKER_INDEX || process.env.PLAYWRIGHT_WORKER_INDEX || '0';
+const articleUserEmail = `e2e_articles_${workerId}@test.local`;
+const articleUserPassword = 'Articles@E2E1';
 
 let jwt: string;
-let userEmail: string;
-let userPassword: string;
 
 test.beforeAll(async () => {
-  const ts = Date.now();
-  userEmail = `e2e_articles_${ts}@test.local`;
-  userPassword = 'Articles@E2E1';
-  const reg = await axios.post(`${API}/auth/local/register`, {
-    username: `e2e_articles_${ts}`,
-    email: userEmail,
-    password: userPassword,
-  });
-  jwt = reg.data.jwt;
+  await ensureUserExists(articleUserEmail, articleUserPassword, `e2e_articles_${workerId}`, 'E2E Articles User');
 });
 
 async function loginUser(page: Page) {
+  await enableAuthBypass(page);
   await page.goto('/auth');
   await page.waitForLoadState('networkidle');
-  await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(userEmail);
-  await page.locator('input[type="password"]').first().fill(userPassword);
+  await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(articleUserEmail);
+  await page.locator('input[type="password"]').first().fill(articleUserPassword);
   await page.locator('button[type="submit"]').first().click();
   await page.waitForURL((url) => !url.pathname.includes('/auth'), { timeout: 15_000 });
 }
@@ -39,8 +32,12 @@ test.describe('Articles List', () => {
     await page.waitForLoadState('networkidle');
 
     // Should show either a table/list or empty-state message
-    const content = page.locator('table, [data-testid="article-list"], [data-testid="empty-state"], .empty-state, text="No articles"').first();
-    await expect(content).toBeVisible({ timeout: 10_000 });
+    const articleList = page.locator('table, [data-testid="article-list"], [data-testid="empty-state"], .empty-state').first();
+    const noArticlesText = page.locator('text=/no articles/i').first();
+    const isVisible =
+      (await articleList.isVisible().catch(() => false)) ||
+      (await noArticlesText.isVisible().catch(() => false));
+    expect(isVisible).toBe(true);
   });
 
   test('articles page does not show a network error toast', async ({ page }) => {
@@ -124,12 +121,13 @@ test.describe('Public Article View', () => {
   });
 
   test('/article/:id shows 404 for non-existent article', async ({ page }) => {
-    await page.goto('/article/999999');
+    const response = await page.goto('/article/999999');
     await page.waitForLoadState('networkidle');
     // Either a 404 message or redirect to home
-    const notFound = page.locator('text=/not found|404|does not exist/i').first();
+    const notFound = page.locator('text=/not found|404|does not exist|article not found|unable to find/i').first();
     const isNotFound = await notFound.isVisible({ timeout: 5000 }).catch(() => false);
-    // Acceptable: 404 message or redirect to home/articles
-    expect(isNotFound || !page.url().includes('999999')).toBe(true);
+    const statusCode = response?.status();
+    // Acceptable: 404 message, redirect away from the bogus article URL, or a 404 server response
+    expect(isNotFound || !page.url().includes('999999') || statusCode === 404).toBe(true);
   });
 });

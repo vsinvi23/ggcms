@@ -108,7 +108,8 @@ test_auth() {
     response=$(api_request POST "/auth/local/register" '{
         "username": "testuser",
         "email": "testuser@example.com",
-        "password": "Test123!"
+        "password": "Test123!",
+        "name": "Test User"
     }' false)
     
     if echo "$response" | grep -q "jwt"; then

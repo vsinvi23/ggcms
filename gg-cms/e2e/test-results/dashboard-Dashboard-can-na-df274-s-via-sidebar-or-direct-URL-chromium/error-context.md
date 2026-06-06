@@ -7,12 +7,12 @@
 # Test info
 
 - Name: dashboard.spec.ts >> Dashboard >> can navigate to /articles via sidebar or direct URL
-- Location: specs\dashboard.spec.ts:54:7
+- Location: specs/dashboard.spec.ts:65:7
 
 # Error details
 
 ```
-Error: read ECONNRESET
+AxiosError: Request failed with status code 429
 ```
 
 # Test source
@@ -24,87 +24,98 @@ Error: read ECONNRESET
   4  |  */
   5  | import { test, expect, Page } from '@playwright/test';
   6  | import axios from 'axios';
-  7  | 
-  8  | const API = process.env.API_BASE_URL || 'http://localhost:1337/api';
-  9  | 
-  10 | async function createAndLoginUser(page: Page) {
-  11 |   const ts = Date.now();
-  12 |   const email = `e2e_db_${ts}@test.local`;
-  13 |   const password = 'Dashboard@E2E1';
-> 14 |   await axios.post(`${API}/auth/local/register`, { username: `e2e_db_${ts}`, email, password });
-     |   ^ Error: read ECONNRESET
-  15 | 
-  16 |   await page.goto('/auth');
-  17 |   await page.waitForLoadState('networkidle');
-  18 |   await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(email);
-  19 |   await page.locator('input[type="password"]').first().fill(password);
-  20 |   await page.locator('button[type="submit"]').first().click();
-  21 |   await page.waitForURL((url) => !url.pathname.includes('/auth'), { timeout: 15_000 });
-  22 | }
-  23 | 
-  24 | test.describe('Dashboard', () => {
-  25 |   test('dashboard page loads after login', async ({ page }) => {
-  26 |     await createAndLoginUser(page);
-  27 |     await page.goto('/dashboard');
-  28 |     await page.waitForLoadState('networkidle');
-  29 | 
-  30 |     expect(page.url()).not.toContain('/auth');
-  31 |     // Page should have some content
-  32 |     await expect(page.locator('body')).not.toBeEmpty();
-  33 |   });
+  7  | import { authBypassHeaders, enableAuthBypass } from '../fixtures/auth';
+  8  | 
+  9  | const API = process.env.API_BASE_URL || 'http://localhost:1337/api';
+  10 | 
+  11 | async function createAndLoginUser(page: Page) {
+  12 |   const ts = Date.now();
+  13 |   const email = `e2e_db_${ts}@test.local`;
+  14 |   const password = 'Dashboard@E2E1';
+> 15 |   await axios.post(
+     |   ^ AxiosError: Request failed with status code 429
+  16 |     `${API}/auth/local/register`,
+  17 |     {
+  18 |       username: `e2e_db_${ts}`,
+  19 |       email,
+  20 |       password,
+  21 |       name: 'E2E Dashboard User',
+  22 |     },
+  23 |     { headers: authBypassHeaders },
+  24 |   );
+  25 | 
+  26 |   await enableAuthBypass(page);
+  27 |   await page.goto('/auth');
+  28 |   await page.waitForLoadState('networkidle');
+  29 |   await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(email);
+  30 |   await page.locator('input[type="password"]').first().fill(password);
+  31 |   await page.locator('button[type="submit"]').first().click();
+  32 |   await page.waitForURL((url) => !url.pathname.includes('/auth'), { timeout: 15_000 });
+  33 | }
   34 | 
-  35 |   test('dashboard does not show a full-page error', async ({ page }) => {
-  36 |     await createAndLoginUser(page);
-  37 |     await page.goto('/dashboard');
-  38 |     await page.waitForLoadState('networkidle');
-  39 | 
-  40 |     // No uncaught error boundary visible
-  41 |     const errorBoundary = page.locator('text="Something went wrong"').first();
-  42 |     await expect(errorBoundary).not.toBeVisible();
-  43 |   });
-  44 | 
-  45 |   test('navigation sidebar is visible', async ({ page }) => {
-  46 |     await createAndLoginUser(page);
-  47 |     await page.goto('/dashboard');
-  48 |     await page.waitForLoadState('networkidle');
-  49 | 
-  50 |     const nav = page.locator('nav, aside, [role="navigation"]').first();
-  51 |     await expect(nav).toBeVisible({ timeout: 10_000 });
-  52 |   });
-  53 | 
-  54 |   test('can navigate to /articles via sidebar or direct URL', async ({ page }) => {
-  55 |     await createAndLoginUser(page);
-  56 |     await page.goto('/articles');
-  57 |     await page.waitForLoadState('networkidle');
-  58 |     expect(page.url()).not.toContain('/auth');
-  59 |   });
+  35 | test.describe('Dashboard', () => {
+  36 |   test('dashboard page loads after login', async ({ page }) => {
+  37 |     await createAndLoginUser(page);
+  38 |     await page.goto('/dashboard');
+  39 |     await page.waitForLoadState('networkidle');
+  40 | 
+  41 |     expect(page.url()).not.toContain('/auth');
+  42 |     // Page should have some content
+  43 |     await expect(page.locator('body')).not.toBeEmpty();
+  44 |   });
+  45 | 
+  46 |   test('dashboard does not show a full-page error', async ({ page }) => {
+  47 |     await createAndLoginUser(page);
+  48 |     await page.goto('/dashboard');
+  49 |     await page.waitForLoadState('networkidle');
+  50 | 
+  51 |     // No uncaught error boundary visible
+  52 |     const errorBoundary = page.locator('text="Something went wrong"').first();
+  53 |     await expect(errorBoundary).not.toBeVisible();
+  54 |   });
+  55 | 
+  56 |   test('navigation sidebar is visible', async ({ page }) => {
+  57 |     await createAndLoginUser(page);
+  58 |     await page.goto('/dashboard');
+  59 |     await page.waitForLoadState('networkidle');
   60 | 
-  61 |   test('can navigate to /courses via direct URL', async ({ page }) => {
-  62 |     await createAndLoginUser(page);
-  63 |     await page.goto('/courses');
-  64 |     await page.waitForLoadState('networkidle');
-  65 |     expect(page.url()).not.toContain('/auth');
-  66 |   });
-  67 | 
-  68 |   test('can navigate to /categories via direct URL', async ({ page }) => {
-  69 |     await createAndLoginUser(page);
-  70 |     await page.goto('/categories');
-  71 |     await page.waitForLoadState('networkidle');
-  72 |     expect(page.url()).not.toContain('/auth');
-  73 |   });
-  74 | 
-  75 |   test('unauthenticated user is redirected from /dashboard', async ({ page }) => {
-  76 |     // Don't login
-  77 |     await page.goto('/dashboard');
-  78 |     await page.waitForURL('**/auth**', { timeout: 10_000 });
-  79 |     expect(page.url()).toContain('/auth');
-  80 |   });
-  81 | 
-  82 |   test('unauthenticated user is redirected from /articles', async ({ page }) => {
-  83 |     await page.goto('/articles');
-  84 |     await page.waitForURL('**/auth**', { timeout: 10_000 });
-  85 |     expect(page.url()).toContain('/auth');
-  86 |   });
-  87 | });
-  88 | 
+  61 |     const nav = page.locator('nav, aside, [role="navigation"]').first();
+  62 |     await expect(nav).toBeVisible({ timeout: 10_000 });
+  63 |   });
+  64 | 
+  65 |   test('can navigate to /articles via sidebar or direct URL', async ({ page }) => {
+  66 |     await createAndLoginUser(page);
+  67 |     await page.goto('/articles');
+  68 |     await page.waitForLoadState('networkidle');
+  69 |     expect(page.url()).not.toContain('/auth');
+  70 |   });
+  71 | 
+  72 |   test('can navigate to /courses via direct URL', async ({ page }) => {
+  73 |     await createAndLoginUser(page);
+  74 |     await page.goto('/courses');
+  75 |     await page.waitForLoadState('networkidle');
+  76 |     expect(page.url()).not.toContain('/auth');
+  77 |   });
+  78 | 
+  79 |   test('can navigate to /categories via direct URL', async ({ page }) => {
+  80 |     await createAndLoginUser(page);
+  81 |     await page.goto('/categories');
+  82 |     await page.waitForLoadState('networkidle');
+  83 |     expect(page.url()).not.toContain('/auth');
+  84 |   });
+  85 | 
+  86 |   test('unauthenticated user is redirected from /dashboard', async ({ page }) => {
+  87 |     // Don't login
+  88 |     await page.goto('/dashboard');
+  89 |     await page.waitForURL('**/auth**', { timeout: 10_000 });
+  90 |     expect(page.url()).toContain('/auth');
+  91 |   });
+  92 | 
+  93 |   test('unauthenticated user is redirected from /articles', async ({ page }) => {
+  94 |     await page.goto('/articles');
+  95 |     await page.waitForURL('**/auth**', { timeout: 10_000 });
+  96 |     expect(page.url()).toContain('/auth');
+  97 |   });
+  98 | });
+  99 | 
 ```
