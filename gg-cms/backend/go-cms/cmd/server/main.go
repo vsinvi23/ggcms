@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -73,7 +76,7 @@ func main() {
 	bootstrap.SeedAdmin(pgDB.Write, &cfg.Admin)
 
 	// ── MongoDB ─────────────────────────────────────────────────────────────
-	mongoDB, err := database.NewMongoDB(&cfg.MongoDB)
+	mongoDB, err := database.NewMongoDB(&cfg.MongoDB, &cfg.TLS)
 	if err != nil {
 		logger.Fatal("mongodb connection failed", zap.Error(err))
 	}
@@ -142,7 +145,7 @@ func main() {
 		logger.Fatal("failed to build router", zap.Error(err))
 	}
 
-	// ── HTTP Server ───────────────────────────────────────────────────────
+	// ── HTTP/HTTPS Server ─────────────────────────────────────────────────
 	srv := &http.Server{
 		Addr:         ":" + cfg.Server.Port,
 		Handler:      router,
@@ -151,12 +154,39 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	go func() {
-		logger.Info("go-cms server starting", zap.String("port", cfg.Server.Port))
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal("server error", zap.Error(err))
+	if cfg.TLS.Enabled {
+		caPool, err := loadCACertPool(cfg.TLS.CAFile)
+		if err != nil {
+			logger.Fatal("tls: failed to load CA cert pool", zap.Error(err))
 		}
-	}()
+		srv.TLSConfig = &tls.Config{
+			MinVersion:   tls.VersionTLS12,
+			ClientAuth:   tls.RequireAndVerifyClientCert,
+			ClientCAs:    caPool,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+			},
+		}
+		go func() {
+			logger.Info("go-cms HTTPS server starting",
+				zap.String("port", cfg.Server.Port),
+				zap.String("cert", cfg.TLS.CertFile),
+			)
+			if err := srv.ListenAndServeTLS(cfg.TLS.CertFile, cfg.TLS.KeyFile); err != nil && err != http.ErrServerClosed {
+				logger.Fatal("server error", zap.Error(err))
+			}
+		}()
+	} else {
+		go func() {
+			logger.Info("go-cms server starting", zap.String("port", cfg.Server.Port))
+			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				logger.Fatal("server error", zap.Error(err))
+			}
+		}()
+	}
 
 	// ── Graceful Shutdown ─────────────────────────────────────────────────
 	quit := make(chan os.Signal, 1)
@@ -175,4 +205,16 @@ func main() {
 	}
 
 	logger.Info("server stopped cleanly")
+}
+
+func loadCACertPool(caFile string) (*x509.CertPool, error) {
+	pem, err := os.ReadFile(caFile)
+	if err != nil {
+		return nil, fmt.Errorf("read CA file %q: %w", caFile, err)
+	}
+	pool := x509.NewCertPool()
+	if !pool.AppendCertsFromPEM(pem) {
+		return nil, fmt.Errorf("parse CA cert from %q", caFile)
+	}
+	return pool, nil
 }

@@ -87,7 +87,7 @@ REM ── Wait for PostgreSQL ────────────────�
 echo [DB]   Waiting for PostgreSQL to be ready (up to 60 s)...
 set PG_RETRIES=30
 :pg_wait
-%COMPOSE% exec -T postgres pg_isready -U go_cms_user -d go_cms >nul 2>&1
+%COMPOSE% exec -T postgres pg_isready -U gg_cms_user -d gg_cms >nul 2>&1
 if %errorlevel%==0 goto pg_ready
 set /a PG_RETRIES-=1
 if %PG_RETRIES%==0 (

@@ -3,36 +3,42 @@ import { SectionDto, SectionCreateDto } from '../types';
 
 const BASE = '/sections';
 
-function transformLesson(l: any): import('../types').LessonDto {
-  const attrs = l.attributes ?? l;
+function transformLesson(l: Record<string, unknown>): import('../types').LessonDto {
+  const attrs = (l.attributes ?? l) as Record<string, unknown>;
+  const sectionField = attrs.section as Record<string, unknown> | undefined;
+  const sectionData = sectionField?.data as Record<string, unknown> | undefined;
   return {
-    id: l.id,
-    title: attrs.title ?? '',
-    type: attrs.type ?? 'text',
-    content: attrs.content ?? null,
-    duration: attrs.duration ?? 0,
-    order: attrs.order ?? 0,
-    section: attrs.section?.data ? { id: attrs.section.data.id } : (attrs.sectionId ? { id: attrs.sectionId } : null),
+    id: l.id as number,
+    title: (attrs.title ?? '') as string,
+    type: (attrs.type ?? 'text') as import('../types').LessonDto['type'],
+    content: (attrs.content ?? null) as string | null,
+    duration: (attrs.duration ?? 0) as number,
+    order: (attrs.order ?? 0) as number,
+    section: sectionData ? { id: sectionData.id as number } : (attrs.sectionId ? { id: attrs.sectionId as number } : null),
   };
 }
 
-function transformSection(item: any): SectionDto {
-  const attrs = item.attributes ?? item;
+function transformSection(item: Record<string, unknown>): SectionDto {
+  const attrs = (item.attributes ?? item) as Record<string, unknown>;
   // Handle both Strapi format ({course: {data: {id}}}) and Go CMS format ({courseId: number})
-  const courseId = attrs.course?.data?.id ?? attrs.courseId ?? null;
-  const parentSectionId = attrs.parentSection?.data?.id ?? attrs.parentSectionId ?? null;
+  const courseField = attrs.course as Record<string, unknown> | undefined;
+  const courseId = (courseField?.data as Record<string, unknown> | undefined)?.id ?? attrs.courseId ?? null;
+  const parentSectionField = attrs.parentSection as Record<string, unknown> | undefined;
+  const parentSectionId = (parentSectionField?.data as Record<string, unknown> | undefined)?.id ?? attrs.parentSectionId ?? null;
   // Handle both Strapi format (childSections.data[]) and Go CMS format (childSections[])
-  const rawChildren = attrs.childSections?.data ?? attrs.childSections ?? [];
-  const rawLessons = attrs.lessons?.data ?? attrs.lessons ?? [];
+  const childSectionsField = attrs.childSections as Record<string, unknown> | undefined;
+  const rawChildren = ((childSectionsField?.data ?? attrs.childSections ?? []) as Record<string, unknown>[]);
+  const lessonsField = attrs.lessons as Record<string, unknown> | undefined;
+  const rawLessons = ((lessonsField?.data ?? attrs.lessons ?? []) as Record<string, unknown>[]);
   return {
-    id: item.id,
-    title: attrs.title ?? '',
-    description: attrs.description ?? null,
-    order: attrs.order ?? 0,
-    course: courseId ? { id: courseId } : null,
-    parentSection: parentSectionId ? { id: parentSectionId } : null,
-    childSections: rawChildren.map((s: any) => transformSection(s)),
-    lessons: rawLessons.map((l: any) => transformLesson(l)),
+    id: item.id as number,
+    title: (attrs.title ?? '') as string,
+    description: (attrs.description ?? null) as string | null,
+    order: (attrs.order ?? 0) as number,
+    course: courseId ? { id: courseId as number } : null,
+    parentSection: parentSectionId ? { id: parentSectionId as number } : null,
+    childSections: rawChildren.map((s) => transformSection(s)),
+    lessons: rawLessons.map((l) => transformLesson(l)),
   };
 }
 
@@ -63,7 +69,7 @@ export const sectionService = {
   },
 
   async updateSection(id: number, data: Partial<SectionCreateDto> & { description?: string | null }): Promise<SectionDto> {
-    const payload: any = {};
+    const payload: Record<string, unknown> = {};
     if (data.title !== undefined) payload.title = data.title;
     if (data.order !== undefined) payload.order = data.order;
     if ('description' in data) payload.description = data.description;

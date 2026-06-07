@@ -27,7 +27,7 @@ echo [INFO] Starting PostgreSQL and MongoDB...
 
 echo [INFO] Waiting for PostgreSQL...
 :pg_wait
-%COMPOSE% exec -T postgres pg_isready -U go_cms_user -d go_cms >nul 2>&1
+%COMPOSE% exec -T postgres pg_isready -U gg_cms_user -d gg_cms >nul 2>&1
 if %errorlevel% neq 0 (
     timeout /t 2 /nobreak >nul
     goto pg_wait
@@ -47,9 +47,9 @@ REM ── Write .env if absent ────────────────
 if not exist .env (
     echo [INFO] Creating .env from template...
     copy .env.example .env >nul
-    powershell -Command "(gc .env) -replace 'DB_WRITE_URL=.*', 'DB_WRITE_URL=postgres://go_cms_user:go_cms_pass@localhost:5433/go_cms?sslmode=disable' | sc .env"
-    powershell -Command "(gc .env) -replace 'MONGO_URI=.*', 'MONGO_URI=mongodb://go_cms_user:go_cms_pass@localhost:27017' | sc .env"
-    powershell -Command "(gc .env) -replace 'MONGO_DATABASE=.*', 'MONGO_DATABASE=go_cms' | sc .env"
+    powershell -Command "(gc .env) -replace 'DB_WRITE_URL=.*', 'DB_WRITE_URL=postgres://gg_cms_user:gg_cms_pass@localhost:5433/gg_cms?sslmode=disable' | sc .env"
+    powershell -Command "(gc .env) -replace 'MONGO_URI=.*', 'MONGO_URI=mongodb://gg_cms_user:gg_cms_pass@localhost:27017' | sc .env"
+    powershell -Command "(gc .env) -replace 'MONGO_DATABASE=.*', 'MONGO_DATABASE=gg_cms' | sc .env"
     powershell -Command "(gc .env) -replace 'JWT_SECRET=.*', 'JWT_SECRET=change-me-in-production-min-32-chars!!' | sc .env"
     echo [WARN] .env created — change JWT_SECRET before deploying!
 ) else (

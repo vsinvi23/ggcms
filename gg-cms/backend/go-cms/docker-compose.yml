@@ -1,33 +1,33 @@
-version: "3.9"
+name: gg-cms
 
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: go-cms-postgres
+    container_name: gg-cms-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: go_cms_user
-      POSTGRES_PASSWORD: go_cms_pass
-      POSTGRES_DB: go_cms
+      POSTGRES_USER: gg_cms_user
+      POSTGRES_PASSWORD: gg_cms_pass
+      POSTGRES_DB: gg_cms
     ports:
       - "5433:5432"   # host:5433 → container:5432 (avoids conflict with other postgres instances)
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./migrations/postgres/001_initial.sql:/docker-entrypoint-initdb.d/001_initial.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U go_cms_user -d go_cms"]
+      test: ["CMD-SHELL", "pg_isready -U gg_cms_user -d gg_cms"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   mongodb:
     image: mongo:7-jammy
-    container_name: go-cms-mongo
+    container_name: gg-cms-mongodb
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: go_cms_user
-      MONGO_INITDB_ROOT_PASSWORD: go_cms_pass
-      MONGO_INITDB_DATABASE: go_cms
+      MONGO_INITDB_ROOT_USERNAME: gg_cms_user
+      MONGO_INITDB_ROOT_PASSWORD: gg_cms_pass
+      MONGO_INITDB_DATABASE: gg_cms
     ports:
       - "27017:27017"
     volumes:
@@ -41,7 +41,7 @@ services:
   # Optional: pgAdmin for DB inspection
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: go-cms-pgadmin
+    container_name: gg-cms-pgadmin
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@serenya.com

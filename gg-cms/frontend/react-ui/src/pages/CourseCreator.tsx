@@ -133,7 +133,7 @@ export default function CourseCreator() {
       setTitle(existingCms.title || '');
       setDescription(existingCms.description || '');
       setCategoryId(existingCms.categoryId?.toString() || '');
-      if ((existingCms as any).courseType) setCourseType((existingCms as any).courseType);
+      if (existingCms.courseType) setCourseType(existingCms.courseType);
       if (existingCms.thumbnailUrl) setThumbnailPreview(existingCms.thumbnailUrl);
       setIsDataLoaded(true);
     }
@@ -173,9 +173,9 @@ export default function CourseCreator() {
       let cmsSlug: string | undefined;
       if (paramId) {
         cmsId = existingCmsId;
-        await updateCms.mutateAsync({ id: cmsId, data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined } as any });
+        await updateCms.mutateAsync({ id: cmsId, data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined } });
       } else {
-        const created = await createCms.mutateAsync({ type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined } as any);
+        const created = await createCms.mutateAsync({ type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined });
         cmsId = created.id;
         cmsSlug = created.slug;
         setSavedCourseId(cmsId);
@@ -306,7 +306,7 @@ export default function CourseCreator() {
     try {
       await updateCms.mutateAsync({
         id: existingCmsId,
-        data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined } as any,
+        data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined },
       });
       if (contentBlocks.length > 0) {
         await uploadBody.mutateAsync({ id: existingCmsId, content: JSON.stringify(contentBlocks), type: 'COURSE' });
@@ -339,7 +339,7 @@ export default function CourseCreator() {
     try {
       await updateCms.mutateAsync({
         id: existingCmsId,
-        data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined } as any,
+        data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined },
       });
       if (contentBlocks.length > 0) {
         await uploadBody.mutateAsync({ id: existingCmsId, content: JSON.stringify(contentBlocks), type: 'COURSE' });
@@ -359,6 +359,12 @@ export default function CourseCreator() {
   const isLoading = !!paramId && (cmsLoading || (!isDataLoaded && !!existingCms));
   const courseIdForChapters = existingCmsId > 0 ? existingCmsId : (savedCourseId ?? null);
 
+  const refreshSections = useCallback(() => {
+    if (courseIdForChapters) {
+      queryClient.refetchQueries({ queryKey: sectionKeys.byCourse(courseIdForChapters) });
+    }
+  }, [queryClient, courseIdForChapters]);
+
   if (paramId && cmsError) {
     return (
       <DashboardLayout>
@@ -376,14 +382,6 @@ export default function CourseCreator() {
       </DashboardLayout>
     );
   }
-
-  // Force-refresh the sections cache whenever the reviewer or publisher exits edit mode,
-  // so CourseChapterViewer always shows the latest chapters rather than stale cached data.
-  const refreshSections = useCallback(() => {
-    if (courseIdForChapters) {
-      queryClient.refetchQueries({ queryKey: sectionKeys.byCourse(courseIdForChapters) });
-    }
-  }, [queryClient, courseIdForChapters]);
 
   return (
     <DashboardLayout>
@@ -1246,10 +1244,10 @@ export default function CourseCreator() {
                     }>
                       {existingCms.status}
                     </Badge>
-                    {(existingCms as any).courseType && (
+                    {existingCms.courseType && (
                       <div className="mt-2">
                         <Badge variant="outline" className="text-xs">
-                          {courseTypes.find(ct => ct.value === (existingCms as any).courseType)?.label ?? (existingCms as any).courseType}
+                          {courseTypes.find(ct => ct.value === existingCms.courseType)?.label ?? existingCms.courseType}
                         </Badge>
                       </div>
                     )}

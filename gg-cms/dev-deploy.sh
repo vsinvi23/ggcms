@@ -19,9 +19,9 @@ NC='\033[0m' # No Color
 PROJECT_ROOT=$(pwd)
 BACKEND_DIR="$PROJECT_ROOT/backend/go-cms"
 FRONTEND_DIR="$PROJECT_ROOT/frontend/react-ui"
-DB_NAME="go_cms"
-DB_USER="go_cms_user"
-DB_PASSWORD="${POSTGRES_PASSWORD:-go_cms_pass}"
+DB_NAME="gg_cms"
+DB_USER="gg_cms_user"
+DB_PASSWORD="${POSTGRES_PASSWORD:-gg_cms_pass}"
 DB_PORT="5432"
 BACKEND_PORT="8000"
 FRONTEND_PORT="5173"
@@ -110,7 +110,7 @@ setup_database() {
     retry_count=0
     
     while [ $retry_count -lt $max_retries ]; do
-        if docker compose exec -T postgres pg_isready -U go_cms_user -d go_cms &>/dev/null; then
+        if docker compose exec -T postgres pg_isready -U gg_cms_user -d gg_cms &>/dev/null; then
             print_success "PostgreSQL is running and healthy"
             break
         fi
@@ -124,7 +124,7 @@ setup_database() {
     
     # Test connection via docker
     print_info "Testing PostgreSQL connection via Docker..."
-    docker compose exec -T postgres psql -U go_cms_user -d go_cms -c "SELECT 1;" > /dev/null || {
+    docker compose exec -T postgres psql -U gg_cms_user -d gg_cms -c "SELECT 1;" > /dev/null || {
         print_error "PostgreSQL connection test failed"
         exit 1
     }
@@ -264,8 +264,8 @@ display_info() {
     echo -e "${GREEN}✓ Development environment setup complete!${NC}"
     echo ""
     echo -e "${BLUE}Docker Services:${NC}"
-    echo "  - PostgreSQL: postgres://go_cms_user:go_cms_pass@localhost:5432/go_cms"
-    echo "  - MongoDB: mongodb://go_cms_user:go_cms_pass@localhost:27017/go_cms"
+    echo "  - PostgreSQL: postgres://gg_cms_user:gg_cms_pass@localhost:5432/gg_cms"
+    echo "  - MongoDB: mongodb://gg_cms_user:gg_cms_pass@localhost:27017/gg_cms"
     echo ""
     echo -e "${BLUE}Backend (Go):${NC}"
     echo "  - API Port: $BACKEND_PORT"

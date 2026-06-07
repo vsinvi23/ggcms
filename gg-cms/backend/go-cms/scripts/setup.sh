@@ -38,7 +38,7 @@ $COMPOSE up -d postgres mongodb
 # ── Wait for PostgreSQL ──────────────────────────────────────────────────────
 info "Waiting for PostgreSQL to be healthy..."
 for i in $(seq 1 30); do
-  if $COMPOSE exec -T postgres pg_isready -U go_cms_user -d go_cms >/dev/null 2>&1; then
+  if $COMPOSE exec -T postgres pg_isready -U gg_cms_user -d gg_cms >/dev/null 2>&1; then
     info "PostgreSQL is ready."
     break
   fi
@@ -66,10 +66,10 @@ if [ ! -f .env ]; then
   info "Creating .env from template..."
   cp .env.example .env
   # Patch in the docker-compose credentials
-  sed -i 's|DB_WRITE_URL=.*|DB_WRITE_URL=postgres://go_cms_user:go_cms_pass@localhost:5433/go_cms?sslmode=disable|' .env
+  sed -i 's|DB_WRITE_URL=.*|DB_WRITE_URL=postgres://gg_cms_user:gg_cms_pass@localhost:5433/gg_cms?sslmode=disable|' .env
   sed -i 's|DB_READ_URL=.*|DB_READ_URL=|' .env
-  sed -i 's|MONGO_URI=.*|MONGO_URI=mongodb://go_cms_user:go_cms_pass@localhost:27017|' .env
-  sed -i 's|MONGO_DATABASE=.*|MONGO_DATABASE=go_cms|' .env
+  sed -i 's|MONGO_URI=.*|MONGO_URI=mongodb://gg_cms_user:gg_cms_pass@localhost:27017|' .env
+  sed -i 's|MONGO_DATABASE=.*|MONGO_DATABASE=gg_cms|' .env
   sed -i 's|JWT_SECRET=.*|JWT_SECRET=change-me-in-production-min-32-chars!!|' .env
   warn ".env created with default credentials — change JWT_SECRET before deploying!"
 else

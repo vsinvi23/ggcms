@@ -1,7 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import Auth from './Auth';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
@@ -39,9 +41,11 @@ vi.mock('@/config/api', () => ({
 
 function renderAuth() {
   return render(
-    <MemoryRouter>
-      <Auth />
-    </MemoryRouter>
+    <TooltipProvider>
+      <MemoryRouter>
+        <Auth />
+      </MemoryRouter>
+    </TooltipProvider>
   );
 }
 
@@ -118,8 +122,9 @@ describe('Auth page — Sign Up tab', () => {
   });
 
   it('renders signup form fields after switching tab', async () => {
+    const user = userEvent.setup();
     renderAuth();
-    fireEvent.click(screen.getByRole('tab', { name: /Sign Up/i }));
+    await user.click(screen.getByRole('tab', { name: /Sign Up/i }));
     await waitFor(() => {
       expect(screen.getByLabelText(/Full Name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Confirm Password/i)).toBeInTheDocument();
@@ -128,9 +133,10 @@ describe('Auth page — Sign Up tab', () => {
 
   it('calls signup with entered data on submit', async () => {
     mockSignup.mockResolvedValue({});
+    const user = userEvent.setup();
     renderAuth();
 
-    fireEvent.click(screen.getByRole('tab', { name: /Sign Up/i }));
+    await user.click(screen.getByRole('tab', { name: /Sign Up/i }));
     await waitFor(() => screen.getByLabelText(/Full Name/i));
 
     fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: 'Jane Doe' } });
@@ -145,9 +151,10 @@ describe('Auth page — Sign Up tab', () => {
   });
 
   it('does not call signup when passwords do not match', async () => {
+    const user = userEvent.setup();
     renderAuth();
 
-    fireEvent.click(screen.getByRole('tab', { name: /Sign Up/i }));
+    await user.click(screen.getByRole('tab', { name: /Sign Up/i }));
     await waitFor(() => screen.getByLabelText(/Full Name/i));
 
     fireEvent.change(screen.getByLabelText(/Full Name/i), { target: { value: 'Jane Doe' } });

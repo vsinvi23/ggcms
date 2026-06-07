@@ -5,7 +5,7 @@ import { TaskCreateDto } from '../types';
 // Query keys
 export const taskKeys = {
   all: ['tasks'] as const,
-  list: (params?: any) => [...taskKeys.all, 'list', params] as const,
+  list: (params?: Record<string, unknown>) => [...taskKeys.all, 'list', params] as const,
   detail: (id: number) => [...taskKeys.all, id] as const,
 };
 

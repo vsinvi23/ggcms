@@ -1,15 +1,18 @@
-export const transformUser = (u: any) => {
+type RawRecord = Record<string, unknown>;
+
+export const transformUser = (u: RawRecord) => {
   if (!u) return null;
+  const role = u.role as RawRecord | undefined;
   return {
     id: u.id,
     name: u.name || u.username,
     email: u.email,
     username: u.username,
-    role: u.role?.name || u.roleType || 'User',
+    role: role?.name || u.roleType || 'User',
     roleType: u.roleType || 'user',
     status: u.status || (u.blocked ? 'deactivated' : 'active'),
-    groups: u.groups?.map((g: any) => g.name || g) || [],
-    groupIds: u.groupIds || u.groups?.map((g: any) => g.id).filter(Boolean) || [],
+    groups: (u.groups as RawRecord[] | undefined)?.map((g) => g.name || g) || [],
+    groupIds: u.groupIds || (u.groups as RawRecord[] | undefined)?.map((g) => g.id).filter(Boolean) || [],
     mobileNo: u.mobileNo || u.phone || '',
     blocked: u.blocked || false,
     confirmed: u.confirmed !== false,
@@ -19,9 +22,10 @@ export const transformUser = (u: any) => {
   };
 };
 
-export const transformGroup = (g: any) => {
+export const transformGroup = (g: RawRecord) => {
   if (!g) return null;
-  const members = g.members?.data?.map(transformUser) || g.users || g.members || [];
+  const membersData = g.members as RawRecord | undefined;
+  const members = (membersData?.data as RawRecord[] | undefined)?.map(transformUser) || g.users || g.members || [];
   return {
     id: g.id,
     name: g.name,
@@ -30,23 +34,24 @@ export const transformGroup = (g: any) => {
     description: g.description,
     members,
     users: members,
-    memberCount: members.length,
+    memberCount: (members as unknown[]).length,
     createdAt: g.createdAt,
     updatedAt: g.updatedAt,
   };
 };
 
-export const transformCategory = (c: any) => {
+export const transformCategory = (c: RawRecord) => {
   if (!c) return null;
+  const parent = c.parent as RawRecord | undefined;
   return {
     id: c.id,
     name: c.name,
     slug: c.slug,
     description: c.description,
-    parentId: c.parent?.id || c.parentId || null,
+    parentId: parent?.id || c.parentId || null,
     isVirtual: c.isVirtual ?? false,
     requiredApprovals: c.requiredApprovals ?? 1,
-    children: c.children?.map(transformCategory) || [],
+    children: (c.children as RawRecord[] | undefined)?.map(transformCategory) || [],
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   };

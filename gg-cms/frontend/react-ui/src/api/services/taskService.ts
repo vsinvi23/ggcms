@@ -3,20 +3,23 @@ import { TaskDto, TaskCreateDto, TaskPagedResponse } from '../types';
 
 const BASE = '/tasks';
 
-function transformTask(item: any): TaskDto {
-  const attrs = item.attributes ?? item;
+function transformTask(item: Record<string, unknown>): TaskDto {
+  const attrs = (item.attributes ?? item) as Record<string, unknown>;
+  const userField = attrs.user as Record<string, unknown> | undefined;
+  const userData = userField?.data as Record<string, unknown> | undefined;
+  const userAttrs = userData?.attributes as Record<string, unknown> | undefined;
   return {
-    id: item.id,
-    contentId: attrs.contentId ?? undefined,
-    type: attrs.type,
-    title: attrs.title,
-    status: attrs.status,
-    ownershipType: attrs.ownershipType,
-    user: attrs.user?.data
-      ? { id: attrs.user.data.id, ...attrs.user.data.attributes }
+    id: item.id as number,
+    contentId: (attrs.contentId ?? undefined) as number | undefined,
+    type: attrs.type as TaskDto['type'],
+    title: attrs.title as string,
+    status: attrs.status as string,
+    ownershipType: attrs.ownershipType as TaskDto['ownershipType'],
+    user: userData
+      ? { id: userData.id as number, name: (userAttrs?.name ?? '') as string, email: (userAttrs?.email ?? '') as string }
       : undefined,
-    createdAt: attrs.createdAt,
-    updatedAt: attrs.updatedAt,
+    createdAt: attrs.createdAt as string,
+    updatedAt: attrs.updatedAt as string,
   };
 }
 

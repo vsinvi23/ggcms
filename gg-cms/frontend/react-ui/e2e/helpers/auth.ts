@@ -68,6 +68,7 @@ export async function injectFakeSession(
 
   await page.addInitScript(
     ({ isAdmin, role, groups, userId }) => {
+      if (sessionStorage.getItem('__session_cleared')) return;
       const fakeUser = {
         id: userId,
         email: isAdmin ? 'geekadmin@geekgully.com' : `test-${role}@geekgully.com`,

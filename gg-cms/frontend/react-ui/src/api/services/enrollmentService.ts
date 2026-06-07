@@ -3,26 +3,30 @@ import { EnrollmentDto, EnrollmentProgressDto } from '../types';
 
 const BASE = '/enrollments';
 
-function transformEnrollment(item: any): EnrollmentDto {
-  const attrs = item.attributes ?? item;
+function transformEnrollment(item: Record<string, unknown>): EnrollmentDto {
+  const attrs = (item.attributes ?? item) as Record<string, unknown>;
   // Handle both Strapi ({course: {data: {id, attributes}}}) and Go CMS ({course: {id}})
   let course = null;
-  if (attrs.course?.data) {
-    course = { id: attrs.course.data.id, title: attrs.course.data.attributes?.title ?? '' };
-  } else if (attrs.course?.id) {
-    course = { id: attrs.course.id, title: attrs.course.title ?? '' };
+  const courseField = attrs.course as Record<string, unknown> | undefined;
+  if (courseField?.data) {
+    const courseData = courseField.data as Record<string, unknown>;
+    const courseAttrs = courseData.attributes as Record<string, unknown> | undefined;
+    course = { id: courseData.id, title: (courseAttrs?.title ?? '') as string };
+  } else if (courseField?.id) {
+    course = { id: courseField.id, title: (courseField.title ?? '') as string };
   }
   // Handle both Strapi ({completedLessons: {data: [...]}}) and Go CMS ({completedLessons: [...]})
-  const rawLessons = attrs.completedLessons?.data ?? attrs.completedLessons ?? [];
+  const completedLessonsField = attrs.completedLessons as Record<string, unknown> | undefined;
+  const rawLessons = (completedLessonsField?.data ?? attrs.completedLessons ?? []) as Record<string, unknown>[];
   return {
-    id: item.id,
-    status: attrs.status ?? 'active',
-    progress: attrs.progress ?? 0,
-    enrolledAt: attrs.enrolledAt ?? null,
-    lastAccessedAt: attrs.lastAccessedAt ?? null,
-    completedAt: attrs.completedAt ?? null,
+    id: item.id as number,
+    status: (attrs.status ?? 'active') as EnrollmentDto['status'],
+    progress: (attrs.progress ?? 0) as number,
+    enrolledAt: (attrs.enrolledAt ?? null) as string | null,
+    lastAccessedAt: (attrs.lastAccessedAt ?? null) as string | null,
+    completedAt: (attrs.completedAt ?? null) as string | null,
     course,
-    completedLessons: rawLessons.map((l: any) => ({ id: l.id ?? l })),
+    completedLessons: rawLessons.map((l) => ({ id: (l.id ?? l) as number })),
   };
 }
 
@@ -55,7 +59,7 @@ export const enrollmentService = {
   },
 
   async updateProgress(enrollmentId: number, data: EnrollmentProgressDto): Promise<EnrollmentDto> {
-    const payload: any = {};
+    const payload: Record<string, unknown> = {};
     if (data.progress !== undefined) payload.progress = data.progress;
     if (data.status !== undefined) payload.status = data.status;
     if (data.completedLessonId !== undefined) {

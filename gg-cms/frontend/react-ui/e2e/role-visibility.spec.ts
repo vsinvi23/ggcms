@@ -99,14 +99,13 @@ test.describe('Dashboard — admin vs regular user', () => {
 // ─── Settings and Configuration — admin-only routes ──────────────────────────
 
 test.describe('Admin-only routes', () => {
-  test.each(['/settings', '/configuration', '/users', '/roles', '/analytics'])(
-    'admin can access %s',
-    async ({ page }, route) => {
+  for (const route of ['/settings', '/configuration', '/users', '/roles', '/analytics']) {
+    test(`admin can access ${route}`, async ({ page }) => {
       await injectFakeSession(page, 'admin');
       await page.goto(route);
       await expect(page).not.toHaveURL(/\/auth/);
-    }
-  );
+    });
+  }
 
   test('learner redirected away from /users', async ({ page }) => {
     await injectFakeSession(page, 'learner');

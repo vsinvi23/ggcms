@@ -43,7 +43,7 @@ export interface AuthResponse {
   userId?: number;
   email?: string;
   token: string;
-  user?: any; // Full user object from Strapi
+  user?: Record<string, unknown>; // Full user object from Strapi
   message?: string;
 }
 

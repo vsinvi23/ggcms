@@ -42,6 +42,28 @@ The root category `geek` (`is_virtual = true`) is hidden from all regular UI.
 - Frontend: filter with `.filter(c => !c.isVirtual)` before rendering
 - Admin group is auto-linked to Geek so admins review all categories
 
+## Lint & security gates (run before every commit)
+
+```bash
+# Backend
+cd backend/go-cms && go build ./... && go vet ./...
+cd backend/go-cms && go test ./internal/... -short -count=1
+
+# Frontend
+cd frontend/react-ui && npm run lint           # must exit 0, no output
+cd frontend/react-ui && node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json
+
+# Before commit  →  /pre-commit
+# Before PR      →  /review-change  then  /review-security
+# Full guidelines →  .ai/context/lint-security-guidelines.md
+```
+
+**HARD-blocking lint rules (never suppress):**
+- `react-hooks/rules-of-hooks` — conditional hook = runtime crash; move all hooks above early returns
+- `@typescript-eslint/no-explicit-any` — use `unknown` or a typed interface
+- `no-control-regex` — embedded null/control bytes in regex; write the char class explicitly
+- `@typescript-eslint/no-require-imports` — use ESM `import` in TS files
+
 ## Scalability targets (1 M users)
 
 - DB: PgBouncer + read replica (separate GORM instances); cursor pagination over OFFSET

@@ -44,7 +44,7 @@ describe('ReviewActionsPanel — available actions by status', () => {
   it('published: shows only Unpublish', () => {
     renderPanel('published');
     expect(screen.getByRole('button', { name: /Unpublish/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Publish/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Publish$/i })).toBeNull();
   });
 
   it('rejected: shows only Resubmit', () => {
@@ -154,7 +154,7 @@ describe('ReviewActionsPanel — Request Changes opens dialog', () => {
   it('clicking Request Changes opens the dialog with correct title', () => {
     renderPanel('in_review');
     fireEvent.click(screen.getByRole('button', { name: /Request Changes/i }));
-    expect(screen.getByText(/Request Changes/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Request Changes/i })).toBeInTheDocument();
   });
 
   it('Confirm disabled while comment is empty', () => {

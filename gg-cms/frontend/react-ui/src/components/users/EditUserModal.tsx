@@ -47,7 +47,7 @@ export function EditUserModal({ open, onClose, user, onSave }: EditUserModalProp
       setEmail(user.email);
       setStatus(user.status);
       // Pre-select the first group if user belongs to one
-      const firstGroupId = (user as any).groupIds?.[0];
+      const firstGroupId = (user as unknown as { groupIds?: number[] }).groupIds?.[0];
       setGroupId(firstGroupId ? String(firstGroupId) : '');
     }
   }, [user]);

@@ -3,16 +3,18 @@ import { LessonDto, LessonCreateDto } from '../types';
 
 const BASE = '/lessons';
 
-function transformLesson(item: any): LessonDto {
-  const attrs = item.attributes ?? item;
+function transformLesson(item: Record<string, unknown>): LessonDto {
+  const attrs = (item.attributes ?? item) as Record<string, unknown>;
+  const sectionField = attrs.section as Record<string, unknown> | undefined;
+  const sectionData = sectionField?.data as Record<string, unknown> | undefined;
   return {
-    id: item.id,
-    title: attrs.title,
-    type: attrs.type ?? 'text',
-    content: attrs.content ?? null,
-    duration: attrs.duration ?? 0,
-    order: attrs.order ?? 0,
-    section: attrs.section?.data ? { id: attrs.section.data.id } : null,
+    id: item.id as number,
+    title: attrs.title as string,
+    type: (attrs.type ?? 'text') as LessonDto['type'],
+    content: (attrs.content ?? null) as string | null,
+    duration: (attrs.duration ?? 0) as number,
+    order: (attrs.order ?? 0) as number,
+    section: sectionData ? { id: sectionData.id as number } : null,
   };
 }
 
@@ -42,7 +44,7 @@ export const lessonService = {
   },
 
   async updateLesson(id: number, data: Partial<LessonCreateDto>): Promise<LessonDto> {
-    const payload: any = {};
+    const payload: Record<string, unknown> = {};
     if (data.title !== undefined) payload.title = data.title;
     if (data.type !== undefined) payload.type = data.type;
     if (data.content !== undefined) payload.content = data.content;

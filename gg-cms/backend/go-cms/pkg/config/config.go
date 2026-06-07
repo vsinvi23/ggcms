@@ -14,6 +14,16 @@ type Config struct {
 	Upload   UploadConfig
 	Admin    AdminConfig
 	OAuth    OAuthConfig
+	TLS      TLSConfig
+}
+
+type TLSConfig struct {
+	Enabled        bool
+	CertFile       string // TLS_CERT_FILE — backend HTTPS server cert
+	KeyFile        string // TLS_KEY_FILE  — backend HTTPS server key
+	CAFile         string // TLS_CA_FILE   — CA cert (verify servers + client certs)
+	ClientCertFile string // TLS_CLIENT_CERT_FILE — presented to DBs
+	ClientKeyFile  string // TLS_CLIENT_KEY_FILE  — presented to DBs
 }
 
 type ServerConfig struct {
@@ -71,7 +81,13 @@ func Load() *Config {
 	viper.SetDefault("GIN_MODE", "debug")
 	viper.SetDefault("LOG_LEVEL", "info")
 	viper.SetDefault("LOG_FILE", "logs/app.log")
-	viper.SetDefault("MONGO_DATABASE", "go_cms")
+	viper.SetDefault("MONGO_DATABASE", "gg_cms")
+	viper.SetDefault("TLS_ENABLED", false)
+	viper.SetDefault("TLS_CERT_FILE", "")
+	viper.SetDefault("TLS_KEY_FILE", "")
+	viper.SetDefault("TLS_CA_FILE", "")
+	viper.SetDefault("TLS_CLIENT_CERT_FILE", "")
+	viper.SetDefault("TLS_CLIENT_KEY_FILE", "")
 	viper.SetDefault("JWT_EXPIRY_HOURS", 24)
 	viper.SetDefault("UPLOAD_DIR", "./uploads")
 	viper.SetDefault("UPLOAD_BASE_URL", "http://localhost:8080/uploads")
@@ -115,6 +131,14 @@ func Load() *Config {
 			GeekAdminEmail:    viper.GetString("GEEK_ADMIN_EMAIL"),
 			GeekAdminPassword: viper.GetString("GEEK_ADMIN_PASSWORD"),
 			GeekAdminName:     viper.GetString("GEEK_ADMIN_NAME"),
+		},
+		TLS: TLSConfig{
+			Enabled:        viper.GetBool("TLS_ENABLED"),
+			CertFile:       viper.GetString("TLS_CERT_FILE"),
+			KeyFile:        viper.GetString("TLS_KEY_FILE"),
+			CAFile:         viper.GetString("TLS_CA_FILE"),
+			ClientCertFile: viper.GetString("TLS_CLIENT_CERT_FILE"),
+			ClientKeyFile:  viper.GetString("TLS_CLIENT_KEY_FILE"),
 		},
 		OAuth: OAuthConfig{
 			GoogleClientID:     viper.GetString("GOOGLE_CLIENT_ID"),

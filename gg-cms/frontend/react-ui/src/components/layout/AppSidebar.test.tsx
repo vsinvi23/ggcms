@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -24,9 +25,11 @@ import { AppSidebar } from './AppSidebar';
 function renderSidebar(isAdmin: boolean, isAuthenticated = true) {
   mockUseAuth.mockReturnValue({ isAdmin, isAuthenticated });
   return render(
-    <MemoryRouter initialEntries={['/dashboard']}>
-      <AppSidebar />
-    </MemoryRouter>
+    <TooltipProvider>
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <AppSidebar />
+      </MemoryRouter>
+    </TooltipProvider>
   );
 }
 

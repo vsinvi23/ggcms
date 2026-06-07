@@ -53,6 +53,7 @@ export default function UserManagementPage() {
 
   useEffect(() => {
     fetchUsers({ page: 0, size: pageSize });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageSize]);
 
   const counts = useMemo(() => ({
@@ -99,8 +100,9 @@ export default function UserManagementPage() {
         toast.success('User activated successfully');
       }
       fetchUsers({ page: currentPage, size: pageSize });
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to update user status');
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { message?: string } } };
+      toast.error(e?.response?.data?.message || 'Failed to update user status');
     }
   };
 
@@ -119,8 +121,9 @@ export default function UserManagementPage() {
       await deleteUserMutation.mutateAsync(parseInt(userToDelete.id));
       toast.success(`User "${userToDelete.name}" deleted successfully`);
       fetchUsers({ page: currentPage, size: pageSize });
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || 'Failed to delete user');
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { message?: string } } };
+      toast.error(e?.response?.data?.message || 'Failed to delete user');
     } finally {
       setDeleteDialogOpen(false);
       setUserToDelete(null);
@@ -144,8 +147,9 @@ export default function UserManagementPage() {
       toast.success('User updated successfully');
       fetchUsers({ page: currentPage, size: pageSize });
       return true;
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error?.message || error?.message || 'Failed to update user');
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      toast.error(e?.response?.data?.error?.message || e?.message || 'Failed to update user');
       return false;
     }
   };

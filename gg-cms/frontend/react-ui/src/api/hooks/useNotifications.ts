@@ -4,7 +4,7 @@ import { notificationService } from '../services/notificationService';
 // Query keys
 export const notifKeys = {
   all: ['notifications'] as const,
-  list: (params?: any) => [...notifKeys.all, 'list', params] as const,
+  list: (params?: Record<string, unknown>) => [...notifKeys.all, 'list', params] as const,
 };
 
 /**

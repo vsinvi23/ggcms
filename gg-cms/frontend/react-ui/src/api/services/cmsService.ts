@@ -34,7 +34,7 @@ export interface CmsQueryParams {
  * Maps a raw Strapi CMS entity to the CmsResponseDto shape expected by the UI.
  * Strapi returns flat entity objects (not wrapped in .attributes in v5).
  */
-const transformCmsItem = (item: any, type?: CmsType): CmsResponseDto => {
+const transformCmsItem = (item: Record<string, unknown>, type?: CmsType): CmsResponseDto => {
   if (!item) return item;
 
   // Go CMS backend returns thumbnailUrl as a flat field.
@@ -125,7 +125,7 @@ export const cmsService = {
       },
     });
 
-    const items: any[] = response.data.data ?? [];
+    const items: Record<string, unknown>[] = response.data.data ?? [];
     const pagination = response.data.meta?.pagination ?? {};
     const type = params?.type ?? 'ARTICLE';
 
@@ -313,7 +313,7 @@ export const cmsService = {
    */
   getActivity: async (id: number, type: CmsType = 'ARTICLE'): Promise<WorkflowEventResponse[]> => {
     const response = await apiClient.get(`${CMS_BASE}/${id}/activity`, { params: { type } });
-    const raw: any[] = response.data.data ?? response.data ?? [];
+    const raw: Record<string, unknown>[] = response.data.data ?? response.data ?? [];
     return raw.map((e) => ({
       id: e.id,
       entityType: e.entityType ?? e.entity_type ?? '',

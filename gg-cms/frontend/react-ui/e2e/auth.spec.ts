@@ -98,9 +98,9 @@ test.describe('Auth — signup validation', () => {
 
   test('shows error when passwords do not match', async ({ page }) => {
     await page.getByLabel('Full Name').fill('Test User');
-    await page.getByLabel('Email').fill('newuser@example.com');
-    await page.getByLabel('Password').fill('password1');
-    await page.getByLabel('Confirm Password').fill('password2');
+    await page.locator('#signup-email').fill('newuser@example.com');
+    await page.locator('#signup-password').fill('password1');
+    await page.locator('#signup-confirm').fill('password2');
     await page.getByRole('button', { name: 'Create Account' }).click();
     // Should stay on /auth
     await expect(page).toHaveURL(/\/auth/);
@@ -115,10 +115,11 @@ test.describe('Auth — logout', () => {
     await page.goto('/dashboard');
     await expect(page).toHaveURL(/\/dashboard/);
 
-    // Clear session (simulates logout)
+    // Clear session (simulates logout) — set __session_cleared so addInitScript won't re-inject
     await page.evaluate(() => {
       sessionStorage.removeItem('authToken');
       sessionStorage.removeItem('auth_user');
+      sessionStorage.setItem('__session_cleared', '1');
     });
 
     await page.goto('/articles');

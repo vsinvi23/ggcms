@@ -3,15 +3,15 @@ import { NotificationDto, NotificationPagedResponse } from '../types';
 
 const BASE = '/notifications';
 
-function transformNotification(item: any): NotificationDto {
-  const attrs = item.attributes ?? item;
+function transformNotification(item: Record<string, unknown>): NotificationDto {
+  const attrs = (item.attributes ?? item) as Record<string, unknown>;
   return {
-    id: item.id,
-    title: attrs.title,
-    message: attrs.message,
-    read: attrs.read ?? false,
-    link: attrs.link ?? null,
-    createdAt: attrs.createdAt,
+    id: item.id as number,
+    title: attrs.title as string,
+    message: attrs.message as string,
+    read: (attrs.read ?? false) as boolean,
+    link: (attrs.link ?? null) as string | null,
+    createdAt: attrs.createdAt as string,
   };
 }
 
@@ -21,7 +21,7 @@ export const notificationService = {
     page?: number;
     pageSize?: number;
   }): Promise<NotificationPagedResponse> {
-    const queryParams: Record<string, any> = {
+    const queryParams: Record<string, unknown> = {
       'pagination[page]': params?.page ?? 1,
       'pagination[pageSize]': params?.pageSize ?? 50,
       sort: 'createdAt:desc',

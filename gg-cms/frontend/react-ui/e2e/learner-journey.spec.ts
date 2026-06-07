@@ -129,12 +129,11 @@ test.describe('Learner — no admin controls', () => {
 // ─── Learner is blocked from admin routes ────────────────────────────────────
 
 test.describe('Learner — blocked from admin-only routes', () => {
-  test.each(['/users', '/roles', '/analytics'])(
-    'learner redirected from %s',
-    async ({ page }, route) => {
+  for (const route of ['/users', '/roles', '/analytics']) {
+    test(`learner redirected from ${route}`, async ({ page }) => {
       await injectFakeSession(page, 'learner');
       await page.goto(route);
       await expect(page).not.toHaveURL(new RegExp(route.replace('/', '\\/')));
-    }
-  );
+    });
+  }
 });

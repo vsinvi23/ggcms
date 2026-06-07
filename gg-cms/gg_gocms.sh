@@ -86,7 +86,7 @@ if $START_DB; then
 
   # Wait for PostgreSQL (up to 60 s)
   for i in $(seq 1 30); do
-    $COMPOSE exec -T postgres pg_isready -U go_cms_user -d go_cms >/dev/null 2>&1 && break
+    $COMPOSE exec -T postgres pg_isready -U gg_cms_user -d gg_cms >/dev/null 2>&1 && break
     [ "$i" -eq 30 ] && error "PostgreSQL did not become ready in time."
     sleep 2
   done

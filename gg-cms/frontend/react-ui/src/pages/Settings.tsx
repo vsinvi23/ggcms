@@ -199,7 +199,7 @@ export default function SettingsPage() {
   const [featureForm, setFeatureForm] = React.useState({
     learning_paths: false,
     interview_prep: false,
-    social_login: true,
+    social_login: false,
   });
 
   React.useEffect(() => {
@@ -207,7 +207,7 @@ export default function SettingsPage() {
     setFeatureForm({
       learning_paths: storageSettings['feature.learning_paths'] === 'true',
       interview_prep: storageSettings['feature.interview_prep'] === 'true',
-      social_login: storageSettings['feature.social_login'] !== 'false',
+      social_login: storageSettings['feature.social_login'] === 'true',
     });
   }, [storageSettings]);
 

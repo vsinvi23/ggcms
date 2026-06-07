@@ -173,7 +173,7 @@ export const categoryService = {
    */
   getGroupCategories: async (groupId: number): Promise<CategoryResponseDto[]> => {
     const response = await apiClient.get(`/user-groups/${groupId}/categories`);
-    const raw: any[] = response.data.data ?? [];
+    const raw: Record<string, unknown>[] = response.data.data ?? [];
     return raw.map(transformCategory).filter(Boolean) as CategoryResponseDto[];
   },
 };

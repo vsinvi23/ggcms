@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, Component, ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { AuthProvider } from './contexts/AuthContext';
@@ -42,7 +42,29 @@ const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const BulkImport = lazy(() => import('./pages/BulkImport'));
 
-const queryClient = new QueryClient();
+class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex min-h-screen items-center justify-center p-8 text-center">
+          <div>
+            <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+            <button className="text-sm text-primary underline" onClick={() => window.location.reload()}>
+              Reload page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 30_000, retry: 1 } },
+});
 
 const App = () => (
   <Provider store={store}>
@@ -53,7 +75,8 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Suspense fallback={null}>
+            <AppErrorBoundary>
+            <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<PublicHome />} />
@@ -69,13 +92,13 @@ const App = () => (
                 {/* Protected Admin Routes */}
                 <Route path="/admin" element={<ProtectedRoute><ContentManagement /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-                <Route path="/user-management" element={<ProtectedRoute><UserManagementDashboard /></ProtectedRoute>} />
-                <Route path="/users" element={<ProtectedRoute><UserManagementPage /></ProtectedRoute>} />
-                <Route path="/roles" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
+                <Route path="/user-management" element={<ProtectedRoute requireAdmin><UserManagementDashboard /></ProtectedRoute>} />
+                <Route path="/users" element={<ProtectedRoute requireAdmin><UserManagementPage /></ProtectedRoute>} />
+                <Route path="/roles" element={<ProtectedRoute requireAdmin><GroupsPage /></ProtectedRoute>} />
                 <Route path="/groups" element={<Navigate to="/roles" replace />} />
-                <Route path="/admin/content" element={<ProtectedRoute><AdminContentOverview /></ProtectedRoute>} />
+                <Route path="/admin/content" element={<ProtectedRoute requireAdmin><AdminContentOverview /></ProtectedRoute>} />
                 <Route path="/categories" element={<Navigate to="/configuration" replace />} />
-                <Route path="/configuration" element={<ProtectedRoute><ConfigurationPage /></ProtectedRoute>} />
+                <Route path="/configuration" element={<ProtectedRoute requireAdmin><ConfigurationPage /></ProtectedRoute>} />
                 <Route path="/content" element={<ProtectedRoute><ContentManagement /></ProtectedRoute>} />
                 <Route path="/courses" element={<ProtectedRoute><CourseManagement /></ProtectedRoute>} />
                 <Route path="/courses/create" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
@@ -87,13 +110,14 @@ const App = () => (
                 <Route path="/my-tasks" element={<ProtectedRoute><MyTasks /></ProtectedRoute>} />
                 <Route path="/my-learning" element={<ProtectedRoute><MyLearning /></ProtectedRoute>} />
                 <Route path="/notes-highlights" element={<ProtectedRoute><NotesHighlightsPage /></ProtectedRoute>} />
-                <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/analytics" element={<ProtectedRoute requireAdmin><Analytics /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                 <Route path="/account-settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            </AppErrorBoundary>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>

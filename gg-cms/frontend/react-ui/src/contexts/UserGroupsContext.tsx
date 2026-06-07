@@ -30,6 +30,7 @@ const defaultContext: UserGroupsContextType = {
   hasGroup: () => false,
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useUserGroups = () => {
   const context = useContext(UserGroupsContext);
   if (!context) {

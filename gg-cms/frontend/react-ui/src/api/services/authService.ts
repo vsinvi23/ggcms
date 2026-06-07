@@ -6,7 +6,7 @@ const AUTH_BASE = '/auth';
 
 // Map a raw Go backend user object to the shape expected by AuthContext.
 // Go returns role as a flat string ("admin" | "user"), not a nested object.
-const mapGoUser = (u: any) => ({
+const mapGoUser = (u: Record<string, unknown>) => ({
   id: u?.id,
   email: u?.email,
   name: u?.name || u?.username,
@@ -43,8 +43,9 @@ export const authService = {
         token: jwt,
         user: mapGoUser(user),
       };
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || error.response?.data?.error?.message || 'Login failed');
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { message?: string; error?: { message?: string } } } };
+      throw new Error(e.response?.data?.message || e.response?.data?.error?.message || 'Login failed');
     }
   },
 
@@ -67,10 +68,11 @@ export const authService = {
         token: jwt,
         user: mapGoUser(user),
       };
-    } catch (error: any) {
-      console.error('Registration error:', error.response?.data);
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { message?: string; error?: { message?: string } } }; message?: string };
+      console.error('Registration error:', e.response?.data);
       throw new Error(
-        error.response?.data?.message || error.response?.data?.error?.message || error.message || 'Registration failed',
+        e.response?.data?.message || e.response?.data?.error?.message || e.message || 'Registration failed',
       );
     }
   },
@@ -99,8 +101,9 @@ export const authService = {
     try {
       await apiClient.post(`${AUTH_BASE}/forgot-password`, { email });
       return { success: true, message: 'Password reset email sent' };
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error?.message || 'Failed to send reset email');
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { error?: { message?: string } } } };
+      throw new Error(e.response?.data?.error?.message || 'Failed to send reset email');
     }
   },
 
@@ -116,8 +119,9 @@ export const authService = {
         passwordConfirmation,
       });
       return { success: true, message: 'Password reset successful' };
-    } catch (error: any) {
-      throw new Error(error.response?.data?.error?.message || 'Failed to reset password');
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { error?: { message?: string } } } };
+      throw new Error(e.response?.data?.error?.message || 'Failed to reset password');
     }
   },
 

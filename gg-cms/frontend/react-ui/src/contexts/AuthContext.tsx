@@ -65,6 +65,7 @@ const defaultAuthContext: AuthContextType = {
   clearVisitorImportFlag: () => {},
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -218,6 +219,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
     const timer = setTimeout(() => handleLogout(), timeUntilExpiry);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleLogout = useCallback(() => {
@@ -375,6 +377,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchUserGroups]);
 
   const groupNames = userGroups.map(g => g.name.toUpperCase());

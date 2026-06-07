@@ -1,0 +1,107 @@
+name: gg-cms
+
+# GG-CMS — Native binary mode
+# DBs + Nginx run in Docker; the Go API binary runs directly on the host OS.
+#
+# Use when:
+#   • Deploying the pre-built server.exe on Windows without building Docker images
+#   • Quick local testing with pre-built binaries from dist/
+#
+# How it works:
+#   Docker provides PostgreSQL, MongoDB, and Nginx (serving the React bundle).
+#   Nginx proxies /api/* → host machine on port 1337 (where server.exe listens).
+#
+# Quick start (Windows):
+#   start.bat                     — starts Docker services + launches server.exe
+#   stop.bat                      — stops everything
+#
+# Manual:
+#   docker compose -f docker-compose.native.yml up -d
+#   cd dist\native && server.exe
+#
+# Stop:
+#   docker compose -f docker-compose.native.yml down
+
+services:
+
+  # ── PostgreSQL 16 ────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: gg-cms-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gg_cms_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gg_cms_pass}
+      POSTGRES_DB: gg_cms
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gg_cms_user -d gg_cms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── MongoDB 7 ────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7-jammy
+    container_name: gg-cms-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: gg_cms_user
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-gg_cms_pass}
+      MONGO_INITDB_DATABASE: gg_cms
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongodb:/data/db
+      - ./data/mongodb-config:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── Nginx (serves pre-built React bundle, proxies API to host) ────────────────
+  frontend:
+    image: nginx:1.27-alpine
+    container_name: gg-cms-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    volumes:
+      # Pre-built React bundle from dist/frontend/
+      - ./dist/frontend:/usr/share/nginx/html:ro
+      # Nginx config that proxies /api to the host-side server.exe
+      - ./config/frontend/nginx.native.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── pgAdmin (optional — use --profile tools) ─────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: gg-cms-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@gg-cms.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-Admin@123}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - ./data/pgadmin:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - tools

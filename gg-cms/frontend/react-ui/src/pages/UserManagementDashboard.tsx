@@ -32,7 +32,7 @@ const getInitials = (name: string): string => {
 export default function UserManagementDashboard() {
   const { data: usersData, isLoading, error } = useUsersQuery({ page: 0, size: 200 });
 
-  const users: UserDto[] = usersData?.items ?? [];
+  const users: UserDto[] = useMemo(() => usersData?.items ?? [], [usersData]);
 
   const totalUsers = usersData?.totalElements ?? usersData?.total ?? users.length;
   const activeCount = users.filter((u) => u.status?.toUpperCase() === 'ACTIVE').length;

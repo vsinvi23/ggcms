@@ -394,10 +394,10 @@ export default function GroupsPage() {
     selectedGroupId !== null && userSheetOpen
   );
 
-  const groups = data?.items || [];
+  const groups = useMemo(() => data?.items || [], [data]);
   const totalElements = data?.total || data?.totalElements || 0;
   const totalPages = Math.ceil(totalElements / pageSize);
-  const categories = categoriesData?.items || [];
+  const categories = useMemo(() => categoriesData?.items || [], [categoriesData]);
 
   const [memberCounts, setMemberCounts] = useState<Record<number, number>>({});
 
@@ -425,7 +425,7 @@ export default function GroupsPage() {
 
   const flatCategories = useMemo(() => {
     const flat: { id: number; name: string; parentId: number | null }[] = [];
-    const walk = (items: any[], parentId: number | null = null) => {
+    const walk = (items: { id: number; name: string; children?: unknown[] }[], parentId: number | null = null) => {
       for (const c of items) {
         flat.push({ id: c.id, name: c.name, parentId });
         if (c.children?.length) walk(c.children, c.id);
@@ -544,7 +544,7 @@ export default function GroupsPage() {
 
   const handleRolePermissionToggle = (resource: keyof GroupPermissions, action: string) => {
     setRoleEditPermissions(prev => {
-      const current = (prev[resource] as any) || {};
+      const current = (prev[resource] as Record<string, boolean | undefined>) || {};
       return { ...prev, [resource]: { ...current, [action]: !current[action] } };
     });
   };
@@ -816,7 +816,7 @@ export default function GroupsPage() {
                     {/* Permission summary */}
                     <div className="space-y-1 text-[11px] border-t pt-2">
                       {PERMISSION_RESOURCES.map(res => {
-                        const p = perms[res.key] as any;
+                        const p = perms[res.key] as Record<string, boolean | undefined> | undefined;
                         const granted = res.actions.filter(a => p?.[a]);
                         if (!granted.length) return null;
                         return (
@@ -888,7 +888,7 @@ export default function GroupsPage() {
                   <div className="grid grid-cols-2 gap-2">
                     {[0, 1, 2, 3].map((level) => {
                       const parentId = level === 0 ? 'root' : selectedCategoryPath[level - 1];
-                      const options = parentId !== undefined ? (categoryChildMap[parentId as any] ?? []) : [];
+                      const options = parentId !== undefined ? (categoryChildMap[parentId as number | 'root'] ?? []) : [];
                       if (level > 0 && !selectedCategoryPath[level - 1]) return null;
                       if (level > 0 && options.length === 0) return null;
                       return (
@@ -951,7 +951,7 @@ export default function GroupsPage() {
               {selectedRole && rolePresets[selectedRole] && (
                 <div className="p-3 rounded-lg bg-muted/50 border text-xs space-y-1">
                   {PERMISSION_RESOURCES.map(res => {
-                    const p = rolePresets[selectedRole][res.key] as any;
+                    const p = rolePresets[selectedRole][res.key] as Record<string, boolean | undefined> | undefined;
                     const granted = res.actions.filter(a => p?.[a]);
                     if (!granted.length) return null;
                     return (
@@ -1070,7 +1070,7 @@ export default function GroupsPage() {
                         <td className="px-3 py-2 font-medium text-sm">{res.label}</td>
                         {['view','create','edit','delete','review','approve','publish'].map(action => {
                           const applicable = res.actions.includes(action);
-                          const checked = applicable ? !!((roleEditPermissions[res.key] as any)?.[action]) : false;
+                          const checked = applicable ? !!((roleEditPermissions[res.key] as Record<string, boolean | undefined> | undefined)?.[action]) : false;
                           return (
                             <td key={action} className="text-center px-2 py-2">
                               {applicable ? (

@@ -3,29 +3,35 @@ import { ReviewCommentDto, ReviewCommentCreateDto } from '../types';
 
 const BASE = '/review-comments';
 
-function transformComment(item: any): ReviewCommentDto {
+function transformComment(item: Record<string, unknown>): ReviewCommentDto {
   // Support both Strapi nested format (item.attributes) and our flat backend DTO
-  const attrs = item.attributes ?? item;
+  const attrs = (item.attributes ?? item) as Record<string, unknown>;
+  const authorField = attrs.author as Record<string, unknown> | undefined;
+  const authorData = authorField?.data as Record<string, unknown> | undefined;
+  const authorAttrs = authorData?.attributes as Record<string, unknown> | undefined;
+  const parentField = attrs.parent as Record<string, unknown> | undefined;
+  const parentData = parentField?.data as Record<string, unknown> | undefined;
+  const repliesField = attrs.replies as Record<string, unknown> | undefined;
   return {
-    id: item.id,
-    content: attrs.content,
-    contentType: attrs.contentType,
-    contentId: attrs.contentId,
+    id: item.id as string,
+    content: attrs.content as string,
+    contentType: attrs.contentType as ReviewCommentDto['contentType'],
+    contentId: attrs.contentId as string,
     // Strapi nests author under .data; our backend returns it flat
-    author: attrs.author?.data
-      ? { id: attrs.author.data.id, ...attrs.author.data.attributes }
-      : attrs.author
-        ? { id: attrs.author.id ?? 0, name: attrs.author.name ?? '', email: attrs.author.email ?? '' }
+    author: authorData
+      ? { id: authorData.id as number, name: (authorAttrs?.name ?? '') as string, email: (authorAttrs?.email ?? '') as string }
+      : authorField
+        ? { id: (authorField.id ?? 0) as number, name: (authorField.name ?? '') as string, email: (authorField.email ?? '') as string }
         : undefined,
-    parent: attrs.parent?.data
-      ? { id: attrs.parent.data.id }
+    parent: parentData
+      ? { id: parentData.id as string }
       : attrs.parentId
-        ? { id: attrs.parentId }
+        ? { id: attrs.parentId as string }
         : null,
     // Strapi nests replies under .data; our backend returns them as a plain array
-    replies: (attrs.replies?.data ?? attrs.replies ?? []).map((r: any) => transformComment(r)),
-    createdAt: attrs.createdAt,
-    updatedAt: attrs.updatedAt ?? attrs.createdAt,
+    replies: ((repliesField?.data ?? attrs.replies ?? []) as Record<string, unknown>[]).map((r) => transformComment(r)),
+    createdAt: attrs.createdAt as string,
+    updatedAt: (attrs.updatedAt ?? attrs.createdAt) as string,
   };
 }
 

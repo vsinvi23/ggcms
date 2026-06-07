@@ -24,10 +24,30 @@ Result: PASS (zero output) or FAIL (print errors).
 ### HARD Gate 2 — Frontend Types Clean
 
 ```bash
-cd frontend/react-ui && npx tsc --noEmit -p tsconfig.app.json
+cd frontend/react-ui && node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json
 ```
 
 Result: PASS (zero output) or FAIL (print errors).
+
+---
+
+### HARD Gate 2b — Frontend ESLint Clean
+
+```bash
+cd frontend/react-ui && npm run lint
+```
+
+Result: PASS (exit 0, no output after banner) or FAIL (list every error).
+
+Rules that always block:
+- `react-hooks/rules-of-hooks` — conditional hook = runtime crash
+- `@typescript-eslint/no-explicit-any` — use `unknown` or a typed interface
+- `no-control-regex` — embedded control chars in regex (security + correctness)
+- `@typescript-eslint/no-require-imports` — use ESM imports in TS files
+
+Acceptable suppressions (must include reason comment):
+- `// eslint-disable-next-line react-hooks/exhaustive-deps` on mount-only effects
+- `// eslint-disable-next-line @typescript-eslint/no-require-imports` on config files only (e.g. tailwind.config.ts)
 
 ---
 

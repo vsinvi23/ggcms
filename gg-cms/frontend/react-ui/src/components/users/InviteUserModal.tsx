@@ -68,8 +68,9 @@ export function InviteUserModal({ open, onClose, onUserCreated }: InviteUserModa
       resetForm();
       onUserCreated?.();
       onClose();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error?.message || error?.message || 'Failed to create user.');
+    } catch (error: unknown) {
+      const e = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      toast.error(e?.response?.data?.error?.message || e?.message || 'Failed to create user.');
     }
   };
 

@@ -72,7 +72,7 @@ if $START_DB; then
 
   # Wait for PostgreSQL
   for i in $(seq 1 30); do
-    if $COMPOSE exec -T postgres pg_isready -U go_cms_user -d go_cms >/dev/null 2>&1; then
+    if $COMPOSE exec -T postgres pg_isready -U gg_cms_user -d gg_cms >/dev/null 2>&1; then
       info "PostgreSQL ready."
       break
     fi

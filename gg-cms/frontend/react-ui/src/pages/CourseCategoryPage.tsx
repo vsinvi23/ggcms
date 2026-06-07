@@ -266,8 +266,8 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
   const { data: categories } = useCategories();
   const { data: tagsData }   = useTags();
 
-  const allItems    = data?.items ?? [];
-  const allTags     = tagsData ?? [];
+  const allItems    = useMemo(() => data?.items ?? [], [data]);
+  const allTags     = useMemo(() => tagsData ?? [], [tagsData]);
   const typeOptions = isArticle ? ARTICLE_TYPE_OPTIONS : COURSE_TYPE_OPTIONS;
 
   const flatCategories = useMemo(() => {

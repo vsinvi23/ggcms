@@ -50,7 +50,7 @@ const buildAbsoluteUrl = (path: string | null | undefined): string | null => {
   return path.startsWith('http') ? path : `${MEDIA_BASE_URL}${path}`;
 };
 
-const transformPublicItem = (item: any, type: 'ARTICLE' | 'COURSE'): CmsResponseDto => {
+const transformPublicItem = (item: Record<string, unknown>, type: 'ARTICLE' | 'COURSE'): CmsResponseDto => {
   if (!item) return item;
   const thumbnail = item.thumbnail;
   const thumbnailUrl = buildAbsoluteUrl(thumbnail?.url);
@@ -118,7 +118,7 @@ export const publicCmsService = {
       },
     });
 
-    const items: any[] = response.data.data ?? [];
+    const items: Record<string, unknown>[] = response.data.data ?? [];
     const pagination = response.data.meta?.pagination ?? {};
 
     return {
@@ -155,7 +155,7 @@ export const publicCmsService = {
       },
     });
 
-    const items: any[] = response.data.data ?? [];
+    const items: Record<string, unknown>[] = response.data.data ?? [];
     const pagination = response.data.meta?.pagination ?? {};
 
     return {
@@ -181,7 +181,7 @@ export const publicCmsService = {
       },
     });
 
-    const items: any[] = response.data.data ?? [];
+    const items: Record<string, unknown>[] = response.data.data ?? [];
     const pagination = response.data.meta?.pagination ?? {};
 
     return {

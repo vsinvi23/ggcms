@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -222,14 +222,12 @@ export default function NotesHighlightsPage() {
   const { mutateAsync: deleteHighlight } = useDeleteHighlight('course', 0);
   const { mutateAsync: deleteNote }      = useDeleteNote();
 
-  const highlights = highlightsData?.items ?? [];
-  const notes      = notesData?.items      ?? [];
+  const highlights = useMemo(() => highlightsData?.items ?? [], [highlightsData]);
+  const notes      = useMemo(() => notesData?.items      ?? [], [notesData]);
 
-  // Auth guard
-  if (!isAuthenticated) {
-    navigate('/auth');
-    return null;
-  }
+  useEffect(() => {
+    if (!isAuthenticated) navigate('/auth');
+  }, [isAuthenticated, navigate]);
 
   // Build course list for sidebar from highlights + enrollments
   const courseNames = useMemo(() => {
@@ -257,7 +255,7 @@ export default function NotesHighlightsPage() {
   }, [highlights, courseFilter, sort]);
 
   const filteredNotes = useMemo(() => {
-    let items = [...notes];
+    const items = [...notes];
     items.sort((a, b) => {
       const da = new Date(a.updatedAt).getTime();
       const db = new Date(b.updatedAt).getTime();
@@ -283,6 +281,8 @@ export default function NotesHighlightsPage() {
     });
     return merged;
   }, [filteredHighlights, filteredNotes, sort]);
+
+  if (!isAuthenticated) return null;
 
   const handleDeleteHighlight = async (id: string) => {
     try {

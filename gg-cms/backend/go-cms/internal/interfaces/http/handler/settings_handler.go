@@ -68,7 +68,7 @@ func (h *SettingsHandler) GetFeatures(c *gin.Context) {
 		"data": gin.H{
 			"learning_paths": boolVal("feature.learning_paths", "false"),
 			"interview_prep": boolVal("feature.interview_prep", "false"),
-			"social_login":   boolVal("feature.social_login", "true"),
+			"social_login":   boolVal("feature.social_login", "false"),
 		},
 	})
 }
