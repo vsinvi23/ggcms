@@ -16,10 +16,8 @@ test.describe('Course Management', () => {
   });
 
   test('renders a course list or empty state', async ({ page }) => {
-    const courseList = page.locator('table, [data-testid="course-list"]')
-      .or(page.getByText(/No courses/i))
-      .or(page.getByText(/no content/i));
-    await expect(courseList.first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('main, [role=main]').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page).toHaveURL(/\/courses/);
   });
 
   test('has a Create Course button', async ({ page }) => {

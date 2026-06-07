@@ -14,14 +14,14 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const API = process.env.PLAYWRIGHT_API_URL || 'http://localhost:1337/api';
+const API = process.env.PLAYWRIGHT_API_URL || 'http://127.0.0.1:1337';
 const STATE_FILE = join(__dirname, '.e2e-state.json');
 
 async function globalTeardown() {
   const ctx = await request.newContext({ baseURL: API });
 
   // ── Login as admin ──────────────────────────────────────────────────────────
-  const loginRes = await ctx.post('/auth/local', {
+  const loginRes = await ctx.post('/api/auth/local', {
     data: {
       identifier: 'geekadmin@geekgully.com',
       password: 'Geekadmin@2026',
@@ -32,7 +32,8 @@ async function globalTeardown() {
     await ctx.dispose();
     return;
   }
-  const { token } = await loginRes.json();
+  const loginBody = await loginRes.json();
+  const token = loginBody.token ?? loginBody.jwt;
   const auth = { Authorization: `Bearer ${token}` };
 
   // ── Delete E2E CMS content ──────────────────────────────────────────────────
@@ -41,7 +42,7 @@ async function globalTeardown() {
   for (const type of ['ARTICLE', 'COURSE'] as const) {
     let page = 1;
     while (true) {
-      const res = await ctx.get('/cms', {
+      const res = await ctx.get('/api/cms', {
         headers: auth,
         params: { type, page, pageSize: 50 },
       });
@@ -52,7 +53,7 @@ async function globalTeardown() {
 
       for (const item of items) {
         if (item.title?.startsWith('E2E ') || item.title?.startsWith('[E2E]')) {
-          const del = await ctx.delete(`/cms/${item.id}`, { headers: auth });
+          const del = await ctx.delete(`/api/cms/${item.id}`, { headers: auth });
           if (del.ok()) deleted++;
         }
       }

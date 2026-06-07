@@ -16,15 +16,15 @@ test.describe('Sidebar nav — admin user', () => {
   });
 
   test('admin sees User Management section in sidebar', async ({ page }) => {
-    await expect(page.getByText('User Management')).toBeVisible({ timeout: 8_000 });
+    await expect(page.locator('aside').getByText('User Management')).toBeVisible({ timeout: 8_000 });
   });
 
   test('admin sees Settings section in sidebar', async ({ page }) => {
-    await expect(page.getByText('Settings').first()).toBeVisible({ timeout: 8_000 });
+    await expect(page.locator('aside').getByText('Settings')).toBeVisible({ timeout: 8_000 });
   });
 
   test('admin sees Analytics nav item in sidebar', async ({ page }) => {
-    await expect(page.getByText('Analytics')).toBeVisible({ timeout: 8_000 });
+    await expect(page.locator('aside').getByText('Analytics')).toBeVisible({ timeout: 8_000 });
   });
 
   test('admin sees Manage Users link', async ({ page }) => {
@@ -43,19 +43,19 @@ test.describe('Sidebar nav — regular user (learner)', () => {
   });
 
   test('regular user sees My Tasks nav item', async ({ page }) => {
-    await expect(page.getByText('My Tasks')).toBeVisible({ timeout: 8_000 });
+    await expect(page.locator('aside').getByText('My Tasks')).toBeVisible({ timeout: 8_000 });
   });
 
   test('regular user sees Courses nav item', async ({ page }) => {
-    await expect(page.getByText('Courses')).toBeVisible({ timeout: 8_000 });
+    await expect(page.locator('aside').getByText('Courses')).toBeVisible({ timeout: 8_000 });
   });
 
   test('regular user does NOT see User Management in sidebar', async ({ page }) => {
-    await expect(page.getByText('User Management')).not.toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('aside').getByText('User Management')).not.toBeVisible({ timeout: 5_000 });
   });
 
   test('regular user does NOT see Analytics in sidebar', async ({ page }) => {
-    await expect(page.getByText('Analytics')).not.toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('aside').getByText('Analytics')).not.toBeVisible({ timeout: 5_000 });
   });
 });
 

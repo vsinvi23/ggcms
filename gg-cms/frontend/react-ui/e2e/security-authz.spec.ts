@@ -62,43 +62,46 @@ test.describe('Admin sidebar items — only visible to admin', () => {
   test('admin sees User Management in sidebar', async ({ page }) => {
     await injectFakeSession(page, 'admin');
     await page.goto('/dashboard');
-    await expect(page.getByText('User Management')).toBeVisible({ timeout: 8_000 });
+    await expect(page.locator('aside').getByText('User Management')).toBeVisible({ timeout: 8_000 });
   });
 
   test('learner does NOT see User Management in sidebar', async ({ page }) => {
     await injectFakeSession(page, 'learner');
     await page.goto('/dashboard');
-    await expect(page.getByText('User Management')).not.toBeVisible({ timeout: 5_000 });
+    // Wait for sidebar to render, then verify the admin section is absent
+    await page.locator('aside').waitFor({ timeout: 8_000 });
+    await expect(page.locator('aside').getByText('User Management', { exact: true })).toHaveCount(0);
   });
 
   test('creator does NOT see User Management in sidebar', async ({ page }) => {
     await injectFakeSession(page, 'creator');
     await page.goto('/dashboard');
-    await expect(page.getByText('User Management')).not.toBeVisible({ timeout: 5_000 });
+    await page.locator('aside').waitFor({ timeout: 8_000 });
+    await expect(page.locator('aside').getByText('User Management', { exact: true })).toHaveCount(0);
   });
 
   test('admin sees Settings in sidebar', async ({ page }) => {
     await injectFakeSession(page, 'admin');
     await page.goto('/dashboard');
-    await expect(page.getByText('Settings').first()).toBeVisible({ timeout: 8_000 });
+    await expect(page.locator('aside').getByText('Settings')).toBeVisible({ timeout: 8_000 });
   });
 
   test('learner does NOT see Settings in sidebar', async ({ page }) => {
     await injectFakeSession(page, 'learner');
     await page.goto('/dashboard');
-    await expect(page.getByText('Settings')).not.toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('aside').getByText('Settings')).not.toBeVisible({ timeout: 5_000 });
   });
 
   test('admin sees Analytics in sidebar', async ({ page }) => {
     await injectFakeSession(page, 'admin');
     await page.goto('/dashboard');
-    await expect(page.getByText('Analytics')).toBeVisible({ timeout: 8_000 });
+    await expect(page.locator('aside').getByText('Analytics')).toBeVisible({ timeout: 8_000 });
   });
 
   test('learner does NOT see Analytics in sidebar', async ({ page }) => {
     await injectFakeSession(page, 'learner');
     await page.goto('/dashboard');
-    await expect(page.getByText('Analytics')).not.toBeVisible({ timeout: 5_000 });
+    await expect(page.locator('aside').getByText('Analytics')).not.toBeVisible({ timeout: 5_000 });
   });
 });
 

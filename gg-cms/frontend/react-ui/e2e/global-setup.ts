@@ -20,7 +20,7 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const API = process.env.PLAYWRIGHT_API_URL || 'http://localhost:1337/api';
+const API = process.env.PLAYWRIGHT_API_URL || 'http://127.0.0.1:1337';
 const STATE_FILE = join(__dirname, '.e2e-state.json');
 
 export const E2E_USERS = {
@@ -53,18 +53,19 @@ async function globalSetup() {
   const ctx = await request.newContext({ baseURL: API });
 
   // ── Login as admin ──────────────────────────────────────────────────────────
-  const loginRes = await ctx.post('/auth/local', {
+  const loginRes = await ctx.post('/api/auth/local', {
     data: { identifier: ADMIN.email, password: ADMIN.password },
   });
   if (!loginRes.ok()) {
     throw new Error(`Admin login failed: ${loginRes.status()} — is the backend running at ${API}?`);
   }
-  const { token } = await loginRes.json();
+  const loginBody = await loginRes.json();
+  const token = loginBody.token ?? loginBody.jwt;
   const auth = { Authorization: `Bearer ${token}` };
 
   // ── Helper: find or create user ─────────────────────────────────────────────
   async function ensureUser(user: { name: string; email: string; password: string }): Promise<number> {
-    const listRes = await ctx.get('/users', { headers: auth });
+    const listRes = await ctx.get('/api/users', { headers: auth });
     if (listRes.ok()) {
       const body = await listRes.json();
       const items: { id: number; email: string }[] = body?.data?.items ?? body?.data ?? [];
@@ -72,7 +73,7 @@ async function globalSetup() {
       if (existing) return existing.id;
     }
 
-    const createRes = await ctx.post('/users', {
+    const createRes = await ctx.post('/api/users', {
       headers: auth,
       data: { name: user.name, email: user.email, password: user.password },
     });
@@ -85,7 +86,7 @@ async function globalSetup() {
 
   // ── Helper: find or create group ────────────────────────────────────────────
   async function ensureGroup(name: string): Promise<number> {
-    const listRes = await ctx.get('/user-groups', { headers: auth });
+    const listRes = await ctx.get('/api/user-groups', { headers: auth });
     if (listRes.ok()) {
       const body = await listRes.json();
       const items: { id: number; name: string }[] = body?.data?.items ?? body?.data ?? [];
@@ -93,13 +94,15 @@ async function globalSetup() {
       if (existing) return existing.id;
     }
 
-    const createRes = await ctx.post('/user-groups', {
+    const createRes = await ctx.post('/api/user-groups', {
       headers: auth,
       data: {
-        name,
-        permissions: {
-          articles: { view: true, create: true, edit: true, review: true, approve: true, publish: true },
-          courses:  { view: true, create: true, edit: true, review: true, approve: true, publish: true },
+        data: {
+          name,
+          permissions: {
+            articles: { view: true, create: true, edit: true, review: true, approve: true, publish: true },
+            courses:  { view: true, create: true, edit: true, review: true, approve: true, publish: true },
+          },
         },
       },
     });
@@ -112,7 +115,7 @@ async function globalSetup() {
 
   // ── Helper: find or create category ────────────────────────────────────────
   async function ensureCategory(name: string): Promise<number> {
-    const listRes = await ctx.get('/categories', { headers: auth });
+    const listRes = await ctx.get('/api/categories', { headers: auth });
     if (listRes.ok()) {
       const body = await listRes.json();
       const items: { id: number; name: string }[] = Array.isArray(body?.data) ? body.data : [];
@@ -121,9 +124,9 @@ async function globalSetup() {
       if (existing) return existing.id;
     }
 
-    const createRes = await ctx.post('/categories', {
+    const createRes = await ctx.post('/api/categories', {
       headers: auth,
-      data: { name, requiredApprovals: 1 },
+      data: { data: { name, requiredApprovals: 1 } },
     });
     if (!createRes.ok()) {
       throw new Error(`Failed to create category ${name}: ${createRes.status()} ${await createRes.text()}`);
@@ -143,7 +146,7 @@ async function globalSetup() {
   console.log('[setup] Creating E2E Reviewers group...');
   const groupId = await ensureGroup('E2E Reviewers');
   // Add reviewer to group
-  await ctx.post(`/user-groups/${groupId}/members`, {
+  await ctx.post(`/api/user-groups/${groupId}/members`, {
     headers: auth,
     data: { userId: reviewerId },
   });
@@ -153,7 +156,7 @@ async function globalSetup() {
   console.log('[setup] Creating E2E Test Category...');
   const categoryId = await ensureCategory('E2E Test Category');
   // Link review group to category
-  await ctx.post(`/categories/${categoryId}/reviewer-groups`, {
+  await ctx.post(`/api/categories/${categoryId}/reviewer-groups`, {
     headers: auth,
     data: { groupId },
   });

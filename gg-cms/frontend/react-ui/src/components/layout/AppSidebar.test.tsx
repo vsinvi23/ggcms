@@ -22,11 +22,11 @@ vi.mock('@/components/NavLink', () => ({
 
 import { AppSidebar } from './AppSidebar';
 
-function renderSidebar(isAdmin: boolean, isAuthenticated = true) {
+function renderSidebar(isAdmin: boolean, isAuthenticated = true, initialPath = '/dashboard') {
   mockUseAuth.mockReturnValue({ isAdmin, isAuthenticated });
   return render(
     <TooltipProvider>
-      <MemoryRouter initialEntries={['/dashboard']}>
+      <MemoryRouter initialEntries={[initialPath]}>
         <AppSidebar />
       </MemoryRouter>
     </TooltipProvider>
@@ -81,17 +81,17 @@ describe('AppSidebar — admin-only items visible only to admins', () => {
   });
 
   it('admin sees Manage Users link inside User Management', () => {
-    renderSidebar(true);
+    renderSidebar(true, true, '/users');
     expect(screen.getByText('Manage Users')).toBeInTheDocument();
   });
 
   it('admin sees Roles & Permissions link', () => {
-    renderSidebar(true);
+    renderSidebar(true, true, '/roles');
     expect(screen.getByText('Roles & Permissions')).toBeInTheDocument();
   });
 
   it('admin sees Configuration link under Settings', () => {
-    renderSidebar(true);
+    renderSidebar(true, true, '/settings');
     expect(screen.getByText('Configuration')).toBeInTheDocument();
   });
 });

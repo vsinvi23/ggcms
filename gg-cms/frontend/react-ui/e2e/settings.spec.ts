@@ -25,7 +25,7 @@ test.describe('Settings page', () => {
 
   test('Storage tab shows local storage fields', async ({ page }) => {
     await page.getByRole('tab', { name: /Storage/i }).click();
-    await expect(page.getByText(/Local Storage|Storage Backend/i)).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText('Storage Backend', { exact: true })).toBeVisible({ timeout: 8_000 });
   });
 
   test('Storage tab has a Save button', async ({ page }) => {
@@ -49,7 +49,7 @@ test.describe('Settings page', () => {
 
   test('Features tab shows Learning Paths toggle', async ({ page }) => {
     await page.getByRole('tab', { name: /Features/i }).click();
-    await expect(page.getByText(/Learning Path/i)).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText('Learning Paths', { exact: true })).toBeVisible({ timeout: 8_000 });
   });
 });
 

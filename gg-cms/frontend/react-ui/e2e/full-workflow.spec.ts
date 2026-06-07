@@ -22,7 +22,7 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const API = process.env.PLAYWRIGHT_API_URL || 'http://localhost:1337/api';
+const API = process.env.PLAYWRIGHT_API_URL || 'http://127.0.0.1:1337';
 const STATE_FILE = join(__dirname, '.e2e-state.json');
 
 // ── Shared credentials ────────────────────────────────────────────────────────
@@ -44,11 +44,11 @@ function loadState() {
 
 async function apiLogin(email: string, password: string): Promise<string> {
   const ctx = await request.newContext({ baseURL: API });
-  const res = await ctx.post('/auth/local', { data: { identifier: email, password } });
+  const res = await ctx.post('/api/auth/local', { data: { identifier: email, password } });
   await ctx.dispose();
   if (!res.ok()) throw new Error(`Login failed for ${email}: ${res.status()}`);
   const body = await res.json();
-  return body.token;
+  return body.token ?? body.jwt;
 }
 
 /** Log in via the /auth page UI and wait for redirect to /dashboard. */

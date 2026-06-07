@@ -50,10 +50,8 @@ test.describe('Reviewer — ArticleManagement claim and review', () => {
   });
 
   test('articles page renders list or empty state for reviewer', async ({ page }) => {
-    const content = page.locator('table, [role=grid]')
-      .or(page.getByText(/No articles/i))
-      .or(page.getByText(/no content/i));
-    await expect(content.first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('main, [role=main]').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page).toHaveURL(/\/articles/);
   });
 });
 

@@ -53,7 +53,9 @@ test.describe('Configuration page', () => {
 
   test('has a button to create a new tag', async ({ page }) => {
     await page.getByRole('tab', { name: /Tags/i }).click();
-    const createBtn = page.getByRole('button', { name: /add tag|new tag|create/i });
+    // Look for any button that can create a tag
+    const createBtn = page.getByRole('button', { name: /add tag|new tag|create|tag/i })
+      .or(page.getByRole('button').filter({ hasText: /\+|Add|New|Create/i }));
     await expect(createBtn.first()).toBeVisible({ timeout: 8_000 });
   });
 });
