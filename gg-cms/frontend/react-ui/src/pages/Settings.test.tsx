@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
 import SettingsPage from './Settings';
@@ -54,8 +55,9 @@ describe('SettingsPage — Storage tab', () => {
   });
 
   it('shows local storage fields when local provider is selected', async () => {
+    const user = userEvent.setup();
     render(<SettingsPage />, { wrapper });
-    fireEvent.click(screen.getByText('Storage'));
+    await user.click(screen.getByRole('tab', { name: /Storage/i }));
     await waitFor(() => {
       expect(screen.getByText('Local Storage')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('./uploads')).toBeInTheDocument();
@@ -63,12 +65,12 @@ describe('SettingsPage — Storage tab', () => {
   });
 
   it('shows S3 fields when S3 provider is selected', async () => {
+    const user = userEvent.setup();
     render(<SettingsPage />, { wrapper });
-    fireEvent.click(screen.getByText('Storage'));
+    await user.click(screen.getByRole('tab', { name: /Storage/i }));
     await waitFor(() => screen.getByText('Storage Backend'));
-    // Switch to S3
-    fireEvent.click(screen.getByRole('combobox'));
-    fireEvent.click(screen.getByText(/S3-Compatible/));
+    await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByText(/S3-Compatible/));
     await waitFor(() => {
       expect(screen.getByPlaceholderText('my-uploads-bucket')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('us-east-1')).toBeInTheDocument();
@@ -76,8 +78,9 @@ describe('SettingsPage — Storage tab', () => {
   });
 
   it('calls update when Save Storage Settings is clicked', async () => {
+    const user = userEvent.setup();
     render(<SettingsPage />, { wrapper });
-    fireEvent.click(screen.getByText('Storage'));
+    await user.click(screen.getByRole('tab', { name: /Storage/i }));
     await waitFor(() => screen.getByText('Save Storage Settings'));
     fireEvent.click(screen.getByText('Save Storage Settings'));
     await waitFor(() => {
