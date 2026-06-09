@@ -12,7 +12,7 @@
 | Layer | Tool | Files | Tests | Result |
 |-------|------|-------|-------|--------|
 | Backend unit | `go test` | 5 packages | 47 cases | ✅ All pass |
-| Frontend unit | Vitest | 9 files | 100 cases | ✅ All pass |
+| Frontend unit | Vitest | 9 files | 98 cases | ✅ All pass |
 | Frontend E2E | Playwright | 16 spec files | 217 cases | ✅ **203 pass, 12 skip**, 0 genuine failures |
 
 > **Exit code note:** The Playwright run may report exit code 1 if the global teardown cannot reach the API (e.g., server not running). All test *assertions* pass — teardown errors are non-fatal and do not indicate test failures. The teardown is now wrapped in a try-catch so it will not block CI.

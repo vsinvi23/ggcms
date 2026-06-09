@@ -1,8 +1,8 @@
 # GeekGully CMS — Test Scenario Documentation
 
-**Date:** 2026-06-07  
+**Date:** 2026-06-09  
 **Branch:** `InitialSetup`  
-**Status:** Draft — Living Document  
+**Status:** Active — Updated with all scenario implementations  
 
 ---
 
@@ -11,8 +11,13 @@
 | Layer | Tool | Total | Pass | Fail | Skip |
 |-------|------|-------|------|------|------|
 | Backend unit | `go test` | 47 | 47 | 0 | — |
-| Frontend unit | Vitest | 94 | 94 | 0 | — |
-| E2E | Playwright (Chrome) | 215 | 203 | 0 | 12 |
+| Frontend unit | Vitest | 98 | 98 | 0 | — |
+| E2E existing | Playwright | 215 | 203 | 0 | 12 |
+| E2E new (HIGH) | Playwright | 6 | 4 | 2* | — |
+| E2E new (MEDIUM) | Playwright | 23 | 23 | 0 | — |
+| **Grand Total** | | **389** | **375** | **2*** | **12** |
+
+> \* 2 HIGH priority failures due to **CORS misconfiguration** (backend was missing `http://localhost:8080` in `CORS_ALLOWED_ORIGINS`). Fix applied — re-validation in progress after Docker restart.
 | **Grand Total** | | **356** | **344** | **0** | **12** |
 
 > **Skipped (12):** Tests that require a live login with real backend credentials. They run in `full-workflow.spec.ts` when `server.exe` is running with the seeded admin account.

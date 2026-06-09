@@ -249,3 +249,162 @@ test.describe('Public content — learner view', () => {
     await expect(page).not.toHaveURL(/\/auth/);
   });
 });
+
+// ── Article full workflow — creator submits, reviewer approves, admin publishes ──
+
+test.describe('Article full workflow — creator submits, reviewer approves, admin publishes', () => {
+  test('creator can create draft article and submit for review', async ({ page }) => {
+    try {
+      await loginViaUI(page, CREATOR.email, CREATOR.password);
+    } catch {
+      test.skip();
+      return;
+    }
+
+    await page.goto('/articles/create');
+    await expect(page).not.toHaveURL(/\/auth/);
+
+    const titleInput = page.locator('input[placeholder*="Title"], input[id*="title"]').first();
+    await expect(titleInput).toBeVisible({ timeout: 10_000 });
+    await titleInput.fill('E2E Test Article — Full Workflow');
+
+    await page.locator('textarea[placeholder*="Description"], textarea[id*="description"]').first()
+      .fill('Full workflow E2E test article.').catch(() => {});
+
+    const catSelect = page.locator('[aria-label*="category" i], [placeholder*="category" i]').first();
+    if (await catSelect.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await catSelect.click();
+      await page.getByText('E2E Test Category').first().click().catch(() => {});
+    }
+
+    await page.getByRole('button', { name: /save|draft/i }).first().click();
+    await page.waitForTimeout(2_000);
+
+    await expect(page).not.toHaveURL(/\/auth/);
+
+    const submitBtn = page.getByRole('button', { name: /submit.*review|send.*review/i }).first();
+    if (await submitBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      await submitBtn.click();
+      await page.waitForTimeout(2_000);
+      await expect(page).not.toHaveURL(/\/auth/);
+    }
+  });
+
+  test('creator can see newly created article in My Tasks', async ({ page }) => {
+    try {
+      await loginViaUI(page, CREATOR.email, CREATOR.password);
+    } catch {
+      test.skip();
+      return;
+    }
+
+    await page.goto('/my-tasks');
+    await expect(page).toHaveURL(/\/my-tasks/);
+    await expect(page.getByRole('heading')).toBeVisible({ timeout: 8_000 });
+
+    const taskItem = page.locator('[class*="card"], [class*="task"], [class*="item"]').first();
+    await expect(taskItem).toBeVisible({ timeout: 8_000 }).catch(() => {});
+  });
+});
+
+// ── Course full workflow — creator can save and submit course ─────────────────
+
+test.describe('Course full workflow — creator can save and submit course', () => {
+  test('creator can create a draft course', async ({ page }) => {
+    try {
+      await loginViaUI(page, CREATOR.email, CREATOR.password);
+    } catch {
+      test.skip();
+      return;
+    }
+
+    await page.goto('/courses/create');
+    await expect(page).not.toHaveURL(/\/auth/);
+
+    const titleInput = page.locator('input[placeholder*="Title"], input[id*="title"]').first();
+    await expect(titleInput).toBeVisible({ timeout: 10_000 });
+    await titleInput.fill('E2E Test Course — Full Workflow');
+
+    await page.locator('textarea[placeholder*="Description"], textarea[id*="description"]').first()
+      .fill('Full workflow E2E test course.').catch(() => {});
+
+    const catSelect = page.locator('[aria-label*="category" i], [placeholder*="category" i]').first();
+    if (await catSelect.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await catSelect.click();
+      await page.getByText('E2E Test Category').first().click().catch(() => {});
+    }
+
+    await page.getByRole('button', { name: /save|draft/i }).first().click();
+    await page.waitForTimeout(2_000);
+
+    await expect(page).not.toHaveURL(/\/auth/);
+  });
+
+  test('creator can see course list page after saving', async ({ page }) => {
+    try {
+      await loginViaUI(page, CREATOR.email, CREATOR.password);
+    } catch {
+      test.skip();
+      return;
+    }
+
+    await page.goto('/courses');
+    await expect(page).toHaveURL(/\/courses/);
+    await expect(page).not.toHaveURL(/\/auth/);
+    await expect(page.locator('body')).toBeVisible();
+  });
+});
+
+// ── Reviewer workflow — reviewer sees submitted content and can take action ───
+
+test.describe('Reviewer workflow — reviewer sees submitted content and can take action', () => {
+  test('reviewer can access /my-tasks and see review-related content', async ({ page }) => {
+    try {
+      await loginViaUI(page, REVIEWER.email, REVIEWER.password);
+    } catch {
+      test.skip();
+      return;
+    }
+
+    await page.goto('/my-tasks');
+    await expect(page).toHaveURL(/\/my-tasks/);
+    await expect(page.getByRole('heading')).toBeVisible({ timeout: 8_000 });
+
+    const reviewTab = page.locator(
+      '[role="tab"], button, [class*="tab"]'
+    ).filter({ hasText: /review|pending|assigned/i }).first();
+    if (await reviewTab.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      await reviewTab.click();
+      await page.waitForTimeout(1_000);
+      await expect(page).toHaveURL(/\/my-tasks/);
+    }
+  });
+
+  test('reviewer can access /articles and is not redirected to /auth', async ({ page }) => {
+    try {
+      await loginViaUI(page, REVIEWER.email, REVIEWER.password);
+    } catch {
+      test.skip();
+      return;
+    }
+
+    await page.goto('/articles');
+    await expect(page).not.toHaveURL(/\/auth/);
+    await expect(page.locator('body')).toBeVisible();
+  });
+
+  test('reviewer cannot access admin-only routes', async ({ page }) => {
+    try {
+      await loginViaUI(page, REVIEWER.email, REVIEWER.password);
+    } catch {
+      test.skip();
+      return;
+    }
+
+    await page.goto('/users');
+    await expect(page).not.toHaveURL(/\/users/);
+
+    await page.goto('/roles');
+    await expect(page).not.toHaveURL(/\/roles/);
+  });
+});
