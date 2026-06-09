@@ -1,0 +1,28 @@
+# ── Go build artifacts ────────────────────────────────────────────────────────
+gg-cms/backend/go-cms/server
+gg-cms/backend/go-cms/server.exe
+
+# ── Runtime logs — never commit ───────────────────────────────────────────────
+gg-cms/backend/go-cms/logs/
+gg-cms/logs/
+
+# ── Test output ───────────────────────────────────────────────────────────────
+gg-cms/frontend/react-ui/test-results/
+gg-cms/frontend/react-ui/playwright-report/
+gg-cms/e2e/test-results/
+gg-cms/e2e/playwright-report/
+
+# ── Secrets — never commit live .env files ────────────────────────────────────
+# .env.example files ARE committed (they are templates)
+gg-cms/backend/go-cms/.env
+
+# ── Node modules ─────────────────────────────────────────────────────────────
+node_modules/
+
+# ── macOS metadata ────────────────────────────────────────────────────────────
+.DS_Store
+
+# ── Editor / IDE ──────────────────────────────────────────────────────────────
+.vscode/settings.json
+*.swp
+*.swo

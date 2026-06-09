@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -l \"apiClient\\\\|fetch\\\\|axios\" /c/Vivek/Pesonal/Serenya/Project/CMS/testcms/frontend/react-ui/src/pages/*.tsx)",
+      "Bash(head -20 grep -n \"mock\\\\|mockData\\\\|api\\\\|service\\\\|useQuery\\\\|useMutation\\\\|section\\\\|lesson\" /c/Vivek/Pesonal/Serenya/Project/CMS/testcms/frontend/react-ui/src/pages/CourseCreator.tsx)",
+      "Bash(head -5 grep -rn \"notification\\\\|review-comment\\\\|enrollment\\\\|\\\\/sections\\\\|\\\\/lessons\\\\|\\\\/tags\\\\|workflow-event\" /c/Vivek/Pesonal/Serenya/Project/CMS/testcms/frontend/react-ui/src/api/services/)",
+      "Bash(find C:/Vivek/Pesonal/Serenya/Project/CMS/testcms/frontend/react-ui/src -name *.ts -path */types/*)",
+      "Bash(npx tsc:*)",
+      "Bash(for f:*)",
+      "Bash(do)",
+      "Bash(sed -i '/auth: true,/d' \"$f\")",
+      "Bash(echo \"Fixed: $f\")",
+      "Bash(done)",
+      "Bash(find /c/Vivek/Pesonal/Serenya/Project/CMS/testcms/frontend/react-ui/src/data -name *.ts)",
+      "Bash(grep -r hashPassword C:/Vivek/Pesonal/Serenya/Project/CMS/testcms/backend/cms-backend/node_modules/@strapi/plugin-users-permissions/dist --include=*.js -l)",
+      "Bash(npm run:*)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":1337\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:1337/_health)",
+      "Bash(curl -v http://localhost:1337/)",
+      "Bash(npx playwright:*)",
+      "Bash(set NO_PROXY=localhost,127.0.0.1)",
+      "Bash(npx jest:*)",
+      "Bash(NO_PROXY=localhost,127.0.0.1 npx jest --testPathPattern=\"tasks|review-comments\" --runInBand --no-coverage)",
+      "Bash(node -e ':*)",
+      "Bash(NO_PROXY=localhost,127.0.0.1 node:*)",
+      "Bash(NO_PROXY=localhost,127.0.0.1 curl -s http://localhost:1337/_health)"
+    ]
+  }
+}

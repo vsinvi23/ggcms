@@ -1,0 +1,80 @@
+  ---
+  Test Suite Summary
+
+  Backend API Tests (Jest + axios)
+
+  Location: backend/cms-backend/tests/
+
+  ┌─────────────────────────────┬───────────────────────────────────────────────────────────────────────────┐
+  │            File             │                               What it tests                               │
+  ├─────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+  │ api/auth.test.ts            │ Registration, login, JWT validation, 401/403 enforcement                  │
+  ├─────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+  │ api/public.test.ts          │ Unauthenticated public endpoints for articles, courses, sections, lessons │
+  ├─────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+  │ api/cms-articles.test.ts    │ Full CRUD + submit/publish workflow via /api/cms?type=ARTICLE             │
+  ├─────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+  │ api/cms-courses.test.ts     │ Full CRUD + sections + lessons + enrollments + publish                    │
+  ├─────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+  │ api/categories.test.ts      │ Admin CRUD, parent/child hierarchy, non-admin restrictions                │
+  ├─────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+  │ api/notifications.test.ts   │ List, mark-read, delete, cross-user isolation                             │
+  ├─────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+  │ api/tasks.test.ts           │ CRUD, isOwner policy (other user blocked), admin override                 │
+  ├─────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+  │ api/review-comments.test.ts │ Threaded comments, ownership policy, validation                           │
+  ├─────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+  │ api/user-groups.test.ts     │ Admin CRUD, regular user blocked                                          │
+  ├─────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+  │ api/users.test.ts           │ Admin user list, get-groups (isAdminOrSelf), activate/deactivate          │
+  ├─────────────────────────────┼───────────────────────────────────────────────────────────────────────────┤
+  │ api/workflow.test.ts        │ Full lifecycle: draft → submitted → published → public feed               │
+  └─────────────────────────────┴───────────────────────────────────────────────────────────────────────────┘
+
+  Frontend E2E Tests (Playwright)
+
+  Location: e2e/
+
+  ┌─────────────────────────────┬──────────────────────────────────────────────────────────────────┐
+  │            File             │                          What it tests                           │
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+  │ specs/auth.spec.ts          │ Login page, invalid creds, redirect on login, sessionStorage JWT │
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+  │ specs/dashboard.spec.ts     │ Dashboard load, nav sidebar, protected route redirects           │
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+  │ specs/articles.spec.ts      │ Articles list, create form, public article view                  │
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+  │ specs/courses.spec.ts       │ Courses list, create form, public course view                    │
+  ├─────────────────────────────┼──────────────────────────────────────────────────────────────────┤
+  │ specs/notifications.spec.ts │ Bell icon, badge count, notifications page                       │
+  └─────────────────────────────┴──────────────────────────────────────────────────────────────────┘
+
+  ---
+  How to Run
+
+  Install backend test deps:
+  cd backend/cms-backend
+  npm install
+
+  Run API tests (Strapi must be running on localhost:1337):
+  npm test
+  # or with coverage:
+  npm run test:coverage
+
+  Install Playwright:
+  cd e2e
+  npm install
+  npx playwright install chromium
+
+  Run E2E tests (both Strapi + React must be running):
+  npx playwright test
+  # headed mode (see browser):
+  npx playwright test --headed
+  # HTML report:
+  npx playwright show-report
+
+  Environment variables (optional overrides, .env in backend/cms-backend/):
+  SEED_ADMIN_EMAIL=admin@cms.local
+  SEED_ADMIN_PASSWORD=Admin@CMS2024!
+  API_BASE_URL=http://localhost:1337/api
+  FRONTEND_URL=http://localhost:8081

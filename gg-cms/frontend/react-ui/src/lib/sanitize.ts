@@ -1,0 +1,84 @@
+﻿/**
+ * Browser-native HTML sanitizer — no external dependencies.
+ *
+ * Uses DOMParser to parse the input into a detached DOM tree, removes all
+ * elements and attributes that are not on the allowlists, strips script tags
+ * and event handlers, blocks javascript:/data: URL schemes, then serialises
+ * back to an HTML string.
+ *
+ * Drop-in upgrade path: once `dompurify` is installable in this environment,
+ * replace the implementation with:
+ *   import DOMPurify from 'dompurify';
+ *   export const sanitizeHtml = (html: string) =>
+ *     DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR, ALLOW_DATA_ATTR: false, FORCE_BODY: true });
+ */
+
+const ALLOWED_TAGS = new Set([
+  'h1','h2','h3','h4','p','br','ul','ol','li',
+  'strong','em','b','i','a','blockquote','code','pre',
+  'img','figure','figcaption',
+  'table','thead','tbody','tr','th','td',
+  'hr','span','div','section','article',
+]);
+
+const ALLOWED_ATTRS = new Set([
+  'href','src','alt','class','title','target','rel',
+  'width','height','colspan','rowspan',
+]);
+
+const URL_ATTRS = new Set(['href', 'src']);
+
+/** Block javascript:, data:, vbscript: and encoded variants. */
+const isSafeUrl = (value: string): boolean => {
+  const v = value.trim().replace(/[\s-]/g, '').toLowerCase();
+  return !(/^(javascript|data|vbscript):/.test(v));
+};
+
+const sanitizeNode = (node: Element): void => {
+  for (const child of Array.from(node.childNodes)) {
+    if (child.nodeType !== Node.ELEMENT_NODE) continue;
+    const el = child as Element;
+    const tag = el.tagName.toLowerCase();
+    if (!ALLOWED_TAGS.has(tag)) {
+      // Replace disallowed element with its plain text — keeps words, drops markup
+      node.replaceChild(document.createTextNode(el.textContent ?? ''), el);
+      continue;
+    }
+    // Remove disallowed or unsafe attributes
+    for (const attr of Array.from(el.attributes).map(a => a.name)) {
+      if (!ALLOWED_ATTRS.has(attr)) {
+        el.removeAttribute(attr);
+      } else if (URL_ATTRS.has(attr) && !isSafeUrl(el.getAttribute(attr) ?? '')) {
+        el.removeAttribute(attr);
+      }
+    }
+    // External links must not leak the referrer
+    if (tag === 'a') el.setAttribute('rel', 'noopener noreferrer');
+    sanitizeNode(el);
+  }
+};
+
+/**
+ * Sanitize an HTML string for safe use with dangerouslySetInnerHTML.
+ * Strips script tags, event handlers, javascript:/data: URL schemes, and all
+ * non-allowlisted elements and attributes.
+ */
+export const sanitizeHtml = (html: string): string => {
+  if (!html) return '';
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    // Remove dangerous element types before the node walk
+    doc.querySelectorAll('script,style,link,meta,object,embed,iframe,frame,frameset,base')
+      .forEach(el => el.remove());
+    // Strip all event handler attributes globally (on*)
+    doc.querySelectorAll('*').forEach(el => {
+      Array.from(el.attributes)
+        .filter(a => a.name.startsWith('on'))
+        .forEach(a => el.removeAttribute(a.name));
+    });
+    sanitizeNode(doc.body);
+    return doc.body.innerHTML;
+  } catch {
+    return '';
+  }
+};

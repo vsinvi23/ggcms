@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(npm config *)",
+      "PowerShell(npm install *)",
+      "PowerShell(Test-NetConnection *)",
+      "PowerShell($env:HTTPS_PROXY; $env:HTTP_PROXY; [System.Net.WebRequest]::DefaultWebProxy.GetProxy\\(\"https://registry.npmjs.org\"\\))",
+      "Bash(npm run *)",
+      "Bash(curl *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Vivek\\\\Pesonal\\\\Serenya\\\\Project\\\\portal\\\\serenya-x-orbit-main\\\\serenya-x-orbit-main\\\\src\" -Recurse -Directory)",
+      "PowerShell($files = Get-ChildItem -Path \"C:\\\\Vivek\\\\Pesonal\\\\DLP_SerenyaX-3June\\\\DLP_SerenyaX-3june\\\\\" -Recurse -File; Write-Host \"Total files: $\\($files.Count\\)\"; $files | Select-Object FullName -ExpandProperty FullName)",
+      "WebFetch(domain:demo.serenyax.com)",
+      "WebFetch(domain:www.tenable.com)",
+      "WebSearch"
+    ]
+  }
+}
