@@ -1,0 +1,387 @@
+openapi: 3.0.3
+info:
+  title: GeekGully API
+  version: 1.0.0
+  description: |
+    OpenAPI specification for GeekGully backend used by frontend integration and QA.
+    - All API responses are wrapped in ApiResponse { success, message, data }
+    - Passwords are never returned in responses.
+servers:
+  - url: http://localhost:8080
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          nullable: true
+    UserDto:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string }
+        name: { type: string }
+        mobileNo: { type: string }
+        status: { type: string }
+        lastLogin: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        groups:
+          type: array
+          items: { type: string }
+    AuthResponse:
+      type: object
+      properties:
+        userId: { type: integer }
+        email: { type: string }
+        token: { type: string }
+        message: { type: string }
+    GroupCreateDto:
+      type: object
+      properties:
+        name: { type: string }
+      required: [name]
+    GroupResponseDto:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        users:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              name: { type: string }
+              email: { type: string }
+    CategoryCreateDto:
+      type: object
+      properties:
+        name: { type: string }
+      required: [name]
+    CategoryResponseDto:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        parentId: { type: integer }
+
+    CmsCreateDto:
+      type: object
+      properties:
+        type: { type: string, enum: [ARTICLE, COURSE] }
+        categoryId: { type: integer }
+        createdBy: { type: integer }
+        contentLocation: { type: string }
+      required: [type, categoryId]
+
+    CmsResponseDto:
+      type: object
+      properties:
+        id: { type: integer }
+        type: { type: string }
+        categoryId: { type: integer }
+        status: { type: string }
+        contentLocation: { type: string }
+        contentName: { type: string }
+        contentType: { type: string }
+        contentSize: { type: integer }
+        createdBy: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        reviewerId: { type: integer }
+        reviewerName: { type: string }
+        reviewerComment: { type: string }
+
+paths:
+  /api/users/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+              required: [email, password]
+            example:
+              email: "testuser@gg.local"
+              password: "Pass123!"
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              examples:
+                success:
+                  summary: Successful login
+                  value:
+                    success: true
+                    message: "Logged in"
+                    data:
+                      userId: 7
+                      email: "testuser@gg.local"
+                      token: "<JWT>"
+        '401':
+          description: Unauthorized
+
+  /api/users/register:
+    post:
+      summary: Register user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthResponse'
+      responses:
+        '200':
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/groups:
+    get:
+      summary: List groups (paged)
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    post:
+      summary: Create group (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupCreateDto'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/groups/{id}:
+    get:
+      summary: Get group by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      summary: Delete group (admin)
+      responses:
+        '204':
+          description: No Content (deleted)
+
+  /api/categories:
+    get:
+      summary: List categories
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+    post:
+      summary: Create category (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateDto'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      summary: Delete category (admin)
+      responses:
+        '204':
+          description: No Content (deleted)
+
+  /api/cms:
+    post:
+      summary: Create CMS item (metadata only)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CmsCreateDto'
+            example:
+              type: ARTICLE
+              categoryId: 1
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              examples:
+                created:
+                  value:
+                    success: true
+                    message: "Created"
+                    data:
+                      id: 12
+                      type: ARTICLE
+                      categoryId: 1
+                      status: DRAFT
+                      contentLocation: null
+    get:
+      summary: List CMS (paged)
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/cms/{id}/upload:
+    post:
+      summary: Upload content file for CMS (multipart/form-data)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              examples:
+                uploaded:
+                  value:
+                    success: true
+                    message: "Uploaded"
+                    data:
+                      id: 12
+                      contentLocation: "storage/abcd-1234.txt"
+                      contentName: "lecture1.pdf"
+                      contentSize: 12345
+                      contentType: "application/pdf"
+
+  /api/cms/{id}/submit:
+    post:
+      summary: Submit CMS for review
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId: { type: integer }
+      responses:
+        '200':
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /api/cms/{id}/send-back:
+    post:
+      summary: Reviewer sends content back to draft with comment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reviewerId: { type: integer }
+                comment: { type: string }
+            example:
+              reviewerId: 3
+              comment: "Please add references and correct typos"
+      responses:
+        '200':
+          description: Sent back
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              examples:
+                sentback:
+                  value:
+                    success: true
+                    message: "Sent back to draft"
+                    data:
+                      id: 12
+                      status: "DRAFT"
+                      reviewerId: 3
+                      reviewerName: "alice@example.com"
+                      reviewerComment: "Please add references and correct typos"
+
+security:
+  - bearerAuth: []

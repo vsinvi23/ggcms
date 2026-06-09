@@ -1,0 +1,13 @@
+# Ignore all generated certificate artifacts
+*.key
+*.crt
+*.pem
+*.csr
+*.srl
+*.p12
+*.pfx
+
+# Keep the generation scripts and this file
+!generate-certs.sh
+!generate-certs.ps1
+!.gitignore
