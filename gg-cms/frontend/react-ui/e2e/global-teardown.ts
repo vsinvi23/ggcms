@@ -19,6 +19,14 @@ const STATE_FILE = join(__dirname, '.e2e-state.json');
 
 async function globalTeardown() {
   const ctx = await request.newContext({ baseURL: API });
+  try { await _cleanup(ctx); } catch (e) {
+    console.warn('[teardown] Non-fatal cleanup error:', (e as Error).message);
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+async function _cleanup(ctx: Awaited<ReturnType<typeof request.newContext>>) {
 
   // ── Login as admin ──────────────────────────────────────────────────────────
   const loginRes = await ctx.post('/api/auth/local', {
@@ -70,8 +78,6 @@ async function globalTeardown() {
     fs.unlinkSync(STATE_FILE);
     console.log('[teardown] State file removed.');
   }
-
-  await ctx.dispose();
 }
 
 export default globalTeardown;
