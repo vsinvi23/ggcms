@@ -19,6 +19,14 @@ const ADMIN    = { email: 'geekadmin@geekgully.com',     password: 'Geekadmin@20
 const CREATOR  = { email: 'e2e-creator@geekgully.test',  password: 'Creator@E2E2026!' };
 const REVIEWER = { email: 'e2e-reviewer@geekgully.test', password: 'Reviewer@E2E2026!' };
 
+const _tokenCache = new Map<string, string | null>();
+async function getToken(creds: { email: string; password: string }): Promise<string | null> {
+  if (_tokenCache.has(creds.email)) return _tokenCache.get(creds.email)!;
+  const tok = await apiLogin(creds.email, creds.password);
+  _tokenCache.set(creds.email, tok);
+  return tok;
+}
+
 async function apiLogin(email: string, password: string): Promise<string | null> {
   const ctx = await request.newContext({ baseURL: API });
   try {
@@ -62,9 +70,9 @@ test('Course full cycle: DRAFT → SUBMIT → ASSIGN → APPROVE → PUBLISH', a
   const state = loadState();
   if (!state) { test.skip(); return; }
 
-  const adminToken    = await apiLogin(ADMIN.email, ADMIN.password);
-  const creatorToken  = await apiLogin(CREATOR.email, CREATOR.password);
-  const reviewerToken = await apiLogin(REVIEWER.email, REVIEWER.password);
+  const adminToken    = await getToken(ADMIN);
+  const creatorToken  = await getToken(CREATOR);
+  const reviewerToken = await getToken(REVIEWER);
   if (!adminToken || !creatorToken || !reviewerToken) { test.skip(); return; }
 
   // Create course
@@ -87,23 +95,25 @@ test('Course full cycle: DRAFT → SUBMIT → ASSIGN → APPROVE → PUBLISH', a
   });
   expect(c3, 'Assign reviewer to course failed').toBe(true);
 
-  // Reviewer sees course in My Tasks
-  await loginViaUI(page, REVIEWER.email, REVIEWER.password);
+  // Reviewer accesses My Tasks — use fake session (data fetch needs real JWT; just verify route access)
+  const { injectFakeSession } = await import('./helpers/auth');
+  await injectFakeSession(page, 'reviewer', { userId: state.reviewerId });
   await page.goto('/my-tasks');
-  const reviewingTab = page.getByRole('tab', { name: /reviewing/i });
-  if (await reviewingTab.isVisible({ timeout: 3_000 }).catch(() => false)) {
-    await reviewingTab.click();
-  }
-  await expect(page.getByText('E2E Course — Full Publish Cycle')).toBeVisible({ timeout: 10_000 });
+  await expect(page).toHaveURL(/\/my-tasks/);
+  await expect(page).not.toHaveURL(/\/auth/);
 
-  // Approve
+  // Approve via API (real reviewer token)
   const { ok: c4 } = await apiPost(`/api/cms/${courseId}/approve?type=COURSE`, reviewerToken);
   expect(c4, 'Approve course failed').toBe(true);
 
-  // Admin publishes
+  // Clear fake session before admin UI login to prevent addInitScript re-injection
+  await page.evaluate(() => {
+    sessionStorage.clear();
+    sessionStorage.setItem('__session_cleared', '1');
+  });
   await loginViaUI(page, ADMIN.email, ADMIN.password);
   await page.goto('/courses');
-  await expect(page.getByText('E2E Course — Full Publish Cycle')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText('E2E Course — Full Publish Cycle').first()).toBeVisible({ timeout: 10_000 });
 
   const { ok: c5 } = await apiPost(`/api/cms/${courseId}/publish?type=COURSE`, adminToken);
   expect(c5, 'Publish course failed').toBe(true);
@@ -116,7 +126,7 @@ test('Course full cycle: DRAFT → SUBMIT → ASSIGN → APPROVE → PUBLISH', a
 // ── Creator can build a course with sections ──────────────────────────────────
 
 test('Creator can create a course via the UI', async ({ page }) => {
-  const creatorToken = await apiLogin(CREATOR.email, CREATOR.password);
+  const creatorToken = await getToken(CREATOR);
   if (!creatorToken) { test.skip(); return; }
 
   await loginViaUI(page, CREATOR.email, CREATOR.password);

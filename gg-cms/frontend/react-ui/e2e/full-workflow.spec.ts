@@ -368,7 +368,7 @@ test.describe('Reviewer workflow — reviewer sees submitted content and can tak
 
     await page.goto('/my-tasks');
     await expect(page).toHaveURL(/\/my-tasks/);
-    await expect(page.getByRole('heading')).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByRole('heading', { name: /My Tasks/i })).toBeVisible({ timeout: 8_000 });
 
     const reviewTab = page.locator(
       '[role="tab"], button, [class*="tab"]'
