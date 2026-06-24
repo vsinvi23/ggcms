@@ -1,17 +1,29 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find c:/Vivek/Pesonal/Serenya/Project/CMS/ggcms/frontend/react-ui/src -name Auth* -o -name auth*)",
-      "Bash(find c:/Vivek/Pesonal/Serenya/Project/CMS/ggcms -name *)",
-      "WebFetch(domain:www.spurtcms.com)",
+      "Bash(go build ./...)",
+      "Bash(go vet ./...)",
+      "Bash(go test ./internal/... *)",
+      "Bash(go test ./tests/... *)",
+      "Bash(npx tsc --noEmit*)",
+      "Bash(npx vitest run*)",
+      "Bash(npm run lint*)",
+      "Bash(grep -rn *)",
+      "Bash(grep -n *)",
+      "Bash(find . -name *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git status*)",
+      "Bash(git show *)",
+      "Bash(docker ps*)",
+      "Bash(docker compose ps*)",
+      "Bash(curl -s http://127.0.0.1:1337*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "Bash(go build ./...)",
-      "Bash(npx tsc --noEmit*)",
-      "Bash(go test ./...)",
-      "Bash(npx vitest run*)",
-      "Bash(grep -rn *)",
-      "Bash(grep -n *)"
+      "WebFetch(domain:pkg.go.dev)",
+      "WebFetch(domain:react.dev)"
     ]
   },
   "hooks": {
@@ -23,7 +35,7 @@
             "type": "command",
             "timeout": 60,
             "statusMessage": "Verifying build…",
-            "command": "FILE=$(jq -r '.tool_input.file_path // empty' 2>/dev/null); [ -z \"$FILE\" ] && exit 0; if echo \"$FILE\" | grep -q 'backend/go-cms' && echo \"$FILE\" | grep -qE '\\.go$'; then OUT=$(cd 'c:/Vivek/Pesonal/Serenya/Project/CMS/ggcms/backend/go-cms' && go build ./... 2>&1); [ -n \"$OUT\" ] && jq -n --arg ctx \"go build ./... FAILED — fix before proceeding:\\n$OUT\" '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":$ctx}}' && exit 0; elif echo \"$FILE\" | grep -q 'frontend/react-ui' && echo \"$FILE\" | grep -qE '\\.(ts|tsx)$'; then OUT=$(cd 'c:/Vivek/Pesonal/Serenya/Project/CMS/ggcms/frontend/react-ui' && npx tsc --noEmit -p tsconfig.app.json 2>&1); [ -n \"$OUT\" ] && jq -n --arg ctx \"tsc --noEmit FAILED — fix before proceeding:\\n$OUT\" '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":$ctx}}' && exit 0; fi"
+            "command": "FILE=$(jq -r '.tool_input.file_path // empty' 2>/dev/null); [ -z \"$FILE\" ] && exit 0; if echo \"$FILE\" | grep -q 'backend/go-cms' && echo \"$FILE\" | grep -qE '\\.go$'; then OUT=$(cd 'c:/Vivek/Pesonal/Serenya/Project/CMS/gocms/gg-cms/backend/go-cms' && go build ./... 2>&1); [ -n \"$OUT\" ] && jq -n --arg ctx \"go build ./... FAILED — fix before proceeding:\\n$OUT\" '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":$ctx}}' && exit 0; elif echo \"$FILE\" | grep -q 'frontend/react-ui' && echo \"$FILE\" | grep -qE '\\.(ts|tsx)$'; then OUT=$(cd 'c:/Vivek/Pesonal/Serenya/Project/CMS/gocms/gg-cms/frontend/react-ui' && node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json 2>&1); [ -n \"$OUT\" ] && jq -n --arg ctx \"tsc --noEmit FAILED — fix before proceeding:\\n$OUT\" '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":$ctx}}' && exit 0; fi"
           }
         ]
       }
