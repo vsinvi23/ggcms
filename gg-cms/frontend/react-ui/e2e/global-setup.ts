@@ -50,6 +50,19 @@ export const ADMIN = {
 };
 
 async function globalSetup() {
+  // ── Short-circuit: reuse existing state if valid ────────────────────────────
+  if (fs.existsSync(STATE_FILE)) {
+    try {
+      const saved = JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'));
+      if (saved.creatorId && saved.reviewerId && saved.learnerId && saved.groupId && saved.categoryId) {
+        console.log('[setup] Valid state file found — skipping seed.', saved);
+        return;
+      }
+    } catch {
+      // fall through to full seed if file is corrupt
+    }
+  }
+
   const ctx = await request.newContext({ baseURL: API });
 
   // ── Login as admin ──────────────────────────────────────────────────────────
@@ -72,7 +85,6 @@ async function globalSetup() {
       const existing = items.find(u => u.email === user.email);
       if (existing) return existing.id;
     }
-
     const createRes = await ctx.post('/api/users', {
       headers: auth,
       data: { name: user.name, email: user.email, password: user.password },
@@ -93,7 +105,6 @@ async function globalSetup() {
       const existing = items.find(g => g.name === name);
       if (existing) return existing.id;
     }
-
     const createRes = await ctx.post('/api/user-groups', {
       headers: auth,
       data: {
@@ -123,7 +134,6 @@ async function globalSetup() {
       const existing = flat.find(c => c.name === name);
       if (existing) return existing.id;
     }
-
     const createRes = await ctx.post('/api/categories', {
       headers: auth,
       data: { data: { name, requiredApprovals: 1 } },
@@ -145,7 +155,6 @@ async function globalSetup() {
   // ── Seed review group ───────────────────────────────────────────────────────
   console.log('[setup] Creating E2E Reviewers group...');
   const groupId = await ensureGroup('E2E Reviewers');
-  // Add reviewer to group
   await ctx.post(`/api/user-groups/${groupId}/members`, {
     headers: auth,
     data: { userId: reviewerId },
@@ -155,7 +164,6 @@ async function globalSetup() {
   // ── Seed category ───────────────────────────────────────────────────────────
   console.log('[setup] Creating E2E Test Category...');
   const categoryId = await ensureCategory('E2E Test Category');
-  // Link review group to category
   await ctx.post(`/api/categories/${categoryId}/reviewer-groups`, {
     headers: auth,
     data: { groupId },
