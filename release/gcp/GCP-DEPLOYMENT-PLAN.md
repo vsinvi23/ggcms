@@ -88,7 +88,8 @@ release/gcp/
 
 ## Prerequisites
 
-Install on your laptop:
+### Tools — install on your laptop
+
 ```bash
 # Google Cloud SDK
 curl https://sdk.cloud.google.com | bash
@@ -103,6 +104,140 @@ npm install -g firebase-tools
 # rclone (for backup setup)
 curl https://rclone.org/install.sh | sudo bash
 ```
+
+### GitHub Actions secrets — add BEFORE the first push
+
+The CI/CD workflow (`.github/workflows/deploy.yml`) triggers on every push to `main`.
+It will **fail immediately** until these 5 secrets are configured.
+
+**Where to add:** `https://github.com/vsinvi23/ggcms/settings/secrets/actions`
+→ Click **New repository secret** for each one below.
+
+---
+
+#### Secret 1 — `GCP_PROJECT_ID`
+
+Your GCP project short ID (not the numeric project number).
+
+```bash
+# Find it
+gcloud projects list
+# e.g. gg-cms-prod
+```
+
+**Value:** plain string, e.g. `gg-cms-prod`
+
+---
+
+#### Secret 2 — `GCP_SA_KEY`
+
+A base64-encoded service account JSON key. GitHub Actions uses this to authenticate
+to GCP and push images / deploy to Cloud Run.
+
+```bash
+export PROJECT_ID=gg-cms-prod   # ← your project ID
+
+# 1. Create the service account
+gcloud iam service-accounts create github-deploy \
+  --display-name="GitHub Actions Deploy" \
+  --project=$PROJECT_ID
+
+# 2. Grant all required roles
+SA=github-deploy@${PROJECT_ID}.iam.gserviceaccount.com
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member=serviceAccount:$SA --role=roles/run.admin
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member=serviceAccount:$SA --role=roles/artifactregistry.writer
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member=serviceAccount:$SA --role=roles/iam.serviceAccountUser
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member=serviceAccount:$SA --role=roles/secretmanager.secretAccessor
+
+# 3. Download key, base64-encode it, then delete the local file
+gcloud iam service-accounts keys create key.json --iam-account=$SA
+cat key.json | base64 -w 0    # ← copy the entire output as the secret value
+rm key.json                    # delete immediately — it's in GitHub now
+```
+
+**Value:** the full base64-encoded output of `cat key.json | base64 -w 0`
+
+---
+
+#### Secret 3 — `FIREBASE_TOKEN`
+
+A non-interactive CI token used by the workflow to deploy to Firebase Hosting.
+
+```bash
+# Generates a long-lived token (opens browser once)
+firebase login:ci
+
+# Output looks like: 1//0gXXXXXXXXXXXXXX...
+```
+
+**Value:** paste the token string printed by `firebase login:ci`
+
+---
+
+#### Secret 4 — `CLOUDRUN_DB_WRITE_URL`
+
+PostgreSQL connection URL using the **internal VPC IP** of the e2-micro VM
+(set up in Phase 3). Cloud Run connects over the private Google network — no TLS
+needed because the traffic never leaves GCP.
+
+```bash
+# Get the VM's internal IP (after Phase 3 VM creation)
+gcloud compute instances describe gg-cms-db \
+  --zone=us-central1-a \
+  --format='get(networkInterfaces[0].networkIP)'
+# e.g. 10.128.0.2
+```
+
+**Value:**
+```
+postgres://gg_cms_user:YOUR_POSTGRES_PASSWORD@10.128.0.2:5432/gg_cms?sslmode=disable
+```
+Replace `YOUR_POSTGRES_PASSWORD` with the password you stored in Secret Manager (Phase 2).
+
+---
+
+#### Secret 5 — `CLOUDRUN_MONGO_URI`
+
+MongoDB connection URI using the same VM internal IP.
+
+**Value:**
+```
+mongodb://gg_cms_user:YOUR_MONGO_PASSWORD@10.128.0.2:27017/?authSource=admin
+```
+Replace `YOUR_MONGO_PASSWORD` with the MongoDB password from Secret Manager (Phase 2).
+
+---
+
+#### Secrets summary table
+
+| Secret | Source | Format |
+|---|---|---|
+| `GCP_PROJECT_ID` | `gcloud projects list` | plain string |
+| `GCP_SA_KEY` | service account key JSON → `base64 -w 0` | base64 string |
+| `FIREBASE_TOKEN` | `firebase login:ci` output | token string |
+| `CLOUDRUN_DB_WRITE_URL` | VM internal IP + PG password | postgres:// URL |
+| `CLOUDRUN_MONGO_URI` | VM internal IP + Mongo password | mongodb:// URI |
+
+> ⚠️ Secrets 4 and 5 require the e2-micro VM to exist (Phase 3) before you can fill them in. Add the other 3 first; add 4 and 5 after Phase 3 is complete.
+
+---
+
+#### Verify secrets are working
+
+After adding all 5 secrets, re-run the failed workflow:
+1. Go to `https://github.com/vsinvi23/ggcms/actions`
+2. Select **Deploy GG-CMS to GCP**
+3. Click **Re-run all jobs**
+
+Or trigger it by pushing any commit to `main`.
 
 ---
 
@@ -345,31 +480,26 @@ gcloud builds triggers create github \
   --region=us-central1
 ```
 
-### Option B: GitHub Actions (alternative, free 2000 min/month)
+### Option B: GitHub Actions (active — already wired to main)
 
-1. Create a GCP service account and download JSON key:
+> The workflow file is already at `.github/workflows/deploy.yml` and triggers
+> on every push to `main`. All that is needed is the 5 secrets listed in
+> the **Prerequisites** section above.
+
+Steps:
+1. Complete the service account setup and generate `GCP_SA_KEY` (see Prerequisites → Secret 2)
+2. Run `firebase login:ci` to get `FIREBASE_TOKEN` (see Prerequisites → Secret 3)
+3. Add all 5 secrets at `https://github.com/vsinvi23/ggcms/settings/secrets/actions`
+4. Push any commit to `main` — the pipeline fires automatically
+
+To monitor the running build:
 ```bash
-gcloud iam service-accounts create github-deploy --display-name="GitHub Deploy"
-# Grant roles: run.admin, artifactregistry.writer, iam.serviceAccountUser, secretmanager.secretAccessor
-gcloud iam service-accounts keys create key.json \
-  --iam-account=github-deploy@${PROJECT_ID}.iam.gserviceaccount.com
-cat key.json | base64 -w 0   # copy this as GCP_SA_KEY secret
-```
+# In browser
+open https://github.com/vsinvi23/ggcms/actions
 
-2. Add GitHub secrets (repo Settings → Secrets → Actions):
-   - `GCP_PROJECT_ID` — your project ID
-   - `GCP_SA_KEY` — base64 encoded service account JSON
-   - `FIREBASE_TOKEN` — from `firebase login:ci`
-   - `CLOUDRUN_DB_WRITE_URL` — postgres URL with VM internal IP
-   - `CLOUDRUN_MONGO_URI` — mongodb URI with VM internal IP
-
-3. Copy the workflow file to `.github/workflows/`:
-```bash
-mkdir -p .github/workflows
-cp release/gcp/github-actions-deploy.yml .github/workflows/deploy.yml
-git add .github/workflows/deploy.yml
-git commit -m "ci: add GitHub Actions GCP deployment"
-git push origin main
+# Or via GitHub CLI
+gh run list --repo vsinvi23/ggcms --limit 5
+gh run watch --repo vsinvi23/ggcms
 ```
 
 ---
