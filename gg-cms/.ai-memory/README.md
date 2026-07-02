@@ -1,69 +1,79 @@
 # .ai-memory — Graph-Derived Memory Index
 
-Pre-computed from `codebase-memory-mcp` indexing run.  
 **Project:** `C-Vivek-Pesonal-Serenya-Project-CMS-gocms-gg-cms`  
-**Graph:** 5,158 nodes · 15,366 edges · Last indexed: 2026-06-11
+**Graph:** 5,158 nodes · 15,366 edges · Indexed: 2026-06-11
 
 ---
 
-## Files
-
-| File | Description | Tokens (est.) |
-|------|-------------|---------------|
-| `summaries.md` | Project overview, recent commits, test status, known issues, perf hotspots | ~900 |
-| `modules.md` | All backend services, frontend pages, API hooks, E2E infrastructure | ~1,500 |
-| `architecture.md` | System topology, workflow state machine, RBAC, DB schema, security controls | ~1,800 |
-| `runbooks.md` | Onboarding, running tests, adding features, troubleshooting tables | ~2,000 |
-
-**Total context cost: ~6,200 tokens** — replaces ~80,000 tokens of raw source browsing.
-
----
-
-## When to Load
-
-| Task | Load |
-|------|------|
-| New to the project | `summaries.md` + `modules.md` |
-| Architecture question | `architecture.md` |
-| Feature work | `modules.md` + `runbooks.md` §4/5 |
-| Debugging | `runbooks.md` §6/7/8 |
-| Test work | `summaries.md` §4 + `runbooks.md` §3 |
-| E2E patterns | `modules.md` E2E section + `runbooks.md` §9 |
-| Content workflow | `architecture.md` §State Machine + `runbooks.md` §10 |
-
----
-
-## Refresh
-
-```bash
-# Re-index after significant codebase changes
-# Run from Claude Code session:
-mcp__codebase-memory-mcp__index_repository({
-  repo_path: "c:\\Vivek\\Pesonal\\Serenya\\Project\\CMS\\gocms\\gg-cms",
-  mode: "moderate",
-  persistence: true
-})
-```
-
-Then regenerate `.ai-memory/` files using the codebase-memory skill.
-
----
-
-## Graph Quick Reference
+## Directory Structure
 
 ```
-# Find a function
-search_graph(name_pattern=".*FunctionName.*", label="Function")
-
-# Trace call chain
-trace_path(function_name="Approve", direction="both", depth=3)
-
-# Find hot code (many callers)
-search_graph(min_degree=8, relationship="CALLS", direction="inbound")
-
-# Detect recent change impact
-detect_changes(since="HEAD~3", depth=2)
-
-# Architecture clusters
-get_architecture(aspects=["clusters", "packages"])
+.ai-memory/
+  summaries/
+    overview.md          ← hottest symbols, complexity, cluster map, test coverage
+  modules/
+    backend-services.md  ← all 21 Go services, handler→service map, pkg/ fan-in
+    frontend-modules.md  ← service sizes, hook sizes, page complexity, state mgmt
+  architecture/
+    service-map.md       ← topology diagram, clusters, deployment variants, HTTP_CALLS
+    data-flow.md         ← content lifecycle, auth, feature flags, engagement, personalization
+  runbooks/
+    onboarding.md           ← first setup, release package, where-is-X table
+    troubleshooting.md      ← backend, frontend/E2E, Docker, workflow issue tables
+    feature-development.md  ← add backend/frontend feature, E2E patterns, workflow API
 ```
+
+---
+
+## Token Budget
+
+| File | Est. Tokens | Load When |
+|------|-------------|-----------|
+| `summaries/overview.md` | ~900 | Session start — always |
+| `modules/backend-services.md` | ~700 | Backend feature work |
+| `modules/frontend-modules.md` | ~700 | Frontend feature work |
+| `architecture/service-map.md` | ~900 | Architecture decisions |
+| `architecture/data-flow.md` | ~600 | Flow/sequence questions |
+| `runbooks/onboarding.md` | ~400 | New developer, setup |
+| `runbooks/troubleshooting.md` | ~600 | Debugging sessions |
+| `runbooks/feature-development.md` | ~700 | Building any feature (backend/frontend/E2E) |
+
+**Total if all loaded: ~5,500 tokens** vs ~80,000 for raw source browsing.
+
+---
+
+## Minimum Load (every session)
+
+```
+.ai-memory/summaries/overview.md      ← hottest symbols + complexity + test map
+.ai/memory-bank.md                    ← entities, workflow rules, tech stack
+.ai/session-init.md                   ← behavior contract
+```
+
+---
+
+## Refresh — MANDATORY After Every Feature
+
+The code graph and `.ai-memory/` files MUST be refreshed whenever code changes
+(new feature, refactor, schema change). This keeps graph-derived docs accurate
+and is a hard project rule (see `CLAUDE.md` and `.ai/project-rules.md`).
+
+```
+# 1. Re-index the graph
+mcp__codebase-memory-mcp__index_repository(
+  repo_path="c:\\Vivek\\Pesonal\\Serenya\\Project\\CMS\\gocms\\gg-cms",
+  mode="moderate"
+)
+
+# 2. Inspect blast radius of the change
+mcp__codebase-memory-mcp__detect_changes(
+  project="C-Vivek-Pesonal-Serenya-Project-CMS-gocms-gg-cms",
+  since="HEAD~1", depth=2
+)
+
+# 3. Regenerate affected .ai-memory/ files (summaries/overview.md at minimum)
+```
+
+> Graph data lives in the codebase-memory MCP store (queryable via the MCP tools).
+> The durable, checked-in representation is this `.ai-memory/` markdown set —
+> treat it as the source of truth for onboarding and architecture context.
