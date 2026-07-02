@@ -1,0 +1,112 @@
+name: gg-cms
+
+# GG-CMS — Database-only compose for GCP e2-micro VM
+#
+# Runs PostgreSQL + MongoDB on the free-tier e2-micro instance.
+# Memory-tuned for 1 GB RAM (OS ~200MB, leaving ~700MB for DBs).
+#
+# Deploy:
+#   docker compose -f docker-compose.vm-dbs.yml up -d
+#
+# On the VM, external access to DB ports is blocked by the firewall.
+# Cloud Run connects via the internal VPC IP (10.x.x.x).
+
+services:
+
+  # ── PostgreSQL 16 (memory-tuned for e2-micro) ─────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: gg-cms-postgres
+    restart: unless-stopped
+    user: root
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        cp /pg-certs-ro/server.crt /pg-certs/server.crt
+        cp /pg-certs-ro/server.key /pg-certs/server.key
+        cp /pg-certs-ro/ca.crt     /pg-certs/ca.crt
+        chown 70:70 /pg-certs/server.crt /pg-certs/server.key /pg-certs/ca.crt
+        chmod 600 /pg-certs/server.key
+        chmod 644 /pg-certs/server.crt /pg-certs/ca.crt
+        exec su-exec postgres docker-entrypoint.sh postgres \
+          -c ssl=on \
+          -c ssl_cert_file=/pg-certs/server.crt \
+          -c ssl_key_file=/pg-certs/server.key \
+          -c ssl_ca_file=/pg-certs/ca.crt \
+          -c max_connections=20 \
+          -c shared_buffers=64MB \
+          -c effective_cache_size=192MB \
+          -c work_mem=4MB \
+          -c maintenance_work_mem=32MB \
+          -c wal_buffers=4MB \
+          -c checkpoint_completion_target=0.9 \
+          -c archive_mode=on \
+          -c archive_command="cp %p /wal-archive/%f" \
+          -c archive_timeout=300
+    environment:
+      POSTGRES_USER: gg_cms_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: gg_cms
+    ports:
+      # Bind to localhost only — firewall blocks external access
+      # Cloud Run connects via VPC internal IP
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./certs/postgres:/pg-certs-ro:ro
+      - pg_certs:/pg-certs
+      # WAL archive directory for delta backups
+      - /opt/gg-cms/wal-archive:/wal-archive
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gg_cms_user -d gg_cms"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── MongoDB 7 (memory-tuned for e2-micro) ─────────────────────────────────
+  mongodb:
+    image: mongo:7-jammy
+    container_name: gg-cms-mongodb
+    restart: unless-stopped
+    command:
+      - mongod
+      - --tlsMode
+      - requireTLS
+      - --tlsCertificateKeyFile
+      - /certs/server.pem
+      - --tlsCAFile
+      - /certs/ca.crt
+      # Limit WiredTiger cache to 150 MB (default is ~half of RAM = 500 MB)
+      - --wiredTigerCacheSizeGB
+      - "0.15"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: gg_cms_user
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?Set MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: gg_cms
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - ./data/mongodb:/data/db
+      - ./data/mongodb-config:/data/configdb
+      - ./certs/mongodb:/certs:ro
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --tls
+        - --tlsCertificateKeyFile
+        - /certs/server.pem
+        - --tlsCAFile
+        - /certs/ca.crt
+        - --quiet
+        - --eval
+        - "db.adminCommand('ping').ok"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  pg_certs:

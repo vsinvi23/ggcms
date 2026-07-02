@@ -11,6 +11,21 @@
 - Do NOT refactor surrounding code when fixing a bug — minimal, targeted changes only
 - Do NOT add new abstractions, helpers, or utilities for one-off operations
 
+## Code graph — MANDATORY
+
+This project is indexed by the **codebase-memory MCP**. Graph-derived docs live in `.ai-memory/`.
+
+- **Discovery FIRST:** before editing, use `search_graph` / `trace_path` / `get_code_snippet`
+  to locate code and understand call chains — not raw grep/glob.
+- **Update on EVERY feature:** after any feature, refactor, or schema change you MUST
+  re-index the graph and refresh affected `.ai-memory/` files. This is a hard gate, not optional.
+  ```
+  index_repository(repo_path="…/gocms/gg-cms", mode="moderate")
+  detect_changes(project="C-Vivek-…-gg-cms", since="HEAD~1", depth=2)
+  # then regenerate .ai-memory/summaries/overview.md (+ any affected module/arch file)
+  ```
+- Full procedure: `.ai-memory/runbooks/feature-development.md` §5 and `.ai-memory/README.md`.
+
 ## Architecture at a glance
 
 ```

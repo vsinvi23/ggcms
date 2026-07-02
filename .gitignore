@@ -26,3 +26,8 @@ node_modules/
 .vscode/settings.json
 *.swp
 *.swo
+
+# ── Codebase-memory graph ─────────────────────────────────────────────────────
+# The full .codebase-memory/ (graph.db.zst + artifact.json + .gitattributes) is
+# COMMITTED so teammates bootstrap the code graph from the repo — no local rebuild.
+# The .ai-memory/ markdown docs (graph-derived) are committed too. Nothing ignored.

@@ -18,6 +18,23 @@ Both must pass before any change is considered complete.
 
 ---
 
+## Code Graph Gate (MANDATORY for every feature)
+
+The codebase-memory MCP graph is the project's discovery + memory layer.
+
+1. **Before coding:** locate code via `search_graph` / `trace_path` (not raw grep).
+2. **After any feature/refactor/schema change:** re-index and refresh `.ai-memory/`:
+   ```
+   index_repository(repo_path="…/gocms/gg-cms", mode="moderate")
+   detect_changes(project="C-Vivek-…-gg-cms", since="HEAD~1", depth=2)
+   # regenerate .ai-memory/summaries/overview.md + any affected module/arch file
+   ```
+3. A change is NOT complete until the graph + `.ai-memory/` reflect it.
+
+Procedure: `.ai-memory/runbooks/feature-development.md` §5.
+
+---
+
 ## Architecture Rules
 
 ### Layering

@@ -1,0 +1,48 @@
+# GG-CMS — Backend Dockerfile optimised for Cloud Run
+#
+# Key differences from release/docker/backend.Dockerfile:
+#   • No TLS certs (Cloud Run handles HTTPS termination externally)
+#   • Listens on $PORT (injected by Cloud Run, default 8080)
+#   • Single compiled binary, minimal alpine runtime
+#   • Health check path: /api/health
+
+# ── Build stage ───────────────────────────────────────────────────────────────
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache git ca-certificates tzdata
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -a -trimpath -ldflags="-w -s" -o server ./cmd/server
+
+# ── Runtime stage ─────────────────────────────────────────────────────────────
+FROM alpine:3.20
+
+RUN apk --no-cache add ca-certificates tzdata wget
+
+WORKDIR /app
+
+COPY --from=builder /app/server .
+COPY --from=builder /app/migrations ./migrations
+
+RUN mkdir -p uploads
+
+# Cloud Run injects PORT; the backend reads SERVER_PORT from env.
+# TLS_ENABLED=false → plain HTTP, which Cloud Run's HTTPS proxy wraps.
+ENV PORT=8080 \
+    TLS_ENABLED=false \
+    GIN_MODE=release
+
+EXPOSE 8080
+
+# Cloud Run health check endpoint
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD wget -qO- http://localhost:${PORT}/api/health || exit 1
+
+CMD ["./server"]

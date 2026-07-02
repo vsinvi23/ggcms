@@ -1,0 +1,47 @@
+--- CODE CHANGES REQUIRED FOR GCP DEPLOYMENT ---
+Apply these minimal changes to gg-cms/backend/go-cms/ before deploying.
+
+=== Change 1: pkg/config/config.go ===
+Add Cloud Run PORT injection at the top of the Load() function.
+Cloud Run sets the PORT env var; the backend must respect it.
+
+FIND (around line 67, just before viper.AutomaticEnv()):
+---
+func Load() *Config {
+	viper.AutomaticEnv()
+---
+
+REPLACE WITH:
+---
+func Load() *Config {
+	// Cloud Run injects PORT — respect it over SERVER_PORT default
+	if port := os.Getenv("PORT"); port != "" {
+		os.Setenv("SERVER_PORT", port)
+	}
+	viper.AutomaticEnv()
+---
+
+Also add "os" to the import block:
+---
+import (
+	"log"
+	"os"
+
+	"github.com/spf13/viper"
+)
+---
+
+
+=== Change 2: pkg/config/config.go (already done in previous session) ===
+TLSConfig struct and TLS_ENABLED default already added. No further change.
+
+
+=== Change 3: cmd/server/main.go (already done in previous session) ===
+The server already respects TLS_ENABLED=false to run as plain HTTP.
+Cloud Run handles HTTPS externally. No further change needed.
+
+
+=== NO OTHER CODE CHANGES REQUIRED ===
+The existing mTLS code is controlled by TLS_ENABLED env var.
+Setting TLS_ENABLED=false in Cloud Run env disables it automatically.
+The Dockerfile.cloudrun sets TLS_ENABLED=false as default.

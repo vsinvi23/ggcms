@@ -115,6 +115,42 @@ When a rule is broken and causes a bug:
 
 ---
 
+## Graph-First Code Discovery
+
+Use codebase-memory-mcp **before** grep/glob/browse for any code question:
+
+| Question | Tool |
+|----------|------|
+| Where is X defined? | `search_graph(name_pattern=".*X.*")` |
+| Who calls X? | `trace_path(function_name="X", direction="inbound")` |
+| What does X call? | `trace_path(function_name="X", direction="outbound")` |
+| Impact of changing X? | `detect_changes(since="HEAD~1", depth=2)` |
+| Hot code (most callers)? | `search_graph(min_degree=10, relationship="CALLS", direction="inbound")` |
+| Architecture clusters? | `get_architecture(aspects=["clusters"])` |
+
+**Cost:** ~500 tokens per graph query vs ~80,000 for raw source browsing.
+
+---
+
+## .ai-memory/ vs .ai/ — When to Use Each
+
+| Need | Use |
+|------|-----|
+| Project overview, hottest symbols, complexity | `.ai-memory/summaries/overview.md` |
+| Which service handles X? | `.ai-memory/modules/backend-services.md` |
+| Frontend hook/service sizes | `.ai-memory/modules/frontend-modules.md` |
+| System topology diagram | `.ai-memory/architecture/service-map.md` |
+| How auth/content/flags flow | `.ai-memory/architecture/data-flow.md` |
+| Setup steps | `.ai-memory/runbooks/onboarding.md` |
+| Debugging a symptom | `.ai-memory/runbooks/troubleshooting.md` |
+| Entities, workflow rules, conventions | `.ai/memory-bank.md` |
+| Behavior contract | `.ai/session-init.md` |
+| Go patterns + code examples | `.ai/context/backend.md` |
+| React patterns + code examples | `.ai/context/frontend.md` |
+| Past architectural decisions | `.ai/adr/` |
+
+---
+
 ## Anti-Patterns to Avoid
 
 ```

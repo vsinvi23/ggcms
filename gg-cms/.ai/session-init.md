@@ -33,7 +33,21 @@ After every code change:
 2. **Run frontend type check:** `npx tsc --noEmit -p tsconfig.app.json` from `frontend/react-ui/`
 3. **Verify no unused imports** introduced
 4. **Confirm response shapes match** existing `response.OK / response.Paged` conventions
-5. **State what changed and why** in one sentence
+5. **Refresh the code graph** (MANDATORY for any feature/refactor/schema change):
+   `index_repository(mode="moderate")` → `detect_changes(since="HEAD~1")` →
+   regenerate `.ai-memory/summaries/overview.md` + affected module/arch files
+6. **State what changed and why** in one sentence
+
+---
+
+## Code Graph — Use It First, Update It Always
+
+- **Discovery:** use `search_graph` / `trace_path` / `get_code_snippet` to find code and
+  call chains before reading files — cheaper and more precise than grep/glob.
+- **Memory:** `.ai-memory/` holds the checked-in graph-derived docs. Load
+  `.ai-memory/summaries/overview.md` at session start.
+- **Mandatory update:** a feature is not done until the graph is re-indexed and
+  `.ai-memory/` reflects the change. See `.ai-memory/runbooks/feature-development.md` §5.
 
 ---
 
@@ -110,3 +124,36 @@ YES  — run build checks after every change
 | API design | + `.ai/context/api-contracts.md` |
 
 Never load all files at once — select only what the current task requires.
+
+---
+
+## Graph Tools (use before grep/browse)
+
+```
+# Find a function
+search_graph(name_pattern=".*FunctionName.*", label="Function")
+
+# Trace callers / callees
+trace_path(function_name="Approve", direction="both", depth=3)
+
+# Find hot code
+search_graph(min_degree=10, relationship="CALLS", direction="inbound")
+
+# Impact of recent changes
+detect_changes(since="HEAD~3", depth=2)
+```
+
+Resolves in ~500 tokens vs ~80,000 for raw source browsing.
+
+---
+
+## Prompt Personas (switch when needed)
+
+| Task | Load Prompt |
+|------|-------------|
+| Architecture planning | `.ai/prompts/architect.md` |
+| Go backend work | `.ai/prompts/backend-engineer.md` |
+| React frontend work | `.ai/prompts/frontend-engineer.md` |
+| Security audit | `.ai/prompts/security-engineer.md` |
+| Code review | `.ai/prompts/reviewer.md` |
+| Debugging | `.ai/prompts/debugging.md` |
