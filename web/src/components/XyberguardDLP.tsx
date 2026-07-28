@@ -350,12 +350,7 @@ const XyberguardDLP = () => {
               className="font-normal leading-tight max-w-6xl text-white
                 text-[20px] sm:text-[28px] md:text-[55px] md:leading-[1.1]"
             >
-              <span className="relative">
-                <span className="absolute inset-0 blur-md text-cyan-400 opacity-60">
-                  Xyberguard-DLP
-                </span>
-                <span className="relative text-cyan-300">Xyberguard-DLP</span>
-              </span>{" "}
+              <span className="text-cyan-300">Xyberguard-DLP</span>{" "}
               <span className="text-white/90">
                 Enterprise Data Loss Prevention
               </span>
