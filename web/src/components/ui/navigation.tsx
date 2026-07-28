@@ -97,13 +97,13 @@ const Navigation = () => {
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="flex justify-between items-center h-40">
+        <div className={`flex justify-between items-center transition-all duration-500 ${isScrolled ? "h-[45px]" : "h-[67px]"}`}>
           {/* Logo */}
           <Link to="/">
             <img
               src={isScrolled ? logoSolid : logoTransparent}
               alt="SerenyaX logo"
-              className="h-32 sm:h-36 w-auto transition-opacity duration-300 hover:opacity-90"
+              className="h-20 sm:h-24 w-auto transition-opacity duration-300 hover:opacity-90"
             />
           </Link>
 
