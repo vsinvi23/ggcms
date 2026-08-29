@@ -34,6 +34,19 @@ fi
 PG_PASS=$(gcloud secrets versions access latest --secret=gg-cms-pg-password --project=$PROJECT_ID)
 MONGO_PASS=$(gcloud secrets versions access latest --secret=gg-cms-mongo-password --project=$PROJECT_ID)
 
+echo "Setting up dedicated Cloud Run Service Account..."
+SA_NAME="gg-cms-cloudrun-sa"
+SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+if ! gcloud iam service-accounts describe $SA_EMAIL --project=$PROJECT_ID >/dev/null 2>&1; then
+    gcloud iam service-accounts create $SA_NAME --display-name="GG-CMS Cloud Run SA" --project=$PROJECT_ID
+fi
+
+# Grant Secret Accessor role to the SA for all secrets
+gcloud secrets add-iam-policy-binding gg-cms-jwt-secret --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor" --project=$PROJECT_ID >/dev/null 2>&1 || true
+gcloud secrets add-iam-policy-binding gg-cms-admin-password --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor" --project=$PROJECT_ID >/dev/null 2>&1 || true
+gcloud secrets add-iam-policy-binding gg-cms-pg-password --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor" --project=$PROJECT_ID >/dev/null 2>&1 || true
+gcloud secrets add-iam-policy-binding gg-cms-mongo-password --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor" --project=$PROJECT_ID >/dev/null 2>&1 || true
+
 echo "Checking Artifact Registry..."
 if ! gcloud artifacts repositories describe gg-cms --location=$REGION --project=$PROJECT_ID >/dev/null 2>&1; then
     gcloud artifacts repositories create gg-cms --repository-format=docker --location=$REGION --project=$PROJECT_ID
@@ -80,6 +93,7 @@ gcloud run deploy gg-cms-backend \
   --max-instances=3 \
   --allow-unauthenticated \
   --ingress=all \
+  --service-account=${SA_EMAIL} \
   --set-secrets=JWT_SECRET=gg-cms-jwt-secret:latest,ADMIN_PASSWORD=gg-cms-admin-password:latest \
   --set-env-vars="DB_WRITE_URL=postgres://gg_cms_user:${PG_PASS}@${VM_IP}:5432/gg_cms?sslmode=require,MONGO_URI=mongodb://gg_cms_user:${MONGO_PASS}@${VM_IP}:27017/?authSource=admin&tls=true&tlsInsecure=true,GIN_MODE=release,TLS_ENABLED=false,LOG_LEVEL=info,MONGO_DATABASE=gg_cms,ADMIN_EMAIL=info@serenyax.com,ADMIN_NAME=Super Admin" \
   --network=default \
