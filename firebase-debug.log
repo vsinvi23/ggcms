@@ -1,0 +1,58 @@
+[debug] [2026-08-29T15:14:30.912Z] ----------------------------------------------------------------------
+[debug] [2026-08-29T15:14:30.913Z] Command:       /usr/local/bin/node /Users/vivek/.npm/_npx/7750544ccf494d8b/node_modules/.bin/firebase projects:addfirebase ggcms-free-tier-vivek --token ya29.a0AdMD6EjFKqYrzWoYH82K891jpa6J8-969TT8MOd1z3ac7mZyWJbOHkmyIzddtCrDWCNH07WBny1xUqsf363JZ44klVfA8AGA6exqbeXYl4vf6NnQsjUyquwf7JqzfKS6W15GJTV3kNmGLf7LE91bX2lYOL5D6yiZCstWsxfpkTEzf5Y2PI-pLHs3_QwF9BQlPthjYuK4ORooaCgYKAWcSARUSFQHGX2Miv0-4Qjvw82V59_TBDxDv_w0211
+[debug] [2026-08-29T15:14:30.913Z] CLI Version:   15.28.2
+[debug] [2026-08-29T15:14:30.913Z] Platform:      darwin
+[debug] [2026-08-29T15:14:30.914Z] Node Version:  v24.15.0
+[debug] [2026-08-29T15:14:30.914Z] Detected Agent: antigravity
+[debug] [2026-08-29T15:14:30.914Z] Time:          Sat Aug 29 2026 20:44:30 GMT+0530 (India Standard Time)
+[debug] [2026-08-29T15:14:30.914Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-08-29T15:14:30.915Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-29T15:14:30.915Z] > authorizing via --token option
+[warn] ⚠  Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started 
+[debug] [2026-08-29T15:14:30.920Z] No OAuth tokens found
+[debug] [2026-08-29T15:14:30.920Z] No OAuth tokens found
+[debug] [2026-08-29T15:14:30.920Z] > refreshing access token with scopes: []
+[debug] [2026-08-29T15:14:30.923Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-08-29T15:14:30.923Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-08-29T15:14:31.069Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 401
+[debug] [2026-08-29T15:14:31.069Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-08-29T15:14:31.069Z] >>> [apiv2][query] POST https://firebase.googleapis.com/v1beta1/projects/ggcms-free-tier-vivek:addFirebase [none]
+[debug] [2026-08-29T15:14:31.254Z] <<< [apiv2][status] POST https://firebase.googleapis.com/v1beta1/projects/ggcms-free-tier-vivek:addFirebase 403
+[debug] [2026-08-29T15:14:31.254Z] <<< [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/ggcms-free-tier-vivek:addFirebase {"error":{"code":403,"message":"Your application is authenticating by using local Application Default Credentials. The firebase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"service":"firebase.googleapis.com","consumer":"projects/32555940559"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Your application is authenticating by using local Application Default Credentials. The firebase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds ."}]}}
+[debug] [2026-08-29T15:14:31.255Z] Request to https://firebase.googleapis.com/v1beta1/projects/ggcms-free-tier-vivek:addFirebase had HTTP Error: 403, Your application is authenticating by using local Application Default Credentials. The firebase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
+[debug] [2026-08-29T15:14:31.256Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/ggcms-free-tier-vivek:addFirebase had HTTP Error: 403, Your application is authenticating by using local Application Default Credentials. The firebase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
+    at responseToError (/Users/vivek/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/Users/vivek/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/apiv2.js:415:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[error] 
+[error] Error: Failed to add Firebase to Google Cloud Platform project. See firebase-debug.log for more info.
+[debug] [2026-08-29T15:15:04.750Z] ----------------------------------------------------------------------
+[debug] [2026-08-29T15:15:04.751Z] Command:       /usr/local/bin/node /Users/vivek/.npm/_npx/7750544ccf494d8b/node_modules/.bin/firebase projects:addfirebase ggcms-free-tier-vivek --token ya29.a0AdMD6EjFKqYrzWoYH82K891jpa6J8-969TT8MOd1z3ac7mZyWJbOHkmyIzddtCrDWCNH07WBny1xUqsf363JZ44klVfA8AGA6exqbeXYl4vf6NnQsjUyquwf7JqzfKS6W15GJTV3kNmGLf7LE91bX2lYOL5D6yiZCstWsxfpkTEzf5Y2PI-pLHs3_QwF9BQlPthjYuK4ORooaCgYKAWcSARUSFQHGX2Miv0-4Qjvw82V59_TBDxDv_w0211
+[debug] [2026-08-29T15:15:04.751Z] CLI Version:   15.28.2
+[debug] [2026-08-29T15:15:04.751Z] Platform:      darwin
+[debug] [2026-08-29T15:15:04.751Z] Node Version:  v24.15.0
+[debug] [2026-08-29T15:15:04.751Z] Detected Agent: antigravity
+[debug] [2026-08-29T15:15:04.751Z] Time:          Sat Aug 29 2026 20:45:04 GMT+0530 (India Standard Time)
+[debug] [2026-08-29T15:15:04.751Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-08-29T15:15:04.752Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-29T15:15:04.752Z] > authorizing via --token option
+[warn] ⚠  Authenticating with `--token` is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started 
+[debug] [2026-08-29T15:15:04.758Z] No OAuth tokens found
+[debug] [2026-08-29T15:15:04.758Z] No OAuth tokens found
+[debug] [2026-08-29T15:15:04.758Z] > refreshing access token with scopes: []
+[debug] [2026-08-29T15:15:04.759Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-08-29T15:15:04.759Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-08-29T15:15:04.898Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 401
+[debug] [2026-08-29T15:15:04.898Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-08-29T15:15:04.898Z] >>> [apiv2][query] POST https://firebase.googleapis.com/v1beta1/projects/ggcms-free-tier-vivek:addFirebase [none]
+[debug] [2026-08-29T15:15:05.121Z] <<< [apiv2][status] POST https://firebase.googleapis.com/v1beta1/projects/ggcms-free-tier-vivek:addFirebase 403
+[debug] [2026-08-29T15:15:05.121Z] <<< [apiv2][body] POST https://firebase.googleapis.com/v1beta1/projects/ggcms-free-tier-vivek:addFirebase {"error":{"code":403,"message":"Your application is authenticating by using local Application Default Credentials. The firebase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","domain":"googleapis.com","metadata":{"service":"firebase.googleapis.com","consumer":"projects/32555940559"}},{"@type":"type.googleapis.com/google.rpc.LocalizedMessage","locale":"en-US","message":"Your application is authenticating by using local Application Default Credentials. The firebase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds ."}]}}
+[debug] [2026-08-29T15:15:05.122Z] Request to https://firebase.googleapis.com/v1beta1/projects/ggcms-free-tier-vivek:addFirebase had HTTP Error: 403, Your application is authenticating by using local Application Default Credentials. The firebase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
+[debug] [2026-08-29T15:15:05.123Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/ggcms-free-tier-vivek:addFirebase had HTTP Error: 403, Your application is authenticating by using local Application Default Credentials. The firebase.googleapis.com API requires a quota project, which is not set by default. To learn how to set your quota project, see https://cloud.google.com/docs/authentication/adc-troubleshooting/user-creds .
+    at responseToError (/Users/vivek/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/responseToError.js:53:12)
+    at RetryOperation._fn (/Users/vivek/.npm/_npx/7750544ccf494d8b/node_modules/firebase-tools/lib/apiv2.js:415:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[error] 
+[error] Error: Failed to add Firebase to Google Cloud Platform project. See firebase-debug.log for more info.
