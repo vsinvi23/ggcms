@@ -27,6 +27,7 @@ services:
         cp /pg-certs-ro/server.key /pg-certs/server.key
         cp /pg-certs-ro/ca.crt     /pg-certs/ca.crt
         chown 70:70 /pg-certs/server.crt /pg-certs/server.key /pg-certs/ca.crt
+        chown -R postgres:postgres /var/lib/postgresql/data
         chmod 600 /pg-certs/server.key
         chmod 644 /pg-certs/server.crt /pg-certs/ca.crt
         exec su-exec postgres docker-entrypoint.sh postgres \
@@ -49,9 +50,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
       POSTGRES_DB: gg_cms
     ports:
-      # Bind to localhost only — firewall blocks external access
-      # Cloud Run connects via VPC internal IP
-      - "127.0.0.1:5432:5432"
+      # Bind to all interfaces so Cloud Run can connect via VPC
+      - "5432:5432"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
       - ./certs/postgres:/pg-certs-ro:ro
@@ -78,15 +78,16 @@ services:
       - /certs/server.pem
       - --tlsCAFile
       - /certs/ca.crt
-      # Limit WiredTiger cache to 150 MB (default is ~half of RAM = 500 MB)
+      - --tlsAllowConnectionsWithoutCertificates
+      # Limit WiredTiger cache to minimum allowed (250 MB)
       - --wiredTigerCacheSizeGB
-      - "0.15"
+      - "0.25"
     environment:
       MONGO_INITDB_ROOT_USERNAME: gg_cms_user
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:?Set MONGO_PASSWORD}
       MONGO_INITDB_DATABASE: gg_cms
     ports:
-      - "127.0.0.1:27017:27017"
+      - "27017:27017"
     volumes:
       - ./data/mongodb:/data/db
       - ./data/mongodb-config:/data/configdb
