@@ -23,6 +23,7 @@ WORKDIR /app
 COPY --from=builder /app/server .
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/.env.example ./.env.example
+COPY --from=builder /app/dist ./dist
 
 # Create uploads directory
 RUN mkdir -p uploads

@@ -75,7 +75,12 @@ gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-
 VM_IP=$(gcloud compute instances describe $VM_NAME --zone=$ZONE --project=$PROJECT_ID --format='value(networkInterfaces[0].networkIP)')
 echo "VM Internal IP: $VM_IP"
 
-echo "Building Backend Image..."
+echo "Building React UI Frontend..."
+(cd gg-cms/frontend/react-ui && npm run build)
+rm -rf gg-cms/backend/go-cms/dist
+cp -r gg-cms/frontend/react-ui/dist gg-cms/backend/go-cms/dist
+
+echo "Building Backend & Frontend Bundle Image..."
 gcloud builds submit gg-cms/backend/go-cms \
   --tag=$IMAGE \
   --region=$REGION \

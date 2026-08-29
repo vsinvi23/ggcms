@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+  <!-- Window body -->
+  <rect width="40" height="40" rx="8" fill="#1a1f2e"/>
+  <!-- Title bar -->
+  <rect x="0" y="0" width="40" height="13" rx="8" fill="#252b3b"/>
+  <rect x="0" y="7" width="40" height="6" fill="#252b3b"/>
+  <!-- macOS dots -->
+  <circle cx="7"  cy="6.5" r="2.2" fill="#ff5f57"/>
+  <circle cx="14" cy="6.5" r="2.2" fill="#febc2e"/>
+  <circle cx="21" cy="6.5" r="2.2" fill="#28c840"/>
+  <!-- Divider -->
+  <line x1="0" y1="13" x2="40" y2="13" stroke="#2d3550" stroke-width="0.8"/>
+  <!-- > prompt -->
+  <text x="4" y="30" font-family="'Courier New',Courier,monospace" font-size="14" font-weight="700" fill="#22c55e">&gt;</text>
+  <!-- GG -->
+  <text x="15" y="30" font-family="'Courier New',Courier,monospace" font-size="14" font-weight="700" fill="white">GG</text>
+  <!-- _ cursor -->
+  <text x="31" y="30" font-family="'Courier New',Courier,monospace" font-size="14" font-weight="700" fill="#22c55e">_</text>
+</svg>

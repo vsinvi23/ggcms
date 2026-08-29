@@ -1,6 +1,9 @@
 package http
 
 import (
+	"os"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	analyticssvc "github.com/serenya/go-cms/internal/application/analytics"
 	auditsvc "github.com/serenya/go-cms/internal/application/audit"
@@ -69,6 +72,23 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 
 	// Serve uploaded files statically
 	r.Static("/uploads", cfg.Upload.Dir)
+
+	// Set JS and CSS MIME types for static assets if needed
+	r.Use(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/assets/") {
+			if strings.HasSuffix(c.Request.URL.Path, ".js") {
+				c.Header("Content-Type", "application/javascript; charset=utf-8")
+			} else if strings.HasSuffix(c.Request.URL.Path, ".css") {
+				c.Header("Content-Type", "text/css; charset=utf-8")
+			}
+		}
+		c.Next()
+	})
+
+	// Serve React SPA frontend if dist directory exists
+	if _, err := os.Stat("dist"); err == nil {
+		r.Static("/assets", "dist/assets")
+	}
 
 	// GraphQL endpoint (public — for content browsing)
 	gql, err := gqlhandler.NewHandler(svcs.CMS, svcs.Category)
@@ -315,9 +335,20 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 				// User's highlights list + delete + update
 				eng.GET("highlights", engH.ListMyHighlights)
 				eng.PUT("highlights/:id", engH.UpdateHighlight)
-				eng.DELETE("highlights/:id", engH.DeleteHighlight)
 			}
 		}
+	}
+
+	// Serve React SPA frontend HTML for non-API routes
+	if _, err := os.Stat("dist"); err == nil {
+		r.NoRoute(func(c *gin.Context) {
+			path := c.Request.URL.Path
+			if !strings.HasPrefix(path, "/api") && !strings.HasPrefix(path, "/graphql") && !strings.HasPrefix(path, "/uploads") {
+				c.File("dist/index.html")
+				return
+			}
+			c.JSON(404, gin.H{"code": 404, "message": "route not found"})
+		})
 	}
 
 	return r, nil
