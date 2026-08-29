@@ -5,11 +5,54 @@
 
 ---
 
-## One-Click Deployment & Upgrade
+### 5. Final Verified Deployment Status
 
-We have fully automated the GCP deployment! A single script provisions all infrastructure, generates internal mTLS certificates, configures databases on the Free Tier VM, and deploys the backend API to Cloud Run securely over the private VPC.
+| Component | GCP Infrastructure | Live URL / Access | Status |
+| :--- | :--- | :--- | :--- |
+| **Frontend & Backend API** | **GCP Cloud Run** (`gg-cms-backend`) | `https://gg-cms-backend-274495931884.us-central1.run.app` | **LIVE & OPERATIONAL** |
+| **Local Auth Access Proxy** | **Local Mac Proxy** | `http://localhost:8085` | **ACTIVE & FUNCTIONAL** |
+| **PostgreSQL & Redis DB** | **Compute Engine VM** (`ggcms-db-vm`) | `10.128.0.2:5432 / 6379` (Internal VPC) | **HEALTHY & SECURE** |
+| **VM Management Access** | **IAP SSH Tunnel** | `gcloud compute ssh ggcms-db-vm --tunnel-through-iap` | **HARDENED** |
 
-### Prerequisites
+---
+
+### How to Access the Live UI
+
+Due to domain-restricted organization policies (`serenyax.com`), direct unauthenticated external requests to `.run.app` URLs are restricted by Google Cloud IAM. You have 3 easy ways to access the live app:
+
+#### Option A: Zero-Setup Local Authenticated Proxy (Recommended for Testing)
+Run the automated local proxy on your Mac:
+```bash
+node release/gcp/local-ui-proxy.js
+```
+Open **`http://localhost:8085`** in your browser. This proxy automatically injects your `gcloud` identity token into all requests, giving you direct access to the live Cloud Run React UI and PostgreSQL DB!
+
+#### Option B: Deploy Frontend to Firebase Hosting (Instant Public Domain)
+Firebase Hosting provides a public HTTPS domain (e.g. `https://ggcms-free-tier-vivek.web.app`) without domain-sharing restrictions:
+```bash
+cd gg-cms/frontend/react-ui
+npm run build
+npx firebase-tools deploy --only hosting
+```
+
+#### Option C: Custom Domain Mapping (`geekgully.com`)
+Map your custom domain to Cloud Run:
+```bash
+gcloud beta run domain-mappings create \
+  --service=gg-cms-backend \
+  --domain=cms.geekgully.com \
+  --region=us-central1
+```
+
+---
+
+### One-Click Deployment & Upgrade Command
+
+To deploy any future frontend or backend code update with one click:
+```bash
+bash release/gcp/deploy.sh
+```
+This single script automatically builds the React SPA assets, packages the unified Go container, submits the build to Cloud Build, and rolls out the new revision on Cloud Run with zero downtime!
 
 You only need two things on your local machine:
 1. **Google Cloud SDK** installed and authenticated (`gcloud auth login`).
