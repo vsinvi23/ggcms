@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -75,6 +76,10 @@ type OAuthConfig struct {
 }
 
 func Load() *Config {
+	// Cloud Run injects PORT — respect it over SERVER_PORT default
+	if port := os.Getenv("PORT"); port != "" {
+		os.Setenv("SERVER_PORT", port)
+	}
 	viper.AutomaticEnv()
 
 	viper.SetDefault("SERVER_PORT", "8080")

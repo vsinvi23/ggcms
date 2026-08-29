@@ -143,9 +143,9 @@ issue_cert "postgres" \
 header "MongoDB — server cert"
 issue_cert "mongodb" \
   "mongodb" \
-  "DNS:mongodb,DNS:localhost,IP:127.0.0.1" \
+  "DNS:mongodb,DNS:localhost,IP:127.0.0.1,IP:10.128.0.2" \
   "digitalSignature,keyEncipherment" \
-  "serverAuth" \
+  "serverAuth,clientAuth" \
   "server"
 
 # ══ Backend ════════════════════════════════════════════════════════════════════
