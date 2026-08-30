@@ -12,7 +12,7 @@
 | **Public Custom Domain** | **GCP Cloud Run Domain Mapping** | **`https://geekgully.com` / `https://www.geekgully.com`** | **MAPPED & PROVISIONING SSL** |
 | **Frontend & Backend API** | **GCP Cloud Run** (`gg-cms-backend`) | `https://gg-cms-backend-274495931884.us-central1.run.app` | **LIVE & OPERATIONAL** |
 | **Local Auth Access Proxy** | **Local Mac Proxy** | `http://localhost:8085` | **ACTIVE & FUNCTIONAL** |
-| **PostgreSQL & Redis DB** | **Compute Engine VM** (`ggcms-db-vm`) | `10.128.0.2:5432 / 6379` (Internal VPC) | **HEALTHY & SECURE** |
+| **PostgreSQL & MongoDB DB** | **Compute Engine VM** (`ggcms-db-vm`) | `10.128.0.2:5432 / 27017` (Internal VPC) | **HEALTHY & SECURE** |
 | **VM Management Access** | **IAP SSH Tunnel** | `gcloud compute ssh ggcms-db-vm --tunnel-through-iap` | **HARDENED** |
 
 ---
@@ -233,15 +233,15 @@ The database VM runs isolated within the VPC without external permissions.
 
 Automated database backups run directly on the `gg-cms-db` Compute Engine VM and sync to remote storage (Google Drive via `rclone`).
 
-### Backup Architecture & Schedule
-* **PostgreSQL Backup**:
-  * **WAL Delta Sync**: Every 15 minutes (`postgres-backup.sh --wal-sync`)
-  * **Daily Logical Dump**: Every day at 2:00 AM (`postgres-backup.sh --daily`)
-  * **Weekly Full Dump**: Every Sunday at 1:00 AM (`postgres-backup.sh --full`)
-* **MongoDB Backup**:
-  * **Daily Snapshot**: Every day at 3:00 AM (`mongodb-backup.sh --snapshot`)
-  * **Weekly Collection Export**: Every Sunday at 3:30 AM (`mongodb-backup.sh --full-collections`)
-* **Log Rotation**: Automated cleanup keeping 7 days of logs.
+### Backup Destination & Retention
+* **Google Drive Target Path**: **`My Drive/backup/geekgully/data/`**
+  * PostgreSQL: `backup/geekgully/data/postgres/`
+  * MongoDB: `backup/geekgully/data/mongodb/`
+* **Retention Policy**: **Weekly Schedule — Retains exactly the last 3 backups** (older backups automatically pruned).
+
+### Backup Schedule
+* **PostgreSQL Weekly Dump**: Every Sunday at 2:00 AM (`postgres-backup.sh --full`)
+* **MongoDB Weekly Snapshot**: Every Sunday at 3:00 AM (`mongodb-backup.sh --snapshot`)
 
 ### Setup Instructions
 1. SSH into the DB VM:
