@@ -3,8 +3,13 @@ gg-cms/backend/go-cms/server
 gg-cms/backend/go-cms/server.exe
 
 # ── Runtime logs — never commit ───────────────────────────────────────────────
+*.log
+firebase-debug.log*
 gg-cms/backend/go-cms/logs/
 gg-cms/logs/
+*.pem
+*.key
+*.crt
 
 # ── Test output ───────────────────────────────────────────────────────────────
 gg-cms/frontend/react-ui/test-results/
