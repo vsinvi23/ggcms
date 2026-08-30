@@ -9,6 +9,7 @@
 
 | Component | GCP Infrastructure | Live URL / Access | Status |
 | :--- | :--- | :--- | :--- |
+| **Public Custom Domain** | **GCP Cloud Run Domain Mapping** | **`https://geekgully.com` / `https://www.geekgully.com`** | **MAPPED & PROVISIONING SSL** |
 | **Frontend & Backend API** | **GCP Cloud Run** (`gg-cms-backend`) | `https://gg-cms-backend-274495931884.us-central1.run.app` | **LIVE & OPERATIONAL** |
 | **Local Auth Access Proxy** | **Local Mac Proxy** | `http://localhost:8085` | **ACTIVE & FUNCTIONAL** |
 | **PostgreSQL & Redis DB** | **Compute Engine VM** (`ggcms-db-vm`) | `10.128.0.2:5432 / 6379` (Internal VPC) | **HEALTHY & SECURE** |
@@ -18,7 +19,24 @@
 
 ### How to Access the Live UI
 
-Due to domain-restricted organization policies (`serenyax.com`), direct unauthenticated external requests to `.run.app` URLs are restricted by Google Cloud IAM. You have 3 easy ways to access the live app:
+Your custom domain **`geekgully.com`** and **`www.geekgully.com`** are mapped directly to your Cloud Run unified deployment!
+
+To complete the setup, add these exact DNS records in your domain registrar:
+
+#### DNS Records for `geekgully.com`:
+Add 4 **`A` Records**:
+- **Host / Name**: `@` (or `geekgully.com`)
+- **IP Addresses**:
+  - `216.239.32.21`
+  - `216.239.34.21`
+  - `216.239.36.21`
+  - `216.239.38.21`
+
+#### DNS Record for `www.geekgully.com`:
+Add 1 **`CNAME` Record**:
+- **Host / Name**: `www`
+- **Target / Points to**: `ghs.googlehosted.com.`
+
 
 #### Option A: Zero-Setup Local Authenticated Proxy (Recommended for Testing)
 Run the automated local proxy on your Mac:
