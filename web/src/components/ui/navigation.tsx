@@ -19,6 +19,7 @@ import solutionIcon from "@/assets/images/digital-certificate.png";
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const closeTimeout = useRef<any>(null);
@@ -99,11 +100,15 @@ const Navigation = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className={`flex justify-between items-center transition-all duration-500 ${isScrolled ? "h-[45px]" : "h-[67px]"}`}>
           {/* Logo */}
-          <Link to="/">
+          <Link to="/" className="relative inline-block h-20 sm:h-24 transition-opacity duration-300 hover:opacity-90">
+            {/* Faux-bold: stack offset copies of the logo to thicken its strokes (it's a raster PNG, so font-weight can't apply) */}
+            <img src={isScrolled ? logoSolid : logoTransparent} alt="" aria-hidden="true" className="absolute inset-0 h-20 sm:h-24 w-auto translate-x-[0.6px]" />
+            <img src={isScrolled ? logoSolid : logoTransparent} alt="" aria-hidden="true" className="absolute inset-0 h-20 sm:h-24 w-auto -translate-x-[0.6px]" />
+            <img src={isScrolled ? logoSolid : logoTransparent} alt="" aria-hidden="true" className="absolute inset-0 h-20 sm:h-24 w-auto translate-y-[0.6px]" />
             <img
               src={isScrolled ? logoSolid : logoTransparent}
               alt="SerenyaX logo"
-              className="h-20 sm:h-24 w-auto transition-opacity duration-300 hover:opacity-90"
+              className="relative h-20 sm:h-24 w-auto"
             />
           </Link>
 
@@ -137,72 +142,93 @@ const Navigation = () => {
 
                     {openDropdown === item.label && (
                       <div
-                        className={`absolute z-50 mt-2 bg-white dark:bg-[#0f172a] shadow-2xl border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden
-                          ${item.label === "Solutions" ? "left-0 w-[28rem]" : "left-1/2 -translate-x-1/2 w-[64rem]"}`}
-                        style={{ borderTop: "3px solid #4483f9" }}
+                        className={`absolute z-50 mt-3 bg-white dark:bg-[#0f172a] shadow-xl border border-gray-100 dark:border-white/10 rounded-xl overflow-hidden
+                          ${item.label === "Solutions" ? "left-0 w-[22rem]" : "left-1/2 -translate-x-1/2 w-[28rem]"}`}
+                        style={{ borderTop: "2px solid #4483f9" }}
                       >
                         {item.label === "Services" ? (
-                          /* ── Tenable-style Services mega-menu ── */
-                          <div className="p-6">
-                            <p style={dropDownHFont} className="mb-4 px-1">Our Services</p>
-                            <div className="grid grid-cols-2 gap-1">
-                              {Object.entries(servicesDropdown).flatMap(([section, items]) =>
-                                items.map(({ label, desc, icon, to }) => (
+                          /* ── Sidebar + preview panel ── */
+                          <div className="flex" style={{ minHeight: "216px" }}>
+                            <div className="w-[11rem] flex-shrink-0 border-r border-gray-100 dark:border-white/10 py-3.5 px-2 bg-gray-50/50 dark:bg-white/[0.02]">
+                              <p style={dropDownHFont} className="mb-2.5 px-2">Services</p>
+                              <div className="flex flex-col gap-0.5">
+                                {Object.keys(servicesDropdown).map((section) => {
+                                  const active = (activeSection ?? Object.keys(servicesDropdown)[0]) === section;
+                                  return (
+                                    <button
+                                      key={section}
+                                      type="button"
+                                      onMouseEnter={() => setActiveSection(section)}
+                                      className={`w-full text-left rounded-lg px-2.5 py-2 text-[12px] font-medium leading-tight transition-colors ${
+                                        active
+                                          ? "text-[#4483f9] bg-white dark:bg-white/10 shadow-sm"
+                                          : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/60 dark:hover:bg-white/5"
+                                      }`}
+                                    >
+                                      {section}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            <div className="flex-1 p-3.5 min-w-0">
+                              <div className="flex flex-col gap-1">
+                                {servicesDropdown[(activeSection ?? Object.keys(servicesDropdown)[0]) as keyof typeof servicesDropdown].map(({ label, desc, icon, to }) => (
                                   <Link
                                     key={label}
                                     to={to}
                                     onClick={() => setOpenDropdown(null)}
-                                    className="group flex items-start gap-3 p-3 rounded-xl hover:bg-[#f0f4ff] dark:hover:bg-white/5 transition-colors duration-150"
+                                    className="group flex items-start gap-2.5 p-2 rounded-lg hover:bg-[#f0f4ff] dark:hover:bg-white/5 transition-colors duration-150"
                                   >
-                                    <span className="flex-shrink-0 flex items-center justify-center h-9 w-9 rounded-xl bg-[#f0f4ff] dark:bg-white/10 group-hover:bg-[#4483f9]/10 transition-colors">
-                                      <img src={icon} alt="" className="h-5 w-5 object-contain" />
+                                    <span className="flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-lg bg-[#f0f4ff] dark:bg-white/10 group-hover:bg-[#4483f9]/10 group-hover:scale-105 transition-all">
+                                      <img src={icon} alt="" className="h-3.5 w-3.5 object-contain" />
                                     </span>
                                     <span className="flex flex-col min-w-0">
-                                      <span className="text-gray-900 dark:text-white text-[13px] font-semibold leading-snug truncate">{label}</span>
-                                      <span className="text-gray-400 dark:text-gray-500 text-[11px] leading-snug mt-0.5 line-clamp-2">{desc}</span>
+                                      <span className="text-gray-900 dark:text-white text-[12px] font-semibold leading-snug truncate">{label}</span>
+                                      <span className="text-gray-400 dark:text-gray-500 text-[10px] leading-snug mt-0.5 line-clamp-2">{desc}</span>
                                     </span>
                                   </Link>
-                                ))
-                              )}
-                            </div>
-                            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10 flex items-center justify-between px-1">
-                              <span className="text-gray-400 dark:text-gray-500 text-[11px]">Not sure where to start?</span>
-                              <Link
-                                to="/contact-us"
-                                onClick={() => setOpenDropdown(null)}
-                                className="text-[#4483f9] text-[12px] font-semibold hover:underline"
-                              >
-                                Talk to an expert →
-                              </Link>
+                                ))}
+                              </div>
+                              <div className="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-white/10 flex items-center justify-between">
+                                <span className="text-gray-400 dark:text-gray-500 text-[10px]">Not sure?</span>
+                                <Link
+                                  to="/contact-us"
+                                  onClick={() => setOpenDropdown(null)}
+                                  className="text-[#4483f9] text-[11px] font-semibold hover:underline"
+                                >
+                                  Talk to an expert →
+                                </Link>
+                              </div>
                             </div>
                           </div>
                         ) : (
-                          /* ── Tenable-style Solutions mega-menu ── */
-                          <div className="p-5">
-                            <p style={dropDownHFont} className="mb-4 px-1">Our Solutions</p>
-                            <div className="flex flex-col gap-2">
+                          /* ── Compact Solutions mega-menu ── */
+                          <div className="p-3.5">
+                            <p style={dropDownHFont} className="mb-2.5 px-1">Our Solutions</p>
+                            <div className="flex flex-col gap-1">
                               {solutionsDropdown.map(({ label, desc, icon, to }) => (
                                 <Link
                                   key={label}
                                   to={to}
                                   onClick={() => setOpenDropdown(null)}
-                                  className="group flex items-start gap-4 p-3 rounded-xl hover:bg-[#f0f4ff] dark:hover:bg-white/5 transition-colors duration-150"
+                                  className="group flex items-start gap-3 p-2 rounded-lg hover:bg-[#f0f4ff] dark:hover:bg-white/5 transition-colors duration-150"
                                 >
-                                  <span className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-xl bg-[#f0f4ff] dark:bg-white/10 group-hover:bg-[#4483f9]/10 transition-colors">
-                                    <img src={icon} alt="" className="h-6 w-6 object-contain" />
+                                  <span className="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg bg-[#f0f4ff] dark:bg-white/10 group-hover:bg-[#4483f9]/10 group-hover:scale-105 transition-all">
+                                    <img src={icon} alt="" className="h-4 w-4 object-contain" />
                                   </span>
-                                  <span className="flex flex-col">
-                                    <span className="text-gray-900 dark:text-white text-[13.5px] font-semibold leading-snug whitespace-nowrap">{label}</span>
-                                    <span className="text-gray-400 dark:text-gray-500 text-[12px] leading-snug mt-1">{desc}</span>
+                                  <span className="flex flex-col min-w-0">
+                                    <span className="text-gray-900 dark:text-white text-[12.5px] font-semibold leading-snug truncate">{label}</span>
+                                    <span className="text-gray-400 dark:text-gray-500 text-[10.5px] leading-snug mt-0.5 line-clamp-1">{desc}</span>
                                   </span>
                                 </Link>
                               ))}
                             </div>
-                            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/10 px-1">
+                            <div className="mt-2.5 pt-2.5 border-t border-gray-100 dark:border-white/10 px-1">
                               <Link
                                 to="/contact-us"
                                 onClick={() => setOpenDropdown(null)}
-                                className="text-[#4483f9] text-[12px] font-semibold hover:underline"
+                                className="text-[#4483f9] text-[11px] font-semibold hover:underline"
                               >
                                 Request a demo →
                               </Link>

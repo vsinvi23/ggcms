@@ -224,16 +224,16 @@ const ContactUs = () => {
           <Card className="border border-gray-100 dark:border-white/10 rounded-3xl shadow-xl p-6 sm:p-8 md:p-10 bg-white dark:bg-white/[0.03]">
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Honeypot field — hidden from real users, tempting for bots */}
-              <input
-                type="text"
-                name="website"
-                value={formData.website}
-                onChange={handleChange}
-                tabIndex={-1}
-                autoComplete="off"
-                className="absolute -left-[9999px] w-px h-px opacity-0"
-                aria-hidden="true"
-              />
+              <div className="h-0 w-0 overflow-hidden" aria-hidden="true">
+                <input
+                  type="text"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleChange}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
 
               <div>
                 <Label htmlFor="name">Your Name *</Label>
