@@ -19,16 +19,16 @@ gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudb
 
 echo "Checking Secrets..."
 if ! gcloud secrets describe gg-cms-jwt-secret --project=$PROJECT_ID >/dev/null 2>&1; then
-    echo -n $(openssl rand -hex 32) | gcloud secrets create gg-cms-jwt-secret --data-file=- --project=$PROJECT_ID
+    openssl rand -hex 32 | gcloud secrets create gg-cms-jwt-secret --data-file=- --project=$PROJECT_ID >/dev/null 2>&1
 fi
 if ! gcloud secrets describe gg-cms-admin-password --project=$PROJECT_ID >/dev/null 2>&1; then
-    echo -n "Admin@12345" | gcloud secrets create gg-cms-admin-password --data-file=- --project=$PROJECT_ID
+    echo -n "Admin@12345" | gcloud secrets create gg-cms-admin-password --data-file=- --project=$PROJECT_ID >/dev/null 2>&1
 fi
 if ! gcloud secrets describe gg-cms-pg-password --project=$PROJECT_ID >/dev/null 2>&1; then
-    echo -n $(openssl rand -hex 16) | gcloud secrets create gg-cms-pg-password --data-file=- --project=$PROJECT_ID
+    openssl rand -hex 16 | gcloud secrets create gg-cms-pg-password --data-file=- --project=$PROJECT_ID >/dev/null 2>&1
 fi
 if ! gcloud secrets describe gg-cms-mongo-password --project=$PROJECT_ID >/dev/null 2>&1; then
-    echo -n $(openssl rand -hex 16) | gcloud secrets create gg-cms-mongo-password --data-file=- --project=$PROJECT_ID
+    openssl rand -hex 16 | gcloud secrets create gg-cms-mongo-password --data-file=- --project=$PROJECT_ID >/dev/null 2>&1
 fi
 
 PG_PASS=$(gcloud secrets versions access latest --secret=gg-cms-pg-password --project=$PROJECT_ID)
@@ -70,7 +70,8 @@ gcloud compute scp --recurse release/certs $VM_NAME:/opt/gg-cms/ --zone=$ZONE --
 gcloud compute scp release/gcp/docker-compose.vm-dbs.yml $VM_NAME:/opt/gg-cms/ --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap
 
 echo "Starting Databases on VM..."
-gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="cd /opt/gg-cms && echo 'POSTGRES_PASSWORD=$PG_PASS' > .env && echo 'MONGO_PASSWORD=$MONGO_PASS' >> .env && sudo chown -R 999:999 /opt/gg-cms/certs/mongodb && docker compose -f docker-compose.vm-dbs.yml down && docker compose -f docker-compose.vm-dbs.yml up -d"
+ENV_B64=$(echo -e "POSTGRES_PASSWORD=$PG_PASS\nMONGO_PASSWORD=$MONGO_PASS" | base64 | tr -d '\n')
+gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="cd /opt/gg-cms && echo '$ENV_B64' | base64 -d > .env && sudo chown -R 999:999 /opt/gg-cms/certs/mongodb && docker compose -f docker-compose.vm-dbs.yml down >/dev/null 2>&1 && docker compose -f docker-compose.vm-dbs.yml up -d >/dev/null 2>&1"
 
 VM_IP=$(gcloud compute instances describe $VM_NAME --zone=$ZONE --project=$PROJECT_ID --format='value(networkInterfaces[0].networkIP)')
 echo "VM Internal IP: $VM_IP"
