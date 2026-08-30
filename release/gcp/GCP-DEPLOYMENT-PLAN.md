@@ -226,3 +226,46 @@ The database VM runs isolated within the VPC without external permissions.
 | **View DB Logs** | `sudo docker compose -f /opt/gg-cms/docker-compose.vm-dbs.yml logs -f` |
 | **Tunnel Postgres** | `gcloud compute start-iap-tunnel gg-cms-db 5432 --local-host-port=localhost:5432` |
 | **Tunnel Mongo** | `gcloud compute start-iap-tunnel gg-cms-db 27017 --local-host-port=localhost:27017` |
+
+---
+
+## 💾 Backup & Disaster Recovery Plan
+
+Automated database backups run directly on the `gg-cms-db` Compute Engine VM and sync to remote storage (Google Drive via `rclone`).
+
+### Backup Architecture & Schedule
+* **PostgreSQL Backup**:
+  * **WAL Delta Sync**: Every 15 minutes (`postgres-backup.sh --wal-sync`)
+  * **Daily Logical Dump**: Every day at 2:00 AM (`postgres-backup.sh --daily`)
+  * **Weekly Full Dump**: Every Sunday at 1:00 AM (`postgres-backup.sh --full`)
+* **MongoDB Backup**:
+  * **Daily Snapshot**: Every day at 3:00 AM (`mongodb-backup.sh --snapshot`)
+  * **Weekly Collection Export**: Every Sunday at 3:30 AM (`mongodb-backup.sh --full-collections`)
+* **Log Rotation**: Automated cleanup keeping 7 days of logs.
+
+### Setup Instructions
+1. SSH into the DB VM:
+   ```bash
+   gcloud compute ssh gg-cms-db --zone=us-central1-a --tunnel-through-iap
+   ```
+2. Initialize Google Drive sync:
+   ```bash
+   bash /opt/gg-cms/backup/setup-gdrive.sh --vm-install
+   ```
+3. Install automated backup cron jobs:
+   ```bash
+   bash /opt/gg-cms/backup/install-cron.sh
+   ```
+
+### Verification & Disaster Recovery
+* **Check Backup Status**:
+  ```bash
+  bash /opt/gg-cms/backup/postgres-backup.sh --list
+  bash /opt/gg-cms/backup/mongodb-backup.sh --list
+  ```
+* **Restore from Backup**:
+  ```bash
+  bash /opt/gg-cms/backup/restore.sh --pg-latest
+  bash /opt/gg-cms/backup/restore.sh --mongo-latest
+  ```
+
