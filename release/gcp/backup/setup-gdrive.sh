@@ -28,7 +28,7 @@ header() { echo ""; echo "══════════════════
 # ── VM-only install (no browser needed) ──────────────────────────────────────
 if [ "${1:-}" = "--vm-install" ]; then
   header "Installing rclone on VM"
-  curl -fsSL https://rclone.org/install.sh | sudo bash
+  command -v rclone &>/dev/null || curl -fsSL https://rclone.org/install.sh | sudo bash
   ok "rclone $(rclone --version | head -1)"
 
   CONF_DIR="$HOME/.config/rclone"

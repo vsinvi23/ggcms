@@ -72,6 +72,9 @@ daily_snapshot() {
       --username="$MONGO_USER" \
       --password="$MONGO_PASS" \
       --authenticationDatabase=admin \
+      --ssl \
+      --sslPEMKeyFile=/certs/server.pem \
+      --sslCAFile=/certs/ca.crt \
       --db="$MONGO_DB" \
       --archive \
       --gzip \

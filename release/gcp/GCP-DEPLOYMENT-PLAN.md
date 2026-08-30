@@ -1,41 +1,54 @@
-# GG-CMS — GCP Forever-Free Deployment Plan
+### 1. Architectural Overview & GCP Services Used
 
-> **Architecture: Plan B** — Cloud Run (API) + e2-micro VM (DBs) + Firebase Hosting (UI)
-> **Monthly cost: $0** (within always-free quotas)
-
----
-
-### 5. Final Verified Deployment Status
-
-| Component | GCP Infrastructure | Live URL / Access | Status |
+| Service / Layer | GCP Resource | Specifications / Details | Cost Tier |
 | :--- | :--- | :--- | :--- |
-| **Public Custom Domain** | **GCP Cloud Run Domain Mapping** | **`https://geekgully.com` / `https://www.geekgully.com`** | **MAPPED & PROVISIONING SSL** |
-| **Frontend & Backend API** | **GCP Cloud Run** (`gg-cms-backend`) | `https://gg-cms-backend-274495931884.us-central1.run.app` | **LIVE & OPERATIONAL** |
-| **Local Auth Access Proxy** | **Local Mac Proxy** | `http://localhost:8085` | **ACTIVE & FUNCTIONAL** |
-| **PostgreSQL & MongoDB DB** | **Compute Engine VM** (`ggcms-db-vm`) | `10.128.0.2:5432 / 27017` (Internal VPC) | **HEALTHY & SECURE** |
-| **VM Management Access** | **IAP SSH Tunnel** | `gcloud compute ssh ggcms-db-vm --tunnel-through-iap` | **HARDENED** |
+| **Custom Public Domains** | **Cloud Run Domain Mapping** | **`https://geekgully.com`** & **`https://www.geekgully.com`** | **$0 / Free** |
+| **Unified UI & API Server** | **Cloud Run** (`gg-cms-backend`) | Go 1.25 + React SPA (Vite/Tailwind), 512 MiB RAM, 1 vCPU | **Always Free** (2M reqs/mo) |
+| **Primary Relational DB** | **Compute Engine VM** (`ggcms-db-vm`) | PostgreSQL 16 (Port `5432`) over TLS | **Always Free** (`e2-micro`, 30GB disk) |
+| **Document NoSQL DB** | **Compute Engine VM** (`ggcms-db-vm`) | MongoDB 7 (Port `27017`) over TLS | **Always Free** (`e2-micro`, 30GB disk) |
+| **Secret Management** | **GCP Secret Manager** | Encrypted DB Passwords & mTLS Certificates | **Always Free** (<6 secret versions) |
+| **Private Networking** | **Default VPC Network** | Private IP `10.128.0.2` (Zero public DB ports exposed) | **$0 / Free** |
+| **Management Tunnel** | **Cloud IAP (Identity-Aware Proxy)** | Encrypted SSH / DB port forwarding (`gcloud compute ssh`) | **$0 / Free** |
+| **Local Auth Access Proxy** | **Node.js Local Proxy** (`local-ui-proxy.js`) | `http://localhost:8085` (Auto-injects `gcloud` identity token) | **$0 / Local** |
+| **Automated Free Tier Audit** | **Limit Check Script** (`check-free-tier-limits.sh`) | Audits VM size, disk, Cloud Run RAM/CPU, IP reservations | **$0 / Local** |
 
 ---
 
-### How to Access the Live UI
+### How to Unblock Unauthenticated Public Access on `geekgully.com`
 
-Your custom domain **`geekgully.com`** and **`www.geekgully.com`** are mapped directly to your Cloud Run unified deployment!
+Your Google Workspace organization (`serenyax.com`) enforces **`constraints/iam.allowedPolicyMemberDomains`**, which blocks granting `allUsers` invoker permissions on Cloud Run via CLI.
 
-To complete the setup, add these exact DNS records in your domain registrar:
+#### Step-by-Step Fix in GCP Console (30 Seconds):
+1. Open [Google Cloud Console Org Policies](https://console.cloud.google.com/iam-admin/orgpolicies/iam-allowedPolicyMemberDomains?project=ggcms-free-tier-vivek).
+2. Click **Edit Policy**.
+3. Select **Override parent's policy**.
+4. Set **Enforcement** to **Off** (or set Policy values to **Allow All**) for project `ggcms-free-tier-vivek`.
+5. Click **Save**.
+6. Run this command in terminal to grant unauthenticated public web access:
+   ```bash
+   gcloud run services add-iam-policy-binding gg-cms-backend \
+     --region=us-central1 \
+     --member=allUsers \
+     --role=roles/run.invoker \
+     --project=ggcms-free-tier-vivek
+   ```
 
-#### DNS Records for `geekgully.com`:
-Add 4 **`A` Records**:
-- **Host / Name**: `@` (or `geekgully.com`)
-- **IP Addresses**:
-  - `216.239.32.21`
-  - `216.239.34.21`
-  - `216.239.36.21`
-  - `216.239.38.21`
+#### Add Missing IPv6 (`AAAA`) Records for `geekgully.com`:
+Add these 4 IPv6 records in your domain registrar for `geekgully.com` to finish Let's Encrypt SSL certificate issuance:
+- `2001:4860:4802:32::15`
+- `2001:4860:4802:34::15`
+- `2001:4860:4802:36::15`
+- `2001:4860:4802:38::15`
 
-#### DNS Record for `www.geekgully.com`:
-Add 1 **`CNAME` Record**:
-- **Host / Name**: `www`
-- **Target / Points to**: `ghs.googlehosted.com.`
+---
+
+### Regular Free Tier Limit Audit Script
+
+Run the automated audit script on your Mac anytime to ensure no quotas or free limits are breached:
+```bash
+bash release/gcp/check-free-tier-limits.sh
+```
+
 
 
 #### Option A: Zero-Setup Local Authenticated Proxy (Recommended for Testing)
