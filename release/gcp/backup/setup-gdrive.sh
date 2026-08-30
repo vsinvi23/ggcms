@@ -18,7 +18,7 @@
 set -euo pipefail
 
 GDRIVE_REMOTE="gdrive"
-BACKUP_ROOT="gg-cms-backups"   # folder name inside your Google Drive
+BACKUP_ROOT="backup/geekgully/data"   # folder path inside Google Drive
 
 ok()     { echo "  [OK]    $*"; }
 info()   { echo "  [INFO]  $*"; }

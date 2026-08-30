@@ -26,7 +26,7 @@ set -euo pipefail
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 GDRIVE_REMOTE="gdrive"
-BACKUP_ROOT="gg-cms-backups"
+BACKUP_ROOT="backup/geekgully/data"
 GDRIVE_MONGO="${GDRIVE_REMOTE}:${BACKUP_ROOT}/mongodb"
 
 MONGO_CONTAINER="gg-cms-mongodb"
@@ -34,8 +34,7 @@ MONGO_USER="gg_cms_user"
 MONGO_DB="gg_cms"
 
 DUMP_DIR="/opt/gg-cms/mongo-dumps"
-DAILY_KEEP_DAYS=7
-FULL_KEEP_WEEKS=4
+KEEP_LAST_COUNT=3
 
 MODE="${1:---snapshot}"
 
@@ -92,13 +91,17 @@ daily_snapshot() {
 
   rm -f "$LOCAL_PATH"
 
-  # Prune old snapshots
-  log "Pruning snapshots older than ${DAILY_KEEP_DAYS} days..."
-  rclone delete "${GDRIVE_MONGO}/snapshots/" \
-    --min-age "${DAILY_KEEP_DAYS}d" \
-    --include "mongo_*.gz" \
-    --log-level=ERROR
-  ok "Pruned old snapshots."
+  # Prune old snapshots (keep last KEEP_LAST_COUNT backups)
+  log "Pruning old snapshots (retaining last ${KEEP_LAST_COUNT} backups)..."
+  local files_to_delete
+  files_to_delete=$(rclone lsf "${GDRIVE_MONGO}/snapshots/" --files-only 2>/dev/null | sort -r | tail -n +4)
+  for f in $files_to_delete; do
+    if [ -n "$f" ]; then
+      rclone deletefile "${GDRIVE_MONGO}/snapshots/$f"
+      log "Pruned old snapshot: $f"
+    fi
+  done
+  ok "Retained last ${KEEP_LAST_COUNT} backups."
 
   # Update manifest
   echo "last_snapshot=$(date -u +%Y-%m-%dT%H:%M:%SZ) file=$FNAME size=$SIZE" \
