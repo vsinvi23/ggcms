@@ -63,9 +63,22 @@ To achieve a **$0 Always-Free, Production-Grade GCP Deployment** while providing
 
 ## 3. Detailed Component Interconnections
 
-### A. Custom Domains ➔ Cloud Run Container
-- **Ingress Protocol**: Cloud Run Domain Mappings dynamically route DNS requests (`A` and `AAAA` records for `geekgully.com`, `CNAME` for `www.geekgully.com`) directly to Google Frontend.
-- **Canonical Redirect Middleware**: Any raw requests hitting `*.run.app` URLs are automatically issued an HTTP `301 Moved Permanently` redirect to `https://geekgully.com`.
+### B. Canonical Domain Redirect Middleware (Hardened Routing)
+- **Automatic HTTP 301 Redirect**: Any incoming web requests hitting default `*.run.app` endpoints are automatically issued an HTTP `301 Moved Permanently` redirect to `https://geekgully.com`.
+- **Implementation in Go Router**:
+  ```go
+  r.Use(func(c *gin.Context) {
+      if strings.Contains(c.Request.Host, ".run.app") {
+          target := "https://geekgully.com" + c.Request.URL.String()
+          c.Redirect(http.StatusMovedPermanently, target)
+          c.Abort()
+          return
+      }
+      c.Next()
+  })
+  ```
+- **SEO & Security Benefit**: Prevents duplicate content indexation in search engines while ensuring all visitors load the official `https://geekgully.com` domain.
+
 
 ### B. Cloud Run ➔ Compute Engine VM Databases (PostgreSQL 16 & MongoDB 7)
 - **Networking**: Cloud Run connects to `ggcms-db-vm` over Google Cloud's internal Virtual Private Cloud (VPC) network at `10.128.0.2`.

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"net/http"
 	"os"
 	"strings"
 
@@ -67,6 +68,17 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	r.Use(middleware.Logger())
 	r.Use(middleware.CORS())
 	r.Use(gin.Recovery())
+	// Canonical Domain Redirect Middleware (Redirect .run.app requests to https://geekgully.com)
+	r.Use(func(c *gin.Context) {
+		host := c.Request.Host
+		if strings.Contains(host, ".run.app") {
+			target := "https://geekgully.com" + c.Request.URL.String()
+			c.Redirect(http.StatusMovedPermanently, target)
+			c.Abort()
+			return
+		}
+		c.Next()
+	})
 	// Attach audit service to every request context so handlers can call middleware.LogAudit
 	r.Use(middleware.AuditMiddleware(svcs.Audit))
 
