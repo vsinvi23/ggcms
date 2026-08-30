@@ -27,7 +27,7 @@ name: Deploy GG-CMS to GCP
 
 on:
   push:
-    branches: [main]
+    branches: [release]
   workflow_dispatch:
 
 env:
