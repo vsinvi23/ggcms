@@ -12,7 +12,7 @@
 set -euo pipefail
 
 GDRIVE_REMOTE="gdrive"
-BACKUP_ROOT="gg-cms-backups"
+BACKUP_ROOT="backup/geekgully/data"
 GDRIVE_PG="${GDRIVE_REMOTE}:${BACKUP_ROOT}/postgres"
 GDRIVE_MONGO="${GDRIVE_REMOTE}:${BACKUP_ROOT}/mongodb"
 

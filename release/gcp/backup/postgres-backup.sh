@@ -26,7 +26,7 @@ set -euo pipefail
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 GDRIVE_REMOTE="gdrive"
-BACKUP_ROOT="gg-cms-backups"
+BACKUP_ROOT="backup/geekgully/data"
 GDRIVE_PG="${GDRIVE_REMOTE}:${BACKUP_ROOT}/postgres"
 
 # Docker service names (match docker-compose.native.yml)
@@ -40,11 +40,10 @@ WAL_ARCHIVE_HOST="/opt/gg-cms/wal-archive"
 # Temp dump dir on VM
 DUMP_DIR="/opt/gg-cms/pg-dumps"
 
-# Retention
-DAILY_KEEP_DAYS=7
-FULL_KEEP_WEEKS=4
+# Retention (Keep last 3 weekly backups)
+KEEP_LAST_COUNT=3
 
-MODE="${1:---wal-sync}"
+MODE="${1:---full}"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 ts()     { date '+%Y%m%d_%H%M%S'; }
@@ -139,14 +138,17 @@ full_dump() {
 
   rm -f "$LOCAL_PATH"
 
-  # Prune old full dumps (keep last N weeks)
-  local KEEP_DAYS=$(( FULL_KEEP_WEEKS * 7 ))
-  log "Pruning full dumps older than ${FULL_KEEP_WEEKS} weeks..."
-  rclone delete "${GDRIVE_PG}/full/" \
-    --min-age "${KEEP_DAYS}d" \
-    --include "full_*.dump" \
-    --log-level=ERROR
-  ok "Old full dumps pruned."
+  # Prune old full dumps (keep last KEEP_LAST_COUNT backups)
+  log "Pruning old full dumps (retaining last ${KEEP_LAST_COUNT} backups)..."
+  local files_to_delete
+  files_to_delete=$(rclone lsf "${GDRIVE_PG}/full/" --files-only 2>/dev/null | sort -r | tail -n +4)
+  for f in $files_to_delete; do
+    if [ -n "$f" ]; then
+      rclone deletefile "${GDRIVE_PG}/full/$f"
+      log "Pruned old dump: $f"
+    fi
+  done
+  ok "Retained last ${KEEP_LAST_COUNT} backups."
 
   # Update manifest
   echo "last_full=$(date -u +%Y-%m-%dT%H:%M:%SZ) file=$FNAME size=$SIZE" \
