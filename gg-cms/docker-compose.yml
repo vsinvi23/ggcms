@@ -64,6 +64,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRY_HOURS: "24"
 
+      FACTORY_SYNC_SECRET: ${FACTORY_SYNC_SECRET}
+
       UPLOAD_DIR: /app/uploads
       UPLOAD_BASE_URL: ${UPLOAD_BASE_URL:-http://localhost:8080/uploads}
 

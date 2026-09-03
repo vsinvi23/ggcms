@@ -16,6 +16,7 @@ type Config struct {
 	Admin    AdminConfig
 	OAuth    OAuthConfig
 	TLS      TLSConfig
+	Import   ImportConfig
 }
 
 type TLSConfig struct {
@@ -62,6 +63,15 @@ type AdminConfig struct {
 	GeekAdminEmail    string
 	GeekAdminPassword string
 	GeekAdminName     string
+}
+
+// ImportConfig holds settings for third-party content ingest (e.g. the Python
+// "content factory" app that POSTs generated articles/courses to /api/import/ingest).
+type ImportConfig struct {
+	// FactorySyncSecret is compared against the X-Factory-Sync-Secret request header.
+	// Required — there is intentionally no default value. If unset, the ingest
+	// endpoint is disabled (every request gets 401) rather than crashing local dev.
+	FactorySyncSecret string
 }
 
 type OAuthConfig struct {
@@ -145,6 +155,9 @@ func Load() *Config {
 			ClientCertFile: viper.GetString("TLS_CLIENT_CERT_FILE"),
 			ClientKeyFile:  viper.GetString("TLS_CLIENT_KEY_FILE"),
 		},
+		Import: ImportConfig{
+			FactorySyncSecret: viper.GetString("FACTORY_SYNC_SECRET"),
+		},
 		OAuth: OAuthConfig{
 			GoogleClientID:     viper.GetString("GOOGLE_CLIENT_ID"),
 			GoogleClientSecret: viper.GetString("GOOGLE_CLIENT_SECRET"),
@@ -163,6 +176,12 @@ func Load() *Config {
 
 	if cfg.JWT.Secret == "" {
 		log.Fatal("JWT_SECRET environment variable is required")
+	}
+
+	if cfg.Import.FactorySyncSecret == "" {
+		// Not fatal — local dev shouldn't have to set this up just to run the server.
+		// The factory-sync middleware rejects every request with 401 while it's unset.
+		log.Println("WARNING: FACTORY_SYNC_SECRET is not set — /api/import/ingest will reject all requests")
 	}
 
 	return cfg

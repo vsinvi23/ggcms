@@ -17,10 +17,10 @@ import (
 	enrollmentsvc "github.com/serenya/go-cms/internal/application/enrollment"
 	groupsvc "github.com/serenya/go-cms/internal/application/group"
 	lpsvc "github.com/serenya/go-cms/internal/application/learningpath"
-	personalizationsvc "github.com/serenya/go-cms/internal/application/personalization"
 	lessonsvc "github.com/serenya/go-cms/internal/application/lesson"
 	notificationsvc "github.com/serenya/go-cms/internal/application/notification"
 	oauthsvc "github.com/serenya/go-cms/internal/application/oauth"
+	personalizationsvc "github.com/serenya/go-cms/internal/application/personalization"
 	sectionsvc "github.com/serenya/go-cms/internal/application/section"
 	settingssvc "github.com/serenya/go-cms/internal/application/settings"
 	tagsvc "github.com/serenya/go-cms/internal/application/tag"
@@ -35,25 +35,25 @@ import (
 
 // Services groups all application service interfaces needed by the router.
 type Services struct {
-	Auth         authsvc.Service
-	User         usersvc.Service
-	Group        groupsvc.Service
-	Category     categorysvc.Service
-	CMS          cmssvc.Service
-	Section      sectionsvc.Service
-	Lesson       lessonsvc.Service
-	Enrollment   enrollmentsvc.Service
-	Task         tasksvc.Service
-	Notification notificationsvc.Service
-	Comment      commentsvc.Service
-	Analytics    analyticssvc.Service
-	Tag          tagsvc.Service
-	Reaction     engagementsvc.ReactionService
-	Note         engagementsvc.NoteService
-	Favourite    engagementsvc.FavouriteService
-	Highlight    engagementsvc.HighlightService
-	ContentType  ctsvc.Service
-	LearningPath lpsvc.Service
+	Auth            authsvc.Service
+	User            usersvc.Service
+	Group           groupsvc.Service
+	Category        categorysvc.Service
+	CMS             cmssvc.Service
+	Section         sectionsvc.Service
+	Lesson          lessonsvc.Service
+	Enrollment      enrollmentsvc.Service
+	Task            tasksvc.Service
+	Notification    notificationsvc.Service
+	Comment         commentsvc.Service
+	Analytics       analyticssvc.Service
+	Tag             tagsvc.Service
+	Reaction        engagementsvc.ReactionService
+	Note            engagementsvc.NoteService
+	Favourite       engagementsvc.FavouriteService
+	Highlight       engagementsvc.HighlightService
+	ContentType     ctsvc.Service
+	LearningPath    lpsvc.Service
 	Audit           auditsvc.Service
 	OAuth           oauthsvc.Service
 	Settings        settingssvc.Service
@@ -133,8 +133,10 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	auditH := handler.NewAuditHandler(svcs.Audit)
 	personH := handler.NewPersonalizationHandler(svcs.Personalization)
 	importH := handler.NewImportHandler(svcs.CMS, svcs.Task)
+	factoryImportH := handler.NewFactoryImportHandler(svcs.CMS, svcs.Section, svcs.Lesson, svcs.User, cfg.Admin.Email)
 
 	authMW := middleware.Auth(jwtManager)
+	factorySecretMW := middleware.FactorySecret(cfg.Import.FactorySyncSecret)
 
 	api := r.Group("/api")
 	{
@@ -171,6 +173,11 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		// ----- Review comments (public read, protected write) -----
 		api.GET("/review-comments", commH.GetByContent)
 		api.GET("/review-comments/:id/replies", commH.ListReplies)
+
+		// ----- Factory sync ingest (secret-header auth, NOT JWT) -----
+		// Called machine-to-machine by the Python "content factory" app, which has
+		// no user session — protected by X-Factory-Sync-Secret instead of authMW.
+		api.POST("/import/ingest", factorySecretMW, factoryImportH.Ingest)
 
 		// ----- Public content (no auth) -----
 		pub := api.Group("/public")
