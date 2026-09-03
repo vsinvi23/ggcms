@@ -53,7 +53,21 @@
 | `personalization_handler.go` | `personalization.Service` | `/api/personalization/` |
 | `public_handler.go` | `cms.Service`, `category.Service`, `analytics.Service` | `/api/public/` |
 | `media_handler.go` | `settings.Service` | `/api/media/` |
-| `import_handler.go` | `cms.Service`, `task.Service` | `/api/import/` |
+| `import_handler.go` | `cms.Service`, `task.Service` | `/api/import/preview`, `/api/import/confirm` (JWT-auth, human-driven bulk import) |
+| `factory_import_handler.go` | `cms.Service`, `section.Service`, `lesson.Service`, `user.Service` | `POST /api/import/ingest` (secret-header auth, machine-to-machine) |
+
+---
+
+## Factory Sync Ingest (added 2026-09-02)
+
+Separate, unauthenticated-by-JWT ingest path for the standalone `content-factory/` Python app (repo root `content-factory/`, not part of this Go module) to push generated articles/courses into the CMS without a user session:
+
+- Route: `api.POST("/import/ingest", factorySecretMW, factoryImportH.Ingest)` — registered in `router.go` directly on the `api` group, outside the JWT-protected `p := api.Group("/")` block.
+- Middleware: `internal/interfaces/http/middleware/factory_secret.go` — `FactorySecret(configuredSecret string) gin.HandlerFunc`, compares the `X-Factory-Sync-Secret` header via `crypto/subtle.ConstantTimeCompare` against `cfg.Import.FactorySyncSecret`.
+- Config: `pkg/config/config.go` → `ImportConfig.FactorySyncSecret`, loaded from env var `FACTORY_SYNC_SECRET` (viper). Empty value → middleware rejects all requests (non-fatal startup warning logged).
+- Handler: `internal/interfaces/http/handler/factory_import_handler.go` — maps the factory's `SyncPayload` DTO (`internal/interfaces/http/dto/factory_sync_dto.go`) onto `cmssvc.CreateRequest`; articles become a single CMS item, courses fan out into `Section`/`Lesson` rows via `section.Service`/`lesson.Service`. Uses `user.Service.GetByEmail` (added to the `Service` interface) to resolve `cfg.Admin.Email` into an attributed user ID. All ingested items land as `DRAFT` — same review pipeline as human-created content.
+- Response: `SyncResult{success, imported_id, slug, version, message}`.
+- Verified end-to-end (2026-09-02) via curl for both `article` and `course` payload shapes against the dockerized backend — see `runbooks/troubleshooting.md`.
 
 ---
 

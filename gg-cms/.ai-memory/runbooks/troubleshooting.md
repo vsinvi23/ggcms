@@ -42,6 +42,20 @@
 | Postgres unhealthy on fresh start | `gg_cms` DB not created during healthcheck window | Healthcheck retries 5×; becomes healthy once `CREATE DATABASE` completes |
 | mTLS certs missing for full Docker mode | `generate-certs.sh` not run | `cd release/certs && bash generate-certs.sh` |
 | Backend Docker build fails | Docker Hub blocked by proxy | Pre-pull base images or use `deploy-backend.ps1 -Load` |
+| Backend container marked `unhealthy` despite API working | `/api/health` referenced by `Dockerfile` `HEALTHCHECK` + `docker-compose.yml` backend healthcheck is **not implemented** in the Go router (pre-existing gap) | Ignore container health status; verify with `curl` against real routes (e.g. `/api/features`) instead. Not fixed — out of scope unless explicitly requested |
+
+### Docker / Corporate Proxy Build Issues (Thales/Zscaler TLS interception)
+
+| Symptom | Root Cause | Fix |
+|---------|-----------|-----|
+| `apk add` fails to fetch packages | Proxy intercepts HTTPS to Alpine repos | `sed -i 's/https/http/g' /etc/apk/repositories` before `apk add` |
+| `go mod download` fails with `x509: certificate signed by unknown authority` | Go's HTTPS client doesn't trust the corporate CA (separate from `apk`'s trust store) | `COPY` a full corporate CA bundle into the image and run `update-ca-certificates` — see two gotchas below |
+| `update-ca-certificates` logs `"does not contain exactly one certificate...: skipping"` | A combined multi-cert bundle file was passed — the tool requires **exactly one cert per file** | Split the bundle into one file per cert (e.g. `cert-1.crt` … `cert-N.crt`) before copying in |
+| `update-ca-certificates` logs `"Cannot copy to bundle"` / skips certs copied into a subdirectory | The tool does **not** recurse into subdirectories under `/usr/local/share/ca-certificates/` | `COPY` cert files flat: `COPY ca-bundle/ /usr/local/share/ca-certificates/` (no nested folder) |
+| `go mod download` fails with `stream error ... INTERNAL_ERROR` | Transient HTTP/2 proxy glitch, unrelated to certs | Just retry the build |
+| `go mod download` fails with `403 Forbidden` from `proxy.golang.org` | Corporate policy blocks the Go module proxy itself (not a cert/network issue) | Add `ENV GOPROXY=direct` and `ENV GOSUMDB=off` in the Dockerfile builder stage before `go mod download`, so Go fetches modules directly from VCS instead of the blocked proxy |
+
+The local corporate CA-bundle directory (`gg-cms/backend/go-cms/ca-bundle/`) is gitignored (contents are machine-specific exports of the Windows cert store) except for a tracked `.gitkeep`, so `COPY ca-bundle/ ...` doesn't break on a fresh clone — regenerate the actual certs locally before rebuilding on a new machine.
 
 ---
 
