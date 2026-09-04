@@ -28,6 +28,7 @@ import type {
   ReviewStatus,
   Source,
   SourceCreatePayload,
+  SourceType,
   SystemSettingsPayload,
   SystemSettingsResponse,
   SystemSettingsUpdateResponse,
@@ -166,6 +167,13 @@ export function createSource(payload: SourceCreatePayload): Promise<Source> {
   return request<Source>("/api/sources", { method: "POST", body: payload })
 }
 
+export function createSourcesBulk(projectId: string, urls: string[], sourceType: SourceType = "url"): Promise<GenerationJobCreated> {
+  return request<GenerationJobCreated>("/api/sources/bulk", {
+    method: "POST",
+    body: { project_id: projectId, urls, source_type: sourceType },
+  })
+}
+
 export function approveSource(id: string): Promise<{ id: string; review_status: ReviewStatus }> {
   return request(`/api/sources/${encodeURIComponent(id)}/approve`, { method: "POST" })
 }
@@ -211,6 +219,13 @@ export function rejectOpportunity(id: string): Promise<{ id: string; status: Opp
 
 export function discoverOpportunities(projectId: string, topics?: string[]): Promise<Opportunity[]> {
   return request<Opportunity[]>("/api/opportunities/discover", {
+    method: "POST",
+    body: { project_id: projectId, topics },
+  })
+}
+
+export function discoverOpportunitiesBulk(projectId: string, topics: string[]): Promise<GenerationJobCreated> {
+  return request<GenerationJobCreated>("/api/opportunities/discover/bulk", {
     method: "POST",
     body: { project_id: projectId, topics },
   })

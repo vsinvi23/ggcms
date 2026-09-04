@@ -3,12 +3,13 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, ConfigDict
 
 from backend.agents.opportunity_agent import OpportunityAgent, expand_statement_to_headlines
 from backend.configs.settings import settings
-from backend.models.domain import Opportunity
+from backend.models.base import utcnow
+from backend.models.domain import GenerationJob, Opportunity, Project
 from backend.services.web_search_service import web_search
 from backend.storage import file_store
 
@@ -70,6 +71,15 @@ class OpportunityDiscoverIn(BaseModel):
     topics: Optional[List[str]] = None
 
 
+class OpportunityDiscoverBulkIn(BaseModel):
+    project_id: uuid.UUID
+    topics: List[str]
+
+
+class OpportunityDiscoverBulkOut(BaseModel):
+    job_id: uuid.UUID
+
+
 @router.get("", response_model=List[OpportunityOut])
 async def list_opportunities(
     project_id: Optional[uuid.UUID] = None,
@@ -121,53 +131,35 @@ async def reject_opportunity(opportunity_id: uuid.UUID):
     return {"id": opportunity.id, "status": opportunity.status}
 
 
-@router.post("/discover", response_model=List[OpportunityOut], status_code=201)
-async def discover_opportunities(payload: OpportunityDiscoverIn):
+async def _discover_from_statements(project: Project, statements: List[str]) -> List[Opportunity]:
     """
-    Runs OpportunityAgent against the project's niche (or explicit `topics`,
-    if given) and persists the resulting candidates as DISCOVERED opportunities.
-
-    When `topics` is explicitly provided, it's treated as a free-text statement
-    (e.g. "AI security") and first expanded into several distinct article/tutorial
-    headline candidates, each carrying a brief and reference URLs (live-searched
-    when Tavily is configured, else LLM-suggested and marked unverified). When
-    `topics` is omitted, the project's curated `niche` list is used as-is, one
-    topic per niche entry, matching today's behavior.
+    Shared core of statement-driven discovery, used by both the synchronous
+    /discover endpoint (small topic lists) and the background-job-backed
+    /discover/bulk endpoint (large pasted topic lists, avoids HTTP timeout).
+    Expands each statement into headline candidates, then batches them all
+    through one OpportunityAgent.run() call and persists the results.
     """
-    project = file_store.load_project(payload.project_id)
-    if project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
-
     meta: dict[str, dict] = {}
+    candidates = []
+    for statement in statements:
+        headlines = await expand_statement_to_headlines(statement, project)
+        for h in headlines:
+            references = h.suggested_references
+            reference_source = "llm_suggested"
+            if settings.tavily_api_key:
+                try:
+                    search_results = await web_search(h.headline)
+                    references = [r.url for r in search_results]
+                    reference_source = "web_search"
+                except Exception as e:
+                    logger.warning(f"Live web search failed for headline '{h.headline}', falling back to LLM-suggested references: {e}")
 
-    if payload.topics:
-        candidates = []
-        for statement in payload.topics:
-            headlines = await expand_statement_to_headlines(statement, project)
-            for h in headlines:
-                references = h.suggested_references
-                reference_source = "llm_suggested"
-                if settings.tavily_api_key:
-                    try:
-                        search_results = await web_search(h.headline)
-                        references = [r.url for r in search_results]
-                        reference_source = "web_search"
-                    except Exception as e:
-                        logger.warning(f"Live web search failed for headline '{h.headline}', falling back to LLM-suggested references: {e}")
-
-                candidates.append(h.headline)
-                meta[h.headline] = {
-                    "brief": h.brief,
-                    "references": references,
-                    "reference_source": reference_source,
-                }
-    else:
-        candidates = project.niche
-        if not candidates:
-            raise HTTPException(
-                status_code=400,
-                detail="No topics to discover from -- set a niche on the project or pass explicit topics.",
-            )
+            candidates.append(h.headline)
+            meta[h.headline] = {
+                "brief": h.brief,
+                "references": references,
+                "reference_source": reference_source,
+            }
 
     agent = OpportunityAgent()
     results = await agent.run(candidates, meta=meta)
@@ -193,4 +185,124 @@ async def discover_opportunities(payload: OpportunityDiscoverIn):
         for r in results
     ]
     await file_store.append_opportunities(project.id, rows)
+    return rows
+
+
+@router.post("/discover", response_model=List[OpportunityOut], status_code=201)
+async def discover_opportunities(payload: OpportunityDiscoverIn):
+    """
+    Runs OpportunityAgent against the project's niche (or explicit `topics`,
+    if given) and persists the resulting candidates as DISCOVERED opportunities.
+
+    When `topics` is explicitly provided, it's treated as a free-text statement
+    (e.g. "AI security") and first expanded into several distinct article/tutorial
+    headline candidates, each carrying a brief and reference URLs (live-searched
+    when Tavily is configured, else LLM-suggested and marked unverified). When
+    `topics` is omitted, the project's curated `niche` list is used as-is, one
+    topic per niche entry, matching today's behavior.
+    """
+    project = file_store.load_project(payload.project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    if payload.topics:
+        rows = await _discover_from_statements(project, payload.topics)
+    else:
+        if not project.niche:
+            raise HTTPException(
+                status_code=400,
+                detail="No topics to discover from -- set a niche on the project or pass explicit topics.",
+            )
+        agent = OpportunityAgent()
+        results = await agent.run(project.niche, meta={})
+        rows = [
+            Opportunity(
+                project_id=project.id,
+                topic=r.topic,
+                score=r.score,
+                demand=r.demand,
+                trend=r.trend,
+                competition=r.competition,
+                content_gap=r.content_gap,
+                audience=r.audience,
+                recommended_content_type=r.recommended_content_type,
+                reason=r.reason,
+                signals={
+                    "brief": r.brief,
+                    "references": r.references,
+                    "reference_source": r.reference_source,
+                } if r.brief or r.references else None,
+            )
+            for r in results
+        ]
+        await file_store.append_opportunities(project.id, rows)
     return [OpportunityOut.from_orm_with_signals(row) for row in rows]
+
+
+async def run_bulk_discover_job(job_id: uuid.UUID, project_id: uuid.UUID, topics: List[str]) -> None:
+    """
+    Background task: processes a large pasted topic list in small chunks
+    (rather than one giant OpportunityAgent.run() call) so job.current_node
+    can report incremental progress, and a failure partway through doesn't
+    lose already-discovered opportunities (each chunk is persisted as it
+    completes via _discover_from_statements -> append_opportunities).
+    """
+    job = file_store.get_job(project_id, job_id)
+    if job is None:
+        logger.error(f"bulk-discover job {job_id} vanished before start")
+        return
+    project = file_store.load_project(project_id)
+    if project is None:
+        job.status = "FAILED"
+        job.error_type = "not_found"
+        job.error_message = "Project not found"
+        job.completed_at = utcnow()
+        await file_store.save_job(project_id, job)
+        return
+
+    job.status = "RUNNING"
+    job.started_at = utcnow()
+    await file_store.save_job(project_id, job)
+
+    CHUNK_SIZE = 5
+    chunks = [topics[i:i + CHUNK_SIZE] for i in range(0, len(topics), CHUNK_SIZE)]
+    failures = []
+    for i, chunk in enumerate(chunks, start=1):
+        job.current_node = f"analyzing topics {min(i * CHUNK_SIZE, len(topics))}/{len(topics)}"
+        await file_store.save_job(project_id, job)
+        try:
+            await _discover_from_statements(project, chunk)
+        except Exception as exc:  # noqa: BLE001 - one bad chunk must not abort the batch
+            logger.warning(f"bulk-discover failed for chunk {chunk}: {exc}")
+            failures.extend(chunk)
+
+    job.status = "SUCCEEDED"
+    job.current_node = None
+    job.completed_at = utcnow()
+    if failures:
+        job.error_type = "partial_failure"
+        job.error_message = f"{len(failures)}/{len(topics)} topics failed: {', '.join(failures)}"
+    await file_store.save_job(project_id, job)
+
+
+@router.post("/discover/bulk", response_model=OpportunityDiscoverBulkOut, status_code=202)
+async def discover_opportunities_bulk(payload: OpportunityDiscoverBulkIn, bg_tasks: BackgroundTasks):
+    """
+    Accepts a batch of topic statements pasted at once, analyzing them in
+    chunks in a background job (see run_bulk_discover_job) so the request
+    returns immediately regardless of list size. Poll GET /api/jobs/{job_id}
+    for progress/completion; resulting Opportunities land incrementally via
+    GET /api/opportunities?project_id=...
+    """
+    project = file_store.load_project(payload.project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    topics = [t.strip() for t in payload.topics if t.strip()]
+    if not topics:
+        raise HTTPException(status_code=400, detail="topics must contain at least one non-empty topic")
+
+    job = GenerationJob(project_id=project.id, topic=f"bulk opportunity discovery ({len(topics)} topics)")
+    await file_store.save_job(project.id, job)
+    bg_tasks.add_task(run_bulk_discover_job, job.id, project.id, topics)
+    return OpportunityDiscoverBulkOut(job_id=job.id)

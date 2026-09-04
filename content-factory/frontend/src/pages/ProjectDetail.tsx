@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   BookOpen,
   Check,
+  ClipboardList,
   Compass,
   Layers,
   Link2,
@@ -57,6 +58,53 @@ const URL_SOURCE_TYPES: { value: SourceType; label: string }[] = [
   { value: "rss", label: "RSS feed" },
   { value: "github", label: "GitHub repo" },
 ]
+
+const BULK_POLL_INTERVAL_MS = 2500
+
+/** Polls GET /api/jobs/{id} until it reaches a terminal state, calling onDone once. */
+function useJobPolling(jobId: string | null, projectId: string, onDone: (status: import("../services/types").JobStatusResponse) => void) {
+  const [job, setJob] = useState<import("../services/types").JobStatusResponse | null>(null)
+  const onDoneRef = useRef(onDone)
+  onDoneRef.current = onDone
+
+  useEffect(() => {
+    if (!jobId) {
+      setJob(null)
+      return
+    }
+    let cancelled = false
+    let intervalId: number | null = null
+
+    const poll = () => {
+      api
+        .getJobStatus(jobId, projectId)
+        .then((status) => {
+          if (cancelled) return
+          setJob(status)
+          if (status.status === "SUCCEEDED" || status.status === "FAILED") {
+            if (intervalId) window.clearInterval(intervalId)
+            onDoneRef.current(status)
+          }
+        })
+        .catch(() => {
+          /* transient poll failure -- next tick retries */
+        })
+    }
+
+    poll()
+    intervalId = window.setInterval(poll, BULK_POLL_INTERVAL_MS)
+    return () => {
+      cancelled = true
+      if (intervalId) window.clearInterval(intervalId)
+    }
+  }, [jobId, projectId])
+
+  return job
+}
+
+function parseBulkLines(text: string): string[] {
+  return Array.from(new Set(text.split("\n").map((line) => line.trim()).filter(Boolean)))
+}
 
 type Tab = "overview" | "config" | "strategy" | "sources" | "opportunities"
 
@@ -463,6 +511,89 @@ function AddUrlSourceCard({ projectId, onAdded }: { projectId: string; onAdded: 
   )
 }
 
+function BulkAddUrlsCard({ projectId, onAdded }: { projectId: string; onAdded: () => void }) {
+  const { showToast } = useToast()
+  const [sourceType, setSourceType] = useState<SourceType>("url")
+  const [text, setText] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [jobId, setJobId] = useState<string | null>(null)
+
+  const job = useJobPolling(jobId, projectId, (status) => {
+    if (status.status === "SUCCEEDED") {
+      showToast(status.error ? `Bulk ingest finished with issues: ${status.error}` : "Bulk ingest finished.", status.error ? "info" : "success")
+    } else {
+      showToast(status.error ?? "Bulk ingest failed.", "error")
+    }
+    onAdded()
+  })
+
+  const urls = parseBulkLines(text)
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (urls.length === 0) {
+      setError("Paste at least one URL, one per line.")
+      return
+    }
+    setSubmitting(true)
+    setError(null)
+    setJobId(null)
+    try {
+      const result = await api.createSourcesBulk(projectId, urls, sourceType)
+      setJobId(result.job_id)
+      showToast(`Queued ${urls.length} URL${urls.length === 1 ? "" : "s"} for ingestion.`, "success")
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not queue the bulk ingest job.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const isRunning = job !== null && job.status !== "SUCCEEDED" && job.status !== "FAILED"
+
+  return (
+    <Card>
+      <CardHeader title="Bulk-add sources" subtitle="Paste many URLs at once, one per line -- each is ingested as a source." />
+      <form onSubmit={submit} className="space-y-4 p-5">
+        {error && <InlineError message={error} onDismiss={() => setError(null)} />}
+        <Field label="Source type" htmlFor="bulk-src-type">
+          <Select id="bulk-src-type" value={sourceType} onChange={(e) => setSourceType(e.target.value as SourceType)}>
+            {URL_SOURCE_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="URLs (one per line)" htmlFor="bulk-src-urls">
+          <Textarea
+            id="bulk-src-urls"
+            rows={6}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={"https://example.com/a\nhttps://example.com/b\nhttps://example.com/c"}
+          />
+        </Field>
+        <div className="flex items-center gap-3">
+          <Button type="submit" icon={<ClipboardList size={15} />} loading={submitting} disabled={isRunning}>
+            {urls.length > 0 ? `Ingest ${urls.length} URL${urls.length === 1 ? "" : "s"}` : "Ingest URLs"}
+          </Button>
+          {job && (
+            <span className="text-xs text-zinc-500">
+              {job.status === "RUNNING" && (job.current_node ?? "Running…")}
+              {job.status === "QUEUED" && "Queued…"}
+              {job.status === "SUCCEEDED" && !job.error && "Done."}
+              {job.status === "SUCCEEDED" && job.error && `Done — ${job.error}`}
+              {job.status === "FAILED" && `Failed — ${job.error ?? "unknown error"}`}
+            </span>
+          )}
+        </div>
+      </form>
+    </Card>
+  )
+}
+
 function UploadSourceCard({ projectId, onAdded }: { projectId: string; onAdded: () => void }) {
   const { showToast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -756,6 +887,7 @@ function SourcesTab({ projectId }: { projectId: string }) {
         <AddUrlSourceCard projectId={projectId} onAdded={bump} />
         <UploadSourceCard projectId={projectId} onAdded={bump} />
       </div>
+      <BulkAddUrlsCard projectId={projectId} onAdded={bump} />
       <SourcesTable {...sourcesState} />
       <PendingReviewSection projectId={projectId} refreshKey={refreshKey} onReviewed={bump} />
       <KnowledgePacksSection
@@ -883,6 +1015,78 @@ function OpportunityRow({ opportunity, onChanged }: { opportunity: Opportunity; 
   )
 }
 
+function BulkDiscoverCard({ projectId, onDone }: { projectId: string; onDone: () => void }) {
+  const { showToast } = useToast()
+  const [text, setText] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [jobId, setJobId] = useState<string | null>(null)
+
+  const job = useJobPolling(jobId, projectId, (status) => {
+    if (status.status === "SUCCEEDED") {
+      showToast(status.error ? `Bulk discovery finished with issues: ${status.error}` : "Bulk discovery finished.", status.error ? "info" : "success")
+    } else {
+      showToast(status.error ?? "Bulk discovery failed.", "error")
+    }
+    onDone()
+  })
+
+  const topics = parseBulkLines(text)
+  const isRunning = job !== null && job.status !== "SUCCEEDED" && job.status !== "FAILED"
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (topics.length === 0) {
+      setError("Paste at least one topic, one per line.")
+      return
+    }
+    setSubmitting(true)
+    setError(null)
+    setJobId(null)
+    try {
+      const result = await api.discoverOpportunitiesBulk(projectId, topics)
+      setJobId(result.job_id)
+      showToast(`Queued ${topics.length} topic${topics.length === 1 ? "" : "s"} for analysis.`, "success")
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not queue bulk discovery.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader title="Bulk-add topics" subtitle="Paste many topic ideas at once, one per line -- each is analyzed into an opportunity." />
+      <form onSubmit={submit} className="space-y-4 p-5">
+        {error && <InlineError message={error} onDismiss={() => setError(null)} />}
+        <Field label="Topics (one per line)" htmlFor="bulk-topics">
+          <Textarea
+            id="bulk-topics"
+            rows={6}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={"Prompt injection defenses for LLM agents\nKubernetes cost optimization checklist\n..."}
+          />
+        </Field>
+        <div className="flex items-center gap-3">
+          <Button type="submit" icon={<ClipboardList size={15} />} loading={submitting} disabled={isRunning}>
+            {topics.length > 0 ? `Analyze ${topics.length} topic${topics.length === 1 ? "" : "s"}` : "Analyze topics"}
+          </Button>
+          {job && (
+            <span className="text-xs text-zinc-500">
+              {job.status === "RUNNING" && (job.current_node ?? "Running…")}
+              {job.status === "QUEUED" && "Queued…"}
+              {job.status === "SUCCEEDED" && !job.error && "Done."}
+              {job.status === "SUCCEEDED" && job.error && `Done — ${job.error}`}
+              {job.status === "FAILED" && `Failed — ${job.error ?? "unknown error"}`}
+            </span>
+          )}
+        </div>
+      </form>
+    </Card>
+  )
+}
+
 function OpportunitiesTab({ projectId, onNavigate }: { projectId: string; onNavigate: (page: Page) => void }) {
   const [filter, setFilter] = useState<OpportunityStatus | "ALL">("DISCOVERED")
   const [discovering, setDiscovering] = useState(false)
@@ -918,6 +1122,8 @@ function OpportunitiesTab({ projectId, onNavigate }: { projectId: string; onNavi
           className="min-w-[20rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-purple-500 focus:outline-none"
         />
       </div>
+
+      <BulkDiscoverCard projectId={projectId} onDone={reload} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">

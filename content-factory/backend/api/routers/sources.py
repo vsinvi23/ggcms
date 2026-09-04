@@ -1,13 +1,17 @@
+import logging
 import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, ConfigDict
 
 from backend.ingestion.pipeline import ingest_source
 from backend.models.base import utcnow
+from backend.models.domain import GenerationJob
 from backend.storage import file_store
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/sources", tags=["Sources"])
 
@@ -20,6 +24,16 @@ class SourceCreate(BaseModel):
     project_id: uuid.UUID
     source_type: str
     url: Optional[str] = None
+
+
+class SourceBulkCreate(BaseModel):
+    project_id: uuid.UUID
+    source_type: str = "url"
+    urls: List[str]
+
+
+class SourceBulkCreateOut(BaseModel):
+    job_id: uuid.UUID
 
 
 class SourceOut(BaseModel):
@@ -101,6 +115,57 @@ async def create_source(payload: SourceCreate):
         url=payload.url,
     )
     return _jsonable(result)
+
+
+async def run_bulk_ingest_job(job_id: uuid.UUID, project_id: uuid.UUID, source_type: str, urls: List[str]) -> None:
+    """
+    Background task: ingests each URL sequentially via ingest_source (reusing
+    its existing pre/post-fetch dedup), tracking overall progress on the
+    GenerationJob row so GET /api/jobs/{job_id} can be polled for status.
+    """
+    job = file_store.get_job(project_id, job_id)
+    if job is None:
+        logger.error(f"bulk-ingest job {job_id} vanished before start")
+        return
+    job.status = "RUNNING"
+    job.started_at = utcnow()
+    await file_store.save_job(project_id, job)
+
+    failures = []
+    for i, url in enumerate(urls, start=1):
+        job.current_node = f"ingesting {i}/{len(urls)}: {url}"
+        await file_store.save_job(project_id, job)
+        try:
+            await ingest_source(project_id=project_id, source_type=source_type, url=url)
+        except Exception as exc:  # noqa: BLE001 - one bad URL must not abort the batch
+            logger.warning(f"bulk-ingest failed for {url}: {exc}")
+            failures.append(url)
+
+    job.status = "SUCCEEDED"
+    job.current_node = None
+    job.completed_at = utcnow()
+    if failures:
+        job.error_type = "partial_failure"
+        job.error_message = f"{len(failures)}/{len(urls)} URLs failed: {', '.join(failures)}"
+    await file_store.save_job(project_id, job)
+
+
+@router.post("/bulk", response_model=SourceBulkCreateOut, status_code=202)
+async def create_sources_bulk(payload: SourceBulkCreate, bg_tasks: BackgroundTasks):
+    """
+    Accepts a batch of URLs pasted at once, ingesting them one-by-one in a
+    background job (see run_bulk_ingest_job) so the request returns
+    immediately regardless of batch size. Poll GET /api/jobs/{job_id} for
+    progress/completion.
+    """
+    urls = [u.strip() for u in payload.urls if u.strip()]
+    if not urls:
+        raise HTTPException(status_code=400, detail="urls must contain at least one non-empty URL")
+
+    job = GenerationJob(project_id=payload.project_id, topic=f"bulk source ingest ({len(urls)} URLs)")
+    await file_store.save_job(payload.project_id, job)
+    bg_tasks.add_task(run_bulk_ingest_job, job.id, payload.project_id, payload.source_type, urls)
+    return SourceBulkCreateOut(job_id=job.id)
 
 
 @router.post("/upload", status_code=202)
