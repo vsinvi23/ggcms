@@ -866,6 +866,101 @@ func TestReviewWorkflow_Article_SendBackPreservesReviewBaseline(t *testing.T) {
 
 // ── Claim review ──────────────────────────────────────────────────────────────
 
+// ── Import → review cycle ─────────────────────────────────────────────────────
+
+// TestReviewWorkflow_Import_CourseWithSectionsFlowsThroughFullCycle imports a
+// COURSE with nested sections/lessons via POST /api/import/confirm, verifies the
+// resulting course is a DRAFT with the section/lesson structure created, then
+// drives it through the standard submit → approve → claim-review → publish
+// cycle to confirm imported content needs no special-casing anywhere else in
+// the review pipeline (design decision 5 in the import plan).
+func TestReviewWorkflow_Import_CourseWithSectionsFlowsThroughFullCycle(t *testing.T) {
+	u := setupTestUser(t, "import_crs")
+	c := u.client
+	suffix := testSuffix + "_import_crs"
+
+	confirmResp, confirmBody := c.post("/api/import/confirm", map[string]interface{}{
+		"items": []map[string]interface{}{
+			{
+				"type":        "COURSE",
+				"title":       "Imported Course " + suffix,
+				"description": "Imported via integration test",
+				"body":        "Course overview text.",
+				"courseType":  "STANDARD",
+				"sections": []map[string]interface{}{
+					{
+						"title": "Section One",
+						"order": 0,
+						"lessons": []map[string]interface{}{
+							{"title": "Lesson One", "type": "text", "duration": 5, "order": 0, "body": "Lesson one body."},
+							{"title": "Lesson Two", "type": "video", "duration": 10, "order": 1, "body": "Lesson two body."},
+						},
+					},
+				},
+			},
+		},
+	})
+	assertStatus(t, confirmResp, 200)
+
+	results, ok := confirmBody["data"].(map[string]interface{})["results"].([]interface{})
+	if !ok || len(results) != 1 {
+		t.Fatalf("expected 1 import result: %v", confirmBody)
+	}
+	result := results[0].(map[string]interface{})
+	if result["success"] != true {
+		t.Fatalf("import did not succeed: %v", result)
+	}
+	if result["error"] != nil && result["error"] != "" {
+		t.Fatalf("import reported a structure warning: %v", result["error"])
+	}
+	courseID := fmt.Sprintf("%v", result["id"])
+	if courseID == "" || courseID == "0" {
+		t.Fatalf("import result has no course id: %v", result)
+	}
+	t.Cleanup(func() { c.delete("/api/cms/" + courseID + "?type=COURSE") })
+
+	// ── Verify DRAFT status right after import ────────────────────────────────
+	gr, gb := c.get("/api/cms/" + courseID + "?type=COURSE")
+	assertStatus(t, gr, 200)
+	data := cmsData(t, gb)
+	if data["status"] != "DRAFT" {
+		t.Errorf("status after import: got %v, want DRAFT", data["status"])
+	}
+
+	// ── Verify the section/lesson structure was actually created ─────────────
+	secResp, secBody := c.get("/api/sections?filters[course][id][$eq]=" + courseID)
+	assertStatus(t, secResp, 200)
+	sections, ok := secBody["data"].([]interface{})
+	if !ok || len(sections) != 1 {
+		t.Fatalf("expected 1 section for imported course, got: %v", secBody)
+	}
+	section := sections[0].(map[string]interface{})
+	if section["title"] != "Section One" {
+		t.Errorf("section title: got %v, want %q", section["title"], "Section One")
+	}
+	lessons, ok := section["lessons"].([]interface{})
+	if !ok || len(lessons) != 2 {
+		t.Fatalf("expected 2 lessons in imported section, got: %v", section["lessons"])
+	}
+
+	// ── Drive the imported course through the standard review cycle ─────────
+	sr, _ := c.post("/api/cms/"+courseID+"/submit?type=COURSE", nil)
+	assertStatus(t, sr, 200)
+	ar, _ := c.post("/api/cms/"+courseID+"/approve?type=COURSE", nil)
+	assertStatus(t, ar, 200)
+	claimR, _ := c.post("/api/cms/"+courseID+"/claim-review?type=COURSE", nil)
+	assertStatus(t, claimR, 200)
+	pr, _ := c.post("/api/cms/"+courseID+"/publish?type=COURSE", nil)
+	assertStatus(t, pr, 200)
+
+	gr2, gb2 := c.get("/api/cms/" + courseID + "?type=COURSE")
+	assertStatus(t, gr2, 200)
+	data2 := cmsData(t, gb2)
+	if data2["status"] != "PUBLISHED" {
+		t.Errorf("status after full cycle: got %v, want PUBLISHED", data2["status"])
+	}
+}
+
 // TestReviewWorkflow_Article_ClaimReviewSetsReviewer verifies that a user can
 // self-assign via POST /cms/:id/claim-review.
 func TestReviewWorkflow_Article_ClaimReviewSetsReviewer(t *testing.T) {

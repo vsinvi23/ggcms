@@ -29,9 +29,14 @@ export function parseBodyToHtml(body: string): string {
  *
  * JSON (new) → parse directly (lossless).
  * HTML (legacy) → parse via DOM (best-effort).
+ * Markdown (import) → parse via markdownToContentBlocks, when sourceFormat says so.
  * Empty / unknown → return [].
+ *
+ * `sourceFormat` is an optional hint (e.g. from an import preview's `bodyFormat` field)
+ * for when sniffing alone can't tell markdown apart from plain HTML-less text. When
+ * omitted, existing sniffing behavior (JSON-array vs HTML) is unchanged.
  */
-export function parseBodyToBlocks(body: string): ContentBlock[] {
+export function parseBodyToBlocks(body: string, sourceFormat?: 'json' | 'html' | 'markdown'): ContentBlock[] {
   if (!body || !body.trim()) return [];
   const trimmed = body.trim();
   if (trimmed.startsWith('[')) {
@@ -45,8 +50,11 @@ export function parseBodyToBlocks(body: string): ContentBlock[] {
         }));
       }
     } catch {
-      // fall through to HTML parser
+      // fall through
     }
+  }
+  if (sourceFormat === 'markdown') {
+    return markdownToContentBlocks(body);
   }
   // Legacy HTML path
   return htmlToContentBlocks(body);
@@ -79,6 +87,147 @@ export function htmlToContentBlocks(html: string): ContentBlock[] {
 
 function generateId(): string {
   return `block-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Parse a Markdown string into ContentBlock[]. Covers the constructs commonly produced
+ * by imported content: headings, paragraphs, fenced code blocks, blockquotes, lists,
+ * dividers, and images. Best-effort, line-oriented — not a full CommonMark parser.
+ */
+export function markdownToContentBlocks(markdown: string): ContentBlock[] {
+  const blocks: ContentBlock[] = [];
+  const lines = (markdown || '').replace(/\r\n/g, '\n').split('\n');
+
+  let paragraphBuf: string[] = [];
+  let listBuf: string[] = [];
+  let listType: ContentBlockType | null = null;
+
+  const flushParagraph = () => {
+    const text = paragraphBuf.join('\n').trim();
+    if (text) {
+      blocks.push({ id: generateId(), type: 'paragraph', content: text });
+    }
+    paragraphBuf = [];
+  };
+  const flushList = () => {
+    if (listBuf.length > 0 && listType) {
+      blocks.push({ id: generateId(), type: listType, content: '', listItems: listBuf });
+    }
+    listBuf = [];
+    listType = null;
+  };
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Fenced code block
+    const fenceMatch = trimmed.match(/^```(\w*)\s*$/);
+    if (fenceMatch) {
+      flushParagraph();
+      flushList();
+      const language = fenceMatch[1] || 'plaintext';
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !/^```\s*$/.test(lines[i].trim())) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      blocks.push({
+        id: generateId(),
+        type: 'code',
+        content: '',
+        codeData: { language, code: codeLines.join('\n'), filename: '' },
+      });
+      i++; // skip closing fence
+      continue;
+    }
+
+    // Heading
+    const headingMatch = trimmed.match(/^(#{1,3})\s+(.*)$/);
+    if (headingMatch) {
+      flushParagraph();
+      flushList();
+      const level = headingMatch[1].length;
+      const type: ContentBlockType = level === 1 ? 'heading1' : level === 2 ? 'heading2' : 'heading3';
+      blocks.push({ id: generateId(), type, content: headingMatch[2].trim() });
+      i++;
+      continue;
+    }
+
+    // Divider
+    if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+      flushParagraph();
+      flushList();
+      blocks.push({ id: generateId(), type: 'divider', content: '' });
+      i++;
+      continue;
+    }
+
+    // Image
+    const imageMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (imageMatch) {
+      flushParagraph();
+      flushList();
+      blocks.push({ id: generateId(), type: 'image', content: '', imageUrl: imageMatch[2], imageAlt: imageMatch[1] });
+      i++;
+      continue;
+    }
+
+    // Blockquote
+    if (/^>\s?/.test(trimmed)) {
+      flushParagraph();
+      flushList();
+      const quoteLines: string[] = [];
+      while (i < lines.length && /^>\s?/.test(lines[i].trim())) {
+        quoteLines.push(lines[i].trim().replace(/^>\s?/, ''));
+        i++;
+      }
+      blocks.push({ id: generateId(), type: 'quote', content: quoteLines.join('\n').trim() });
+      continue;
+    }
+
+    // Ordered list
+    const orderedMatch = trimmed.match(/^\d+\.\s+(.*)$/);
+    if (orderedMatch) {
+      flushParagraph();
+      if (listType && listType !== 'ordered-list') flushList();
+      listType = 'ordered-list';
+      listBuf.push(orderedMatch[1].trim());
+      i++;
+      continue;
+    }
+
+    // Unordered list
+    const unorderedMatch = trimmed.match(/^[-*+]\s+(.*)$/);
+    if (unorderedMatch) {
+      flushParagraph();
+      if (listType && listType !== 'list') flushList();
+      listType = 'list';
+      listBuf.push(unorderedMatch[1].trim());
+      i++;
+      continue;
+    }
+
+    // Blank line — paragraph/list separator
+    if (trimmed === '') {
+      flushParagraph();
+      flushList();
+      i++;
+      continue;
+    }
+
+    // Plain text — accumulate into current paragraph
+    flushList();
+    paragraphBuf.push(line);
+    i++;
+  }
+
+  flushParagraph();
+  flushList();
+
+  return blocks;
 }
 
 function unescapeHtml(text: string): string {
