@@ -20,6 +20,9 @@ import type {
   KnowledgePackCreatePayload,
   Opportunity,
   OpportunityStatus,
+  Portal,
+  PortalCreatePayload,
+  PortalUpdatePayload,
   Project,
   ProjectCreatePayload,
   ProjectSettingsPayload,
@@ -28,6 +31,7 @@ import type {
   ReviewStatus,
   Source,
   SourceCreatePayload,
+  SourceFolderCreatePayload,
   SourceType,
   SystemSettingsPayload,
   SystemSettingsResponse,
@@ -187,6 +191,41 @@ export function uploadSource(projectId: string, file: File): Promise<{ source_id
   formData.append("project_id", projectId)
   formData.append("file", file)
   return request<{ source_id: string; status: string }>("/api/sources/upload", { method: "POST", formData })
+}
+
+export function uploadSourceFolder(payload: SourceFolderCreatePayload): Promise<GenerationJobCreated> {
+  return request<GenerationJobCreated>("/api/sources/upload-folder", { method: "POST", body: payload })
+}
+
+// ---------------------------------------------------------------------------
+// Portals
+// ---------------------------------------------------------------------------
+
+export function listPortals(projectId: string): Promise<Portal[]> {
+  return request<Portal[]>("/api/portals", { query: { project_id: projectId } })
+}
+
+export function createPortal(payload: PortalCreatePayload): Promise<Portal> {
+  return request<Portal>("/api/portals", { method: "POST", body: payload })
+}
+
+export function updatePortal(id: string, projectId: string, payload: PortalUpdatePayload): Promise<Portal> {
+  return request<Portal>(`/api/portals/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    query: { project_id: projectId },
+    body: payload,
+  })
+}
+
+export function deletePortal(id: string, projectId: string): Promise<void> {
+  return request<void>(`/api/portals/${encodeURIComponent(id)}`, { method: "DELETE", query: { project_id: projectId } })
+}
+
+export function scanPortalNow(id: string, projectId: string): Promise<{ status: string }> {
+  return request<{ status: string }>(`/api/portals/${encodeURIComponent(id)}/scan`, {
+    method: "POST",
+    query: { project_id: projectId },
+  })
 }
 
 // ---------------------------------------------------------------------------

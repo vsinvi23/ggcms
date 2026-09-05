@@ -5,14 +5,18 @@ import {
   Check,
   ClipboardList,
   Compass,
+  FolderOpen,
   Layers,
   Link2,
+  PlayCircle,
   Plus,
   RefreshCw,
+  Rss,
   Save,
   Search,
   Shield,
   Sparkles,
+  Trash2,
   Upload,
   X,
 } from "lucide-react"
@@ -42,6 +46,9 @@ import type { Page } from "../App"
 import type {
   Opportunity,
   OpportunityStatus,
+  Portal,
+  PortalCreatePayload,
+  PortalType,
   Project,
   ProjectSettingsPayload,
   ProjectStrategyPayload,
@@ -106,13 +113,14 @@ function parseBulkLines(text: string): string[] {
   return Array.from(new Set(text.split("\n").map((line) => line.trim()).filter(Boolean)))
 }
 
-type Tab = "overview" | "config" | "strategy" | "sources" | "opportunities"
+type Tab = "overview" | "config" | "strategy" | "sources" | "portals" | "opportunities"
 
 const TABS: { value: Tab; label: string }[] = [
   { value: "overview", label: "Overview" },
   { value: "config", label: "Config" },
   { value: "strategy", label: "Strategy" },
   { value: "sources", label: "Sources" },
+  { value: "portals", label: "Portals" },
   { value: "opportunities", label: "Opportunities" },
 ]
 
@@ -645,6 +653,76 @@ function UploadSourceCard({ projectId, onAdded }: { projectId: string; onAdded: 
   )
 }
 
+function UploadFolderCard({ projectId, onAdded }: { projectId: string; onAdded: () => void }) {
+  const { showToast } = useToast()
+  const [folderPath, setFolderPath] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [jobId, setJobId] = useState<string | null>(null)
+
+  const job = useJobPolling(jobId, projectId, (status) => {
+    if (status.status === "SUCCEEDED") {
+      showToast(status.error ? `Folder ingest finished with issues: ${status.error}` : "Folder ingest finished.", status.error ? "info" : "success")
+    } else {
+      showToast(status.error ?? "Folder ingest failed.", "error")
+    }
+    onAdded()
+  })
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!folderPath.trim()) {
+      setError("Enter a folder path.")
+      return
+    }
+    setSubmitting(true)
+    setError(null)
+    setJobId(null)
+    try {
+      const result = await api.uploadSourceFolder({ project_id: projectId, folder_path: folderPath.trim() })
+      setJobId(result.job_id)
+      showToast("Folder queued for ingestion.", "success")
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not queue the folder ingest job.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const isRunning = job !== null && job.status !== "SUCCEEDED" && job.status !== "FAILED"
+
+  return (
+    <Card>
+      <CardHeader title="Ingest a local folder" subtitle="Point at a folder on this machine -- every PDF, Word, Markdown, or text file inside is ingested." />
+      <form onSubmit={submit} className="space-y-4 p-5">
+        {error && <InlineError message={error} onDismiss={() => setError(null)} />}
+        <Field label="Folder path" htmlFor="src-folder" hint="Absolute path, e.g. C:\Docs\research">
+          <Input
+            id="src-folder"
+            value={folderPath}
+            onChange={(e) => setFolderPath(e.target.value)}
+            placeholder="C:\Docs\research"
+          />
+        </Field>
+        <div className="flex items-center gap-3">
+          <Button type="submit" icon={<FolderOpen size={15} />} loading={submitting} disabled={isRunning}>
+            Ingest folder
+          </Button>
+          {job && (
+            <span className="text-xs text-zinc-500">
+              {job.status === "RUNNING" && (job.current_node ?? "Running…")}
+              {job.status === "QUEUED" && "Queued…"}
+              {job.status === "SUCCEEDED" && !job.error && "Done."}
+              {job.status === "SUCCEEDED" && job.error && `Done — ${job.error}`}
+              {job.status === "FAILED" && `Failed — ${job.error ?? "unknown error"}`}
+            </span>
+          )}
+        </div>
+      </form>
+    </Card>
+  )
+}
+
 function SourcesTable({
   data,
   loading,
@@ -697,6 +775,9 @@ function SourcesTable({
                     {s.source_type}
                     {s.discovery_method === "web_search" && (
                       <Badge tone="info" className="ml-2">Web search</Badge>
+                    )}
+                    {s.discovery_method === "portal_scrape" && (
+                      <Badge tone="progress" className="ml-2">Portal scan</Badge>
                     )}
                   </td>
                   <td className="px-5 py-3">
@@ -887,6 +968,7 @@ function SourcesTab({ projectId }: { projectId: string }) {
         <AddUrlSourceCard projectId={projectId} onAdded={bump} />
         <UploadSourceCard projectId={projectId} onAdded={bump} />
       </div>
+      <UploadFolderCard projectId={projectId} onAdded={bump} />
       <BulkAddUrlsCard projectId={projectId} onAdded={bump} />
       <SourcesTable {...sourcesState} />
       <PendingReviewSection projectId={projectId} refreshKey={refreshKey} onReviewed={bump} />
@@ -899,6 +981,231 @@ function SourcesTab({ projectId }: { projectId: string }) {
           sourcesState.reload()
         }}
       />
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Portals
+// ---------------------------------------------------------------------------
+
+const PORTAL_TYPE_OPTIONS: { value: PortalType; label: string }[] = [
+  { value: "listing", label: "Listing page" },
+  { value: "rss", label: "RSS feed" },
+]
+
+function AddPortalCard({ projectId, onAdded }: { projectId: string; onAdded: () => void }) {
+  const { showToast } = useToast()
+  const [name, setName] = useState("")
+  const [url, setUrl] = useState("")
+  const [portalType, setPortalType] = useState<PortalType>("listing")
+  const [intervalMinutes, setIntervalMinutes] = useState("360")
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!name.trim() || !url.trim()) {
+      setError("Enter a name and URL.")
+      return
+    }
+    setSubmitting(true)
+    setError(null)
+    try {
+      const payload: PortalCreatePayload = {
+        project_id: projectId,
+        name: name.trim(),
+        url: url.trim(),
+        portal_type: portalType,
+        scan_interval_minutes: Number(intervalMinutes) || 360,
+      }
+      await api.createPortal(payload)
+      setName("")
+      setUrl("")
+      setIntervalMinutes("360")
+      showToast("Portal added.", "success")
+      onAdded()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not add the portal.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader title="Add a portal" subtitle="A listing page or RSS feed to periodically re-scan for new articles." />
+      <form onSubmit={submit} className="space-y-4 p-5">
+        {error && <InlineError message={error} onDismiss={() => setError(null)} />}
+        <Field label="Name" htmlFor="portal-name">
+          <Input id="portal-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Engineering Blog" />
+        </Field>
+        <Field label="URL" htmlFor="portal-url">
+          <Input id="portal-url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com/blog" />
+        </Field>
+        <Field label="Type" htmlFor="portal-type">
+          <Select id="portal-type" value={portalType} onChange={(e) => setPortalType(e.target.value as PortalType)}>
+            {PORTAL_TYPE_OPTIONS.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label="Scan interval (minutes)" htmlFor="portal-interval" hint="Default 360 (6 hours)">
+          <Input
+            id="portal-interval"
+            type="number"
+            min={1}
+            value={intervalMinutes}
+            onChange={(e) => setIntervalMinutes(e.target.value)}
+          />
+        </Field>
+        <Button type="submit" icon={<Rss size={15} />} loading={submitting}>
+          Add portal
+        </Button>
+      </form>
+    </Card>
+  )
+}
+
+function PortalsTable({ projectId, data, loading, error, isOffline, reload }: {
+  projectId: string
+  data: Portal[] | null
+  loading: boolean
+  error: string | null
+  isOffline: boolean
+  reload: () => void
+}) {
+  const { showToast } = useToast()
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  const scanNow = async (portal: Portal) => {
+    setBusyId(portal.id)
+    try {
+      await api.scanPortalNow(portal.id, projectId)
+      showToast(`Scanning "${portal.name}"...`, "info")
+      window.setTimeout(reload, 2500)
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : "Could not start the scan.", "error")
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const toggleActive = async (portal: Portal) => {
+    setBusyId(portal.id)
+    try {
+      await api.updatePortal(portal.id, projectId, { is_active: !portal.is_active })
+      reload()
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : "Could not update the portal.", "error")
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const remove = async (portal: Portal) => {
+    setBusyId(portal.id)
+    try {
+      await api.deletePortal(portal.id, projectId)
+      showToast("Portal removed.", "success")
+      reload()
+    } catch (err) {
+      showToast(err instanceof ApiError ? err.message : "Could not remove the portal.", "error")
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader
+        title="Portals"
+        subtitle="Recurring scans that discover new sources automatically."
+        action={
+          <Button variant="secondary" icon={<RefreshCw size={14} />} onClick={reload}>
+            Refresh
+          </Button>
+        }
+      />
+      {loading ? (
+        <Spinner label="Loading portals..." />
+      ) : error ? (
+        <ErrorState message={error} isOffline={isOffline} onRetry={reload} />
+      ) : !data || data.length === 0 ? (
+        <EmptyState icon={<Rss size={22} />} title="No portals yet" description="Add a listing page or RSS feed above to start recurring discovery." />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-800 text-xs uppercase tracking-wide text-zinc-500">
+                <th className="px-5 py-3 font-medium">Name / URL</th>
+                <th className="px-5 py-3 font-medium">Type</th>
+                <th className="px-5 py-3 font-medium">Last scanned</th>
+                <th className="px-5 py-3 font-medium">Last result</th>
+                <th className="px-5 py-3 font-medium">Active</th>
+                <th className="px-5 py-3 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800">
+              {data.map((p) => (
+                <tr key={p.id} className="hover:bg-zinc-800/30">
+                  <td className="max-w-xs truncate px-5 py-3 text-zinc-200" title={p.url}>
+                    {p.name}
+                    <div className="truncate text-xs text-zinc-500">{p.url}</div>
+                  </td>
+                  <td className="px-5 py-3 text-zinc-400">{p.portal_type}</td>
+                  <td className="px-5 py-3 text-xs text-zinc-500">
+                    {p.last_scanned_at ? new Date(p.last_scanned_at).toLocaleString() : "Never"}
+                  </td>
+                  <td className="px-5 py-3">
+                    {p.last_scan_status === "success" && (
+                      <Badge tone="success">{p.last_scan_new_count ?? 0} new</Badge>
+                    )}
+                    {p.last_scan_status === "failed" && <Badge tone="danger">Failed</Badge>}
+                    {!p.last_scan_status && <Badge tone="neutral">—</Badge>}
+                  </td>
+                  <td className="px-5 py-3">
+                    <button
+                      onClick={() => toggleActive(p)}
+                      disabled={busyId === p.id}
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+                        p.is_active ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-800 text-zinc-500"
+                      }`}
+                    >
+                      {p.is_active ? "Active" : "Paused"}
+                    </button>
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <Button variant="secondary" icon={<PlayCircle size={14} />} loading={busyId === p.id} onClick={() => scanNow(p)}>
+                        Scan now
+                      </Button>
+                      <Button variant="danger" icon={<Trash2 size={14} />} loading={busyId === p.id} onClick={() => remove(p)}>
+                        Delete
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function PortalsTab({ projectId }: { projectId: string }) {
+  const [refreshKey, setRefreshKey] = useState(0)
+  const bump = () => setRefreshKey((n) => n + 1)
+  const portalsState = useAsync(() => api.listPortals(projectId), [projectId, refreshKey])
+
+  return (
+    <div className="space-y-6">
+      <AddPortalCard projectId={projectId} onAdded={bump} />
+      <PortalsTable projectId={projectId} {...portalsState} reload={bump} />
     </div>
   )
 }
@@ -1247,6 +1554,7 @@ export default function ProjectDetail({
       {tab === "config" && <ConfigTab projectId={projectId} project={project} onSaved={refreshProjects} />}
       {tab === "strategy" && <StrategyTab projectId={projectId} />}
       {tab === "sources" && <SourcesTab projectId={projectId} />}
+      {tab === "portals" && <PortalsTab projectId={projectId} />}
       {tab === "opportunities" && <OpportunitiesTab projectId={projectId} onNavigate={onNavigate} />}
     </div>
   )

@@ -1,7 +1,9 @@
 import httpx
 
+from backend.ingestion.extractors.docx_extractor import extract_text_from_docx
 from backend.ingestion.extractors.html_extractor import extract_text_from_html
 from backend.ingestion.extractors.pdf_extractor import extract_text_from_pdf
+from backend.ingestion.extractors.text_extractor import extract_text_from_text
 from backend.knowledge.chunking import chunk_text
 from backend.models.domain import Source
 from backend.retrieval import vector_store
@@ -10,8 +12,12 @@ from backend.storage import file_store
 from backend.storage.file_store import ProjectId
 
 # source_type values per DDL §2: 'pdf','docx','markdown','txt','url','website','sitemap','rss','github'.
-# Anything not explicitly 'pdf' is treated as HTML/text and routed through trafilatura.
+# Each of pdf/docx/markdown+txt gets a real extractor; anything else (url,
+# website, sitemap, rss, github) is treated as fetched HTML and routed
+# through trafilatura.
 _PDF_SOURCE_TYPES = {"pdf"}
+_DOCX_SOURCE_TYPES = {"docx"}
+_TEXT_SOURCE_TYPES = {"markdown", "txt"}
 
 
 async def _fetch(url: str) -> bytes:
@@ -88,7 +94,6 @@ async def ingest_source(
                 return {"status": "duplicate", "source_id": existing.id}
 
     # --- fetch ---------------------------------------------------------
-    is_pdf = source_type in _PDF_SOURCE_TYPES
     if file_bytes is not None:
         raw_bytes = file_bytes
     else:
@@ -113,11 +118,16 @@ async def ingest_source(
     # --- extract ---------------------------------------------------------
     page_count = None
     section_map = None
-    if is_pdf:
+    if source_type in _PDF_SOURCE_TYPES:
         extracted = extract_text_from_pdf(raw_bytes)
         raw_text = extracted["text"]
         page_count = extracted["page_count"]
         section_map = extracted["section_map"]
+    elif source_type in _DOCX_SOURCE_TYPES:
+        extracted = extract_text_from_docx(raw_bytes)
+        raw_text = extracted["text"]
+    elif source_type in _TEXT_SOURCE_TYPES:
+        raw_text = extract_text_from_text(raw_bytes)
     else:
         html = raw_bytes.decode("utf-8", errors="ignore")
         raw_text = extract_text_from_html(html)
@@ -162,12 +172,13 @@ async def ingest_discovered_source(
     search_query: str,
     search_rank: int,
     source_type: str = "url",
+    discovery_method: str = "web_search",
 ) -> dict:
     """
-    Ingests a web-search-discovered URL via `ingest_source` (reused, not
-    duplicated) and stamps discovery/review metadata onto the resulting
-    Source row. New sources land as review_status='PENDING' so they cannot
-    ground *future* generations until a human approves them (see
+    Ingests a discovered URL (web-search or portal-scan) via `ingest_source`
+    (reused, not duplicated) and stamps discovery/review metadata onto the
+    resulting Source row. New sources land as review_status='PENDING' so they
+    cannot ground *future* generations until a human approves them (see
     retrieval/vector_store.similarity_search's review_status filter).
     """
     result = await ingest_source(project_id, source_type, url=url, title=title)
@@ -176,7 +187,7 @@ async def ingest_discovered_source(
         return result  # duplicate: an existing Source already carries its own review state
 
     source = file_store.get_source(project_id, result["source_id"])
-    source.discovery_method = "web_search"
+    source.discovery_method = discovery_method
     source.review_status = "PENDING"
     source.discovered_snippet = snippet
     source.search_query = search_query

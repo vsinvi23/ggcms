@@ -1,6 +1,7 @@
 import logging
 import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
@@ -19,6 +20,15 @@ router = APIRouter(prefix="/api/sources", tags=["Sources"])
 _URL_SOURCE_TYPES = {"url", "website", "sitemap", "rss", "github"}
 _UPLOAD_SOURCE_TYPES = {"pdf", "docx", "markdown", "txt"}
 
+# Maps a file extension to the source_type ingest_source expects, for folder scans.
+_EXTENSION_SOURCE_TYPES = {
+    ".pdf": "pdf",
+    ".docx": "docx",
+    ".md": "markdown",
+    ".markdown": "markdown",
+    ".txt": "txt",
+}
+
 
 class SourceCreate(BaseModel):
     project_id: uuid.UUID
@@ -34,6 +44,11 @@ class SourceBulkCreate(BaseModel):
 
 class SourceBulkCreateOut(BaseModel):
     job_id: uuid.UUID
+
+
+class SourceFolderCreate(BaseModel):
+    project_id: uuid.UUID
+    folder_path: str
 
 
 class SourceOut(BaseModel):
@@ -187,3 +202,70 @@ async def upload_source(
         title=file.filename,
     )
     return _jsonable(result)
+
+
+async def run_folder_ingest_job(job_id: uuid.UUID, project_id: uuid.UUID, folder_path: str) -> None:
+    """
+    Background task: recursively walks folder_path (the backend runs locally,
+    so direct filesystem access is appropriate here, unlike the web-facing
+    endpoints), ingesting every file whose extension maps to a supported
+    source_type via the same ingest_source used by single-file upload. One
+    bad file doesn't abort the batch, mirroring run_bulk_ingest_job.
+    """
+    job = file_store.get_job(project_id, job_id)
+    if job is None:
+        logger.error(f"folder-ingest job {job_id} vanished before start")
+        return
+    job.status = "RUNNING"
+    job.started_at = utcnow()
+    await file_store.save_job(project_id, job)
+
+    files = [
+        p for p in Path(folder_path).rglob("*")
+        if p.is_file() and p.suffix.lower() in _EXTENSION_SOURCE_TYPES
+    ]
+
+    failures = []
+    for i, path in enumerate(files, start=1):
+        job.current_node = f"ingesting {i}/{len(files)}: {path.name}"
+        await file_store.save_job(project_id, job)
+        try:
+            file_bytes = path.read_bytes()
+            source_type = _EXTENSION_SOURCE_TYPES[path.suffix.lower()]
+            await ingest_source(
+                project_id=project_id,
+                source_type=source_type,
+                file_bytes=file_bytes,
+                title=path.name,
+            )
+        except Exception as exc:  # noqa: BLE001 - one bad file must not abort the batch
+            logger.warning(f"folder-ingest failed for {path}: {exc}")
+            failures.append(path.name)
+
+    job.status = "SUCCEEDED"
+    job.current_node = None
+    job.completed_at = utcnow()
+    if not files:
+        job.error_type = "no_supported_files"
+        job.error_message = f"No supported files (.pdf/.docx/.md/.txt) found under {folder_path}"
+    elif failures:
+        job.error_type = "partial_failure"
+        job.error_message = f"{len(failures)}/{len(files)} files failed: {', '.join(failures)}"
+    await file_store.save_job(project_id, job)
+
+
+@router.post("/upload-folder", response_model=SourceBulkCreateOut, status_code=202)
+async def upload_source_folder(payload: SourceFolderCreate, bg_tasks: BackgroundTasks):
+    """
+    Ingests every supported file (.pdf/.docx/.md/.markdown/.txt) found
+    recursively under a local folder path, in a background job (see
+    run_folder_ingest_job). Poll GET /api/jobs/{job_id} for progress.
+    """
+    folder = Path(payload.folder_path)
+    if not folder.is_dir():
+        raise HTTPException(status_code=400, detail=f"folder_path is not a directory: {payload.folder_path}")
+
+    job = GenerationJob(project_id=payload.project_id, topic=f"folder source ingest ({payload.folder_path})")
+    await file_store.save_job(payload.project_id, job)
+    bg_tasks.add_task(run_folder_ingest_job, job.id, payload.project_id, payload.folder_path)
+    return SourceBulkCreateOut(job_id=job.id)

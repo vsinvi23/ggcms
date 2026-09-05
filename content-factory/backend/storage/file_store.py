@@ -66,6 +66,7 @@ from backend.models.domain import (
     KnowledgeDocument,
     KnowledgePack,
     Opportunity,
+    Portal,
     Project,
     ProjectStrategy,
     QualityReport,
@@ -80,6 +81,7 @@ ProjectId = uuid.UUID | str
 
 _PROJECT_FILE = "project.yaml"
 _SOURCES_FILE = "sources.yaml"
+_PORTALS_FILE = "portals.yaml"
 _OPPORTUNITIES_FILE = "opportunities.yaml"
 _JOBS_FILE = "jobs.yaml"
 _EXPORTS_FILE = "exports.yaml"
@@ -264,6 +266,55 @@ async def update_source(project_id: ProjectId, source: Source) -> Source:
             raise KeyError(f"source {source.id} not found in project {project_id}")
         _atomic_write_yaml(path, raw)
     return source
+
+
+# ---------------------------------------------------------------------------
+# portals
+# ---------------------------------------------------------------------------
+
+def list_portals(project_id: ProjectId) -> list[Portal]:
+    raw = _read_yaml(_project_file(project_id, _PORTALS_FILE)) or []
+    return [Portal.model_validate(p) for p in raw]
+
+
+def get_portal(project_id: ProjectId, portal_id: ProjectId) -> Optional[Portal]:
+    for p in list_portals(project_id):
+        if str(p.id) == str(portal_id):
+            return p
+    return None
+
+
+async def append_portal(project_id: ProjectId, portal: Portal) -> Portal:
+    async with _lock_for(project_id):
+        path = _project_file(project_id, _PORTALS_FILE)
+        raw = _read_yaml(path) or []
+        raw.append(portal.model_dump(mode="json"))
+        _atomic_write_yaml(path, raw)
+    return portal
+
+
+async def update_portal(project_id: ProjectId, portal: Portal) -> Portal:
+    """Replaces the existing entry matching `portal.id`. Raises KeyError if not found."""
+    async with _lock_for(project_id):
+        path = _project_file(project_id, _PORTALS_FILE)
+        raw = _read_yaml(path) or []
+        for i, item in enumerate(raw):
+            if str(item.get("id")) == str(portal.id):
+                raw[i] = portal.model_dump(mode="json")
+                break
+        else:
+            raise KeyError(f"portal {portal.id} not found in project {project_id}")
+        _atomic_write_yaml(path, raw)
+    return portal
+
+
+async def delete_portal(project_id: ProjectId, portal_id: ProjectId) -> None:
+    """No-op if the portal is already gone."""
+    async with _lock_for(project_id):
+        path = _project_file(project_id, _PORTALS_FILE)
+        raw = _read_yaml(path) or []
+        filtered = [item for item in raw if str(item.get("id")) != str(portal_id)]
+        _atomic_write_yaml(path, filtered)
 
 
 # ---------------------------------------------------------------------------

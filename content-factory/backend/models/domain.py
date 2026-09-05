@@ -117,6 +117,28 @@ class Source(BaseModel):
     search_rank: int | None = None
 
 
+class Portal(BaseModel):
+    """
+    A recurring "portal" to periodically scan for new content (a listing
+    page or an RSS feed) -- newly discovered links are ingested via
+    ingestion.pipeline.ingest_discovered_source(discovery_method="portal_scrape"),
+    landing as review_status="PENDING" like web-search discovery does today.
+    See backend/services/portal_scanner.py.
+    """
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    project_id: uuid.UUID
+    name: str
+    url: str
+    portal_type: str = "listing"  # "listing" | "rss"
+    link_selector: str | None = None
+    scan_interval_minutes: int = 360
+    is_active: bool = True
+    last_scanned_at: datetime | None = None
+    last_scan_status: str | None = None  # "success" | "failed" | None (never run)
+    last_scan_new_count: int | None = None
+    created_at: datetime = Field(default_factory=utcnow)
+
+
 class KnowledgeDocument(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     source_id: uuid.UUID

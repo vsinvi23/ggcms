@@ -17,7 +17,7 @@ export type SourceType =
 
 export type SourceStatus = "PENDING" | "FETCHED" | "EXTRACTED" | "FAILED"
 
-export type DiscoveryMethod = "manual" | "web_search"
+export type DiscoveryMethod = "manual" | "web_search" | "portal_scrape"
 
 export type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED"
 
@@ -110,6 +110,46 @@ export interface SourceCreatePayload {
   project_id: string
   source_type: SourceType
   url: string
+}
+
+export interface SourceFolderCreatePayload {
+  project_id: string
+  folder_path: string
+}
+
+export type PortalType = "listing" | "rss"
+
+export interface Portal {
+  id: string
+  project_id: string
+  name: string
+  url: string
+  portal_type: PortalType
+  link_selector?: string | null
+  scan_interval_minutes: number
+  is_active: boolean
+  last_scanned_at?: string | null
+  last_scan_status?: "success" | "failed" | null
+  last_scan_new_count?: number | null
+  created_at?: string
+}
+
+export interface PortalCreatePayload {
+  project_id: string
+  name: string
+  url: string
+  portal_type: PortalType
+  link_selector?: string
+  scan_interval_minutes: number
+}
+
+export interface PortalUpdatePayload {
+  name?: string
+  url?: string
+  portal_type?: PortalType
+  link_selector?: string
+  scan_interval_minutes?: number
+  is_active?: boolean
 }
 
 export interface KnowledgePack {

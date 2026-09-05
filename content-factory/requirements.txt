@@ -8,6 +8,8 @@ langchain-google-genai
 langchain-anthropic
 trafilatura
 pymupdf
+python-docx
+feedparser
 beautifulsoup4
 httpx
 python-multipart
