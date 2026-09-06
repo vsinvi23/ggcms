@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     factory_sync_secret: str = Field(default="mock-sync-secret", validation_alias="FACTORY_SYNC_SECRET")
     tavily_api_key: str = Field(default="", validation_alias="TAVILY_API_KEY")
     web_search_max_results: int = Field(default=5, validation_alias="WEB_SEARCH_MAX_RESULTS")
+    # ── Auth — shared JWT secret with gg-cms backend ───────────────────────
+    jwt_secret: str = Field(default="", validation_alias="JWT_SECRET")
+    # ── Google Drive integration ───────────────────────────────────────────
+    gdrive_enabled: bool = Field(default=False, validation_alias="GDRIVE_ENABLED")
+    # SA key JSON string mounted from GCP Secret Manager (base64 or raw JSON)
+    gdrive_service_account_key: str = Field(default="", validation_alias="GDRIVE_SA_KEY")
 
     model_config = SettingsConfigDict(
         env_file=".env",

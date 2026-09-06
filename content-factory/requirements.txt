@@ -15,4 +15,10 @@ httpx
 python-multipart
 litellm
 pyyaml
+# Google Drive integration
+google-api-python-client>=2.100.0
+google-auth>=2.23.0
+google-auth-httplib2>=0.2.0
+# JWT validation (shared secret with gg-cms Go backend)
+PyJWT>=2.8.0
 

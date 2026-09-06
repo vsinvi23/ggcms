@@ -1,11 +1,15 @@
 import asyncio
+import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from backend.configs.settings import settings
+from backend.api.middleware.auth import JWTAuthMiddleware, ALLOWED_ORIGINS
 from backend.api.routers.analytics import router as analytics_router
 from backend.api.routers.content import router as content_router
 from backend.api.routers.generation import router as generation_router
+from backend.api.routers.gdrive import router as gdrive_router
 from backend.api.routers.jobs import router as jobs_router
 from backend.api.routers.knowledge_packs import router as knowledge_packs_router
 from backend.api.routers.opportunities import router as opportunities_router
@@ -23,12 +27,20 @@ app = FastAPI(
     version="2.0.0"
 )
 
+# ── JWT auth middleware (validates gg-cms tokens) ───────────────────────────────
+app.add_middleware(JWTAuthMiddleware)
+
+# ── CORS — restricted to geekgully.com + localhost dev ───────────────────────
+# In production (JWT_SECRET configured) only geekgully.com origins are accepted.
+# Localhost origins are allowed only in local dev where JWT_SECRET is absent.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
+    expose_headers=["X-Factory-Request-ID"],
+    max_age=600,
 )
 
 # Include Routers
@@ -42,6 +54,7 @@ app.include_router(jobs_router)
 app.include_router(content_router)
 app.include_router(analytics_router)
 app.include_router(system_settings_router)
+app.include_router(gdrive_router)
 
 
 @app.on_event("startup")
@@ -71,3 +84,11 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run("backend.api.main:app", host="0.0.0.0", port=8000, reload=True)
 
+
+# ── Serve React SPA static files at /factory (Cloud Run mode) ───────────────────
+# The Dockerfile copies the Vite build output to /app/dist.
+# In local dev (npm run dev), Vite's proxy handles /api calls so this mount
+# is skipped to avoid conflicts.
+_STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
+if os.path.isdir(_STATIC_DIR):
+    app.mount("/factory", StaticFiles(directory=_STATIC_DIR, html=True), name="factory-spa")

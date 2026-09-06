@@ -4,25 +4,31 @@ from backend.storage import file_store
 
 # Fields the UI can override. Excludes database_url (stays .env-only -- live
 # DB reconnection is out of scope/dangerous).
+# factory_sync_secret is machine-to-machine only -- set via GCP Secret Manager,
+# never via the UI to prevent accidental exposure.
 OVERRIDABLE_FIELDS = [
     "gemini_api_key",
     "gemini_model_planner",
     "gemini_model_researcher",
     "gemini_model_writer",
     "gemini_model_reviewer",
-    "gemini_base_url",
-    "embedding_model",
-    "gcs_bucket",
     "max_monthly_ai_budget",
     "max_cost_per_content_unit",
     "max_revisions",
     "source_max_pages",
     "source_max_depth",
     "mock_mode",
-    "ggcms_base_url",
-    "factory_sync_secret",
     "tavily_api_key",
     "web_search_max_results",
+]
+
+# Internal/infra fields — returned read-only in GET for visibility,
+# but the PUT endpoint ignores them. Not editable via the UI.
+READONLY_FIELDS = [
+    "ggcms_base_url",
+    "gemini_base_url",
+    "embedding_model",
+    "gcs_bucket",
 ]
 
 # Fields that only take effect on the next process restart -- they're read
@@ -38,7 +44,9 @@ RESTART_REQUIRED_FIELDS = {
     "embedding_model",
 }
 
-SECRET_FIELDS = {"gemini_api_key", "tavily_api_key", "factory_sync_secret"}
+# Secret fields — values are NEVER returned in plaintext in any API response.
+# factory_sync_secret is intentionally excluded from this view entirely.
+SECRET_FIELDS = {"gemini_api_key", "tavily_api_key"}
 
 
 def get_row() -> AppSetting:
@@ -71,22 +79,40 @@ def apply_overrides(row: AppSetting) -> None:
         setattr(settings, field, value)
 
 
-def mask_secret(value: str | None) -> str:
-    if not value:
-        return ""
-    if len(value) <= 4:
-        return "*" * len(value)
-    return "*" * (len(value) - 4) + value[-4:]
-
-
 def effective_view(db_row: AppSetting | None) -> dict:
-    """Builds the GET response: effective value (override or .env default) + source marker."""
+    """Builds the GET /api/system-settings response.
+
+    Security rules for secret fields:
+    - source='override' (user explicitly set via UI → in data/settings.yaml):
+        return is_set=True with value='' — UI shows 'Key configured' badge
+    - source='default' (from env var / GCP Secret Manager injection):
+        return is_set=True/False with value='' — never leak any chars
+
+    Plaintext key values are NEVER returned. Not even partially.
+    Non-secret fields return their actual effective value.
+    """
+    all_fields = OVERRIDABLE_FIELDS + READONLY_FIELDS
     view = {}
-    for field in OVERRIDABLE_FIELDS:
+    for field in all_fields:
         override_value = getattr(db_row, field, None) if db_row is not None else None
-        effective = override_value if override_value is not None else getattr(settings, field)
+        effective = override_value if override_value is not None else getattr(settings, field, None)
         source = "override" if override_value is not None else "default"
+        readonly = field in READONLY_FIELDS
+
         if field in SECRET_FIELDS:
-            effective = mask_secret(effective)
-        view[field] = {"value": effective, "source": source}
+            # Never send any key characters — only signal whether the key is set
+            view[field] = {
+                "value": "",          # always empty — no characters ever returned
+                "source": source,
+                "readonly": readonly,
+                "is_set": bool(effective),  # True/False so UI shows configured state
+            }
+        else:
+            view[field] = {
+                "value": effective,
+                "source": source,
+                "readonly": readonly,
+                "is_set": bool(effective),
+            }
+
     return view

@@ -108,13 +108,15 @@ async def create_course_outline(req: CourseOutlineRequest):
 
 @router.get("", response_model=List[ContentItemOut])
 async def list_content(
-    project_id: Optional[uuid.UUID] = None,
+    project_id: uuid.UUID,  # now REQUIRED — prevents cross-project IDOR
     status: Optional[str] = None,
 ):
-    if project_id is not None:
-        items = file_store.list_content_items(project_id)
-    else:
-        items = [c for p in file_store.list_projects() for c in file_store.list_content_items(p.id)]
+    """List content items for a specific project.
+
+    project_id is required to prevent cross-project IDOR: without it a caller
+    could enumerate all content items across every project by omitting the param.
+    """
+    items = file_store.list_content_items(project_id)
     if status is not None:
         items = [c for c in items if c.status == status]
     items.sort(key=lambda c: c.created_at, reverse=True)

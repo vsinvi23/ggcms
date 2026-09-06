@@ -284,6 +284,9 @@ export interface ContentItemDetail extends ContentItem {
 export interface SystemSettingField {
   value: string | number | boolean
   source: "override" | "default"
+  readonly: boolean
+  /** True when a value is configured (even if value='' for secrets) */
+  is_set: boolean
 }
 
 export interface SystemSettings {
@@ -302,7 +305,7 @@ export interface SystemSettings {
   source_max_depth: SystemSettingField
   mock_mode: SystemSettingField
   ggcms_base_url: SystemSettingField
-  factory_sync_secret: SystemSettingField
+  // factory_sync_secret intentionally omitted — GCP Secret Manager only
   tavily_api_key: SystemSettingField
   web_search_max_results: SystemSettingField
 }
@@ -322,17 +325,15 @@ export interface SystemSettingsPayload {
   gemini_model_researcher?: string
   gemini_model_writer?: string
   gemini_model_reviewer?: string
-  gemini_base_url?: string
-  embedding_model?: string
-  gcs_bucket?: string
+  // gemini_base_url, gcs_bucket, embedding_model: infrastructure-only,
+  // set via GCP Secret Manager / Cloud Run env vars — not editable from UI
   max_monthly_ai_budget?: number
   max_cost_per_content_unit?: number
   max_revisions?: number
   source_max_pages?: number
   source_max_depth?: number
   mock_mode?: boolean
-  ggcms_base_url?: string
-  factory_sync_secret?: string
+  // ggcms_base_url and factory_sync_secret: infra-only, not UI-editable
   tavily_api_key?: string
   web_search_max_results?: number
 }

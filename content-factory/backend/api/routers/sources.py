@@ -258,14 +258,39 @@ async def run_folder_ingest_job(job_id: uuid.UUID, project_id: uuid.UUID, folder
 async def upload_source_folder(payload: SourceFolderCreate, bg_tasks: BackgroundTasks):
     """
     Ingests every supported file (.pdf/.docx/.md/.markdown/.txt) found
-    recursively under a local folder path, in a background job (see
-    run_folder_ingest_job). Poll GET /api/jobs/{job_id} for progress.
-    """
-    folder = Path(payload.folder_path)
-    if not folder.is_dir():
-        raise HTTPException(status_code=400, detail=f"folder_path is not a directory: {payload.folder_path}")
+    recursively under a local folder path, in a background job.
 
-    job = GenerationJob(project_id=payload.project_id, topic=f"folder source ingest ({payload.folder_path})")
+    Security: folder_path is resolved to an absolute real path and validated
+    against a safe prefix (/app/data) to prevent path traversal attacks.
+    Only files within the allowed data directory are accessible.
+    """
+    import os
+    # Resolve real absolute path to block traversal (../, symlinks, etc.)
+    try:
+        resolved = Path(payload.folder_path).resolve(strict=True)
+    except (OSError, ValueError):
+        raise HTTPException(status_code=400, detail="folder_path does not exist or is inaccessible")
+
+    # Restrict to /app/data (Cloud Run container data dir) or local dev CWD/data
+    safe_roots = [
+        Path("/app/data").resolve(),
+        Path("data").resolve(),
+    ]
+    if not any(str(resolved).startswith(str(root)) for root in safe_roots):
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied: folder_path must be within the allowed data directory",
+        )
+
+    if not resolved.is_dir():
+        raise HTTPException(status_code=400, detail="folder_path is not a directory")
+
+    # Verify project exists to prevent IDOR via non-existent project IDs
+    project = file_store.load_project(payload.project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    job = GenerationJob(project_id=payload.project_id, topic=f"folder source ingest ({resolved.name})")
     await file_store.save_job(payload.project_id, job)
-    bg_tasks.add_task(run_folder_ingest_job, job.id, payload.project_id, payload.folder_path)
+    bg_tasks.add_task(run_folder_ingest_job, job.id, payload.project_id, str(resolved))
     return SourceBulkCreateOut(job_id=job.id)
