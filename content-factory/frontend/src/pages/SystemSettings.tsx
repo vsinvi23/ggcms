@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { AlertTriangle, CheckCircle2, Cloud, CloudOff, FolderOpen, Key, Lock, RefreshCw, Save, ShieldAlert } from "lucide-react"
+import { AlertTriangle, CheckCircle2, Cloud, CloudOff, FolderOpen, Key, Lock, RefreshCw, Save } from "lucide-react"
 import { useToast } from "../components/Toast"
 import { useAsync } from "../hooks/useAsync"
 import * as api from "../services/api"
@@ -63,7 +63,7 @@ function SecretField({
       </div>
 
       <Field
-        id={id}
+        htmlFor={id}
         hint={
           isSet
             ? "API Key is securely stored. Leave blank to keep existing key, or enter a new key to update."

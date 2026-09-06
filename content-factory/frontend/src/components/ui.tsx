@@ -113,10 +113,10 @@ export function Select({
   )
 }
 
-export function Field({ label, hint, children, htmlFor }: { label: string; hint?: string; children: ReactNode; htmlFor?: string }) {
+export function Field({ label, hint, children, htmlFor }: { label?: string; hint?: string; children: ReactNode; htmlFor?: string }) {
   return (
     <div>
-      <Label htmlFor={htmlFor}>{label}</Label>
+      {label && <Label htmlFor={htmlFor}>{label}</Label>}
       {children}
       {hint && <p className="mt-1 text-xs text-zinc-600">{hint}</p>}
     </div>
