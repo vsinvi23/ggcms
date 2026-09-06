@@ -314,11 +314,10 @@ geekgully.com/factory/**  →  Firebase Hosting rewrite
 | Secret | `factory-sync-secret` | Shared GGCMS ↔ Factory machine-to-machine token |
 | Docker image | `us-central1-docker.pkg.dev/ggcms-free-tier-vivek/gg-cms/content-factory:latest` | Multi-stage (Node 20 + Python 3.12) |
 
-### Master Admin Access
-
 | Field | Value |
 |---|---|
-| URL | `https://geekgully.com/factory` |
+| Direct Service URL | `https://content-factory-backend-wuisbddlxq-uc.a.run.app` |
+| Custom Domain URL | `https://geekgully.com/factory` |
 | Login | `https://geekgully.com/auth` |
 | Email | `info@serenyax.com` |
 | Password | stored in Secret Manager as `gg-cms-admin-password` (`Admin@12345`) |
