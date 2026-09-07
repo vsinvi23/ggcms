@@ -48,7 +48,7 @@ import { BookOpen, FileText, ListTodo, Layers, GraduationCap, Settings2, Upload,
 // All menu items with access control flags
 const standaloneItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' }, // visible to all authenticated users
-  { icon: Factory, label: 'AI Content Factory', href: '/factory', adminOnly: true, external: true },
+  { icon: Factory, label: 'AI Content Factory', href: '/factory', adminOnly: true },
   { icon: ListTodo, label: 'My Tasks', href: '/my-tasks', contentOnly: true },
   { icon: BookOpen, label: 'Courses', href: '/courses', contentOnly: true },
   { icon: FileText, label: 'Articles', href: '/articles', contentOnly: true },

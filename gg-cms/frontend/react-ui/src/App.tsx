@@ -43,6 +43,7 @@ const NotesHighlightsPage = lazy(() => import('./pages/NotesHighlightsPage'));
 const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const BulkImport = lazy(() => import('./pages/BulkImport'));
+const FactoryPage = lazy(() => import('./pages/FactoryPage'));
 
 class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
@@ -115,6 +116,8 @@ const App = () => (
                 <Route path="/my-learning" element={<ProtectedRoute><MyLearning /></ProtectedRoute>} />
                 <Route path="/notes-highlights" element={<ProtectedRoute><NotesHighlightsPage /></ProtectedRoute>} />
                 <Route path="/analytics" element={<ProtectedRoute requireAdmin><Analytics /></ProtectedRoute>} />
+                <Route path="/factory" element={<ProtectedRoute requireAdmin><FactoryPage /></ProtectedRoute>} />
+                <Route path="/factory/*" element={<ProtectedRoute requireAdmin><FactoryPage /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                 <Route path="/account-settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
