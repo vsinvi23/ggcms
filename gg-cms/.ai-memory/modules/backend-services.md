@@ -71,6 +71,19 @@ Separate, unauthenticated-by-JWT ingest path for the standalone `content-factory
 
 ---
 
+## Password Reset & Admin Recovery (added 2026-09-07)
+
+Two distinct paths, both in `internal/application/auth/service.go`:
+
+- **Self-service reset (all users)**: `POST /auth/forgot-password` → `Service.RequestReset(email)` — anti-enumeration (always returns nil), generates a 32-byte random hex token, stores only its SHA-256 hash in `password_reset_tokens` (1-hour TTL via `resetTokenTTL`), emails a `{FRONTEND_URL}/reset-password?code=...` link via `pkg/mailer`. `POST /auth/reset-password` → `Service.ConfirmReset(code, newPassword)` — hashes the incoming code, looks up via `PasswordResetTokenRepository.FindValidByHash` (unused + unexpired), re-hashes the password, updates the user, marks the token used. Both routes are public + `middleware.AuthRateLimit()`, registered in `router.go` right after `/auth/local/register`.
+- **Break-glass master-admin recovery**: `POST /admin/recover-password`, gated by `middleware.AdminRecoverySecret` (`internal/interfaces/http/middleware/admin_recovery_secret.go`) — exact mirror of `factory_secret.go`: compares `X-Admin-Recovery-Secret` header via `crypto/subtle.ConstantTimeCompare` against `cfg.Recovery.AdminRecoverySecret` (env `ADMIN_RECOVERY_SECRET`, empty → all requests rejected, non-fatal startup warning). Calls `Service.RecoverPassword(email, newPassword)` — looks up by email, hashes, updates directly; no token/email round-trip. Registered outside the JWT-protected block, same pattern as `/import/ingest`. Audited via `middleware.LogAudit(c, "admin.password_recovered", ...)`.
+- Mailer: `pkg/mailer/mailer.go` — minimal stdlib `net/smtp` sender (`Send(to, subject, body)`), config via `MailerConfig` (`SMTP_HOST`/`SMTP_PORT`/`SMTP_USERNAME`/`SMTP_PASSWORD`/`SMTP_FROM_ADDRESS`), non-fatal if `SMTP_HOST` unset.
+- Migration: `migrations/postgres/027_password_reset_tokens.sql` (+ mirrored copy in `release/dist/native/migrations/postgres/`).
+- Frontend: `pages/ForgotPassword.tsx`, `pages/ResetPassword.tsx`, routes in `App.tsx`, "Forgot password?" link in `pages/Auth.tsx`'s login tab — wired to the pre-existing `authService.forgotPassword`/`resetPassword`.
+- Operational doc: `release/CONFIGURATION.md` §11 "Rotate the master admin password (break-glass)" has the exact curl command and the GCP Secret Manager path (`gg-cms-admin-recovery-secret`, auto-created by `release/gcp/deploy.sh`).
+
+---
+
 ## Shared Infrastructure (`pkg/`)
 
 | Package | Fan-In | Purpose |

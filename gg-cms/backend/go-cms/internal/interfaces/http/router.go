@@ -137,12 +137,15 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 
 	authMW := middleware.Auth(jwtManager)
 	factorySecretMW := middleware.FactorySecret(cfg.Import.FactorySyncSecret)
+	adminRecoveryMW := middleware.AdminRecoverySecret(cfg.Recovery.AdminRecoverySecret)
 
 	api := r.Group("/api")
 	{
 		// ----- Auth (public) — email/password -----
 		api.POST("/auth/local", middleware.AuthRateLimit(), authH.Login)
 		api.POST("/auth/local/register", middleware.AuthRateLimit(), authH.Register)
+		api.POST("/auth/forgot-password", middleware.AuthRateLimit(), authH.ForgotPassword)
+		api.POST("/auth/reset-password", middleware.AuthRateLimit(), authH.ResetPassword)
 
 		// ----- Auth (public) — OAuth social login -----
 		api.GET("/auth/google", oauthH.GoogleRedirect)
@@ -178,6 +181,11 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		// Called machine-to-machine by the Python "content factory" app, which has
 		// no user session — protected by X-Factory-Sync-Secret instead of authMW.
 		api.POST("/import/ingest", factorySecretMW, factoryImportH.Ingest)
+
+		// ----- Admin break-glass password recovery (secret-header auth, NOT JWT) -----
+		// For when the master admin is locked out and can't rely on email delivery
+		// or a JWT — protected by X-Admin-Recovery-Secret instead of authMW.
+		api.POST("/admin/recover-password", adminRecoveryMW, authH.RecoverPassword)
 
 		// ----- Public content (no auth) -----
 		pub := api.Group("/public")

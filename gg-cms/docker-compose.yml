@@ -65,6 +65,7 @@ services:
       JWT_EXPIRY_HOURS: "24"
 
       FACTORY_SYNC_SECRET: ${FACTORY_SYNC_SECRET}
+      ADMIN_RECOVERY_SECRET: ${ADMIN_RECOVERY_SECRET}
 
       UPLOAD_DIR: /app/uploads
       UPLOAD_BASE_URL: ${UPLOAD_BASE_URL:-http://localhost:8080/uploads}

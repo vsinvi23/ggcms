@@ -86,6 +86,52 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	middleware.LogAudit(c, "user.registered", "user", fmt.Sprint(user.ID), user.Email, nil)
 }
 
+// POST /api/auth/forgot-password
+func (h *AuthHandler) ForgotPassword(c *gin.Context) {
+	var req dto.ForgotPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	_ = h.service.RequestReset(c.Request.Context(), req.Email)
+	response.OK(c, gin.H{"message": "if that email is registered, a reset link has been sent"})
+}
+
+// POST /api/auth/reset-password
+func (h *AuthHandler) ResetPassword(c *gin.Context) {
+	var req dto.ResetPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.service.ConfirmReset(c.Request.Context(), req.Code, req.Password); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	response.OK(c, gin.H{"message": "password reset successful"})
+}
+
+// POST /api/admin/recover-password — secret-gated break-glass master-admin
+// recovery, protected by middleware.AdminRecoverySecret (not JWT).
+func (h *AuthHandler) RecoverPassword(c *gin.Context) {
+	var req dto.RecoverPasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.service.RecoverPassword(c.Request.Context(), req.Email, req.NewPassword); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	middleware.LogAudit(c, "admin.password_recovered", "user", req.Email, req.Email, nil)
+	response.OK(c, gin.H{"message": "password updated"})
+}
+
 // GET /api/users/me
 func (h *AuthHandler) Me(c *gin.Context) {
 	userID := middleware.GetUserID(c)

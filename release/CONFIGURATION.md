@@ -18,6 +18,7 @@
 9. [Step-by-step deployment — Local development](#9-local-development)
 10. [Post-deployment verification](#10-post-deployment-verification)
 11. [Credential rotation](#11-credential-rotation)
+    - [Configure SMTP for password-reset emails on GCP](#configure-smtp-for-password-reset-emails-on-gcp)
 
 ---
 
@@ -40,8 +41,17 @@ are idempotent — they only create the user if the email is not already registe
   content-review access across the entire category tree
 - **Password update**: changing `ADMIN_PASSWORD` and restarting the backend does NOT
   update an existing account's password — it only affects first-time creation.
-  To change an existing password: use the API `PATCH /api/users/{id}` as an Admin,
-  or directly UPDATE the `password_hash` column in PostgreSQL.
+  To change an existing password, use the break-glass recovery endpoint or the
+  direct-SQL fallback — see [§11 Credential rotation](#11-credential-rotation).
+  (There is no user-update API that changes a password — `PATCH /api/users/{id}`
+  only updates name/mobile/status/group.)
+- **Deploy-path consistency**: `ADMIN_EMAIL` must be identical across
+  `release/gcp/deploy.sh`, `.github/workflows/deploy.yml`, and
+  `release/gcp/cloudbuild.yaml`. Because seeding never updates an existing user,
+  a mismatched value in any one path — e.g. a CI pipeline seeding a *different*
+  email than the one you're trying to log in with — creates a second admin
+  identity, not an error. If login fails with the expected credential, first
+  check which value the pipeline that actually deployed most recently used.
 
 ### Secondary admin (`GEEK_ADMIN_*`)
 
@@ -118,6 +128,12 @@ Copy from `.env.example` and fill every value listed below.
 | `GITHUB_CLIENT_ID` | GitHub OAuth app ID (leave empty to disable) | From GitHub Settings |
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth app secret | From GitHub Settings |
 | `GITHUB_REDIRECT_URL` | Must match GitHub OAuth callback URL | `https://yourdomain:8443/api/auth/github/callback` |
+| `SMTP_HOST` | SMTP server for forgot-password emails (leave empty to disable) | e.g. `smtp.sendgrid.net` |
+| `SMTP_PORT` | SMTP server port | e.g. `587` |
+| `SMTP_USERNAME` | SMTP auth username | Provider-specific |
+| `SMTP_PASSWORD` | SMTP auth password | Provider-specific |
+| `SMTP_FROM_ADDRESS` | "From" address on reset emails | `noreply@yourdomain` |
+| `ADMIN_RECOVERY_SECRET` | Shared secret gating `POST /api/admin/recover-password` (break-glass admin reset) | ≥ 32 random chars |
 
 ### 2.3 `release/dist/native/.env` — native binary credentials
 
@@ -796,21 +812,99 @@ bash certs/generate-certs.sh --host your-domain.com
 docker compose restart postgres mongodb backend frontend
 ```
 
-### Rotate admin password
+### Rotate a regular user's password
 
-> The bootstrap system does NOT update passwords of existing users.
-> Must be done via API or direct DB update.
+Use the self-service flow: `POST /auth/forgot-password` with `{"email": "..."}`,
+then follow the emailed link to `POST /auth/reset-password` with the token and
+new password. Requires `SMTP_*` to be configured (§2.2) — if unset, the backend
+logs a warning and email sending fails, so this path won't work in an
+environment without SMTP.
+
+### Rotate the master admin password (break-glass)
+
+> The bootstrap system does NOT update passwords of existing users, and there is
+> no user-update API that touches a password. Recovery is via one of the two
+> paths below — no SSH/psql access required for the first.
 
 ```bash
-# Via API (as admin)
-curl -k -X PATCH https://localhost:8443/api/users/<user-id> \
-  -H "Authorization: Bearer <admin-token>" \
+# Preferred: secret-gated recovery endpoint (no JWT, no email, no DB shell —
+# only needs the ADMIN_RECOVERY_SECRET value, e.g. from Secret Manager)
+curl -k -X POST https://localhost:8443/api/admin/recover-password \
+  -H "X-Admin-Recovery-Secret: <ADMIN_RECOVERY_SECRET value>" \
   -H "Content-Type: application/json" \
-  -d '{"password":"NewStrongPassword!2026"}'
+  -d '{"email":"info@serenyax.com","newPassword":"NewStrongPassword!2026"}'
 
-# Via PostgreSQL directly
+# Fallback: direct PostgreSQL update (requires DB shell access)
 docker compose exec postgres psql -U gg_cms_user -d gg_cms -c \
   "UPDATE users SET password_hash = '<bcrypt-hash>' WHERE email = 'admin@your-domain.com';"
+```
+
+On GCP, the recovery secret lives in Secret Manager as `gg-cms-admin-recovery-secret`
+(auto-created by `release/gcp/deploy.sh` on first run) — read it with:
+
+```bash
+gcloud secrets versions access latest --secret=gg-cms-admin-recovery-secret --project=$PROJECT_ID
+```
+
+### Configure SMTP for password-reset emails on GCP
+
+> Without this, `POST /auth/forgot-password` still returns success (anti-enumeration)
+> but no email is ever sent — the backend logs
+> `WARNING: SMTP_HOST is not set — forgot-password emails will fail to send` and
+> silently no-ops. This is safe (never crashes the request) but means self-service
+> reset is non-functional until SMTP is wired in.
+
+**1. Pick a provider** and get an SMTP host, port (usually `587`), a username,
+and a password/API key. Common choices: SendGrid, Mailgun, AWS SES SMTP
+credentials, or a Google Workspace SMTP relay.
+
+**2. Store the password/API key in Secret Manager** — same tier as
+`gg-cms-jwt-secret` / `gg-cms-admin-recovery-secret`:
+
+```bash
+echo -n "<your-smtp-password-or-api-key>" | \
+  gcloud secrets create gg-cms-smtp-password --data-file=- --project=$PROJECT_ID
+
+gcloud secrets add-iam-policy-binding gg-cms-smtp-password \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/secretmanager.secretAccessor" \
+  --project=$PROJECT_ID
+```
+
+**3. Wire it into the Cloud Run deploy.** `SMTP_PASSWORD` is a secret reference;
+`SMTP_HOST`/`SMTP_PORT`/`SMTP_USERNAME`/`SMTP_FROM_ADDRESS` are plain env vars.
+Add all five to **each of the three deploy paths** (they must stay in sync —
+see the inline "keep all three deploy paths in sync" comments in each file):
+
+| File | Flag to extend |
+|------|----------------|
+| `release/gcp/deploy.sh` | `--set-secrets=...,SMTP_PASSWORD=gg-cms-smtp-password:latest` and `--set-env-vars=...,SMTP_HOST=...,SMTP_PORT=587,SMTP_USERNAME=...,SMTP_FROM_ADDRESS=...` |
+| `.github/workflows/deploy.yml` | same two flags, in the "Deploy to Cloud Run" step |
+| `release/gcp/cloudbuild.yaml` | same two flags, in the `deploy-backend` step |
+
+`deploy.sh` additionally auto-creates `gg-cms-smtp-password` and grants
+`secretAccessor` the first time it runs, mirroring how it already does this for
+`gg-cms-admin-recovery-secret` (see the "Rotate the master admin password"
+section above for that exact pattern).
+
+**4. Redeploy.** No code change needed — `pkg/config/config.go` already reads
+all five `SMTP_*` env vars unconditionally; only the deploy-time wiring is
+provider-specific.
+
+**5. Verify:**
+
+```bash
+# Confirm the secret exists and the service account can read it
+gcloud secrets versions access latest --secret=gg-cms-smtp-password --project=$PROJECT_ID
+
+# Confirm the running revision has the env vars set
+gcloud run services describe gg-cms-backend --region=$REGION --format=yaml | grep -A2 SMTP
+
+# Trigger a real reset and confirm the email arrives (use a real inbox you control)
+curl -sk -X POST https://<your-backend-url>/api/auth/forgot-password \
+  -H "Content-Type: application/json" -d '{"email":"you@yourdomain.com"}'
+
+# Backend logs should NOT show the "SMTP_HOST is not set" warning after this
 ```
 
 ---

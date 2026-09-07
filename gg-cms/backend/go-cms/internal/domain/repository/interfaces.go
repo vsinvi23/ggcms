@@ -333,3 +333,10 @@ type AppSettingsRepository interface {
 	Set(ctx context.Context, key, value string) error
 	SetMany(ctx context.Context, settings map[string]string) error
 }
+
+// PasswordResetTokenRepository manages password-reset tokens.
+type PasswordResetTokenRepository interface {
+	Create(ctx context.Context, token *entity.PasswordResetToken) error
+	FindValidByHash(ctx context.Context, tokenHash string) (*entity.PasswordResetToken, error)
+	MarkUsed(ctx context.Context, id string) error
+}

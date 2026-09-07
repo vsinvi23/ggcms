@@ -28,6 +28,8 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const UserSettings = lazy(() => import('./pages/UserSettings'));
 const PublicHome = lazy(() => import('./pages/PublicHome'));
 const Auth = lazy(() => import('./pages/Auth'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const TechnologyPage = lazy(() => import('./pages/TechnologyPage'));
 const CourseCategoryPage = lazy(() => import('./pages/CourseCategoryPage'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
@@ -82,6 +84,8 @@ const App = () => (
                 <Route path="/" element={<PublicHome />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<OAuthCallback />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/technology/:slug" element={<TechnologyPage />} />
                 <Route path="/explore/:category" element={<CourseCategoryPage />} />

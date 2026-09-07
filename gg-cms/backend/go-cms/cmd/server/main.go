@@ -43,6 +43,7 @@ import (
 	"github.com/serenya/go-cms/pkg/database"
 	jwtpkg "github.com/serenya/go-cms/pkg/jwt"
 	"github.com/serenya/go-cms/pkg/logger"
+	"github.com/serenya/go-cms/pkg/mailer"
 )
 
 func main() {
@@ -84,6 +85,9 @@ func main() {
 	// ── JWT ─────────────────────────────────────────────────────────────────
 	jwtManager := jwtpkg.NewManager(&cfg.JWT)
 
+	// ── Mailer ──────────────────────────────────────────────────────────────
+	mlr := mailer.New(cfg.Mailer)
+
 	// ── Repositories (PostgreSQL — read/write split) ─────────────────────
 	userRepo := pgrepo.NewUserRepository(pgDB.Write, pgDB.Read)
 	groupRepo := pgrepo.NewGroupRepository(pgDB.Write, pgDB.Read)
@@ -101,6 +105,7 @@ func main() {
 	learningPathRepo := pgrepo.NewLearningPathRepository(pgDB.Write, pgDB.Read)
 	appSettingsRepo := pgrepo.NewAppSettingsRepository(pgDB.Write)
 	userProfileRepo := pgrepo.NewUserProfileRepository(pgDB.Write, pgDB.Read)
+	passwordResetRepo := pgrepo.NewPasswordResetTokenRepository(pgDB.Write, pgDB.Read)
 
 	// ── Repositories (MongoDB) ────────────────────────────────────────────
 	commentRepo := mongorepo.NewCommentRepository(mongoDB.Database)
@@ -114,7 +119,7 @@ func main() {
 
 	// ── Application Services ─────────────────────────────────────────────
 	svcs := httpserver.Services{
-		Auth:         authsvc.NewService(userRepo, groupRepo, jwtManager),
+		Auth:         authsvc.NewService(userRepo, groupRepo, passwordResetRepo, jwtManager, mlr, cfg.OAuth.FrontendURL),
 		OAuth:        oauthsvc.NewService(userRepo, groupRepo, jwtManager, &cfg.OAuth),
 		User:         usersvc.NewService(userRepo, groupRepo),
 		Group:        groupsvc.NewService(groupRepo, userRepo),

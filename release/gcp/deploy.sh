@@ -30,6 +30,9 @@ fi
 if ! gcloud secrets describe gg-cms-mongo-password --project=$PROJECT_ID >/dev/null 2>&1; then
     openssl rand -hex 16 | gcloud secrets create gg-cms-mongo-password --data-file=- --project=$PROJECT_ID >/dev/null 2>&1
 fi
+if ! gcloud secrets describe gg-cms-admin-recovery-secret --project=$PROJECT_ID >/dev/null 2>&1; then
+    openssl rand -hex 32 | gcloud secrets create gg-cms-admin-recovery-secret --data-file=- --project=$PROJECT_ID >/dev/null 2>&1
+fi
 
 PG_PASS=$(gcloud secrets versions access latest --secret=gg-cms-pg-password --project=$PROJECT_ID)
 MONGO_PASS=$(gcloud secrets versions access latest --secret=gg-cms-mongo-password --project=$PROJECT_ID)
@@ -46,6 +49,7 @@ gcloud secrets add-iam-policy-binding gg-cms-jwt-secret --member="serviceAccount
 gcloud secrets add-iam-policy-binding gg-cms-admin-password --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor" --project=$PROJECT_ID >/dev/null 2>&1 || true
 gcloud secrets add-iam-policy-binding gg-cms-pg-password --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor" --project=$PROJECT_ID >/dev/null 2>&1 || true
 gcloud secrets add-iam-policy-binding gg-cms-mongo-password --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor" --project=$PROJECT_ID >/dev/null 2>&1 || true
+gcloud secrets add-iam-policy-binding gg-cms-admin-recovery-secret --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor" --project=$PROJECT_ID >/dev/null 2>&1 || true
 
 echo "Checking Artifact Registry..."
 if ! gcloud artifacts repositories describe gg-cms --location=$REGION --project=$PROJECT_ID >/dev/null 2>&1; then
@@ -100,7 +104,7 @@ gcloud run deploy gg-cms-backend \
   --allow-unauthenticated \
   --ingress=all \
   --service-account=${SA_EMAIL} \
-  --set-secrets=JWT_SECRET=gg-cms-jwt-secret:latest,ADMIN_PASSWORD=gg-cms-admin-password:latest \
+  --set-secrets=JWT_SECRET=gg-cms-jwt-secret:latest,ADMIN_PASSWORD=gg-cms-admin-password:latest,ADMIN_RECOVERY_SECRET=gg-cms-admin-recovery-secret:latest \
   --set-env-vars="DB_WRITE_URL=postgres://gg_cms_user:${PG_PASS}@${VM_IP}:5432/gg_cms?sslmode=require,MONGO_URI=mongodb://gg_cms_user:${MONGO_PASS}@${VM_IP}:27017/?authSource=admin&tls=true&tlsInsecure=true,GIN_MODE=release,TLS_ENABLED=false,LOG_LEVEL=info,MONGO_DATABASE=gg_cms,ADMIN_EMAIL=info@serenyax.com,ADMIN_NAME=Super Admin" \
   --network=default \
   --subnet=default \
