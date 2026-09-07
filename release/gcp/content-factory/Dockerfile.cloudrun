@@ -12,6 +12,8 @@ RUN npm ci --silent
 # Copy all frontend source and build
 # VITE_BASE_PATH must be /factory/ so all assets resolve correctly
 COPY content-factory/frontend/ ./
+ENV NODE_ENV=production
+ENV VITE_BASE_PATH=/factory/
 RUN npm run build
 
 # ─────────────────────────────────────────────────────────────────────────────

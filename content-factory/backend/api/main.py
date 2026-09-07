@@ -85,10 +85,31 @@ if __name__ == "__main__":
     uvicorn.run("backend.api.main:app", host="0.0.0.0", port=8000, reload=True)
 
 
+from fastapi.responses import FileResponse, RedirectResponse
+
 # ── Serve React SPA static files at /factory (Cloud Run mode) ───────────────────
 # The Dockerfile copies the Vite build output to /app/dist.
-# In local dev (npm run dev), Vite's proxy handles /api calls so this mount
-# is skipped to avoid conflicts.
 _STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "dist")
 if os.path.isdir(_STATIC_DIR):
-    app.mount("/factory", StaticFiles(directory=_STATIC_DIR, html=True), name="factory-spa")
+    assets_dir = os.path.join(_STATIC_DIR, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/factory/assets", StaticFiles(directory=assets_dir), name="factory-assets")
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="root-assets")
+
+    @app.get("/")
+    async def root_redirect():
+        return RedirectResponse(url="/factory/")
+
+    @app.get("/factory")
+    @app.get("/factory/")
+    @app.get("/factory/{full_path:path}")
+    async def serve_factory_spa(full_path: str = ""):
+        if full_path:
+            file_path = os.path.join(_STATIC_DIR, full_path)
+            if os.path.isfile(file_path):
+                return FileResponse(file_path)
+        index_file = os.path.join(_STATIC_DIR, "index.html")
+        if os.path.isfile(index_file):
+            return FileResponse(index_file)
+        return {"error": "Frontend build files not found"}
+
