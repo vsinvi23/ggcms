@@ -1,0 +1,24 @@
+{
+  "system_version": "1.0.0",
+  "environment": "prod",
+  "build_timestamp": "2026-09-07T21:00:00Z",
+  "git_commit": "initial-prod-build",
+  "components": {
+    "ui": {
+      "version": "1.0.0",
+      "package": "gg-cms/frontend/react-ui"
+    },
+    "backend": {
+      "version": "1.0.0",
+      "package": "gg-cms/backend/go-cms"
+    },
+    "db": {
+      "version": "1.0.0",
+      "package": "gg-cms/backend/go-cms/migrations"
+    },
+    "content-factory": {
+      "version": "1.0.0",
+      "package": "content-factory"
+    }
+  }
+}

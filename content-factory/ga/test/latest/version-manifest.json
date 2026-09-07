@@ -1,0 +1,16 @@
+{
+  "system_version": "1.0.0-test",
+  "environment": "test",
+  "build_timestamp": "2026-09-07T21:00:00Z",
+  "git_commit": "initial-cf-test-build",
+  "components": {
+    "frontend": {
+      "version": "1.0.0-test",
+      "package": "content-factory/frontend"
+    },
+    "backend": {
+      "version": "1.0.0-test",
+      "package": "content-factory/backend"
+    }
+  }
+}
