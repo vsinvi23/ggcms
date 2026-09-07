@@ -2,6 +2,8 @@ package http
 
 import (
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"strings"
 
@@ -84,6 +86,27 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 
 	// Serve uploaded files statically
 	r.Static("/uploads", cfg.Upload.Dir)
+
+	// Reverse proxy /factory and /factory/* to Content Factory Cloud Run service
+	factoryURLStr := os.Getenv("CONTENT_FACTORY_URL")
+	if factoryURLStr == "" {
+		factoryURLStr = "https://content-factory-backend-wuisbddlxq-uc.a.run.app"
+	}
+	if factoryTarget, err := url.Parse(factoryURLStr); err == nil {
+		factoryProxy := httputil.NewSingleHostReverseProxy(factoryTarget)
+		originalDirector := factoryProxy.Director
+		factoryProxy.Director = func(req *http.Request) {
+			originalDirector(req)
+			req.Host = factoryTarget.Host
+			req.URL.Scheme = factoryTarget.Scheme
+			req.URL.Host = factoryTarget.Host
+		}
+		factoryHandler := func(c *gin.Context) {
+			factoryProxy.ServeHTTP(c.Writer, c.Request)
+		}
+		r.Any("/factory", factoryHandler)
+		r.Any("/factory/*filepath", factoryHandler)
+	}
 
 	// Set JS and CSS MIME types for static assets if needed
 	r.Use(func(c *gin.Context) {
