@@ -29,7 +29,7 @@ function isTokenValid(token: string | null): boolean {
   }
 }
 
-const TOKEN_KEYS = ["token", "auth_token", "jwt", "access_token", "gg_cms_token"]
+const TOKEN_KEYS = ["authToken", "token", "auth_token", "jwt", "access_token", "gg_cms_token"]
 
 function getStoredToken(): string | null {
   for (const key of TOKEN_KEYS) {

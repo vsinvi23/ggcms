@@ -63,21 +63,22 @@ export const setAuthToken = (token: string): void => {
   tokenCache = token;
   try {
     sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
   } catch {
-    console.warn('sessionStorage unavailable, using memory only');
+    console.warn('Storage unavailable, using memory only');
   }
 };
 
 export const getAuthToken = (): string | null => {
   if (tokenCache) return tokenCache;
   try {
-    const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
+    const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY) || localStorage.getItem(TOKEN_STORAGE_KEY);
     if (stored) {
       tokenCache = stored;
       return stored;
     }
   } catch {
-    // sessionStorage unavailable
+    // Storage unavailable
   }
   return null;
 };
@@ -86,8 +87,9 @@ export const clearAuthToken = (): void => {
   tokenCache = null;
   try {
     sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
   } catch {
-    // sessionStorage unavailable
+    // Storage unavailable
   }
 };
 

@@ -1,0 +1,64 @@
+version: '3.8'
+
+# ==============================================================================
+# GG-CMS — VM Databases (PostgreSQL + MongoDB) for Production
+# ==============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gg-cms-postgres-prod
+    restart: always
+    environment:
+      POSTGRES_USER: gg_cms_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: gg_cms
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - /opt/gg-cms/certs/postgres:/etc/postgresql/certs:ro
+    command:
+      - "postgres"
+      - "-c"
+      - "ssl=on"
+      - "-c"
+      - "ssl_cert_file=/etc/postgresql/certs/server.crt"
+      - "-c"
+      - "ssl_key_file=/etc/postgresql/certs/server.key"
+      - "-c"
+      - "ssl_ca_file=/etc/postgresql/certs/ca.crt"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gg_cms_user -d gg_cms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7.0
+    container_name: gg-cms-mongo-prod
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: gg_cms_user
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: gg_cms
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+      - /opt/gg-cms/certs/mongodb:/etc/mongodb/certs:ro
+    command: >
+      mongod
+      --tlsMode requireTLS
+      --tlsCertificateKeyFile /etc/mongodb/certs/mongodb.pem
+      --tlsCAFile /etc/mongodb/certs/ca.crt
+      --bind_ip_all
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  mongodata:

@@ -91,15 +91,33 @@ function buildUrl(path: string, query?: RequestOptions["query"]): string {
   return url.toString()
 }
 
+function getStoredToken(): string | null {
+  const keys = ["authToken", "token", "auth_token", "jwt", "access_token", "gg_cms_token"]
+  for (const key of keys) {
+    const val = localStorage.getItem(key) ?? sessionStorage.getItem(key)
+    if (val) return val
+  }
+  return null
+}
+
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, query, formData } = options
   const url = buildUrl(path, query)
+
+  const headers: Record<string, string> = {}
+  if (!formData && body !== undefined) {
+    headers["Content-Type"] = "application/json"
+  }
+  const token = getStoredToken()
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
 
   let res: Response
   try {
     res = await fetch(url, {
       method,
-      headers: formData ? undefined : body !== undefined ? { "Content-Type": "application/json" } : undefined,
+      headers: Object.keys(headers).length > 0 ? headers : undefined,
       body: formData ? formData : body !== undefined ? JSON.stringify(body) : undefined,
     })
   } catch {
