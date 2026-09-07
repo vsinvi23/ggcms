@@ -106,7 +106,7 @@ export function Header() {
             </DropdownMenuItem>
             <DropdownMenuItem 
               className="cursor-pointer"
-              onSelect={() => navigate('/settings')}
+              onSelect={() => navigate('/account-settings')}
             >
               <Settings className="w-4 h-4 mr-2" />
               Settings

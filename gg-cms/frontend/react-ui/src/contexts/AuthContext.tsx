@@ -149,6 +149,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUserGroups([]);
   }, []);
 
+  // Helper to check admin/superadmin role variations
+  const isAdminRole = useCallback((roleStr?: string) => {
+    if (!roleStr) return false;
+    const r = roleStr.toLowerCase();
+    return r === 'admin' || r === 'superadmin' || r === 'super_admin' || r === 'super-admin';
+  }, []);
+
   // Keep tokenExpiryRef in sync with the active session.
   // This must run whenever user changes so the ref reflects the latest expiry.
   useEffect(() => {
@@ -174,6 +181,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (expiry && Date.now() < expiry * 1000) {
         // Token was still valid when this fired → permissions error, not auth failure.
         // Do NOT log the user out.
+        return;
+      }
+      if (checkStoredToken()) {
+        // Token is still valid in storage → do not log out on permission error.
         return;
       }
       // Token expired or no session → real auth failure, force logout.
@@ -245,7 +256,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           name: response.user?.name || response.user?.username || email.split('@')[0],
           avatar: response.user?.avatar,
           status: response.user?.blocked ? 'DEACTIVATED' : 'ACTIVE' as UserStatus,
-          role: response.user?.roleType === 'admin' || response.user?.role === 'admin' ? 'admin' : 'user',
+          role: (isAdminRole(response.user?.roleType) || isAdminRole(response.user?.role) ? 'admin' : 'user'),
         };
 
         // flushSync ensures state is committed before navigate('/dashboard') runs in caller
@@ -301,7 +312,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           email: response.user?.email || email,
           name: response.user?.name || name,
           status: 'ACTIVE' as UserStatus,
-          role: (response.user?.role === 'admin' ? 'admin' : 'user'),
+          role: (isAdminRole(response.user?.role) || isAdminRole(response.user?.roleType) ? 'admin' : 'user'),
         };
 
         flushSync(() => {
@@ -362,7 +373,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email: userData?.email || decoded?.email || '',
         name: userData?.name || '',
         status: (userData?.status as UserStatus) || 'ACTIVE',
-        role: (decoded?.role as 'admin' | 'user') || 'user',
+        role: (isAdminRole(decoded?.role) || isAdminRole(userData?.role) ? 'admin' : 'user'),
       };
       flushSync(() => setUser(authUser));
       setUserData(authUser);
@@ -378,12 +389,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchUserGroups]);
+  }, [fetchUserGroups, isAdminRole]);
 
   const groupNames = userGroups.map(g => g.name.toUpperCase());
+  const adminGroupNames = [ADMIN_GROUP_NAME.toUpperCase(), 'ADMIN', 'SUPERADMIN', 'SUPER_ADMIN', 'SUPER-ADMIN'];
   // isAdmin: primary check is role stored on user object (from JWT/login response),
   // supplemented by group membership check so either alone is sufficient
-  const isAdmin = user?.role === 'admin' || groupNames.includes(ADMIN_GROUP_NAME.toUpperCase());
+  const isAdmin = isAdminRole(user?.role) || groupNames.some(g => adminGroupNames.includes(g));
   const hasNoGroups = userGroups.length === 0;
   const hasGroup = useCallback(
     (groupName: string) => groupNames.includes(groupName.toUpperCase()),
