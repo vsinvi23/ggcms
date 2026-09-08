@@ -7,21 +7,21 @@ const AUTH_BASE = '/auth';
 // Map a raw Go backend user object to the shape expected by AuthContext.
 // Go returns role as a flat string ("admin" | "user"), not a nested object.
 const mapGoUser = (u: Record<string, unknown>) => ({
-  id: u?.id,
-  email: u?.email,
-  name: u?.name || u?.username,
-  username: u?.username,
-  role: u?.role || 'user',
-  roleType: u?.role || 'user',
-  status: u?.status || 'ACTIVE',
-  mobileNo: u?.mobileNo || '',
-  groups: [],
-  groupIds: [],
+  id: (u?.id as number | undefined) ?? 0,
+  email: (u?.email as string | undefined) ?? '',
+  name: (u?.name as string | undefined) || (u?.username as string | undefined) || '',
+  username: u?.username as string | undefined,
+  role: (u?.role as string | undefined) || 'user',
+  roleType: (u?.role as string | undefined) || 'user',
+  status: (u?.status as string | undefined) || 'ACTIVE',
+  mobileNo: (u?.mobileNo as string | undefined) || '',
+  groups: [] as string[],
+  groupIds: [] as number[],
   blocked: false,
   confirmed: true,
-  lastLogin: u?.lastLogin || null,
-  createdAt: u?.createdAt,
-  updatedAt: u?.updatedAt,
+  lastLogin: (u?.lastLogin as string | null | undefined) || null,
+  createdAt: u?.createdAt as string | undefined,
+  updatedAt: u?.updatedAt as string | undefined,
 });
 
 export const authService = {
@@ -136,9 +136,14 @@ export const authService = {
   },
 
   /**
-   * Logout - clear stored token
+   * Logout - clear the backend session cookie and stored token
    */
-  logout: (): void => {
+  logout: async (): Promise<void> => {
+    try {
+      await apiClient.post(`${AUTH_BASE}/logout`);
+    } catch {
+      // best-effort — still clear client-side state
+    }
     clearAuthToken();
     clearUserData();
   },

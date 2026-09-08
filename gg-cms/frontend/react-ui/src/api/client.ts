@@ -14,21 +14,29 @@ let tokenCache: string | null = null;
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
-  // Auth is handled via the Authorization: Bearer header set by the request interceptor.
-  // withCredentials: false prevents the browser from attaching session cookies to
-  // cross-origin requests, eliminating a CSRF attack surface.
-  withCredentials: false,
+  // Auth is carried via the HttpOnly "jwt" cookie set by the backend.
+  // withCredentials: true is required so the browser attaches that cookie.
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor — attach JWT token to every request
+const getCsrfTokenFromCookie = (): string | null => {
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
+// Request interceptor — attach JWT token (legacy fallback) and CSRF header
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = getAuthToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    const csrfToken = getCsrfTokenFromCookie();
+    if (csrfToken && config.headers) {
+      config.headers['X-CSRF-Token'] = csrfToken;
     }
     return config;
   },
