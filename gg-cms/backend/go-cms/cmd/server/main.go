@@ -25,10 +25,10 @@ import (
 	enrollmentsvc "github.com/serenya/go-cms/internal/application/enrollment"
 	groupsvc "github.com/serenya/go-cms/internal/application/group"
 	lpsvc "github.com/serenya/go-cms/internal/application/learningpath"
-	personalizationsvc "github.com/serenya/go-cms/internal/application/personalization"
 	lessonsvc "github.com/serenya/go-cms/internal/application/lesson"
 	notificationsvc "github.com/serenya/go-cms/internal/application/notification"
 	oauthsvc "github.com/serenya/go-cms/internal/application/oauth"
+	personalizationsvc "github.com/serenya/go-cms/internal/application/personalization"
 	sectionsvc "github.com/serenya/go-cms/internal/application/section"
 	settingssvc "github.com/serenya/go-cms/internal/application/settings"
 	tagsvc "github.com/serenya/go-cms/internal/application/tag"
@@ -118,29 +118,30 @@ func main() {
 	workflowEventRepo := mongorepo.NewWorkflowEventRepository(mongoDB.Database)
 
 	// ── Application Services ─────────────────────────────────────────────
+	settingsSvc := settingssvc.NewService(appSettingsRepo, cfg)
 	svcs := httpserver.Services{
-		Auth:         authsvc.NewService(userRepo, groupRepo, passwordResetRepo, jwtManager, mlr, cfg.OAuth.FrontendURL),
-		OAuth:        oauthsvc.NewService(userRepo, groupRepo, jwtManager, &cfg.OAuth),
-		User:         usersvc.NewService(userRepo, groupRepo),
-		Group:        groupsvc.NewService(groupRepo, userRepo),
-		Category:     categorysvc.NewService(categoryRepo, groupRepo),
-		CMS:          cmssvc.NewService(articleRepo, courseRepo, sectionRepo, groupRepo, categoryRepo, workflowEventRepo, userRepo, contentReviewRepo),
-		Section:      sectionsvc.NewService(sectionRepo),
-		Lesson:       lessonsvc.NewService(lessonRepo),
-		Enrollment:   enrollmentsvc.NewService(enrollmentRepo),
-		Task:         tasksvc.NewService(taskRepo),
-		Notification: notificationsvc.NewService(notifRepo),
-		Comment:      commentsvc.NewService(commentRepo),
-		Analytics:    analyticssvc.NewService(analyticsRepo),
-		Tag:          tagsvc.NewService(tagRepo),
-		Reaction:     engagementsvc.NewReactionService(reactionRepo, analyticsRepo),
-		Note:         engagementsvc.NewNoteService(noteRepo),
-		Favourite:    engagementsvc.NewFavouriteService(favouriteRepo),
-		Highlight:    engagementsvc.NewHighlightService(highlightRepo),
-		ContentType:  ctsvc.NewService(contentTypeRepo),
+		Auth:            authsvc.NewService(userRepo, groupRepo, passwordResetRepo, jwtManager, mlr, cfg.OAuth.FrontendURL),
+		OAuth:           oauthsvc.NewService(userRepo, groupRepo, jwtManager, &cfg.OAuth),
+		User:            usersvc.NewService(userRepo, groupRepo),
+		Group:           groupsvc.NewService(groupRepo, userRepo),
+		Category:        categorysvc.NewService(categoryRepo, groupRepo),
+		CMS:             cmssvc.NewService(articleRepo, courseRepo, sectionRepo, groupRepo, categoryRepo, workflowEventRepo, userRepo, contentReviewRepo, settingsSvc),
+		Section:         sectionsvc.NewService(sectionRepo),
+		Lesson:          lessonsvc.NewService(lessonRepo),
+		Enrollment:      enrollmentsvc.NewService(enrollmentRepo),
+		Task:            tasksvc.NewService(taskRepo),
+		Notification:    notificationsvc.NewService(notifRepo),
+		Comment:         commentsvc.NewService(commentRepo),
+		Analytics:       analyticssvc.NewService(analyticsRepo),
+		Tag:             tagsvc.NewService(tagRepo),
+		Reaction:        engagementsvc.NewReactionService(reactionRepo, analyticsRepo),
+		Note:            engagementsvc.NewNoteService(noteRepo),
+		Favourite:       engagementsvc.NewFavouriteService(favouriteRepo),
+		Highlight:       engagementsvc.NewHighlightService(highlightRepo),
+		ContentType:     ctsvc.NewService(contentTypeRepo),
 		LearningPath:    lpsvc.NewService(learningPathRepo),
 		Audit:           auditsvc.NewService(auditLogRepo),
-		Settings:        settingssvc.NewService(appSettingsRepo, cfg),
+		Settings:        settingsSvc,
 		Personalization: personalizationsvc.NewService(userProfileRepo, articleRepo, courseRepo, enrollmentRepo, tagRepo),
 	}
 
@@ -165,9 +166,9 @@ func main() {
 			logger.Fatal("tls: failed to load CA cert pool", zap.Error(err))
 		}
 		srv.TLSConfig = &tls.Config{
-			MinVersion:   tls.VersionTLS12,
-			ClientAuth:   tls.RequireAndVerifyClientCert,
-			ClientCAs:    caPool,
+			MinVersion: tls.VersionTLS12,
+			ClientAuth: tls.RequireAndVerifyClientCert,
+			ClientCAs:  caPool,
 			CipherSuites: []uint16{
 				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
