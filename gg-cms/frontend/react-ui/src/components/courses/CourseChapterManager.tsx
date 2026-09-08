@@ -11,6 +11,7 @@ import {
   AlignLeft, Save,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toUserMessage } from '@/lib/errors';
 import { RichContentEditor } from '@/components/articles/RichContentEditor';
 import { ContentBlock } from '@/types/content';
 import { parseBodyToBlocks } from '@/lib/htmlParser';
@@ -76,8 +77,8 @@ function SectionDescriptionEditor({
       await updateSection.mutateAsync({ id: sectionId, data: { description: text } });
       toast.success('Description saved');
       onSaved?.();
-    } catch {
-      toast.error('Failed to save description');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to save description'));
     } finally {
       setSaving(false);
     }
@@ -131,8 +132,8 @@ function LessonContentEditor({
       await updateLesson.mutateAsync({ id: lesson.id, data: { content: jsonContent ?? undefined } });
       toast.success('Lesson content saved');
       onSaved?.();
-    } catch {
-      toast.error('Failed to save lesson content');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to save lesson content'));
     } finally {
       setSaving(false);
     }
@@ -262,8 +263,8 @@ function SubSectionBlock({
         type: 'text',
       });
       setExpanded(true);
-    } catch {
-      toast.error('Failed to add lesson');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to add lesson'));
     }
   };
 
@@ -271,16 +272,16 @@ function SubSectionBlock({
     if (!title.trim()) return;
     try {
       await updateLesson.mutateAsync({ id, data: { title } });
-    } catch {
-      toast.error('Failed to update lesson');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to update lesson'));
     }
   };
 
   const handleDeleteLesson = async (id: number) => {
     try {
       await deleteLesson.mutateAsync(id);
-    } catch {
-      toast.error('Failed to delete lesson');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete lesson'));
     }
   };
 
@@ -410,8 +411,8 @@ function SectionBlock({
         order: childSections.length,
       });
       setExpanded(true);
-    } catch {
-      toast.error('Failed to add sub-chapter');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to add sub-chapter'));
     }
   };
 
@@ -424,8 +425,8 @@ function SectionBlock({
         type: 'text',
       });
       setExpanded(true);
-    } catch {
-      toast.error('Failed to add lesson');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to add lesson'));
     }
   };
 
@@ -433,16 +434,16 @@ function SectionBlock({
     if (!title.trim()) return;
     try {
       await updateSection.mutateAsync({ id, data: { title } });
-    } catch {
-      toast.error('Failed to update sub-chapter');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to update sub-chapter'));
     }
   };
 
   const handleDeleteSubSection = async (id: number) => {
     try {
       await deleteSection.mutateAsync(id);
-    } catch {
-      toast.error('Failed to delete sub-chapter');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete sub-chapter'));
     }
   };
 
@@ -450,16 +451,16 @@ function SectionBlock({
     if (!title.trim()) return;
     try {
       await updateLesson.mutateAsync({ id, data: { title } });
-    } catch {
-      toast.error('Failed to update lesson');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to update lesson'));
     }
   };
 
   const handleDeleteLesson = async (id: number) => {
     try {
       await deleteLesson.mutateAsync(id);
-    } catch {
-      toast.error('Failed to delete lesson');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete lesson'));
     }
   };
 
@@ -588,8 +589,8 @@ export function CourseChapterManager({ courseId }: CourseChapterManagerProps) {
         courseId,
         order: sections.length,
       });
-    } catch {
-      toast.error('Failed to add chapter');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to add chapter'));
     }
   };
 
@@ -597,16 +598,16 @@ export function CourseChapterManager({ courseId }: CourseChapterManagerProps) {
     if (!title.trim()) return;
     try {
       await updateSection.mutateAsync({ id, data: { title } });
-    } catch {
-      toast.error('Failed to update chapter');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to update chapter'));
     }
   };
 
   const handleDeleteSection = async (id: number) => {
     try {
       await deleteSection.mutateAsync(id);
-    } catch {
-      toast.error('Failed to delete chapter');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete chapter'));
     }
   };
 
