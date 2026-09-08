@@ -1,5 +1,5 @@
 # AI Content Factory — Solution & Architecture Design (SLAD)
-**Version 1.0 — Consolidated master reference**
+**Version 1.1 — Consolidated master reference + Quality/Grounding Hardening**
 
 ---
 
@@ -146,6 +146,8 @@ Source hierarchy:
 
 Output is a structured **Evidence Pack** (claims + evidence + source + confidence, definitions, examples, limitations, controversies, open questions, citations) — the Writer works primarily from this, not raw search results.
 
+**Trust fast-track (added §18):** Tier-1 domains (`wikipedia.org`, `*.gov`, `*.edu`, official docs sites) discovered during autonomous web research are marked `review_status = AUTO_APPROVED` rather than sitting `PENDING` until a human reviews them — retrieval (`similarity_search`, `count_approved_sources`) treats `APPROVED` and `AUTO_APPROVED` as equally usable. This closes the original gap where an autonomous pass could research a topic, find good sources, and still generate from zero usable context because nothing had been manually approved yet. Retrieval itself moved from keyword-count scanning to real cosine-similarity ranking over Gemini embeddings (cached in a local SQLite store), using the same embedding client the Knowledge Pack pipeline already had (§6) — no new ML dependency introduced.
+
 ### 5.4 Learning Architecture
 Determines learner problem, objectives, prerequisites, difficulty, conceptual sequence, examples, exercises, and assessment points before any prose is written.
 
@@ -156,15 +158,21 @@ article, tutorial, explainer, how-to, comparison, troubleshooting guide, FAQ, ch
 Synthesizes Strategy + Knowledge Pack + Evidence Pack + Learning Plan + Content Plan + Brand Voice into original material. Must not copy source text — summarize/transform only.
 
 ### 5.7 Quality Gate
-Checks per item: factuality, citation validation, source-integrity (citation actually supports the claim), learning quality (objectives/progression/prerequisites/clarity/examples/difficulty), originality, readability, SEO, GEO/AI-search readiness (clear definitions, direct answers, structured sections, concise summaries).
+Checks per item: factuality, citation validation, source-integrity (citation actually supports the claim), learning quality (objectives/progression/prerequisites/clarity/examples/difficulty), originality, readability, SEO, GEO/AI-search readiness (clear definitions, direct answers, structured sections, concise summaries), and (added §18) **narrative voice / humanization** — scored against the same story-driven-writing rubric the Writer agent is instructed to follow, so a factually correct but robotic draft no longer passes silently.
 
-Revision loop: Draft → Audit → Issues → Revision Agent → Audit again, max **3 cycles**, then `status = NEEDS_REVIEW` (never silently discarded).
+Revision loop: Draft → Audit → Issues → Revision Agent → Audit again, max **3 cycles**, then `status = NEEDS_REVIEW` (never silently discarded). As of §18, the Quality Gate's `issues` and `narrative_voice_issues` are no longer discarded between cycles — they are formatted into structured revision feedback and fed back into the next Writer pass, so revisions actually address what failed rather than the Writer blindly retrying.
+
+**Evidence-drift fact-checking (added §18):** the Fact Checker previously checked claims only against the already-synthesized Evidence Pack, one step removed from raw source text — a claim could be attributed to a source that never actually said it, and this went undetected. The Fact Checker now also receives the raw retrieved source chunks (unioned with, not replacing, the existing evidence-pack context, so PENDING web-discovered chunks aren't dropped) and reports `evidence_drift_claims` (claim attributed to a source but the source's actual wording differs or contradicts it) as a distinct signal from the original "no source support at all" check.
+
+**Course-level tone consistency & originality (added §18):** multi-lesson courses previously had no mechanism keeping voice consistent lesson-to-lesson, and no check for near-verbatim copying from source material. A one-time "style fingerprint" is now extracted from a course's first lesson and reused as the brand-voice input for every subsequent lesson. A deterministic (no-embeddings) n-gram overlap check flags drafts with high verbatim overlap against source chunks as a **warning** in `issues` — not a hard failure, since grounded quotes legitimately overlap with source text.
 
 ### 5.8 Canonical Format & Export
 Canonical representation is **JSON**; Markdown is derived from it. Export package: `manifest.json + articles/ + research/ + sources/`. The factory's responsibility ends at Generate → Validate → Package → Export — it does **not** own import, publishing, users, courses, navigation, access control, or analytics (that's `ggcms`'s job — no Strapi dependency, no CMS lock-in).
 
 ### 5.9 Scale & Cost Control
 Target: ~10,000 items/month **without** 10,000 independent research operations. Mechanism: 1 topic research → 1 Knowledge/Evidence Pack → many derived items (article, tutorial, FAQ, quiz, exercise, cheat sheet). Cost pipeline: rules → cheap filtering → small/cheap model → expensive model reserved for high-value work only.
+
+**Real cost metering (added §18):** `GenerationJob.cost_estimate` was previously a flat per-job constant, unrelated to what a job actually spent — meaning `max_monthly_ai_budget` didn't correspond to anything real. Every structured LLM call across every agent is now metered per-call (input/output tokens × a static per-model pricing table), accumulated into a single `CostTracker` instance threaded through the whole pipeline run (including multi-lesson course generation and revision-loop iterations), and logged per-agent-run for auditability — turning the budget cap from a no-op into an enforceable one.
 
 ### 5.10 Content Lifecycle & Versioning
 States: `DISCOVERED → APPROVED → RESEARCHING → PLANNED → GENERATING → VALIDATING → REVISION → READY → EXPORTED → PUBLISHED → ARCHIVED`.
@@ -178,6 +186,8 @@ Approval modes:
 1. Discover → **Ask approval** → Generate
 2. Discover → Generate → **Ask approval** → Export
 3. Discover → Generate → Validate → Export (fully automatic)
+
+**Auto-publish gates (added §18):** mode 3's automatic export previously gated only on the weighted overall quality score, so a draft could score well on average while being ungrounded or robotic and still auto-publish. The scheduler's `_maybe_publish` decision now additionally requires (a) `narrative_voice_score` to clear a configurable per-project floor (`humanization_auto_publish_floor`, default 70) independent of the weighted average, and (b) the content to be `is_grounded` (i.e., generated from real approved/auto-approved source material, not a research-fallback). Both gates fail **open** (not closed) when the underlying field is `None` — protecting pre-cutover `QualityReport` rows from being retroactively blocked — and each gate now logs a distinct reason in the scheduler's decision log so operators can tell which check blocked a given item.
 
 ### 5.12 UI Screens
 Dashboard (content/jobs/opportunities/quality/knowledge-source counts) · Project Configuration · Knowledge Library (upload/status/errors) · Content Opportunity board (score/demand/trend/gap, Approve/Reject/Generate/Edit) · Generation console (live agent progress ticker) · Autonomous Factory settings.
@@ -345,10 +355,30 @@ ai-content-factory/
 
 ---
 
-## 17. Immediate Next Steps
+## 18. Quality & Grounding Hardening (2026-09) — findings and fixes
+
+A deep review of the implemented factory (which by this point had moved well past MVP scaffolding into a working LangGraph pipeline) found that autonomous generation could produce content that was factually checked but not actually humanized, story-driven, or reliably grounded in the sources it claimed to draw from. Seven gaps were identified and fixed in one coordinated multi-agent implementation pass:
+
+| # | Gap | Fix |
+|---|---|---|
+| 1 | Weak source grounding — approved-source filter blocked freshly-discovered trustworthy sources; retrieval was keyword-count matching, not semantic | Trust fast-track (`AUTO_APPROVED` review status for Tier-1 domains) + real embedding-based semantic retrieval via the existing Gemini embedding client, with a new `is_grounded` signal threaded end-to-end into the persisted `QualityReport` |
+| 2 | Fact-checking worked only against the synthesized Evidence Pack, not raw source text | `FactCheckerAgent` now also checks against raw retrieved source chunks; new `evidence_drift_claims` field distinct from "unsupported claim" |
+| 3 | No scoring of narrative voice/humanization — a robotic-but-accurate draft could pass | New `narrative_voice_score` dimension in the Quality Gate, scored against the Writer agent's own voice rubric; version-aware scoring weights (`v2`) so the dimension set scored is fully determined by the resolved weighting version, not hardcoded |
+| 4 | No course-level tone consistency across lessons; no plagiarism/near-copy detection | Once-per-course style fingerprint threaded through lesson generation; deterministic n-gram overlap check flags (warns, doesn't hard-fail) near-verbatim source copying |
+| 5 | Cost tracking was a flat per-job estimate, unrelated to actual spend | Real per-call token metering (input/output tokens × static pricing table) accumulated in a `CostTracker` threaded through the whole pipeline run, replacing the flat constant |
+| 6 | Auto-publish gated only on weighted overall score | Added independent humanization-floor and grounding gates to the scheduler's publish decision, both fail-open on missing data for backward compatibility |
+| 7 | Image placement was a permanent stub (no real images ever attached) | Real image lookup service (Pexels) with mock-mode/soft-fail behavior matching the existing web-search service's pattern; minimal frontend rendering support |
+
+**Root shared wiring point:** `backend/api/routers/generation.py`'s `QualityReport(...)` construction is the single place every quality signal must be explicitly mapped from the pipeline's internal dict to the persisted domain model — any new signal not added there is silently dropped before it ever reaches the scheduler's publish decision. This is now the documented integration seam for future quality dimensions.
+
+**Deferred (explicitly out of scope for this pass):** an LLM-as-judge golden-corpus evaluation tier (`tests/eval/`) for humanization quality — needs CI/secrets infrastructure decisions; and extending the Citation Checker with the same evidence-drift awareness as the Fact Checker.
+
+---
+
+## 19. Immediate Next Steps
 
 1. Delete the empty Node/TS scaffold (`apps/*`, `packages/*`) and the orphaned, non-buildable Go files (`cmd/importer/main.go`, `packages/exports/gg_importer.go`) — or explicitly archive them if you want to keep the Go exploration for reference.
 2. Delete or clearly mark `V2_GO_ARCHITECTURE_AND_DESIGN.md` as superseded by this document.
-3. Scaffold the real Python repo per §16.
-4. Implement MVP scope (§14) end-to-end before touching Phase 2+.
-5. Implement the ggcms import client in Python against the contract in §10, replacing the orphaned Go importer.
+3. Stand up the deferred `tests/eval/` LLM-as-judge tier for narrative-voice quality once CI/secrets infra decisions are made (§18).
+4. Extend the Citation Checker agent with the same evidence-drift awareness added to the Fact Checker (§18).
+5. Continue MVP/Phase 2 feature buildout (§14) — trend discovery, autonomous topic selection, scheduled generation.
