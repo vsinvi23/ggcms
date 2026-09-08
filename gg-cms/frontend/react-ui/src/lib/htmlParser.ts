@@ -425,7 +425,7 @@ export function contentBlocksToHtml(blocks: ContentBlock[]): string {
           }
         } catch {
           // relative paths are kept as-is after escaping
-          if (rawUrl && !rawUrl.includes(':')) safeUrl = escapeHtml(rawUrl);
+          if (rawUrl && !rawUrl.includes(':') && !rawUrl.startsWith('//')) safeUrl = escapeHtml(rawUrl);
         }
         return `<figure><img src="${safeUrl}" alt="${escapeHtml(block.imageAlt || '')}" />${block.imageAlt ? `<figcaption>${escapeHtml(block.imageAlt)}</figcaption>` : ''}</figure>`;
       }
