@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2, Upload, FileText, CheckCircle2, XCircle, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 
 const ACCEPTED_EXTENSIONS = '.md,.markdown,.json,.csv';
 
@@ -52,7 +53,7 @@ export default function BulkImport() {
         setSelected(validIdx);
         setExpanded(new Set());
       },
-      onError: () => toast.error('Failed to parse content'),
+      onError: (err) => toast.error(toUserMessage(err, 'Failed to parse content')),
     });
   };
 
@@ -136,7 +137,7 @@ export default function BulkImport() {
           toast.warning(`${res.created} imported, ${res.failed} failed`);
         }
       },
-      onError: () => toast.error('Import failed'),
+      onError: (err) => toast.error(toUserMessage(err, 'Import failed')),
     });
   };
 

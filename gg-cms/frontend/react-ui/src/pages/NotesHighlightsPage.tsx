@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { HighlightDto, NoteDto } from '@/api/types';
+import { toUserMessage } from '@/lib/errors';
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -288,8 +289,8 @@ export default function NotesHighlightsPage() {
     try {
       await deleteHighlight(id);
       toast.success('Highlight deleted');
-    } catch {
-      toast.error('Failed to delete highlight');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete highlight'));
     }
   };
 
@@ -297,8 +298,8 @@ export default function NotesHighlightsPage() {
     try {
       await deleteNote(id);
       toast.success('Note deleted');
-    } catch {
-      toast.error('Failed to delete note');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete note'));
     }
   };
 

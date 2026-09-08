@@ -46,6 +46,7 @@ import {
   useDeleteCategory,
 } from '@/api/hooks/useCategories';
 import { CategoryResponseDto, CategoryCreateDto } from '@/api/types';
+import { toUserMessage } from '@/lib/errors';
 
 // ─── Tree helpers ──────────────────────────────────────────────────────────────
 
@@ -224,8 +225,8 @@ export function CategoriesTab() {
       setCategoryName('');
       setParentId(null);
       setEditingCategory(null);
-    } catch {
-      toast.error(editingCategory ? 'Failed to update category' : 'Failed to create category');
+    } catch (err) {
+      toast.error(toUserMessage(err, editingCategory ? 'Failed to update category' : 'Failed to create category'));
     }
   };
 
@@ -234,8 +235,8 @@ export function CategoriesTab() {
     try {
       await deleteMutation.mutateAsync(categoryToDelete.id);
       toast.success(`Category "${categoryToDelete.name}" deleted`);
-    } catch {
-      toast.error('Failed to delete category. It may have children or be in use.');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete category. It may have children or be in use.'));
     } finally {
       setDeleteDialogOpen(false);
       setCategoryToDelete(null);

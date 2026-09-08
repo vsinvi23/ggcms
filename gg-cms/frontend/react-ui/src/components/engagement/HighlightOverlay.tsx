@@ -6,6 +6,7 @@ import { HighlightDto } from '@/api/types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 
 type ContentType = 'article' | 'course';
 type HighlightColor = 'yellow' | 'green' | 'blue';
@@ -166,8 +167,8 @@ export function HighlightOverlay({
     dismiss();
     try {
       await createHighlight({ text, startOffset, endOffset, color, contentTitle, contentSlug });
-    } catch {
-      toast.error('Failed to save highlight');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to save highlight'));
     }
   };
 
@@ -184,8 +185,8 @@ export function HighlightOverlay({
         contentTitle,
         contentSlug,
       });
-    } catch {
-      toast.error('Failed to save highlight');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to save highlight'));
     }
   };
 
@@ -196,8 +197,8 @@ export function HighlightOverlay({
     try {
       await updateHighlight({ id: matchedHighlight.id, note: noteText.trim() });
       toast.success(noteText.trim() ? 'Note saved' : 'Note removed');
-    } catch {
-      toast.error('Failed to update note');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to update note'));
     }
   };
 
@@ -208,8 +209,8 @@ export function HighlightOverlay({
     try {
       await deleteHighlight(matchedHighlight.id);
       toast.success('Highlight removed');
-    } catch {
-      toast.error('Failed to remove highlight');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to remove highlight'));
     }
   };
 

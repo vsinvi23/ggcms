@@ -35,6 +35,7 @@ import {
 import { useCmsList } from '@/api/hooks/useCms';
 import { LearningPathDto } from '@/api/services/learningPathService';
 import { CmsResponseDto } from '@/api/types';
+import { toUserMessage } from '@/lib/errors';
 
 interface SelectedCourse {
   courseId: number;
@@ -96,8 +97,8 @@ function InterviewPathBuilder({ path, onClose }: { path?: LearningPathDto; onClo
       });
       toast.success(path ? 'Interview path updated' : 'Interview path created');
       onClose();
-    } catch {
-      toast.error('Failed to save interview path');
+    } catch (err) {
+      toast.error(toUserMessage(err, path ? 'Failed to update interview path' : 'Failed to create interview path'));
     }
   };
 
@@ -189,8 +190,8 @@ export function InterviewPathsTab() {
     try {
       await deletePath.mutateAsync(deleteTarget.id);
       toast.success(`"${deleteTarget.title}" deleted`);
-    } catch {
-      toast.error('Failed to delete interview path');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete interview path'));
     } finally {
       setDeleteTarget(null);
     }

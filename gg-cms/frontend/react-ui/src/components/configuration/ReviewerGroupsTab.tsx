@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Loader2, Plus, X, ChevronDown, ChevronRight, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 import {
   Select,
   SelectContent,
@@ -44,7 +45,7 @@ function CategoryReviewerRow({ category }: { category: CategoryResponseDto }) {
           setSelectedGroupId('');
           toast.success('Reviewer group linked');
         },
-        onError: () => toast.error('Failed to link group'),
+        onError: (err) => toast.error(toUserMessage(err, 'Failed to link group')),
       }
     );
   };
@@ -54,7 +55,7 @@ function CategoryReviewerRow({ category }: { category: CategoryResponseDto }) {
       { categoryId: category.id, groupId },
       {
         onSuccess: () => toast.success(`Removed "${groupName}"`),
-        onError: () => toast.error('Failed to remove group'),
+        onError: (err) => toast.error(toUserMessage(err, 'Failed to remove group')),
       }
     );
   };
@@ -65,7 +66,7 @@ function CategoryReviewerRow({ category }: { category: CategoryResponseDto }) {
       { id: category.id, data: { name: category.name, requiredApprovals: n } },
       {
         onSuccess: () => toast.success('Required approvals updated'),
-        onError: () => toast.error('Failed to update required approvals'),
+        onError: (err) => toast.error(toUserMessage(err, 'Failed to update required approvals')),
       }
     );
   };

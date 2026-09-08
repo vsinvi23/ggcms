@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 import { Loader2 } from 'lucide-react';
 import { useCreateUser } from '@/api/hooks/useUsers';
 import { useGroupsQuery } from '@/api/hooks/useGroups';
@@ -69,8 +70,7 @@ export function InviteUserModal({ open, onClose, onUserCreated }: InviteUserModa
       onUserCreated?.();
       onClose();
     } catch (error: unknown) {
-      const e = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      toast.error(e?.response?.data?.error?.message || e?.message || 'Failed to create user.');
+      toast.error(toUserMessage(error, 'Failed to create user.'));
     }
   };
 

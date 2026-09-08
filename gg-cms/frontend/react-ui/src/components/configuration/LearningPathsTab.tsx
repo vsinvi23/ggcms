@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Plus, Pencil, Trash2, Route, BookOpen, ChevronUp, ChevronDown, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 import {
   Sheet,
   SheetContent,
@@ -114,8 +115,8 @@ function PathBuilder({ kind, path, onClose }: PathBuilderProps) {
       });
       toast.success(path ? 'Learning path updated' : 'Learning path created');
       onClose();
-    } catch {
-      toast.error('Failed to save learning path');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to save learning path'));
     }
   };
 
@@ -246,8 +247,8 @@ function PathsList({ kind, title, description }: PathsListProps) {
     try {
       await deletePath.mutateAsync(deleteTarget.id);
       toast.success(`"${deleteTarget.title}" deleted`);
-    } catch {
-      toast.error('Failed to delete learning path');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete learning path'));
     } finally {
       setDeleteTarget(null);
     }
