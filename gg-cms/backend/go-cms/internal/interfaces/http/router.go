@@ -27,6 +27,7 @@ import (
 	settingssvc "github.com/serenya/go-cms/internal/application/settings"
 	tagsvc "github.com/serenya/go-cms/internal/application/tag"
 	tasksvc "github.com/serenya/go-cms/internal/application/task"
+	topicsvc "github.com/serenya/go-cms/internal/application/topic"
 	usersvc "github.com/serenya/go-cms/internal/application/user"
 	gqlhandler "github.com/serenya/go-cms/internal/interfaces/graphql"
 	"github.com/serenya/go-cms/internal/interfaces/http/handler"
@@ -50,6 +51,7 @@ type Services struct {
 	Comment         commentsvc.Service
 	Analytics       analyticssvc.Service
 	Tag             tagsvc.Service
+	Topic           topicsvc.Service
 	Reaction        engagementsvc.ReactionService
 	Note            engagementsvc.NoteService
 	Favourite       engagementsvc.FavouriteService
@@ -150,6 +152,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	pubH := handler.NewPublicHandler(svcs.CMS, svcs.Category, svcs.Analytics)
 	analyticsH := handler.NewAnalyticsHandler(svcs.Analytics)
 	tagH := handler.NewTagHandler(svcs.Tag)
+	topicH := handler.NewTopicHandler(svcs.Topic)
 	engH := handler.NewEngagementHandler(svcs.Reaction, svcs.Note, svcs.Favourite, svcs.Highlight)
 	ctH := handler.NewContentTypeHandler(svcs.ContentType)
 	lpH := handler.NewLearningPathHandler(svcs.LearningPath)
@@ -184,6 +187,11 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 
 		// ----- Tags (public read) -----
 		api.GET("/tags", tagH.GetAll)
+
+		// ----- Topics (public read) -----
+		api.GET("/topics", topicH.GetAll)
+		api.GET("/topics/:id", topicH.GetByID)
+		api.GET("/topics/:id/relationships", topicH.GetRelationships)
 
 		// ----- Sections (public read — course curriculum preview) -----
 		api.GET("/sections", secH.GetAll)
@@ -271,6 +279,12 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.POST("tags", tagH.Create)
 			p.DELETE("tags/:id", tagH.Delete)
 
+			// Topics (GET is public — see above; write operations are admin only)
+			p.POST("topics", middleware.AdminOnly(), topicH.Create)
+			p.PUT("topics/:id", middleware.AdminOnly(), topicH.Update)
+			p.DELETE("topics/:id", middleware.AdminOnly(), topicH.Delete)
+			p.PUT("topics/:id/relationships", middleware.AdminOnly(), topicH.SetRelationships)
+
 			// Content Types (admin only)
 			p.POST("content-types", middleware.AdminOnly(), ctH.Create)
 			p.PUT("content-types/:id", middleware.AdminOnly(), ctH.Update)
@@ -298,6 +312,8 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.POST("cms/:id/reassign-review", cmsH.ReassignReview)
 			p.POST("cms/:id/review-note", cmsH.SaveReviewNote)
 			p.POST("cms/:id/assign-reviewer", middleware.AdminOnly(), cmsH.AssignReviewer)
+			p.GET("cms/:id/topics", topicH.GetContentTopics)
+			p.PUT("cms/:id/topics", topicH.SetContentTopics)
 
 			// Sections (GET is public — see above; write operations require auth)
 			p.POST("sections", secH.Create)

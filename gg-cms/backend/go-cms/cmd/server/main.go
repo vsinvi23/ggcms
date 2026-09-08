@@ -33,6 +33,7 @@ import (
 	settingssvc "github.com/serenya/go-cms/internal/application/settings"
 	tagsvc "github.com/serenya/go-cms/internal/application/tag"
 	tasksvc "github.com/serenya/go-cms/internal/application/task"
+	topicsvc "github.com/serenya/go-cms/internal/application/topic"
 	usersvc "github.com/serenya/go-cms/internal/application/user"
 	"github.com/serenya/go-cms/internal/bootstrap"
 	mongorepo "github.com/serenya/go-cms/internal/infrastructure/persistence/mongodb"
@@ -100,6 +101,7 @@ func main() {
 	taskRepo := pgrepo.NewTaskRepository(pgDB.Write, pgDB.Read)
 	notifRepo := pgrepo.NewNotificationRepository(pgDB.Write, pgDB.Read)
 	tagRepo := pgrepo.NewTagRepository(pgDB.Write, pgDB.Read)
+	topicRepo := pgrepo.NewTopicRepository(pgDB.Write, pgDB.Read)
 	contentReviewRepo := pgrepo.NewContentReviewRepository(pgDB.Write, pgDB.Read)
 	contentTypeRepo := pgrepo.NewContentTypeRepository(pgDB.Write, pgDB.Read)
 	learningPathRepo := pgrepo.NewLearningPathRepository(pgDB.Write, pgDB.Read)
@@ -134,6 +136,7 @@ func main() {
 		Comment:         commentsvc.NewService(commentRepo),
 		Analytics:       analyticssvc.NewService(analyticsRepo),
 		Tag:             tagsvc.NewService(tagRepo),
+		Topic:           topicsvc.NewService(topicRepo),
 		Reaction:        engagementsvc.NewReactionService(reactionRepo, analyticsRepo),
 		Note:            engagementsvc.NewNoteService(noteRepo),
 		Favourite:       engagementsvc.NewFavouriteService(favouriteRepo),

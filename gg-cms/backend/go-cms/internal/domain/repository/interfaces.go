@@ -221,6 +221,19 @@ type TagRepository interface {
 	GetCategoryTags(ctx context.Context, categoryID uint) ([]*entity.Tag, error)
 }
 
+type TopicRepository interface {
+	Create(ctx context.Context, topic *entity.Topic) error
+	FindAll(ctx context.Context) ([]*entity.Topic, error)
+	FindByID(ctx context.Context, id uint) (*entity.Topic, error)
+	FindBySlug(ctx context.Context, slug string) (*entity.Topic, error)
+	Update(ctx context.Context, topic *entity.Topic) error
+	Delete(ctx context.Context, id uint) error
+	ListRelationships(ctx context.Context, topicID uint) ([]*entity.TopicRelationship, error)
+	SetRelationships(ctx context.Context, topicID uint, relationships []entity.TopicRelationship) error
+	GetContentTopics(ctx context.Context, contentID uint, contentType string) ([]*entity.Topic, error)
+	SetContentTopics(ctx context.Context, contentID uint, contentType string, topicIDs []uint) error
+}
+
 // --- MongoDB Repository Interfaces ---
 
 type CommentRepository interface {
