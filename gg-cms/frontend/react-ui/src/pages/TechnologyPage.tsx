@@ -1,5 +1,4 @@
 import { useParams, Link } from 'react-router-dom';
-import { useState } from 'react';
 import { BookOpen, Code, Clock, Play, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,23 +7,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { useCategories } from '@/api/hooks/useCategories';
-import { useTags } from '@/api/hooks/useTags';
 import {
   usePublicArticlesByCategory,
   usePublicCoursesByCategory,
 } from '@/api/hooks/usePublicCms';
 import { CmsResponseDto } from '@/api/types';
-import { FilterBar } from '@/components/public/FilterBar';
+import { buildArticleUrl, buildCourseUrl } from '@/lib/slug';
 
 const TechnologyPage = () => {
   const { slug } = useParams<{ slug: string }>();
 
-  // TODO: tag filtering — selectedTagIds will filter items once the public API
-  // returns tags on each content item. Currently CmsResponseDto has no tags field.
-  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
-
   const { data: categories, isLoading: catLoading } = useCategories();
-  const { data: tags, isLoading: tagsLoading } = useTags();
 
   const category = slug
     ? (categories ?? []).find((c) => c.slug === slug || c.slug === slug?.toLowerCase())
@@ -42,14 +35,6 @@ const TechnologyPage = () => {
   const articles: CmsResponseDto[] = articlesData?.items ?? [];
   const courses: CmsResponseDto[] = coursesData?.items ?? [];
   const isLoading = catLoading || articlesLoading || coursesLoading;
-
-  const handleTagToggle = (id: number) => {
-    setSelectedTagIds((prev) =>
-      prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
-    );
-  };
-
-  const hasActiveFilters = selectedTagIds.length > 0;
 
   if (!catLoading && !category && slug) {
     return (
@@ -92,18 +77,10 @@ const TechnologyPage = () => {
           )}
         </section>
 
-        {/* Filters — tag row only (this page is already scoped to a single category) */}
-        <FilterBar
-          tags={tags}
-          selectedTagIds={selectedTagIds}
-          onTagChange={handleTagToggle}
-          tagsLoading={tagsLoading}
-          hasActiveFilters={hasActiveFilters}
-          onClearFilters={() => setSelectedTagIds([])}
-          // Category chips are intentionally omitted on TechnologyPage because
-          // the page content is already filtered to a single category slug.
-          onCategoryChange={() => undefined}
-        />
+        {/* Tag filtering is coming soon — the public API does not yet return tags on list items */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Badge variant="outline">Tag filters coming soon</Badge>
+        </div>
 
         {/* Content */}
         <Tabs defaultValue="courses">
@@ -120,21 +97,23 @@ const TechnologyPage = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {courses.map((course) => (
-                  <Card key={course.id} className="hover:shadow-md transition-shadow cursor-pointer group">
-                    <div className="h-20 bg-primary rounded-t-lg flex items-center justify-center">
-                      <Play className="h-6 w-6 text-primary-foreground" />
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold group-hover:text-primary transition-colors mb-2 line-clamp-2">
-                        {course.title}
-                      </h3>
-                      {course.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {course.description}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <Link key={course.id} to={buildCourseUrl(course)}>
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer group">
+                      <div className="h-20 bg-primary rounded-t-lg flex items-center justify-center">
+                        <Play className="h-6 w-6 text-primary-foreground" />
+                      </div>
+                      <CardContent className="p-4">
+                        <h3 className="font-semibold group-hover:text-primary transition-colors mb-2 line-clamp-2">
+                          {course.title}
+                        </h3>
+                        {course.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {course.description}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Link>
                 ))}
               </div>
             )}
@@ -148,25 +127,27 @@ const TechnologyPage = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {articles.map((article) => (
-                  <Card key={article.id} className="hover:shadow-md transition-shadow cursor-pointer group">
-                    <CardContent className="p-5">
-                      <FileText className="h-6 w-6 text-primary mb-3" />
-                      <h3 className="font-semibold group-hover:text-primary transition-colors mb-2 line-clamp-2">
-                        {article.title}
-                      </h3>
-                      {article.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {article.description}
-                        </p>
-                      )}
-                      {article.publishedAt && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-3">
-                          <Clock className="h-3 w-3" />
-                          {new Date(article.publishedAt).toLocaleDateString()}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <Link key={article.id} to={buildArticleUrl(article)}>
+                    <Card className="hover:shadow-md transition-shadow cursor-pointer group">
+                      <CardContent className="p-5">
+                        <FileText className="h-6 w-6 text-primary mb-3" />
+                        <h3 className="font-semibold group-hover:text-primary transition-colors mb-2 line-clamp-2">
+                          {article.title}
+                        </h3>
+                        {article.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {article.description}
+                          </p>
+                        )}
+                        {article.publishedAt && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-3">
+                            <Clock className="h-3 w-3" />
+                            {new Date(article.publishedAt).toLocaleDateString()}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Link>
                 ))}
               </div>
             )}
