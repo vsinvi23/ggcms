@@ -51,27 +51,29 @@ const buildAbsoluteUrl = (path: string | null | undefined): string | null => {
 };
 
 const transformPublicItem = (item: Record<string, unknown>, type: 'ARTICLE' | 'COURSE'): CmsResponseDto => {
-  if (!item) return item;
-  const thumbnail = item.thumbnail;
-  const thumbnailUrl = buildAbsoluteUrl(thumbnail?.url);
+  if (!item) return item as unknown as CmsResponseDto;
+  const category = item.category as Record<string, unknown> | undefined;
+  const author = item.author as Record<string, unknown> | undefined;
+  const thumbnail = item.thumbnail as Record<string, unknown> | undefined;
+  const thumbnailUrl = buildAbsoluteUrl(thumbnail?.url as string | undefined);
 
   return {
-    id: item.id,
-    publicId: item.publicId ?? item.public_id ?? undefined,
-    slug: item.slug ?? undefined,
+    id: item.id as number,
+    publicId: (item.publicId as string | undefined) ?? (item.public_id as string | undefined) ?? undefined,
+    slug: (item.slug as string | undefined) ?? undefined,
     type,
-    courseType: item.courseType ?? null,
-    categoryId: item.categoryId ?? item.category?.id ?? null,
-    categoryName: item.categoryName ?? item.category?.name ?? null,
-    createdBy: item.createdBy ?? item.author?.id ?? null,
+    courseType: (item.courseType as string | null | undefined) ?? null,
+    categoryId: (item.categoryId as number | undefined) ?? (category?.id as number | undefined) ?? null,
+    categoryName: (item.categoryName as string | undefined) ?? (category?.name as string | undefined) ?? null,
+    createdBy: (item.createdBy as number | undefined) ?? (author?.id as number | undefined) ?? null,
     reviewerId: null,
     reviewerName: null,
     reviewerComment: null,
     status: 'PUBLISHED',
-    title: item.title ?? null,
+    title: (item.title as string | null | undefined) ?? null,
     // Strip HTML/markdown from description so it shows as clean plain text in cards
-    description: stripHtml(item.description ?? item.shortDescription ?? item.excerpt),
-    body: item.body ?? item.content ?? null,
+    description: stripHtml((item.description as string | undefined) ?? (item.shortDescription as string | undefined) ?? (item.excerpt as string | undefined)),
+    body: (item.body as string | null | undefined) ?? (item.content as string | null | undefined) ?? null,
     bodyLocation: null,
     bodyName: null,
     bodyType: null,
@@ -82,17 +84,17 @@ const transformPublicItem = (item: Record<string, unknown>, type: 'ARTICLE' | 'C
     contentType: null,
     contentSize: null,
     contentUrl: null,
-    thumbnailLocation: thumbnail?.url ?? null,
-    thumbnailName: thumbnail?.name ?? null,
-    thumbnailType: thumbnail?.mime ?? null,
-    thumbnailSize: thumbnail?.size ?? null,
+    thumbnailLocation: (thumbnail?.url as string | undefined) ?? null,
+    thumbnailName: (thumbnail?.name as string | undefined) ?? null,
+    thumbnailType: (thumbnail?.mime as string | undefined) ?? null,
+    thumbnailSize: (thumbnail?.size as number | undefined) ?? null,
     thumbnailUrl,
-    attachments: item.attachments ?? null,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt ?? null,
-    publishedAt: item.publishedAt ?? null,
-    version: item.version ?? 1,
-    updatedBy: null,
+    attachments: (item.attachments as CmsResponseDto['attachments']) ?? null,
+    createdAt: item.createdAt as string,
+    updatedAt: (item.updatedAt as string | null | undefined) ?? null,
+    publishedAt: (item.publishedAt as string | null | undefined) ?? null,
+    version: (item.version as number | undefined) ?? 1,
+    updatedBy: undefined,
   };
 };
 

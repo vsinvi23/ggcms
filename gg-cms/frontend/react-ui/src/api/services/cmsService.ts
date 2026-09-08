@@ -35,38 +35,44 @@ export interface CmsQueryParams {
  * Strapi returns flat entity objects (not wrapped in .attributes in v5).
  */
 const transformCmsItem = (item: Record<string, unknown>, type?: CmsType): CmsResponseDto => {
-  if (!item) return item;
+  if (!item) return item as unknown as CmsResponseDto;
+
+  const category = item.category as Record<string, unknown> | undefined;
+  const author = item.author as Record<string, unknown> | undefined;
+  const reviewer = item.reviewer as Record<string, unknown> | undefined;
+  const updatedByObj = item.updatedBy as Record<string, unknown> | undefined;
 
   // Go CMS backend returns thumbnailUrl as a flat field.
   // Strapi (legacy) returns thumbnail as a nested media object.
-  const thumbnail = item.thumbnail;
+  const thumbnail = item.thumbnail as Record<string, unknown> | undefined;
+  const thumbnailUrlRaw = thumbnail?.url as string | undefined;
   const thumbnailUrl: string | null =
-    item.thumbnailUrl ??
-    (thumbnail?.url
-      ? thumbnail.url.startsWith('http')
-        ? thumbnail.url
-        : `${MEDIA_BASE_URL}${thumbnail.url}`
+    (item.thumbnailUrl as string | undefined) ??
+    (thumbnailUrlRaw
+      ? thumbnailUrlRaw.startsWith('http')
+        ? thumbnailUrlRaw
+        : `${MEDIA_BASE_URL}${thumbnailUrlRaw}`
       : null);
 
   return {
-    id: item.id,
-    publicId: item.publicId ?? undefined,
-    slug: item.slug ?? undefined,
-    type: (item.type || type || 'ARTICLE') as CmsType,
-    articleType: item.articleType ?? null,
-    courseType: item.courseType ?? null,
-    blockCount: item.blockCount ?? 0,
-    categoryId: item.category?.id ?? item.categoryId ?? null,
-    createdBy: item.author?.id ?? item.createdBy ?? null,
-    createdByName: item.author?.name ?? item.createdByName ?? undefined,
-    reviewerId: item.reviewer?.id ?? item.reviewerId ?? null,
-    reviewerName: item.reviewer?.name ?? item.reviewer?.username ?? item.reviewerName ?? null,
-    reviewerComment: item.reviewerComment ?? null,
-    status: ((item.status || 'DRAFT').toUpperCase()) as CmsResponseDto['status'],
-    title: item.title ?? null,
-    description: item.description ?? item.excerpt ?? null,
-    body: item.body ?? item.content ?? null,
-    categoryName: item.categoryName ?? null,
+    id: item.id as number,
+    publicId: (item.publicId as string | undefined) ?? undefined,
+    slug: (item.slug as string | undefined) ?? undefined,
+    type: ((item.type as CmsType | undefined) || type || 'ARTICLE') as CmsType,
+    articleType: (item.articleType as string | null | undefined) ?? null,
+    courseType: (item.courseType as string | null | undefined) ?? null,
+    blockCount: (item.blockCount as number | undefined) ?? 0,
+    categoryId: (category?.id as number | undefined) ?? (item.categoryId as number | undefined) ?? null,
+    createdBy: (author?.id as number | undefined) ?? (item.createdBy as number | undefined) ?? null,
+    createdByName: (author?.name as string | undefined) ?? (item.createdByName as string | undefined) ?? undefined,
+    reviewerId: (reviewer?.id as number | undefined) ?? (item.reviewerId as number | undefined) ?? null,
+    reviewerName: (reviewer?.name as string | undefined) ?? (reviewer?.username as string | undefined) ?? (item.reviewerName as string | undefined) ?? null,
+    reviewerComment: (item.reviewerComment as string | null | undefined) ?? null,
+    status: (((item.status as string | undefined) || 'DRAFT').toUpperCase()) as CmsResponseDto['status'],
+    title: (item.title as string | null | undefined) ?? null,
+    description: (item.description as string | null | undefined) ?? (item.excerpt as string | null | undefined) ?? null,
+    body: (item.body as string | null | undefined) ?? (item.content as string | null | undefined) ?? null,
+    categoryName: (item.categoryName as string | null | undefined) ?? null,
     // Body/content fields (Go CMS stores body inline)
     bodyLocation: null,
     bodyName: null,
@@ -79,28 +85,28 @@ const transformCmsItem = (item: Record<string, unknown>, type?: CmsType): CmsRes
     contentSize: null,
     contentUrl: null,
     // Thumbnail
-    thumbnailLocation: thumbnail?.url ?? item.thumbnailUrl ?? null,
-    thumbnailName: thumbnail?.name ?? null,
-    thumbnailType: thumbnail?.mime ?? null,
-    thumbnailSize: thumbnail?.size ?? null,
+    thumbnailLocation: thumbnailUrlRaw ?? (item.thumbnailUrl as string | undefined) ?? null,
+    thumbnailName: (thumbnail?.name as string | undefined) ?? null,
+    thumbnailType: (thumbnail?.mime as string | undefined) ?? null,
+    thumbnailSize: (thumbnail?.size as number | undefined) ?? null,
     thumbnailUrl,
     // Attachments
-    attachments: item.attachments ?? null,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt ?? null,
-    publishedAt: item.publishedAt ?? null,
-    version: item.version ?? 1,
-    updatedBy: item.updatedBy?.id ?? null,
-    hasPendingDraft: item.hasPendingDraft ?? false,
-    publishedVersion: item.publishedVersion ?? null,
-    publishedTitle: item.publishedTitle ?? null,
-    publishedDescription: item.publishedDescription ?? null,
-    publishedBody: item.publishedBody ?? null,
-    reviewBaselineTitle: item.reviewBaselineTitle ?? null,
-    reviewBaselineDescription: item.reviewBaselineDescription ?? null,
-    reviewBaselineBody: item.reviewBaselineBody ?? null,
-    publishedChaptersSnapshot: item.publishedChaptersSnapshot ?? null,
-    reviewBaselineChapters: item.reviewBaselineChapters ?? null,
+    attachments: (item.attachments as CmsResponseDto['attachments']) ?? null,
+    createdAt: item.createdAt as string,
+    updatedAt: (item.updatedAt as string | null | undefined) ?? null,
+    publishedAt: (item.publishedAt as string | null | undefined) ?? null,
+    version: (item.version as number | undefined) ?? 1,
+    updatedBy: (updatedByObj?.id as number | undefined) ?? null,
+    hasPendingDraft: (item.hasPendingDraft as boolean | undefined) ?? false,
+    publishedVersion: (item.publishedVersion as number | null | undefined) ?? null,
+    publishedTitle: (item.publishedTitle as string | null | undefined) ?? null,
+    publishedDescription: (item.publishedDescription as string | null | undefined) ?? null,
+    publishedBody: (item.publishedBody as string | null | undefined) ?? null,
+    reviewBaselineTitle: (item.reviewBaselineTitle as string | null | undefined) ?? null,
+    reviewBaselineDescription: (item.reviewBaselineDescription as string | null | undefined) ?? null,
+    reviewBaselineBody: (item.reviewBaselineBody as string | null | undefined) ?? null,
+    publishedChaptersSnapshot: (item.publishedChaptersSnapshot as string | null | undefined) ?? null,
+    reviewBaselineChapters: (item.reviewBaselineChapters as string | null | undefined) ?? null,
   };
 };
 
@@ -314,20 +320,23 @@ export const cmsService = {
   getActivity: async (id: number, type: CmsType = 'ARTICLE'): Promise<WorkflowEventResponse[]> => {
     const response = await apiClient.get(`${CMS_BASE}/${id}/activity`, { params: { type } });
     const raw: Record<string, unknown>[] = response.data.data ?? response.data ?? [];
-    return raw.map((e) => ({
-      id: e.id,
-      entityType: e.entityType ?? e.entity_type ?? '',
-      entityId: e.entityId ?? e.entity_id ?? id,
-      userId: e.userId ?? e.user_id ?? 0,
-      userName: e.userName ?? e.user_name ?? e.user?.name ?? 'Unknown',
-      fromStatus: e.fromStatus ?? e.from_status ?? '',
-      toStatus: e.toStatus ?? e.to_status ?? '',
-      action: e.action ?? '',
-      comment: e.comment ?? null,
-      version: e.version ?? null,
-      titleSnapshot: e.titleSnapshot ?? e.title_snapshot ?? undefined,
-      createdAt: e.createdAt ?? e.created_at ?? '',
-    }));
+    return raw.map((e) => {
+      const user = e.user as Record<string, unknown> | undefined;
+      return {
+        id: e.id as number,
+        entityType: (e.entityType as string | undefined) ?? (e.entity_type as string | undefined) ?? '',
+        entityId: (e.entityId as number | undefined) ?? (e.entity_id as number | undefined) ?? id,
+        userId: (e.userId as number | undefined) ?? (e.user_id as number | undefined) ?? 0,
+        userName: (e.userName as string | undefined) ?? (e.user_name as string | undefined) ?? (user?.name as string | undefined) ?? 'Unknown',
+        fromStatus: (e.fromStatus as string | undefined) ?? (e.from_status as string | undefined) ?? '',
+        toStatus: (e.toStatus as string | undefined) ?? (e.to_status as string | undefined) ?? '',
+        action: (e.action as string | undefined) ?? '',
+        comment: (e.comment as string | null | undefined) ?? null,
+        version: (e.version as number | null | undefined) ?? null,
+        titleSnapshot: (e.titleSnapshot as string | undefined) ?? (e.title_snapshot as string | undefined) ?? undefined,
+        createdAt: (e.createdAt as string | undefined) ?? (e.created_at as string | undefined) ?? '',
+      };
+    });
   },
 
   // ─── Thumbnail helpers ───────────────────────────────────────────────────────
