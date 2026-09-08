@@ -276,7 +276,7 @@ async def upload_source_folder(payload: SourceFolderCreate, bg_tasks: Background
         Path("/app/data").resolve(),
         Path("data").resolve(),
     ]
-    if not any(str(resolved).startswith(str(root)) for root in safe_roots):
+    if not any(resolved.is_relative_to(root) for root in safe_roots):
         raise HTTPException(
             status_code=403,
             detail="Access denied: folder_path must be within the allowed data directory",

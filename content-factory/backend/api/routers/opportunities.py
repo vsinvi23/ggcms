@@ -10,6 +10,7 @@ from backend.agents.opportunity_agent import OpportunityAgent, expand_statement_
 from backend.configs.settings import settings
 from backend.models.base import utcnow
 from backend.models.domain import GenerationJob, Opportunity, Project
+from backend.services.dedup import compute_cooldown_until, find_duplicate_opportunity, is_in_cooldown
 from backend.services.web_search_service import web_search
 from backend.storage import file_store
 
@@ -127,8 +128,118 @@ async def reject_opportunity(opportunity_id: uuid.UUID):
         raise HTTPException(status_code=404, detail="Opportunity not found")
 
     opportunity.status = "REJECTED"
+    # Cooldown (plan §4/§6.1): a rejected topic shouldn't be immediately
+    # re-discovered next run -- give it COOLDOWN_DAYS_REJECTED before it's
+    # eligible again. See services/dedup.compute_cooldown_until. The
+    # PUBLISHED-side cooldown is set wherever an Opportunity actually
+    # transitions to PUBLISHED, which today is nowhere yet (that status is
+    # only reachable via the not-yet-built scheduler, per plan §17 Wave 3) --
+    # this is the one call site that exists today.
+    opportunity.cooldown_until = compute_cooldown_until(opportunity.status)
     await file_store.update_opportunity(project_id, opportunity)
     return {"id": opportunity.id, "status": opportunity.status}
+
+
+async def _persist_opportunity_results(project_id: uuid.UUID, results: list) -> List[Opportunity]:
+    """
+    Persists a batch of OpportunityAgent.run() results, applying topic
+    dedup/cooldown (plan §6.1/§17 Wave 2). Chosen semantics -- this is the
+    judgment call the plan leaves open (§12: "dedup ... reject, not
+    duplicate row"):
+
+      - If an existing Opportunity in this project shares `canonical_topic`
+        AND is still within its cooldown window (is_in_cooldown), skip
+        creating a new row entirely for that candidate. The topic was
+        recently rejected/published; re-surfacing it immediately would just
+        re-litigate a decision that was just made.
+      - If an existing Opportunity shares `canonical_topic` but is NOT (or
+        no longer) in cooldown -- e.g. it's still DISCOVERED and just
+        hasn't been approved/rejected yet, or its cooldown lapsed -- treat
+        this as a re-evaluation rather than a new candidate: bump the
+        existing row's score/sub-scores/reasoning/evaluated_at in place
+        (via update_opportunity) instead of appending a duplicate. This
+        keeps exactly one row per canonical topic per project at any time,
+        matching "reject, not duplicate row" while still letting fresh
+        signals refresh a stale-but-still-open Opportunity.
+      - Only genuinely new canonical topics are appended as new rows.
+
+    Returns the combined new + refreshed rows (order not guaranteed).
+    """
+    existing_opportunities = file_store.list_opportunities(project_id)
+    new_rows: list[Opportunity] = []
+    refreshed_rows: list[Opportunity] = []
+    skipped_topics: list[str] = []
+
+    for r in results:
+        signals = {
+            "brief": r.brief,
+            "references": r.references,
+            "reference_source": r.reference_source,
+        } if r.brief or r.references else None
+
+        canonical_topic = getattr(r, "canonical_topic", None)
+        duplicate = find_duplicate_opportunity(existing_opportunities, canonical_topic)
+
+        if duplicate is not None and is_in_cooldown(duplicate):
+            skipped_topics.append(r.topic)
+            continue
+
+        if duplicate is not None:
+            duplicate.score = r.score
+            duplicate.demand = r.demand
+            duplicate.trend = r.trend
+            duplicate.competition = r.competition
+            duplicate.content_gap = r.content_gap
+            duplicate.audience = r.audience
+            duplicate.recommended_content_type = r.recommended_content_type
+            duplicate.reason = r.reason
+            duplicate.demand_score = r.demand_score
+            duplicate.trend_score = r.trend_score
+            duplicate.content_gap_score = r.content_gap_score
+            duplicate.competition_score = r.competition_score
+            duplicate.audience_relevance_score = r.audience_relevance_score
+            duplicate.business_value_score = r.business_value_score
+            duplicate.opportunity_score_version = getattr(r, "opportunity_score_version", None)
+            duplicate.scoring_breakdown = getattr(r, "scoring_breakdown", None)
+            duplicate.evaluated_at = getattr(r, "evaluated_at", None) or utcnow()
+            if signals is not None:
+                duplicate.signals = signals
+            refreshed_rows.append(duplicate)
+            continue
+
+        new_rows.append(Opportunity(
+            project_id=project_id,
+            topic=r.topic,
+            score=r.score,
+            demand=r.demand,
+            trend=r.trend,
+            competition=r.competition,
+            content_gap=r.content_gap,
+            audience=r.audience,
+            recommended_content_type=r.recommended_content_type,
+            reason=r.reason,
+            signals=signals,
+            canonical_topic=canonical_topic,
+            opportunity_score_version=getattr(r, "opportunity_score_version", None),
+            scoring_breakdown=getattr(r, "scoring_breakdown", None),
+            evaluated_at=getattr(r, "evaluated_at", None),
+        ))
+        # Keep the in-memory existing list current so later results in this
+        # same batch dedup against rows just decided on, not just what was
+        # on disk before this call started.
+        existing_opportunities.append(new_rows[-1])
+
+    if new_rows:
+        await file_store.append_opportunities(project_id, new_rows)
+    for row in refreshed_rows:
+        await file_store.update_opportunity(project_id, row)
+    if skipped_topics:
+        logger.info(
+            f"[opportunities] skipped {len(skipped_topics)} topic(s) still in "
+            f"cooldown for project {project_id}: {skipped_topics}"
+        )
+
+    return [*new_rows, *refreshed_rows]
 
 
 async def _discover_from_statements(project: Project, statements: List[str]) -> List[Opportunity]:
@@ -137,7 +248,8 @@ async def _discover_from_statements(project: Project, statements: List[str]) -> 
     /discover endpoint (small topic lists) and the background-job-backed
     /discover/bulk endpoint (large pasted topic lists, avoids HTTP timeout).
     Expands each statement into headline candidates, then batches them all
-    through one OpportunityAgent.run() call and persists the results.
+    through one OpportunityAgent.run() call and persists the results
+    (dedup/cooldown-aware -- see _persist_opportunity_results).
     """
     meta: dict[str, dict] = {}
     candidates = []
@@ -163,36 +275,15 @@ async def _discover_from_statements(project: Project, statements: List[str]) -> 
 
     agent = OpportunityAgent()
     results = await agent.run(candidates, meta=meta)
-
-    rows = [
-        Opportunity(
-            project_id=project.id,
-            topic=r.topic,
-            score=r.score,
-            demand=r.demand,
-            trend=r.trend,
-            competition=r.competition,
-            content_gap=r.content_gap,
-            audience=r.audience,
-            recommended_content_type=r.recommended_content_type,
-            reason=r.reason,
-            signals={
-                "brief": r.brief,
-                "references": r.references,
-                "reference_source": r.reference_source,
-            } if r.brief or r.references else None,
-        )
-        for r in results
-    ]
-    await file_store.append_opportunities(project.id, rows)
-    return rows
+    return await _persist_opportunity_results(project.id, results)
 
 
 @router.post("/discover", response_model=List[OpportunityOut], status_code=201)
 async def discover_opportunities(payload: OpportunityDiscoverIn):
     """
     Runs OpportunityAgent against the project's niche (or explicit `topics`,
-    if given) and persists the resulting candidates as DISCOVERED opportunities.
+    if given) and persists the resulting candidates as DISCOVERED opportunities
+    (dedup/cooldown-aware -- see _persist_opportunity_results).
 
     When `topics` is explicitly provided, it's treated as a free-text statement
     (e.g. "AI security") and first expanded into several distinct article/tutorial
@@ -215,27 +306,7 @@ async def discover_opportunities(payload: OpportunityDiscoverIn):
             )
         agent = OpportunityAgent()
         results = await agent.run(project.niche, meta={})
-        rows = [
-            Opportunity(
-                project_id=project.id,
-                topic=r.topic,
-                score=r.score,
-                demand=r.demand,
-                trend=r.trend,
-                competition=r.competition,
-                content_gap=r.content_gap,
-                audience=r.audience,
-                recommended_content_type=r.recommended_content_type,
-                reason=r.reason,
-                signals={
-                    "brief": r.brief,
-                    "references": r.references,
-                    "reference_source": r.reference_source,
-                } if r.brief or r.references else None,
-            )
-            for r in results
-        ]
-        await file_store.append_opportunities(project.id, rows)
+        rows = await _persist_opportunity_results(project.id, results)
     return [OpportunityOut.from_orm_with_signals(row) for row in rows]
 
 

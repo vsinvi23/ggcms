@@ -1,3 +1,6 @@
+import uuid
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 class Opportunity(BaseModel):
@@ -23,4 +26,18 @@ class Opportunity(BaseModel):
     brief: str | None = None
     references: list[str] | None = None
     reference_source: str | None = None
+    # Autonomous Content Factory extensions (docs/architecture/
+    # AUTONOMOUS_CONTENT_FACTORY_IMPLEMENTATION_PLAN.md section 6.1), mirrored
+    # here from backend/models/domain.py::Opportunity so these values can
+    # round-trip through the API once a caller populates/reads them. All
+    # optional/additive -- not populated by OpportunityAgent's LLM call today.
+    canonical_topic: str | None = None
+    freshness_score: float | None = None
+    evidence_strength_score: float | None = None
+    opportunity_score_version: str | None = None
+    evaluated_at: datetime | None = None
+    last_generated_at: datetime | None = None
+    cooldown_until: datetime | None = None
+    knowledge_pack_id: uuid.UUID | None = None
+    scoring_breakdown: dict | None = None
 

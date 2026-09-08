@@ -196,7 +196,7 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 		results = append(results, dto.ImportConfirmResult{
 			Title:   item.Title,
 			ID:      contentID,
-			Success: true,
+			Success: structureWarning == "",
 			Error:   structureWarning,
 		})
 	}

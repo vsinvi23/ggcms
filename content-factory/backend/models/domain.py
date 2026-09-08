@@ -54,8 +54,10 @@ __all__ = [
     "ContentVersion",
     "QualityReport",
     "GenerationJob",
+    "ContentJob",
     "ExportPackage",
     "AppSetting",
+    "SchedulerRun",
 ]
 
 
@@ -77,6 +79,17 @@ class Project(BaseModel):
     min_opportunity_score: int = 75
     daily_limit: int = 10
     require_human_approval: bool = True
+    # Autonomous Content Factory extension (plan section 8): the minimum
+    # QualityReport.overall_score (0-100) required, in addition to
+    # QualityReport.passed, for a ContentJob with
+    # publish_policy=="auto_if_quality_pass" to actually auto-publish rather
+    # than fall back to HUMAN_REVIEW. See backend/services/quality_scoring.py.
+    auto_publish_threshold: int = 85
+    # Autonomous Content Factory extension (plan section 16): caps how many
+    # ContentJobs the scheduler will dispatch concurrently within one pass.
+    # Named (not a global env var) since AI spend/concurrency budgets are
+    # naturally per-project, matching daily_limit's existing shape.
+    max_concurrent_generation_jobs: int = 3
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
 
@@ -168,6 +181,27 @@ class KnowledgePack(BaseModel):
     source_ids: list[uuid.UUID] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utcnow)
     refreshed_at: datetime | None = None
+    # --- Autonomous Content Factory extensions (see docs/architecture/
+    # AUTONOMOUS_CONTENT_FACTORY_IMPLEMENTATION_PLAN.md section 6.2). All
+    # optional/default-empty so existing knowledge_packs.yaml rows keep
+    # loading unchanged. `source_claim_ids` inside each concepts/definitions/
+    # etc. entry is expected (by a later Knowledge Pack builder step, not
+    # this one) to resolve to a Claim actually present in the EvidencePack
+    # referenced by `evidence_pack_id`.
+    summary: str | None = None
+    concepts: list[dict] = Field(default_factory=list)          # {concept, description, source_claim_ids}
+    definitions: list[dict] = Field(default_factory=list)       # {term, definition, source_claim_ids}
+    common_mistakes: list[dict] = Field(default_factory=list)
+    practical_patterns: list[dict] = Field(default_factory=list)
+    misconceptions: list[dict] = Field(default_factory=list)
+    comparisons: list[dict] = Field(default_factory=list)
+    learning_objectives: list[str] = Field(default_factory=list)
+    difficulty_levels: list[str] = Field(default_factory=list)
+    research_gaps: list[str] = Field(default_factory=list)
+    contradictions: list[dict] = Field(default_factory=list)
+    evidence_pack_id: uuid.UUID | None = None
+    evidence_version: int = 1
+    knowledge_version: int = 1
 
 
 # ---------------------------------------------------------------------------
@@ -189,8 +223,28 @@ class Opportunity(BaseModel):
     # {"brief": ..., "references": [...], "reference_source": ...} -- see
     # backend/api/routers/opportunities.py and backend/agents/opportunity_agent.py.
     signals: dict | None = None
+    # Still a plain str, not a strict enum -- matches the existing loose-string
+    # pattern used elsewhere in this file (e.g. Source.status). Historically
+    # only DISCOVERED/APPROVED/REJECTED were ever assigned; per the Autonomous
+    # Content Factory plan (docs/architecture/
+    # AUTONOMOUS_CONTENT_FACTORY_IMPLEMENTATION_PLAN.md section 6.1), Opportunity
+    # now also serves as the Topic Registry, so this field additionally supports:
+    # RESEARCHING, KNOWLEDGE_READY, CONTENT_PLANNED, GENERATING, QUALITY_REVIEW,
+    # PUBLISHED, DEFERRED, HUMAN_REVIEW, FAILED. No validator enforcement.
     status: str = "DISCOVERED"
     created_at: datetime = Field(default_factory=utcnow)
+    # --- Autonomous Content Factory extensions (plan section 6.1). All
+    # optional/default-None so existing opportunities.yaml rows keep loading
+    # unchanged.
+    canonical_topic: str | None = None       # normalized/deduped key (slug of topic, lowercased)
+    freshness_score: float | None = None
+    evidence_strength_score: float | None = None
+    opportunity_score_version: str | None = None   # ties to scoring weight version (services/scoring.py)
+    evaluated_at: datetime | None = None
+    last_generated_at: datetime | None = None
+    cooldown_until: datetime | None = None
+    knowledge_pack_id: uuid.UUID | None = None      # set once research completes
+    scoring_breakdown: dict | None = None           # {sub_scores, weights, version, llm_reasoning}
 
 
 class ResearchRun(BaseModel):
@@ -320,6 +374,21 @@ class QualityReport(BaseModel):
     readability_score: float | None = None
     seo_score: float | None = None
     geo_score: float | None = None
+    # Autonomous Content Factory extensions (plan section 8). All optional
+    # so existing quality_reports.yaml rows keep loading unchanged.
+    # source_integrity_score: new 8th dimension -- see
+    # backend/agents/quality_agent.py for how it's populated (currently a
+    # deterministic proxy derived from the fact-check/citation-check
+    # pass/fail signals, not its own LLM-scored dimension -- see that
+    # module's docstring for the rationale).
+    source_integrity_score: float | None = None
+    # overall_score: COMPUTED, not LLM-decided -- a deterministic weighted
+    # average across all 8 dimensions above, produced by
+    # backend/services/quality_scoring.py::compute_overall_quality_score.
+    # `passed` below is likewise derived deterministically from this value
+    # (see that module's determine_pass), never from an LLM's own
+    # pass/fail judgment.
+    overall_score: float | None = None
     passed: bool
     issues: list = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utcnow)
@@ -351,6 +420,38 @@ class GenerationJob(BaseModel):
     created_at: datetime = Field(default_factory=utcnow)
 
 
+class ContentJob(BaseModel):
+    """
+    NEW (autonomous content factory, plan §6.3). One `KnowledgePack` fans out
+    into many `ContentJob`s -- this is the higher-level "what and why" (which
+    topic, which content type, for whom, under what publish policy). It does
+    NOT replace `GenerationJob`, which remains the existing lower-level
+    "one pipeline run" tracking entity; `generation_job_id` below links the
+    two once this job's pipeline run is dispatched.
+
+    Lifecycle (`status`):
+        QUEUED -> RUNNING -> GENERATED -> QUALITY_PASSED -> PUBLISHING -> PUBLISHED
+                                        -> QUALITY_FAILED -> HUMAN_REVIEW
+                           -> PUBLISH_FAILED -> RETRY -> HUMAN_REVIEW
+    """
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    project_id: uuid.UUID
+    opportunity_id: uuid.UUID
+    knowledge_pack_id: uuid.UUID
+    content_type: str
+    audience: str | None = None
+    difficulty: str | None = None
+    learning_objectives: list[str] = Field(default_factory=list)
+    priority: int = 0
+    publish_policy: Literal["auto_if_quality_pass", "always_review"] = "always_review"
+    status: str = "QUEUED"
+    generation_job_id: uuid.UUID | None = None
+    content_item_id: uuid.UUID | None = None
+    export_package_id: uuid.UUID | None = None
+    created_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=utcnow)
+
+
 class ExportPackage(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
     project_id: uuid.UUID
@@ -360,6 +461,37 @@ class ExportPackage(BaseModel):
     ggcms_slug: str | None = None
     status: str = "PENDING"
     created_at: datetime = Field(default_factory=utcnow)
+
+
+class SchedulerRun(BaseModel):
+    """
+    NEW (autonomous content factory, plan §9/§17 Wave 3). Tracks one
+    end-to-end autonomous scheduler pass for a project (discover -> score ->
+    select -> knowledge-pack -> content-jobs -> generate -> publish), backing
+    `POST /api/autonomous/run` + `GET /api/autonomous/status/{run_id}` the
+    same way `GenerationJob` backs `POST /api/generate` + `GET /api/jobs/{id}`.
+
+    Unlike AgentRunLogEntry (one line per agent invocation), this is one row
+    per whole pass -- coarse-grained progress/counters for the dashboard, not
+    a replacement for the fine-grained agent_runs.jsonl log.
+    """
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    project_id: uuid.UUID
+    status: str = "QUEUED"  # QUEUED -> RUNNING -> SUCCEEDED | FAILED
+    current_stage: str | None = None
+    opportunities_discovered: int = 0
+    opportunities_selected: int = 0
+    content_jobs_created: int = 0
+    content_jobs_generated: int = 0
+    content_jobs_published: int = 0
+    content_jobs_human_review: int = 0
+    content_jobs_failed: int = 0
+    error_message: str | None = None
+    decision_log: list[str] = Field(default_factory=list)
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    created_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=utcnow)
 
 
 # ---------------------------------------------------------------------------

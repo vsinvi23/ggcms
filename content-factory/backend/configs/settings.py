@@ -19,6 +19,16 @@ class Settings(BaseSettings):
     claude_model_researcher: str = Field(default="claude-sonnet-5", validation_alias="CLAUDE_MODEL_RESEARCHER")
     claude_model_writer: str = Field(default="claude-sonnet-5", validation_alias="CLAUDE_MODEL_WRITER")
     claude_model_reviewer: str = Field(default="claude-sonnet-5", validation_alias="CLAUDE_MODEL_REVIEWER")
+
+    # CHEAP tier (see services/model_provider.py) -- for classification/dedup-style
+    # calls that don't fit one of the 4 fixed roles above and shouldn't pay for a
+    # planner/writer/reviewer-grade model. NOT yet mirrored on the AppSetting
+    # domain model / system-settings overlay (backend/models/domain.py) -- add
+    # gemini_cheap_model/claude_cheap_model there too if this needs to become
+    # per-project-overridable like the other model fields.
+    gemini_cheap_model: str = Field(default="gemini-1.5-flash-8b", validation_alias="GEMINI_CHEAP_MODEL")
+    claude_cheap_model: str = Field(default="claude-haiku-4-5", validation_alias="CLAUDE_CHEAP_MODEL")
+
     gcs_bucket: str = Field(default="local-bucket", validation_alias="GCS_BUCKET")
     max_monthly_ai_budget: float = Field(default=500.00, validation_alias="MAX_MONTHLY_AI_BUDGET")
     max_cost_per_content_unit: float = Field(default=0.50, validation_alias="MAX_COST_PER_CONTENT_UNIT")

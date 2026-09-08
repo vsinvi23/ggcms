@@ -164,21 +164,77 @@ async def refresh_content(content_id: uuid.UUID, bg_tasks: BackgroundTasks):
     return RefreshResponse(job_id=job.id, status=job.status)
 
 
+def _find_export_package_for_content(
+    project_id: uuid.UUID, content_id: uuid.UUID
+) -> Optional[ExportPackage]:
+    """Most recent export_package row for this content item, if any.
+
+    `exports.yaml` has no content_id index -- scan and keep the one with the
+    latest `created_at`. Used both to short-circuit a duplicate export of an
+    already-published, unchanged item and to upsert (rather than always
+    mint a fresh id for) the export_package row for repeat attempts on the
+    same content item.
+    """
+    matches = [
+        e
+        for e in file_store.list_export_packages(project_id)
+        if str(e.manifest.get("content_id")) == str(content_id)
+    ]
+    if not matches:
+        return None
+    return max(matches, key=lambda e: e.created_at)
+
+
 @router.post("/{content_id}/export", response_model=ExportResponse)
 async def export_content(content_id: uuid.UUID):
     """
     Pushes a READY content item into ggcms via `exporters/ggcms_client.push_content`
     and records an `export_package` row reflecting the outcome.
+
+    Double-export guard: per
+    docs/architecture/AUTONOMOUS_CONTENT_FACTORY_IMPLEMENTATION_PLAN.md §1,
+    nothing previously prevented calling this route twice for the same
+    content item -- `ExportPackage(...)` always minted a fresh id, so two
+    calls produced two `export_package` rows and two gg-cms POSTs. Two
+    changes fix this:
+      1. If the item is already `status == "exported"` for its current
+         version (tracked via `export_package.manifest["content_version"]`)
+         and the prior export succeeded (`ACKED`), reject with 409 instead
+         of re-publishing -- a no-op re-click of Export in the UI shouldn't
+         re-POST. `/refresh` bumps `current_version`, so a genuinely new
+         version is still exportable.
+      2. Otherwise, upsert the content item's existing `export_package` row
+         (by reusing its id) instead of always creating a new one, so a
+         retried/failed export doesn't accumulate duplicate rows either.
     """
     project_id, item = _find_content_item(content_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Content item not found")
 
-    export_package = ExportPackage(
-        project_id=item.project_id,
-        manifest={"content_id": str(item.id), "title": item.title, "slug": item.slug},
-        status="PENDING",
-    )
+    existing = _find_export_package_for_content(project_id, item.id)
+    if (
+        existing is not None
+        and existing.status == "ACKED"
+        and item.status == "exported"
+        and existing.manifest.get("content_version") == item.current_version
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Content item {item.id} (version {item.current_version}) was already "
+                f"exported to ggcms (imported_id={existing.ggcms_imported_id!r}). "
+                "Use /refresh to generate a new version before exporting again."
+            ),
+        )
+
+    export_package = existing or ExportPackage(project_id=item.project_id, manifest={})
+    export_package.manifest = {
+        "content_id": str(item.id),
+        "title": item.title,
+        "slug": item.slug,
+        "content_version": item.current_version,
+    }
+    export_package.status = "PENDING"
     await file_store.save_export_package(project_id, export_package)
 
     try:

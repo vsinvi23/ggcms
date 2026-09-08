@@ -7,6 +7,7 @@ from backend.ingestion.extractors.text_extractor import extract_text_from_text
 from backend.knowledge.chunking import chunk_text
 from backend.models.domain import Source
 from backend.retrieval import vector_store
+from backend.security.net_guard import assert_public_url
 from backend.services import dedup
 from backend.storage import file_store
 from backend.storage.file_store import ProjectId
@@ -21,10 +22,16 @@ _TEXT_SOURCE_TYPES = {"markdown", "txt"}
 
 
 async def _fetch(url: str) -> bytes:
-    async with httpx.AsyncClient(follow_redirects=True) as client:
-        response = await client.get(url, timeout=30.0)
-        response.raise_for_status()
-        return response.content
+    async with httpx.AsyncClient(follow_redirects=False) as client:
+        for _ in range(10):
+            assert_public_url(url)
+            response = await client.get(url, timeout=30.0)
+            if response.is_redirect:
+                url = str(response.next_request.url)
+                continue
+            response.raise_for_status()
+            return response.content
+        raise ValueError(f"too many redirects fetching {url!r}")
 
 
 def _normalize(text: str) -> str:

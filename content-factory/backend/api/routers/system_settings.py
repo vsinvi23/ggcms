@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from backend.api.middleware.auth import require_admin
 from backend.services.system_settings_service import (
     OVERRIDABLE_FIELDS,
     READONLY_FIELDS,
@@ -58,7 +59,7 @@ async def get_system_settings():
     return {"settings": effective_view(row)}
 
 
-@router.put("")
+@router.put("", dependencies=[Depends(require_admin)])
 async def update_system_settings(payload: SystemSettingsUpdate):
     """Updates overridable settings.
 

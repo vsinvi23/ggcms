@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from backend.ingestion.pipeline import ingest_discovered_source
 from backend.models.base import utcnow
 from backend.models.domain import Portal
+from backend.security.net_guard import assert_public_url
 from backend.services import dedup
 from backend.storage import file_store
 from backend.storage.file_store import ProjectId
@@ -22,10 +23,16 @@ _LOOP_CHECK_SECONDS = 60
 
 
 async def _fetch_text(url: str) -> str:
-    async with httpx.AsyncClient(follow_redirects=True) as client:
-        response = await client.get(url, timeout=30.0)
-        response.raise_for_status()
-        return response.text
+    async with httpx.AsyncClient(follow_redirects=False) as client:
+        for _ in range(10):
+            assert_public_url(url)
+            response = await client.get(url, timeout=30.0)
+            if response.is_redirect:
+                url = str(response.next_request.url)
+                continue
+            response.raise_for_status()
+            return response.text
+        raise ValueError(f"too many redirects fetching {url!r}")
 
 
 async def discover_links(portal: Portal) -> list[dict]:

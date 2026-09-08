@@ -8,12 +8,36 @@ from pydantic import BaseModel, Field
 
 from backend.models.base import utcnow
 from backend.models.domain import ContentItem, ContentVersion, GenerationJob, QualityReport, ResourceLink
+from backend.services.cost_tracker import BudgetExceededError, CostTracker
 from backend.storage import file_store
 from backend.workflows.content_pipeline import build_graph
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/generate", tags=["Generation"])
+
+# No per-call token metering exists yet (no LLM call site records
+# usage_metadata anywhere in this codebase), so CostTracker can't be fed a
+# precise figure. Using a conservative flat per-job estimate is still far
+# better than the previous state (cost_estimate always None, no cap ever
+# enforced) -- it's what lets settings.max_monthly_ai_budget actually mean
+# something. Revisit if/when real token usage is threaded through.
+_ESTIMATED_COST_PER_GENERATION_JOB = 0.05
+
+
+def _monthly_spend_so_far() -> float:
+    """Sums GenerationJob.cost_estimate across every project for jobs
+    created in the current UTC month -- the running total CostTracker checks
+    new spend against."""
+    now = utcnow()
+    total = 0.0
+    for project in file_store.list_projects():
+        for job in file_store.list_jobs(project.id):
+            if job.cost_estimate is None:
+                continue
+            if job.created_at.year == now.year and job.created_at.month == now.month:
+                total += job.cost_estimate
+    return total
 
 
 class GenerateRequest(BaseModel):
@@ -85,6 +109,7 @@ async def run_pipeline_job(
     enable_web_research: bool = True,
     course_outline: Optional[dict] = None,
     opportunity_id: Optional[uuid.UUID] = None,
+    content_job_id: Optional[uuid.UUID] = None,
 ) -> None:
     """
     Background task: runs the LangGraph content pipeline end-to-end, keeping
@@ -92,13 +117,35 @@ async def run_pipeline_job(
     (QUEUED -> RUNNING -> SUCCEEDED | FAILED per
     IMPLEMENTATION_SPECIFICATION.md sections 2/6), and persists a
     ContentItem/ContentVersion/QualityReport on success.
+
+    `content_job_id` (new, additive, plan §10) is optional and used purely
+    for traceability -- passed through to PipelineState.content_job_id for
+    logging, never branched on. Only the Content Job orchestrator
+    (backend/orchestration/content_job_orchestrator.py) passes it; the
+    existing `/api/generate` and `/api/content/{id}/refresh` call sites are
+    unaffected (it defaults to None).
     """
     job = file_store.get_job(project_id, job_id)
     if job is None:
         logger.error(f"GenerationJob {job_id} vanished before pipeline start")
         return
+
+    tracker = CostTracker(str(job_id), monthly_spend_so_far=_monthly_spend_so_far())
+    try:
+        tracker.add_cost(_ESTIMATED_COST_PER_GENERATION_JOB)
+    except BudgetExceededError as e:
+        logger.error(f"GenerationJob {job_id} blocked before start: {e}")
+        job.status = "FAILED"
+        job.error_type = e.error_type
+        job.error_message = str(e)
+        job.cost_estimate = 0.0
+        job.completed_at = utcnow()
+        await file_store.save_job(project_id, job)
+        return
+
     job.status = "RUNNING"
     job.started_at = utcnow()
+    job.cost_estimate = tracker.job_cost
     await file_store.save_job(project_id, job)
 
     # For an existing content item (refresh), fall back to whatever
@@ -113,6 +160,8 @@ async def run_pipeline_job(
         "project_id": str(project_id),
         "topic": topic,
         "knowledge_pack_ids": [str(pid) for pid in (knowledge_pack_ids or [])],
+        "knowledge_pack_id": str(knowledge_pack_ids[0]) if knowledge_pack_ids else None,
+        "content_job_id": str(content_job_id) if content_job_id is not None else None,
         "enable_web_research": enable_web_research,
         "content_type": content_type,
         "course_outline": course_outline,
@@ -206,7 +255,15 @@ async def run_pipeline_job(
 
         await file_store.append_quality_report(project_id, content_item.id, QualityReport(
             content_version_id=version.id,
+            factuality_score=quality.get("factuality_score"),
+            citation_score=quality.get("citation_score"),
+            learning_quality_score=quality.get("learning_quality_score"),
+            originality_score=quality.get("originality_score"),
             readability_score=quality.get("readability_score"),
+            seo_score=quality.get("seo_score"),
+            geo_score=quality.get("geo_score"),
+            source_integrity_score=quality.get("source_integrity_score"),
+            overall_score=quality.get("overall_score"),
             passed=bool(quality.get("passed", is_approved)),
             issues=quality.get("issues", []) or [],
         ))

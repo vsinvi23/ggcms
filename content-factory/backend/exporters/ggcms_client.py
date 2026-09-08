@@ -11,6 +11,7 @@ testing.
 """
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Mapping
 
 import httpx
@@ -34,6 +35,14 @@ from backend.schemas.sync_payload import (
 )
 
 INGEST_PATH = "/api/import/ingest"
+
+# Retry policy for transient failures only (transport-level errors, timeouts,
+# and 5xx responses). 4xx responses (bad payload, auth failure) are never
+# retried -- retrying a malformed request three times just wastes time and
+# hides the real error behind a slow failure.
+MAX_ATTEMPTS = 3
+INITIAL_BACKOFF_SECONDS = 0.5
+BACKOFF_MULTIPLIER = 2.0
 
 
 class GgcmsSyncError(RuntimeError):
@@ -174,6 +183,27 @@ def build_sync_payload(content_item: Any) -> SyncPayload:
     )
 
 
+def build_idempotency_key(content_item: Any, payload: SyncPayload) -> str:
+    """Derive a stable idempotency key for one publish attempt of one content item.
+
+    Keyed on `content_id` + `current_version` (when available on
+    `content_item`): re-POSTing the same content version -- e.g. a retried
+    request, or a second call to `POST /api/content/{id}/export` before the
+    item has changed -- yields the same key every time, while a genuinely
+    new version (after `/refresh`) gets a new key, since that *is* new
+    content to publish.
+
+    This is a client-side signal only. Whether gg-cms's `/api/import/ingest`
+    endpoint actually dedupes on `X-Idempotency-Key` is unverifiable from
+    this repo (flagged as an open question in
+    docs/architecture/AUTONOMOUS_CONTENT_FACTORY_IMPLEMENTATION_PLAN.md §1);
+    sending it consistently at least makes the client side of that contract
+    correct and ready for whenever/if the server honors it.
+    """
+    version = _get(content_item, "current_version", 1)
+    return f"{payload.content_id}:v{version}"
+
+
 async def push_content(
     content_item: Any,
     *,
@@ -183,30 +213,38 @@ async def push_content(
     """Push a content item into ggcms via `POST /api/import/ingest`.
 
     Builds the `SyncPayload` from `content_item`, sends it with the shared
-    `X-Factory-Sync-Secret` header, and parses the response into a
-    `SyncResult`. Raises `GgcmsSyncError` on any transport failure, non-2xx
-    response, or a response body that doesn't match `SyncResult`.
+    `X-Factory-Sync-Secret` header plus a derived `X-Idempotency-Key`
+    (see `build_idempotency_key`), and parses the response into a
+    `SyncResult`.
+
+    Transient failures -- connection/transport errors, timeouts, and 5xx
+    responses -- are retried up to `MAX_ATTEMPTS` times with exponential
+    backoff (`INITIAL_BACKOFF_SECONDS * BACKOFF_MULTIPLIER ** attempt`).
+    4xx responses are never retried: a malformed payload or an auth failure
+    will not fix itself by resending the same bytes, so failing fast
+    surfaces the real error instead of hiding it behind a slow retry loop.
+
+    Raises `GgcmsSyncError` on final failure (after exhausting retries for
+    transient errors, or immediately for a non-retryable error), or if the
+    response body doesn't match `SyncResult`.
 
     Pass `client` to reuse an existing `httpx.AsyncClient` (e.g. in tests,
     a fake transport); otherwise a short-lived client is created and closed.
     """
     payload = build_sync_payload(content_item)
     url = f"{settings.ggcms_base_url.rstrip('/')}{INGEST_PATH}"
-    headers = {"X-Factory-Sync-Secret": settings.factory_sync_secret}
+    headers = {
+        "X-Factory-Sync-Secret": settings.factory_sync_secret,
+        "X-Idempotency-Key": build_idempotency_key(content_item, payload),
+    }
+    body = payload.model_dump(mode="json")
 
     owns_client = client is None
     if owns_client:
         client = httpx.AsyncClient(timeout=timeout)
 
     try:
-        try:
-            response = await client.post(
-                url, json=payload.model_dump(mode="json"), headers=headers
-            )
-        except httpx.HTTPError as exc:
-            raise GgcmsSyncError(
-                f"Failed to reach ggcms at {url}: {exc}"
-            ) from exc
+        response = await _post_with_retry(client, url, body, headers)
     finally:
         if owns_client:
             await client.aclose()
@@ -235,3 +273,49 @@ async def push_content(
             status_code=response.status_code,
             response_body=response.text,
         ) from exc
+
+
+async def _post_with_retry(
+    client: httpx.AsyncClient,
+    url: str,
+    body: dict,
+    headers: dict,
+) -> httpx.Response:
+    """POST with up to MAX_ATTEMPTS tries, retrying only transient failures.
+
+    Retried: `httpx.TransportError` (covers connect/read/write/pool timeouts
+    and connection failures) and any 5xx response. Not retried: 4xx
+    responses, which are returned immediately so the caller's existing
+    status-code handling in `push_content` raises the appropriate
+    `GgcmsSyncError` without wasting two more round trips on a request that
+    cannot succeed by being resent unchanged.
+    """
+    last_exc: httpx.TransportError | None = None
+    backoff = INITIAL_BACKOFF_SECONDS
+
+    for attempt in range(MAX_ATTEMPTS):
+        try:
+            response = await client.post(url, json=body, headers=headers)
+        except httpx.TransportError as exc:
+            last_exc = exc
+            if attempt == MAX_ATTEMPTS - 1:
+                raise GgcmsSyncError(
+                    f"Failed to reach ggcms at {url} after {MAX_ATTEMPTS} attempts: {exc}"
+                ) from exc
+            await asyncio.sleep(backoff)
+            backoff *= BACKOFF_MULTIPLIER
+            continue
+
+        if response.status_code >= 500 and attempt < MAX_ATTEMPTS - 1:
+            await asyncio.sleep(backoff)
+            backoff *= BACKOFF_MULTIPLIER
+            continue
+
+        return response
+
+    # Unreachable in practice (the loop always returns or raises above), but
+    # keeps type-checkers happy and fails loudly rather than returning None
+    # if the loop logic above is ever changed.
+    raise GgcmsSyncError(
+        f"Failed to reach ggcms at {url} after {MAX_ATTEMPTS} attempts"
+    ) from last_exc

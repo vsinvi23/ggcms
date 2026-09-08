@@ -16,6 +16,8 @@ Directory layout (relative to `settings.data_dir`, default "./data"):
         sources.yaml                 <- list[Source]
         opportunities.yaml           <- list[Opportunity]
         jobs.yaml                    <- list[GenerationJob]
+        content_jobs.yaml            <- list[ContentJob]
+        scheduler_runs.yaml          <- list[SchedulerRun]
         exports.yaml                 <- list[ExportPackage]
         knowledge.yaml               <- {"documents": [...], "chunks": [...], "packs": [...]}
         content/
@@ -59,6 +61,7 @@ from backend.configs.settings import settings as _config
 from backend.models.domain import (
     AppSetting,
     ContentItem,
+    ContentJob,
     ContentVersion,
     ExportPackage,
     GenerationJob,
@@ -70,6 +73,7 @@ from backend.models.domain import (
     Project,
     ProjectStrategy,
     QualityReport,
+    SchedulerRun,
     Source,
 )
 
@@ -84,6 +88,8 @@ _SOURCES_FILE = "sources.yaml"
 _PORTALS_FILE = "portals.yaml"
 _OPPORTUNITIES_FILE = "opportunities.yaml"
 _JOBS_FILE = "jobs.yaml"
+_CONTENT_JOBS_FILE = "content_jobs.yaml"
+_SCHEDULER_RUNS_FILE = "scheduler_runs.yaml"
 _EXPORTS_FILE = "exports.yaml"
 _KNOWLEDGE_FILE = "knowledge.yaml"
 _CONTENT_DIR = "content"
@@ -475,6 +481,75 @@ async def save_job(project_id: ProjectId, job: GenerationJob) -> GenerationJob:
             raw.append(job.model_dump(mode="json"))
         _atomic_write_yaml(path, raw)
     return job
+
+
+# ---------------------------------------------------------------------------
+# content jobs (NEW -- autonomous content factory, plan §6.3. Layered on top
+# of generation jobs above: a ContentJob is the higher-level "what and why"
+# that a GenerationJob's `id` gets linked back into via
+# ContentJob.generation_job_id once dispatched. Same upsert-into-list pattern
+# as save_job/save_export_package.)
+# ---------------------------------------------------------------------------
+
+def list_content_jobs(project_id: ProjectId) -> list[ContentJob]:
+    raw = _read_yaml(_project_file(project_id, _CONTENT_JOBS_FILE)) or []
+    return [ContentJob.model_validate(j) for j in raw]
+
+
+def get_content_job(project_id: ProjectId, job_id: ProjectId) -> Optional[ContentJob]:
+    for j in list_content_jobs(project_id):
+        if str(j.id) == str(job_id):
+            return j
+    return None
+
+
+async def save_content_job(project_id: ProjectId, job: ContentJob) -> ContentJob:
+    """Upsert into content_jobs.yaml: replaces the entry matching `job.id`, else appends."""
+    async with _lock_for(project_id):
+        path = _project_file(project_id, _CONTENT_JOBS_FILE)
+        raw = _read_yaml(path) or []
+        for i, item in enumerate(raw):
+            if str(item.get("id")) == str(job.id):
+                raw[i] = job.model_dump(mode="json")
+                break
+        else:
+            raw.append(job.model_dump(mode="json"))
+        _atomic_write_yaml(path, raw)
+    return job
+
+
+# ---------------------------------------------------------------------------
+# scheduler runs (NEW -- autonomous content factory, plan §9/§17 Wave 3).
+# One row per whole autonomous pass, backing GET /api/autonomous/status/{id}
+# the same way jobs.yaml backs GET /api/jobs/{id}. Same upsert-into-list
+# pattern as save_job/save_content_job.
+# ---------------------------------------------------------------------------
+
+def list_scheduler_runs(project_id: ProjectId) -> list[SchedulerRun]:
+    raw = _read_yaml(_project_file(project_id, _SCHEDULER_RUNS_FILE)) or []
+    return [SchedulerRun.model_validate(r) for r in raw]
+
+
+def get_scheduler_run(project_id: ProjectId, run_id: ProjectId) -> Optional[SchedulerRun]:
+    for r in list_scheduler_runs(project_id):
+        if str(r.id) == str(run_id):
+            return r
+    return None
+
+
+async def save_scheduler_run(project_id: ProjectId, run: SchedulerRun) -> SchedulerRun:
+    """Upsert into scheduler_runs.yaml: replaces the entry matching `run.id`, else appends."""
+    async with _lock_for(project_id):
+        path = _project_file(project_id, _SCHEDULER_RUNS_FILE)
+        raw = _read_yaml(path) or []
+        for i, item in enumerate(raw):
+            if str(item.get("id")) == str(run.id):
+                raw[i] = run.model_dump(mode="json")
+                break
+        else:
+            raw.append(run.model_dump(mode="json"))
+        _atomic_write_yaml(path, raw)
+    return run
 
 
 # ---------------------------------------------------------------------------

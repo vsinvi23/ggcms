@@ -3,7 +3,7 @@ import logging
 import uuid
 from typing import TypedDict, Annotated, Optional
 from langgraph.graph import StateGraph, END
-from backend.schemas.evidence_pack import EvidencePack
+from backend.schemas.evidence_pack import EvidencePack, Claim
 from backend.schemas.learning_plan import LearningPlan
 from backend.schemas.content_plan import ContentPlan
 
@@ -16,6 +16,7 @@ from backend.agents.fact_checker_agent import FactCheckerAgent
 from backend.agents.citation_checker_agent import CitationCheckerAgent
 from backend.agents.quality_agent import QualityAgent
 from backend.services.image_service import generate_placeholder_image
+from backend.configs.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,16 @@ class PipelineState(TypedDict):
     project_id: str
     topic: str
     knowledge_pack_ids: list[str]
+    # Singular convenience key (plan §10). `knowledge_pack_ids[0]` already
+    # carries this today via research_web/build_evidence_pack -- this key is
+    # only populated by the new Content Job orchestrator
+    # (backend/orchestration/content_job_orchestrator.py) so build_evidence_pack
+    # doesn't have to re-derive "the" knowledge pack from a list every time.
+    # Optional: falls back to knowledge_pack_ids[0] when absent.
+    knowledge_pack_id: Optional[str]
+    # For logging/traceability only (plan §10) -- links pipeline log lines
+    # back to the ContentJob that triggered this run. Never branched on.
+    content_job_id: Optional[str]
     enable_web_research: bool
     content_type: Optional[str]
     # First-class course structure planned via
@@ -108,7 +119,108 @@ async def research_web(state: PipelineState) -> dict:
 
     return {"context_chunks": context_chunks or None}
 
+def _resolve_knowledge_pack_id(state: PipelineState) -> Optional[str]:
+    """
+    Singular knowledge_pack_id if the caller set one (Content Job orchestrator),
+    else falls back to knowledge_pack_ids[0] (existing convention used by
+    research_web) so this stays a pure read of state the caller already fills.
+    """
+    kp_id = state.get("knowledge_pack_id")
+    if kp_id:
+        return kp_id
+    kp_ids = state.get("knowledge_pack_ids") or []
+    return kp_ids[0] if kp_ids else None
+
+
+def _try_load_reusable_evidence_pack(project_id: str, knowledge_pack_id: str) -> Optional[EvidencePack]:
+    """
+    Plan §10 research-reuse check: if the KnowledgePack referenced by
+    knowledge_pack_id already has a populated, non-stale `evidence_pack_id`,
+    load and return the existing Evidence Pack so the caller can skip the
+    ResearchAgent LLM call entirely -- "one research effort -> many content
+    assets," the single biggest cost lever in the autonomous-factory plan.
+
+    IMPORTANT GAP (found during this workstream, not invented/worked around):
+    `backend.models.domain.EvidencePack` -- the file-store-shaped domain model
+    that `KnowledgePack.evidence_pack_id` is meant to point at -- has NO
+    file_store.py accessor today (no save_evidence_pack/get_evidence_pack/
+    list_evidence_packs; grepped, confirmed absent). Nothing in the current
+    codebase ever populates `KnowledgePack.evidence_pack_id` either (the
+    Knowledge Pack builder step that would do so is explicitly out of scope
+    per plan §6.2 and this workstream's assignment). So in practice this
+    function's fast path is unreachable today -- `evidence_pack_id` is always
+    None -- and it always falls through to returning None, letting the caller
+    run research_web/build_evidence_pack exactly as before. This is the
+    documented minimal-risk fallback: skip the optimization gracefully rather
+    than inventing new EvidencePack persistence beyond what already exists.
+    The check is still wired end-to-end (state keys, staleness check, feature
+    -detected loader) so a future workstream only needs to add the
+    file_store accessor for this to start working with no pipeline changes.
+    """
+    from backend.storage import file_store
+
+    pack = file_store.get_knowledge_pack(project_id, knowledge_pack_id)
+    if pack is None or pack.evidence_pack_id is None:
+        return None
+
+    # Non-stale: the pack's evidence hasn't been superseded by a newer
+    # knowledge-refresh pass. evidence_version/knowledge_version are the only
+    # freshness signals modeled today (plan §6.2) -- treat evidence as stale
+    # once knowledge_version has moved past the version the evidence was
+    # captured at.
+    if pack.evidence_version < pack.knowledge_version:
+        logger.info(
+            f"[build_evidence_pack] KnowledgePack {knowledge_pack_id} evidence is stale "
+            f"(evidence_version={pack.evidence_version} < knowledge_version={pack.knowledge_version}); "
+            "re-running research."
+        )
+        return None
+
+    # Feature-detect a persisted-EvidencePack loader rather than assuming one
+    # exists -- see docstring gap note above.
+    loader = getattr(file_store, "get_evidence_pack", None)
+    if loader is None:
+        logger.info(
+            f"[build_evidence_pack] KnowledgePack {knowledge_pack_id} has evidence_pack_id="
+            f"{pack.evidence_pack_id} but backend.storage.file_store has no get_evidence_pack "
+            "accessor yet -- skipping research-reuse optimization, running research_web as usual."
+        )
+        return None
+
+    domain_pack = loader(project_id, pack.evidence_pack_id)
+    if domain_pack is None:
+        return None
+
+    # Adapt the persisted domain.EvidencePack shape to the
+    # backend.schemas.evidence_pack.EvidencePack shape the pipeline/agents
+    # actually consume (see tests/conftest.py's docstring -- two EvidencePack
+    # classes exist in this repo today; this is the intentional bridge).
+    return EvidencePack(
+        topic=domain_pack.topic,
+        claims=[
+            Claim(claim=c.get("claim", ""), evidence=c.get("evidence", ""),
+                  source=c.get("source", ""), confidence=c.get("confidence", 1.0))
+            if isinstance(c, dict) else c
+            for c in (domain_pack.claims or [])
+        ],
+        definitions=domain_pack.definitions or [],
+        examples=domain_pack.examples or [],
+        limitations=domain_pack.limitations or [],
+        controversies=domain_pack.controversies or [],
+        open_questions=domain_pack.open_questions or [],
+        citations=domain_pack.citations or [],
+    )
+
+
 async def build_evidence_pack(state: PipelineState) -> dict:
+    knowledge_pack_id = _resolve_knowledge_pack_id(state)
+    if knowledge_pack_id:
+        reused = _try_load_reusable_evidence_pack(state["project_id"], knowledge_pack_id)
+        if reused is not None:
+            print(f"[*] Reusing existing Evidence Pack for knowledge_pack_id={knowledge_pack_id} "
+                  f"(job={state.get('content_job_id')}) -- skipping ResearchAgent call")
+            return {"evidence_pack": reused}
+
     print(f"[*] Running Research Agent for: {state['topic']}")
     evidence = await researcher.run(topic=state["topic"], context_chunks=state.get("context_chunks"))
     return {"evidence_pack": evidence}
@@ -211,11 +323,23 @@ async def revise(state: PipelineState) -> dict:
     return {"revisions_count": state["revisions_count"] + 1}
 
 def should_revise(state: PipelineState) -> str:
+    """
+    Decides whether to loop back into another revision or proceed to export.
+
+    Bug fix (plan §1/§12): this previously hardcoded the literal `3` as the
+    revision cap instead of reading the configurable `settings.max_revisions`
+    (which already exists and defaults to 3 -- see backend/configs/settings.py
+    and backend/services/system_settings_service.py's OVERRIDABLE_FIELDS,
+    the established pattern for reading a live-overridable setting). Reading
+    `settings.max_revisions` here means changing that override (via the
+    system-settings overlay or MAX_REVISIONS env var) now actually changes
+    the revision loop's behavior instead of silently doing nothing.
+    """
     if state.get("is_approved", False):
         return "export_package"
-    if state["revisions_count"] < 3:
+    if state["revisions_count"] < settings.max_revisions:
         return "revise"
-    return "export_package" 
+    return "export_package"
 
 async def export_package(state: PipelineState) -> dict:
     print(f"[+] Final Export Node Reached. Approved: {state.get('is_approved')}")

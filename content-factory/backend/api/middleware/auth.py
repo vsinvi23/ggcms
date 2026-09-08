@@ -16,7 +16,7 @@ import logging
 from typing import Any
 
 import jwt
-from fastapi import Request
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -32,13 +32,18 @@ _EXEMPT_PREFIXES = ("/docs", "/openapi", "/redoc")
 ALLOWED_ORIGINS = [
     "https://geekgully.com",
     "https://www.geekgully.com",
+] + (
     # Allow localhost for local dev (only when JWT_SECRET is not set)
-    "http://localhost:5173",
-    "http://localhost:8000",
-    "http://localhost:3000",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:8000",
-]
+    [
+        "http://localhost:5173",
+        "http://localhost:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8000",
+    ]
+    if not settings.jwt_secret
+    else []
+)
 
 
 def _is_exempt(path: str) -> bool:
@@ -71,15 +76,6 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
 
         # Exempt liveness + docs
         if _is_exempt(path):
-            return await call_next(request)
-
-        # Dev mode: JWT_SECRET not configured → skip validation but log warning
-        if not settings.jwt_secret:
-            logger.warning(
-                "JWT_SECRET not configured — auth is DISABLED. "
-                "Set JWT_SECRET (from gg-cms-jwt-secret Secret Manager) before deploying."
-            )
-            _inject_dev_identity(request)
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization", "")
@@ -118,13 +114,6 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-def _inject_dev_identity(request: Request) -> None:
-    """Inject a placeholder dev identity when JWT auth is disabled."""
-    request.state.user_id = "dev-user"
-    request.state.user_email = "dev@localhost"
-    request.state.is_admin = True
-
-
 def get_current_user(request: Request) -> dict:
     """Helper for routes that need to read the authenticated user's identity.
 
@@ -136,3 +125,9 @@ def get_current_user(request: Request) -> dict:
         "user_email": getattr(request.state, "user_email", ""),
         "is_admin": getattr(request.state, "is_admin", False),
     }
+
+
+def require_admin(request: Request) -> None:
+    """FastAPI dependency: raises 403 unless the authenticated user is an admin."""
+    if not getattr(request.state, "is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin privileges required")

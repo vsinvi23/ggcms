@@ -8,9 +8,10 @@ All endpoints require a valid gg-cms JWT (enforced by JWTAuthMiddleware).
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from backend.api.middleware.auth import require_admin
 from backend.configs.settings import settings
 from backend.ingestion.fetchers.gdrive_fetcher import (
     extract_folder_id_from_url,
@@ -18,7 +19,7 @@ from backend.ingestion.fetchers.gdrive_fetcher import (
     list_drive_files,
 )
 
-router = APIRouter(prefix="/api/gdrive", tags=["Google Drive"])
+router = APIRouter(prefix="/api/gdrive", tags=["Google Drive"], dependencies=[Depends(require_admin)])
 
 
 def _require_gdrive():

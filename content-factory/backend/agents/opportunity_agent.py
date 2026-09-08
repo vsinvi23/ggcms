@@ -1,5 +1,6 @@
 import logging
 from pydantic import BaseModel, Field
+from backend.models.base import utcnow
 from backend.services.model_provider import get_llm
 from backend.configs.settings import settings
 from backend.schemas.opportunity import Opportunity
@@ -11,6 +12,14 @@ from backend.prompts.loader import load_prompt
 # weights: demand 25%, trend 20%, content_gap 20%, competition 15%,
 # audience_relevance 10%, business_value 10%). Wired in directly below.
 from backend.services.scoring import compute_opportunity_score
+
+# Topic dedup (Autonomous Content Factory plan §6.1/§17 Wave 2). Only
+# canonicalize_topic is used here -- the dedup-against-existing-Opportunities
+# and cooldown checks need project context (file_store access) that this
+# agent doesn't have, so those live in the discover route
+# (backend/api/routers/opportunities.py) instead. See that file for the
+# skip/merge semantics.
+from backend.services.dedup import canonicalize_topic
 
 logger = logging.getLogger(__name__)
 
@@ -132,6 +141,8 @@ class OpportunityAgent:
             raw = signals.get(topic, {}) or {}
             topic_meta = meta.get(topic, {}) or {}
 
+            canonical_topic = canonicalize_topic(topic)
+
             if settings.mock_mode:
                 opportunities.append(Opportunity(
                     topic=topic,
@@ -145,6 +156,9 @@ class OpportunityAgent:
                     brief=topic_meta.get("brief"),
                     references=topic_meta.get("references"),
                     reference_source=topic_meta.get("reference_source"),
+                    canonical_topic=canonical_topic,
+                    opportunity_score_version="mock",
+                    evaluated_at=utcnow(),
                 ))
                 continue
 
@@ -180,7 +194,7 @@ class OpportunityAgent:
                 for key in SUB_SCORE_KEYS
             }
 
-            score = compute_opportunity_score(
+            score_result = compute_opportunity_score(
                 demand=sub_scores["demand"],
                 trend=sub_scores["trend"],
                 content_gap=sub_scores["content_gap"],
@@ -188,6 +202,7 @@ class OpportunityAgent:
                 audience_relevance=sub_scores["audience_relevance"],
                 business_value=sub_scores["business_value"],
             )
+            score = score_result["score"]
 
             opportunities.append(Opportunity(
                 topic=topic,
@@ -208,6 +223,10 @@ class OpportunityAgent:
                 brief=topic_meta.get("brief"),
                 references=topic_meta.get("references"),
                 reference_source=topic_meta.get("reference_source"),
+                canonical_topic=canonical_topic,
+                opportunity_score_version=score_result["version"],
+                scoring_breakdown=score_result["breakdown"],
+                evaluated_at=utcnow(),
             ))
 
         return opportunities

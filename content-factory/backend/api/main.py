@@ -7,7 +7,9 @@ from fastapi.staticfiles import StaticFiles
 from backend.configs.settings import settings
 from backend.api.middleware.auth import JWTAuthMiddleware, ALLOWED_ORIGINS
 from backend.api.routers.analytics import router as analytics_router
+from backend.api.routers.autonomous import human_review_router, router as autonomous_router
 from backend.api.routers.content import router as content_router
+from backend.api.routers.content_jobs import router as content_jobs_router
 from backend.api.routers.generation import router as generation_router
 from backend.api.routers.gdrive import router as gdrive_router
 from backend.api.routers.jobs import router as jobs_router
@@ -52,6 +54,9 @@ app.include_router(opportunities_router)
 app.include_router(generation_router)
 app.include_router(jobs_router)
 app.include_router(content_router)
+app.include_router(content_jobs_router)
+app.include_router(autonomous_router)
+app.include_router(human_review_router)
 app.include_router(analytics_router)
 app.include_router(system_settings_router)
 app.include_router(gdrive_router)
