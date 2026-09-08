@@ -1,5 +1,22 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
+from pydantic import Field, model_validator
+
+
+def _require_secrets_outside_mock_mode(mock_mode: bool, jwt_secret: str, factory_sync_secret: str) -> None:
+    """Fail fast when required secrets are unset and mock_mode is not enabled."""
+    if mock_mode:
+        return
+    missing = [
+        name
+        for name, value in (("JWT_SECRET", jwt_secret), ("FACTORY_SYNC_SECRET", factory_sync_secret))
+        if not value
+    ]
+    if missing:
+        raise ValueError(
+            f"Missing required environment variable(s): {', '.join(missing)}. "
+            "Set them, or set MOCK_MODE=true for local development."
+        )
+
 
 class Settings(BaseSettings):
     data_dir: str = Field(default="./data", validation_alias="DATA_DIR")
@@ -38,7 +55,7 @@ class Settings(BaseSettings):
     mock_mode: bool = Field(default=False, validation_alias="MOCK_MODE")
     embedding_model: str = Field(default="models/text-embedding-004", validation_alias="EMBEDDING_MODEL")
     ggcms_base_url: str = Field(default="http://localhost:8080", validation_alias="GGCMS_BASE_URL")
-    factory_sync_secret: str = Field(default="mock-sync-secret", validation_alias="FACTORY_SYNC_SECRET")
+    factory_sync_secret: str = Field(default="", validation_alias="FACTORY_SYNC_SECRET")
     tavily_api_key: str = Field(default="", validation_alias="TAVILY_API_KEY")
     web_search_max_results: int = Field(default=5, validation_alias="WEB_SEARCH_MAX_RESULTS")
     # ── Auth — shared JWT secret with gg-cms backend ───────────────────────
@@ -53,6 +70,11 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore"
     )
+
+    @model_validator(mode="after")
+    def _check_required_secrets(self) -> "Settings":
+        _require_secrets_outside_mock_mode(self.mock_mode, self.jwt_secret, self.factory_sync_secret)
+        return self
 
 settings = Settings()
 
