@@ -227,9 +227,11 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		// ----- Protected routes -----
 		p := api.Group("/")
 		p.Use(authMW)
+		p.Use(middleware.CSRF())
 		{
 			// Current user
 			p.GET("users/me", authH.Me)
+			p.POST("auth/logout", authH.Logout)
 
 			// Users — read: any authenticated user; write: admin only
 			// PUT /users/:id is intentionally not AdminOnly — ownership check is in the handler

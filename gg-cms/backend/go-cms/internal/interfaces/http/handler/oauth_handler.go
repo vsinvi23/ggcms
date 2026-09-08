@@ -123,7 +123,8 @@ func (h *OAuthHandler) GitHubCallback(c *gin.Context) {
 }
 
 func (h *OAuthHandler) redirectSuccess(c *gin.Context, token string) {
-	dest := h.frontendURL + "/auth/callback?token=" + url.QueryEscape(token)
+	setAuthCookies(c, token)
+	dest := h.frontendURL + "/auth/callback"
 	c.Redirect(302, dest)
 }
 

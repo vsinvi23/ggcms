@@ -43,6 +43,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		}
 	}
 
+	setAuthCookies(c, token)
+
 	// Return flat { jwt, user } — matches Strapi format expected by the frontend.
 	c.JSON(http.StatusOK, dto.AuthResponse{
 		JWT: token,
@@ -56,6 +58,12 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 	// Audit: actor == the logged-in user themselves (actorID from the response, not JWT context)
 	middleware.LogAudit(c, "user.login", "user", fmt.Sprint(user.ID), user.Email, nil)
+}
+
+// POST /api/auth/logout
+func (h *AuthHandler) Logout(c *gin.Context) {
+	clearAuthCookies(c)
+	response.OK(c, gin.H{"message": "logged out"})
 }
 
 // POST /api/auth/local/register
