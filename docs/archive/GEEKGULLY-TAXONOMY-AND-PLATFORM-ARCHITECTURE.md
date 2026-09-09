@@ -1,6 +1,8 @@
 # GeekGully — Dedicated Domain Hubs, Universal Taxonomy & Publishing Architecture
 
-> **Document Type:** Architectural Blueprint & Platform Review Document  
+> **⚠️ ARCHIVED / SUPERSEDED (2026-09-09):** This document predates and conflicts with the current governing architecture in `docs/TAXONOMY_ARCHITECTURE_DECISION.md` and `docs/GG_CMS_AI_NATIVE_PLATFORM_CONSOLIDATED_REVIEW.md` — most notably its UUID-based schema (vs. the actual `SERIAL`/`uint` schema in gg-cms), its "Naturopathy & Health"/"Business & Leadership" domain examples (vs. the tech-focused domain seed derived from actual shipped topics), and its `subcategory_relations` cross-domain mechanism (superseded by the topics/topic_relationships knowledge-graph approach). It has **not** been reconciled against the current direction — kept here for reference only (e.g., the general "dedicated domain hubs" and "Substack-style publications" ideas may still be worth revisiting), not as an active plan. Do not implement from this document without first checking it against the current governing docs.
+
+> **Document Type:** Architectural Blueprint & Platform Review Document (ARCHIVED)  
 > **Target Audience:** Product, Engineering & Content Strategy Teams  
 > **Platform Vision:** A multi-domain learning & digital publishing platform (Substack + Medium + Coursera hybrid) supporting dedicated domain verticals (**Technology**, **Naturopathy & Health**, **Business**, **Design**, etc.) powered by a single core engine.
 
