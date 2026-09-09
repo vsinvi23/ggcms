@@ -6,29 +6,31 @@ injected `AsyncSession`. There is no database anymore -- everything here now
 reads/writes through `backend/storage/file_store.py` (per-project YAML), and
 every function takes an explicit `project_id` instead of a `db` session.
 
-`similarity_search` in particular no longer does vector math: per
+`similarity_search` in particular no longer does pgvector math: per
 STAGE 1's docstring on `KnowledgeChunk.embedding` (dropped entirely -- see
-backend/models/domain.py), there is no embedding to compare against. It is
-replaced with a case-insensitive substring/keyword relevance scan over chunk
-text, ranking by the number of query-keyword occurrences. The "lower distance
-= closer/better match" convention is preserved (distance = 1 / (1 + match
-count)) so callers that sort/consume results ascending-by-distance (e.g.
-backend/workflows/content_pipeline.py's research_web node -- a later stage)
-don't need to change their ordering assumption, only how they build the query
-argument (a plain string instead of an embedding vector).
+backend/models/domain.py), there was no in-memory column to compare against.
+STAGE 3 (source-trust fast-track) reintroduces real semantic ranking without
+reviving that column: query and chunk text are embedded on demand via
+`backend/retrieval/semantic_search.py` (a small SQLite-backed cache in front
+of `backend/knowledge/embeddings.py`'s Gemini embedding client), and ranked
+by cosine similarity. The "lower distance = closer/better match" convention
+is preserved (distance = 1 - cosine_similarity, i.e. cosine *distance*) so
+callers that sort/consume results ascending-by-distance (e.g.
+backend/workflows/content_pipeline.py's research_web node) don't need to
+change their ordering assumption.
+
+Sources are usable when review_status is "APPROVED" (manually reviewed) or
+"AUTO_APPROVED" (auto-approved during discovery because the source came from
+a trusted domain -- see backend/security/net_guard.is_trusted_domain).
 """
-import re
 import uuid
 
 from backend.models.domain import KnowledgeChunk, KnowledgeDocument, KnowledgePack
+from backend.retrieval import semantic_search
 from backend.storage import file_store
 from backend.storage.file_store import ProjectId
 
-_KEYWORD_RE = re.compile(r"\w+")
-
-
-def _keywords(query: str) -> list[str]:
-    return _KEYWORD_RE.findall(query.lower())
+_USABLE_REVIEW_STATUSES = ("APPROVED", "AUTO_APPROVED")
 
 
 # --- Writes ------------------------------------------------------------------
@@ -103,15 +105,15 @@ def similarity_search(
     """
     Returns the top-k knowledge chunks most relevant to `query`, scoped to
     `project_id` and, optionally, to a knowledge pack's source_ids. Relevance
-    is a case-insensitive count of query-keyword occurrences in chunk text
-    (no embeddings/vector math -- see module docstring).
+    is real cosine-similarity ranking against Gemini embeddings (see module
+    docstring and backend/retrieval/semantic_search.py); in settings.mock_mode
+    a deterministic pseudo-embedding is used instead so tests stay fast and
+    deterministic.
 
     Each result: {"chunk_id", "document_id", "text", "url", "distance"}
-    (lower distance = better match: distance = 1 / (1 + match_count)).
-    Only chunks belonging to APPROVED sources are considered.
+    (lower distance = better match: distance = 1 - cosine_similarity).
+    Only chunks belonging to APPROVED or AUTO_APPROVED sources are considered.
     """
-    keywords = _keywords(query)
-
     documents = file_store.list_knowledge_documents(project_id)
     document_to_source = {str(d.id): d.source_id for d in documents}
 
@@ -129,26 +131,32 @@ def similarity_search(
         if source_id is None:
             continue
         source = sources_by_id.get(str(source_id))
-        if source is None or source.review_status != "APPROVED":
+        if source is None or source.review_status not in _USABLE_REVIEW_STATUSES:
             continue
         if allowed_source_ids is not None and str(source_id) not in allowed_source_ids:
             continue
         candidates.append((chunk, source))
 
-    text_lower_cache: dict[str, str] = {}
+    if not candidates:
+        return []
 
-    def _match_count(chunk: KnowledgeChunk) -> int:
-        lowered = text_lower_cache.get(str(chunk.id))
-        if lowered is None:
-            lowered = chunk.text.lower()
-            text_lower_cache[str(chunk.id)] = lowered
-        return sum(lowered.count(kw) for kw in keywords) if keywords else 0
+    query_embedding = semantic_search.get_embedding(query, is_query=True)
+    chunk_embeddings = {
+        str(chunk.id): semantic_search.get_embedding(chunk.text)
+        for chunk, _source in candidates
+    }
+    similarity_by_chunk_id = dict(
+        semantic_search.rank_by_similarity(
+            query_embedding,
+            [(str(chunk.id), chunk_embeddings[str(chunk.id)]) for chunk, _source in candidates],
+        )
+    )
 
     scored = [
         (
             chunk,
             source,
-            1.0 / (1.0 + _match_count(chunk)),
+            1.0 - similarity_by_chunk_id[str(chunk.id)],
         )
         for chunk, source in candidates
     ]
@@ -170,8 +178,14 @@ def count_approved_sources(
     project_id: ProjectId,
     knowledge_pack_id: ProjectId | None = None,
 ) -> int:
-    """Counts APPROVED sources for a project, optionally scoped to a knowledge pack."""
-    sources = [s for s in file_store.list_sources(project_id) if s.review_status == "APPROVED"]
+    """
+    Counts usable (APPROVED or AUTO_APPROVED) sources for a project,
+    optionally scoped to a knowledge pack.
+    """
+    sources = [
+        s for s in file_store.list_sources(project_id)
+        if s.review_status in _USABLE_REVIEW_STATUSES
+    ]
 
     if knowledge_pack_id is not None:
         pack = file_store.get_knowledge_pack(project_id, knowledge_pack_id)

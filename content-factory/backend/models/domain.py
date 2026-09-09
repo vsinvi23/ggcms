@@ -90,6 +90,10 @@ class Project(BaseModel):
     # Named (not a global env var) since AI spend/concurrency budgets are
     # naturally per-project, matching daily_limit's existing shape.
     max_concurrent_generation_jobs: int = 3
+    # Humanization extension: the minimum humanization-related quality floor
+    # (0-100) required, alongside the existing auto_publish_threshold checks,
+    # for a ContentJob to auto-publish rather than fall back to HUMAN_REVIEW.
+    humanization_auto_publish_floor: int = 70
     created_at: datetime = Field(default_factory=utcnow)
     updated_at: datetime = Field(default_factory=utcnow)
 
@@ -390,6 +394,14 @@ class QualityReport(BaseModel):
     # pass/fail judgment.
     overall_score: float | None = None
     passed: bool
+    # Humanization extension: signals describing how "human-sounding" /
+    # non-AI-templated the generated content reads, as distinct from the
+    # factuality/citation/etc. dimensions above. All optional so existing
+    # quality_reports.yaml rows keep loading unchanged.
+    is_grounded: bool | None = None
+    narrative_voice_score: float | None = None
+    source_overlap_ratio: float | None = None
+    near_copy_flag: bool = False
     issues: list = Field(default_factory=list)
     created_at: datetime = Field(default_factory=utcnow)
 
