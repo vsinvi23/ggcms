@@ -213,6 +213,156 @@ class TestMaybePublish:
         assert run.content_jobs_published == 1
 
     @pytest.mark.asyncio
+    async def test_routes_to_human_review_below_humanization_floor(
+        self, temp_project, project_factory, content_job_factory
+    ):
+        """Even with all 8 pre-existing dimensions at 90, a narrative_voice_score
+        below the project's humanization floor must route to HUMAN_REVIEW."""
+        project = project_factory(
+            id=uuid.UUID(temp_project), auto_publish_threshold=85, humanization_auto_publish_floor=70
+        )
+        content_item_id = uuid.uuid4()
+        job = content_job_factory(
+            temp_project,
+            uuid.uuid4(),
+            uuid.uuid4(),
+            publish_policy="auto_if_quality_pass",
+            content_item_id=content_item_id,
+        )
+        report = _quality_report(narrative_voice_score=50.0)
+        await file_store.append_quality_report(temp_project, content_item_id, report)
+
+        run = SchedulerRun(project_id=project.id)
+        await scheduler._maybe_publish(project, job, run)
+
+        assert job.status == "HUMAN_REVIEW"
+        assert run.content_jobs_human_review == 1
+        assert run.content_jobs_published == 0
+        assert any("humanization floor" in line for line in run.decision_log)
+
+    @pytest.mark.asyncio
+    async def test_publishes_when_narrative_voice_score_at_floor(
+        self, temp_project, project_factory, content_job_factory, monkeypatch
+    ):
+        """A narrative_voice_score at/above the floor must not block publish
+        when everything else already clears the bar."""
+        project = project_factory(
+            id=uuid.UUID(temp_project), auto_publish_threshold=85, humanization_auto_publish_floor=70
+        )
+        content_item_id = uuid.uuid4()
+        job = content_job_factory(
+            temp_project,
+            uuid.uuid4(),
+            uuid.uuid4(),
+            publish_policy="auto_if_quality_pass",
+            content_item_id=content_item_id,
+        )
+        report = _quality_report(narrative_voice_score=70.0)
+        await file_store.append_quality_report(temp_project, content_item_id, report)
+
+        async def fake_export_content(content_id):
+            pass
+
+        monkeypatch.setattr(
+            "backend.api.routers.content.export_content", fake_export_content
+        )
+
+        run = SchedulerRun(project_id=project.id)
+        await scheduler._maybe_publish(project, job, run)
+
+        assert job.status == "PUBLISHED"
+        assert run.content_jobs_published == 1
+
+    @pytest.mark.asyncio
+    async def test_missing_narrative_voice_score_does_not_block_publish(
+        self, temp_project, project_factory, content_job_factory, monkeypatch
+    ):
+        """narrative_voice_score=None simulates a pre-cutover QualityReport --
+        it must fail open and not block publish."""
+        project = project_factory(
+            id=uuid.UUID(temp_project), auto_publish_threshold=85, humanization_auto_publish_floor=70
+        )
+        content_item_id = uuid.uuid4()
+        job = content_job_factory(
+            temp_project,
+            uuid.uuid4(),
+            uuid.uuid4(),
+            publish_policy="auto_if_quality_pass",
+            content_item_id=content_item_id,
+        )
+        report = _quality_report(narrative_voice_score=None)
+        await file_store.append_quality_report(temp_project, content_item_id, report)
+
+        async def fake_export_content(content_id):
+            pass
+
+        monkeypatch.setattr(
+            "backend.api.routers.content.export_content", fake_export_content
+        )
+
+        run = SchedulerRun(project_id=project.id)
+        await scheduler._maybe_publish(project, job, run)
+
+        assert job.status == "PUBLISHED"
+        assert run.content_jobs_published == 1
+
+    @pytest.mark.asyncio
+    async def test_blocks_publish_when_explicitly_ungrounded(
+        self, temp_project, project_factory, content_job_factory
+    ):
+        """is_grounded=False must block auto-publish even with a perfect score."""
+        project = project_factory(id=uuid.UUID(temp_project), auto_publish_threshold=85)
+        content_item_id = uuid.uuid4()
+        job = content_job_factory(
+            temp_project,
+            uuid.uuid4(),
+            uuid.uuid4(),
+            publish_policy="auto_if_quality_pass",
+            content_item_id=content_item_id,
+        )
+        report = _quality_report(is_grounded=False)
+        await file_store.append_quality_report(temp_project, content_item_id, report)
+
+        run = SchedulerRun(project_id=project.id)
+        await scheduler._maybe_publish(project, job, run)
+
+        assert job.status == "HUMAN_REVIEW"
+        assert run.content_jobs_human_review == 1
+        assert run.content_jobs_published == 0
+        assert any("not adequately grounded" in line for line in run.decision_log)
+
+    @pytest.mark.asyncio
+    async def test_missing_is_grounded_does_not_block_publish(
+        self, temp_project, project_factory, content_job_factory, monkeypatch
+    ):
+        """is_grounded=None simulates a pre-cutover QualityReport -- it must
+        fail open and not block publish."""
+        project = project_factory(id=uuid.UUID(temp_project), auto_publish_threshold=85)
+        content_item_id = uuid.uuid4()
+        job = content_job_factory(
+            temp_project,
+            uuid.uuid4(),
+            uuid.uuid4(),
+            publish_policy="auto_if_quality_pass",
+            content_item_id=content_item_id,
+        )
+        report = _quality_report(is_grounded=None)
+        await file_store.append_quality_report(temp_project, content_item_id, report)
+
+        async def fake_export_content(content_id):
+            pass
+
+        monkeypatch.setattr(
+            "backend.api.routers.content.export_content", fake_export_content
+        )
+
+        run = SchedulerRun(project_id=project.id)
+        await scheduler._maybe_publish(project, job, run)
+
+        assert job.status == "PUBLISHED"
+        assert run.content_jobs_published == 1
+
+    @pytest.mark.asyncio
     async def test_marks_publish_failed_when_export_raises(
         self, temp_project, project_factory, content_job_factory, monkeypatch
     ):

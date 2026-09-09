@@ -22,3 +22,7 @@ google-auth-httplib2>=0.2.0
 # JWT validation (shared secret with gg-cms Go backend)
 PyJWT>=2.8.0
 
+# Test suite
+pytest>=8.4
+pytest-asyncio>=1.4.0
+

@@ -27,8 +27,12 @@ existing building blocks:
   5. Publish: after a ContentJob finishes with `status == "GENERATED"`, if
      `publish_policy == "auto_if_quality_pass"` and the linked
      QualityReport's deterministic `passed` (see
-     `backend.services.quality_scoring`) is true AND its `overall_score`
-     clears `project.auto_publish_threshold`, call
+     `backend.services.quality_scoring`, scored with the v2/9-dimension
+     weight set) is true AND its `overall_score` clears
+     `project.auto_publish_threshold` AND its `narrative_voice_score` clears
+     `project.humanization_auto_publish_floor` (fail-open if the score is
+     absent -- pre-cutover reports) AND it is not explicitly marked
+     `is_grounded=False` (fail-open if unset), call
      `backend.api.routers.content.export_content` directly. Otherwise the
      job is left at GENERATED/HUMAN_REVIEW for a human to publish manually --
      the scheduler never force-publishes content that didn't clear the bar.
@@ -68,6 +72,13 @@ MAX_CONSECUTIVE_FAILURES = 3
 # scheduler restricts itself to the same set so it never creates a
 # ContentJob doomed to raise UnsupportedContentTypeError.
 DEFAULT_CONTENT_TYPES = ("article",)
+
+
+def passes_floor(score: float | None, floor: float) -> bool:
+    """True if `score` is None (fail-open -- backward compat with
+    pre-cutover QualityReports that don't have this field yet) or `score`
+    clears `floor`."""
+    return score is None or score >= floor
 
 
 async def _select_topic(project: Project, opportunity) -> uuid.UUID:
@@ -132,15 +143,53 @@ async def _maybe_publish(project: Project, content_job, run) -> None:
         )
         return
 
-    result = compute_overall_quality_score(report_scores)
-    passed = determine_pass(report_scores, result["overall_score"])
+    # narrative_voice_score is a v2-only dimension -- a pre-cutover
+    # QualityReport won't have it populated. Only fold it into the weighted
+    # v2 scoring when present; otherwise fall back to v1 (its absence is
+    # handled separately, and fail-open, by the humanization floor gate
+    # below via `passes_floor`).
+    if report.narrative_voice_score is not None:
+        report_scores["narrative_voice_score"] = report.narrative_voice_score
+        scoring_version = "v2"
+    else:
+        scoring_version = "v1"
 
-    if not (passed and result["overall_score"] >= project.auto_publish_threshold):
-        run.decision_log.append(
-            f"ContentJob {content_job.id}: overall_score={result['overall_score']:.1f} "
-            f"passed={passed}, below auto_publish_threshold={project.auto_publish_threshold} -- "
-            "routed to human review"
-        )
+    result = compute_overall_quality_score(report_scores, version=scoring_version)
+    passed = determine_pass(report_scores, result["overall_score"], version=scoring_version)
+    meets_threshold = passed and result["overall_score"] >= project.auto_publish_threshold
+    meets_humanization_floor = passes_floor(
+        report.narrative_voice_score, project.humanization_auto_publish_floor
+    )
+    # Fails closed only when explicitly marked ungrounded (`is_grounded is
+    # False`) -- an old report with `is_grounded is None` (pre-cutover, field
+    # never populated) still passes through unaffected.
+    meets_grounding_gate = report.is_grounded is not False
+
+    if not (meets_threshold and meets_humanization_floor and meets_grounding_gate):
+        # Checked in this order (floor before threshold) so the decision_log
+        # names the actual root cause: a low narrative_voice_score also drags
+        # down the v2 weighted overall_score (it's one of the nine weighted
+        # dimensions -- see QUALITY_WEIGHTS_V2), so meets_threshold can be
+        # simultaneously false purely as a side effect. When the floor itself
+        # is the thing that failed, that's what the log should say, not a
+        # generic "below auto_publish_threshold" that hides the real reason.
+        if not meets_humanization_floor:
+            run.decision_log.append(
+                f"ContentJob {content_job.id}: blocked: narrative voice score "
+                f"({report.narrative_voice_score:.1f}) below humanization floor "
+                f"({project.humanization_auto_publish_floor}) -- routed to human review"
+            )
+        elif not meets_threshold:
+            run.decision_log.append(
+                f"ContentJob {content_job.id}: overall_score={result['overall_score']:.1f} "
+                f"passed={passed}, below auto_publish_threshold={project.auto_publish_threshold} -- "
+                "routed to human review"
+            )
+        else:
+            run.decision_log.append(
+                f"ContentJob {content_job.id}: blocked: content not adequately grounded "
+                "in sources -- routed to human review"
+            )
         content_job.status = "HUMAN_REVIEW"
         content_job.updated_at = utcnow()
         await file_store.save_content_job(project.id, content_job)
