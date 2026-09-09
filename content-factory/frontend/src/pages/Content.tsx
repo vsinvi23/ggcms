@@ -69,26 +69,27 @@ function QualityReportPanel({ contentId }: { contentId: string }) {
 interface SectionWithImage {
   title: string
   image_prompt?: string | null
+  image_url?: string | null
 }
 
-/** Pulls a flat list of {title, image_prompt} out of body_json, whether it's
- * the flat-article shape (`sections: [{title, image_prompt}]`) or the course
- * shape (`sections: [{title, lessons: [{title, image_prompt}]}]`). Images
- * themselves are still a placeholder stub on the backend
- * (backend/services/image_service.py) -- this just surfaces where one is
- * planned so the operator isn't left guessing. */
+/** Pulls a flat list of {title, image_prompt, image_url} out of body_json,
+ * whether it's the flat-article shape (`sections: [{title, image_prompt,
+ * image_url}]`) or the course shape (`sections: [{title, lessons: [{title,
+ * image_prompt, image_url}]}]`). `image_url` is populated by the backend's
+ * real Pexels lookup (backend/services/image_service.py) when available;
+ * spots without one still fall back to the placeholder UI. */
 function extractImageSpots(bodyJson: ContentItemDetail["body_json"]): SectionWithImage[] {
   const sections = (bodyJson?.sections as unknown[]) || []
   const spots: SectionWithImage[] = []
   for (const raw of sections) {
-    const section = raw as { title?: string; image_prompt?: string | null; lessons?: unknown[] }
-    const lessons = section.lessons as { title?: string; image_prompt?: string | null }[] | undefined
+    const section = raw as { title?: string; image_prompt?: string | null; image_url?: string | null; lessons?: unknown[] }
+    const lessons = section.lessons as { title?: string; image_prompt?: string | null; image_url?: string | null }[] | undefined
     if (lessons) {
       for (const lesson of lessons) {
-        if (lesson.image_prompt) spots.push({ title: lesson.title || section.title || "", image_prompt: lesson.image_prompt })
+        if (lesson.image_prompt) spots.push({ title: lesson.title || section.title || "", image_prompt: lesson.image_prompt, image_url: lesson.image_url })
       }
     } else if (section.image_prompt) {
-      spots.push({ title: section.title || "", image_prompt: section.image_prompt })
+      spots.push({ title: section.title || "", image_prompt: section.image_prompt, image_url: section.image_url })
     }
   }
   return spots
@@ -99,16 +100,26 @@ function ImagePlanPanel({ bodyJson }: { bodyJson: ContentItemDetail["body_json"]
   if (spots.length === 0) return null
   return (
     <Card>
-      <CardHeader title="Planned images" subtitle="Placeholder art -- real generation isn't wired up yet." />
+      <CardHeader title="Planned images" subtitle="Real images are fetched from Pexels when available." />
       <ul className="divide-y divide-zinc-800">
         {spots.map((spot, idx) => (
           <li key={idx} className="flex items-center gap-3 px-5 py-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-700 text-zinc-500">
-              <ImageIcon size={14} />
-            </span>
+            {spot.image_url ? (
+              <img
+                src={spot.image_url}
+                alt={spot.title}
+                className="h-8 w-8 shrink-0 rounded-lg object-cover"
+              />
+            ) : (
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-dashed border-zinc-700 text-zinc-500">
+                <ImageIcon size={14} />
+              </span>
+            )}
             <div className="min-w-0">
               <div className="truncate text-sm text-zinc-200">{spot.title}</div>
-              <div className="truncate text-xs text-zinc-500">Image coming soon · {spot.image_prompt}</div>
+              <div className="truncate text-xs text-zinc-500">
+                {spot.image_url ? "Image found" : "Image coming soon"} · {spot.image_prompt}
+              </div>
             </div>
           </li>
         ))}
