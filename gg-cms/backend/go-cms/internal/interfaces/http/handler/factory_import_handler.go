@@ -13,6 +13,7 @@ import (
 	sectionsvc "github.com/serenya/go-cms/internal/application/section"
 	usersvc "github.com/serenya/go-cms/internal/application/user"
 	"github.com/serenya/go-cms/internal/domain/entity"
+	"github.com/serenya/go-cms/internal/domain/repository"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
 )
 
@@ -25,27 +26,32 @@ type FactoryImportHandler struct {
 	sectionService sectionsvc.Service
 	lessonService  lessonsvc.Service
 	userService    usersvc.Service
+	genRunRepo     repository.ContentGenerationRunRepository
 	// systemUserEmail identifies the account attributed as CreatedByID for
 	// factory-ingested content (created_by_id is NOT NULL / FK'd to users.id,
 	// so we need a real, already-seeded user — the master admin by default).
 	systemUserEmail string
 }
 
-func NewFactoryImportHandler(cmsService cmssvc.Service, sectionService sectionsvc.Service, lessonService lessonsvc.Service, userService usersvc.Service, systemUserEmail string) *FactoryImportHandler {
+func NewFactoryImportHandler(cmsService cmssvc.Service, sectionService sectionsvc.Service, lessonService lessonsvc.Service, userService usersvc.Service, genRunRepo repository.ContentGenerationRunRepository, systemUserEmail string) *FactoryImportHandler {
 	return &FactoryImportHandler{
 		cmsService:      cmsService,
 		sectionService:  sectionService,
 		lessonService:   lessonService,
 		userService:     userService,
+		genRunRepo:      genRunRepo,
 		systemUserEmail: systemUserEmail,
 	}
 }
 
+
 // ingestResult is the internal, transport-agnostic result of ingesting a payload.
 type ingestResult struct {
-	PublicID string
-	Slug     string
-	Version  int
+	NumericID   uint
+	ContentType string
+	PublicID    string
+	Slug        string
+	Version     int
 }
 
 // POST /api/import/ingest
@@ -73,6 +79,24 @@ func (h *FactoryImportHandler) Ingest(c *gin.Context) {
 		log.Printf("[factory-import] ingest failed for content_id=%s: %v", payload.ContentID, err)
 		c.JSON(400, dto.FactorySyncResult{Success: false, Message: &msg})
 		return
+	}
+
+	// Persist structured ContentGenerationRun if provenance is present
+	if h.genRunRepo != nil && !isZeroProvenance(payload.Provenance) {
+		qualityScore := payload.Provenance.QualityScore
+		genRun := &entity.ContentGenerationRun{
+			ContentID:       result.NumericID,
+			ContentType:     result.ContentType,
+			Model:           payload.Provenance.Model,
+			Provider:        payload.Provenance.Provider,
+			PromptVersion:   "v1",
+			AgentVersion:    payload.Provenance.AgentVersion,
+			KnowledgePackID: payload.Provenance.KnowledgePackID,
+			QualityScore:    &qualityScore,
+		}
+		if err := h.genRunRepo.Create(c.Request.Context(), genRun); err != nil {
+			log.Printf("[factory-import] warning: failed to persist generation run: %v", err)
+		}
 	}
 
 	version := result.Version
@@ -136,7 +160,7 @@ func ingestSyncPayload(ctx context.Context, cmsService cmssvc.Service, sectionSe
 		if !ok {
 			return nil, fmt.Errorf("unexpected result type from cms create")
 		}
-		return &ingestResult{PublicID: article.PublicID, Slug: article.Slug, Version: article.Version}, nil
+		return &ingestResult{NumericID: article.ID, ContentType: "ARTICLE", PublicID: article.PublicID, Slug: article.Slug, Version: article.Version}, nil
 
 	case "course":
 		// Course body carries only the top-level metadata + provenance/quiz/exercise
@@ -189,7 +213,8 @@ func ingestSyncPayload(ctx context.Context, cmsService cmssvc.Service, sectionSe
 			}
 		}
 
-		return &ingestResult{PublicID: course.PublicID, Slug: course.Slug, Version: course.Version}, nil
+		return &ingestResult{NumericID: course.ID, ContentType: "COURSE", PublicID: course.PublicID, Slug: course.Slug, Version: course.Version}, nil
+
 
 	default:
 		return nil, fmt.Errorf("unsupported type %q (expected \"article\" or \"course\")", payload.Type)

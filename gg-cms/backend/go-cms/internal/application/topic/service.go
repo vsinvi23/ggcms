@@ -19,7 +19,12 @@ type Service interface {
 	GetRelationships(ctx context.Context, topicID uint) ([]*entity.TopicRelationship, error)
 	SetRelationships(ctx context.Context, topicID uint, relationships []entity.TopicRelationship) error
 	GetContentTopics(ctx context.Context, contentID uint, contentType string) ([]*entity.Topic, error)
+	GetContentTopicEntries(ctx context.Context, contentID uint, contentType string) ([]*entity.ContentTopic, error)
 	SetContentTopics(ctx context.Context, contentID uint, contentType string, topicIDs []uint) error
+	SetContentTopicEntries(ctx context.Context, contentID uint, contentType string, entries []entity.ContentTopic) error
+	ResolveTopic(ctx context.Context, rawName string) (*repository.TopicResolutionResult, error)
+	FindBySlugs(ctx context.Context, slugs []string) ([]*entity.Topic, error)
+	FindReachable(ctx context.Context, topicID uint, maxDepth int) ([]*repository.ReachableTopic, error)
 }
 
 type service struct {
@@ -57,6 +62,7 @@ func (s *service) Create(ctx context.Context, name, entityType, description stri
 		Slug:        slug,
 		EntityType:  entityType,
 		Description: description,
+		Status:      "ACTIVE",
 	}
 	if err := s.topicRepo.Create(ctx, topic); err != nil {
 		return nil, err
@@ -102,6 +108,27 @@ func (s *service) GetContentTopics(ctx context.Context, contentID uint, contentT
 	return s.topicRepo.GetContentTopics(ctx, contentID, contentType)
 }
 
+func (s *service) GetContentTopicEntries(ctx context.Context, contentID uint, contentType string) ([]*entity.ContentTopic, error) {
+	return s.topicRepo.GetContentTopicEntries(ctx, contentID, contentType)
+}
+
 func (s *service) SetContentTopics(ctx context.Context, contentID uint, contentType string, topicIDs []uint) error {
 	return s.topicRepo.SetContentTopics(ctx, contentID, contentType, topicIDs)
 }
+
+func (s *service) SetContentTopicEntries(ctx context.Context, contentID uint, contentType string, entries []entity.ContentTopic) error {
+	return s.topicRepo.SetContentTopicEntries(ctx, contentID, contentType, entries)
+}
+
+func (s *service) ResolveTopic(ctx context.Context, rawName string) (*repository.TopicResolutionResult, error) {
+	return s.topicRepo.ResolveTopic(ctx, rawName)
+}
+
+func (s *service) FindBySlugs(ctx context.Context, slugs []string) ([]*entity.Topic, error) {
+	return s.topicRepo.FindBySlugs(ctx, slugs)
+}
+
+func (s *service) FindReachable(ctx context.Context, topicID uint, maxDepth int) ([]*repository.ReachableTopic, error) {
+	return s.topicRepo.FindReachable(ctx, topicID, maxDepth)
+}
+
