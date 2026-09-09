@@ -470,6 +470,7 @@ async def run_citation_check(state: PipelineState) -> dict:
     print(f"[*] Citation Checking...")
     res = await citation_checker.run(
         draft=state["draft_json"],
+        source_chunks=state.get("context_chunks"),
         tracker=state.get("cost_tracker"),
         project_id=state.get("project_id"),
         job_id=state.get("content_job_id"),
