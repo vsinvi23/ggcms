@@ -371,14 +371,16 @@ A deep review of the implemented factory (which by this point had moved well pas
 
 **Root shared wiring point:** `backend/api/routers/generation.py`'s `QualityReport(...)` construction is the single place every quality signal must be explicitly mapped from the pipeline's internal dict to the persisted domain model — any new signal not added there is silently dropped before it ever reaches the scheduler's publish decision. This is now the documented integration seam for future quality dimensions.
 
-**Deferred (explicitly out of scope for this pass):** an LLM-as-judge golden-corpus evaluation tier (`tests/eval/`) for humanization quality — needs CI/secrets infrastructure decisions; and extending the Citation Checker with the same evidence-drift awareness as the Fact Checker.
+**Deferred (explicitly out of scope for this pass):** an LLM-as-judge golden-corpus evaluation tier (`tests/eval/`) for humanization quality — needs CI/secrets infrastructure decisions.
+
+**Follow-up landed (2026-09-09):** the Citation Checker now receives the same raw source chunks as the Fact Checker and reports `citation_drift_claims` (a citation that points somewhere, but that source's wording doesn't actually back the quote/statistic) distinct from `missing_citations` — mirroring the Fact Checker's `evidence_drift_claims`/`unsupported_claims` split. `run_citation_check` in `content_pipeline.py` passes `state["context_chunks"]` through, matching `run_fact_check`'s pattern.
 
 ---
 
 ## 19. Immediate Next Steps
 
-1. Delete the empty Node/TS scaffold (`apps/*`, `packages/*`) and the orphaned, non-buildable Go files (`cmd/importer/main.go`, `packages/exports/gg_importer.go`) — or explicitly archive them if you want to keep the Go exploration for reference.
-2. Delete or clearly mark `V2_GO_ARCHITECTURE_AND_DESIGN.md` as superseded by this document.
+1. ~~Delete the empty Node/TS scaffold (`apps/*`, `packages/*`) and the orphaned, non-buildable Go files (`cmd/importer/main.go`, `packages/exports/gg_importer.go`)~~ — done; neither exists in the repo any longer.
+2. ~~Delete or clearly mark `V2_GO_ARCHITECTURE_AND_DESIGN.md` as superseded by this document~~ — done; `V2_ARCHITECTURE_AND_DESIGN.md` now carries a `Status: SUPERSEDED` header pointing here.
 3. Stand up the deferred `tests/eval/` LLM-as-judge tier for narrative-voice quality once CI/secrets infra decisions are made (§18).
-4. Extend the Citation Checker agent with the same evidence-drift awareness added to the Fact Checker (§18).
+4. ~~Extend the Citation Checker agent with the same evidence-drift awareness added to the Fact Checker (§18)~~ — done (§18 follow-up, 2026-09-09).
 5. Continue MVP/Phase 2 feature buildout (§14) — trend discovery, autonomous topic selection, scheduled generation.

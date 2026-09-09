@@ -1,7 +1,12 @@
-# AI Content Factory V2 — Technical Architecture & LLD Design
+# AI Content Factory V2 â€” Technical Architecture & LLD Design
 
-**Status:** APPROVED / IMPLEMENTATION REFERENCE  
-**Revision:** 2.0 (Knowledge-Driven Autonomous Learning Content Engine)  
+**Status:** SUPERSEDED â€” see [`SLAD_AI_CONTENT_FACTORY.md`](SLAD_AI_CONTENT_FACTORY.md), the consolidated master reference.
+**Revision:** 2.0 (Knowledge-Driven Autonomous Learning Content Engine)
+
+> This document is kept for historical reference only. Its design content was
+> folded into the SLAD as part of the consolidation called for in
+> `SLAD_AI_CONTENT_FACTORY.md` Â§19 (Immediate Next Steps, item 2). Do not use
+> this file as a source of current architecture decisions.
 
 ---
 
@@ -17,7 +22,7 @@ The V2 specification elevates the system from a "linear content generation tool"
 | **Ingestion Formats** | PDFs, URLs, standard Web-crawling, plain Text. | **Extended Formats:** EPUB, Sitemap extraction, **RSS feeds**, Documentations, **GitHub repositories**, existing Markdown/JSON dumps. |
 | **Research Intermediary** | Prompt maps raw chunks directly to the Writer Agent. | **Evidence Pack Pattern:** Strict structured intermediate JSON schema containing facts, claims, controversies, and code examples. Writer cannot draft without an approved Evidence Pack. |
 | **Quality Gate** | Fact check + simple word-count checks. | **8-Dimension Audit:** Accuracy, Citation, Source Integrity, Learning Quality, Originality, Readability, SEO, and **GEO (Generative Engine Optimization / AI-Search Readiness)**. |
-| **Scale Viability (10k/mo)** | Linear research-to-generation runs (high cost). | **1-to-Many Multiplexing:** 1 Topic Research ? 1 Evidence Pack ? Reusable Knowledge Pack ? Multi-Content Plan ? Multiple Outputs (Article, Quiz, Cheat Sheet, Exercises). Reduces AI cost by **70%–90%**. |
+| **Scale Viability (10k/mo)** | Linear research-to-generation runs (high cost). | **1-to-Many Multiplexing:** 1 Topic Research ? 1 Evidence Pack ? Reusable Knowledge Pack ? Multi-Content Plan ? Multiple Outputs (Article, Quiz, Cheat Sheet, Exercises). Reduces AI cost by **70%ï¿½90%**. |
 | **Content Strategy** | Campaign-based batch dumps. | **Dual Evergreen/Trending Streams** with freshness-class mappings and automated claims-refresh loop. |
 
 ---
@@ -28,45 +33,45 @@ The system is architected as a Python-based Modular Monolith built on **FastAPI*
 
 ```text
                                  [ ADMIN USER ]
-                                        ¦
+                                        ï¿½
                                         ?
                              [ React Agent Console ]
-                                        ¦
+                                        ï¿½
                                         ?
                             [ FastAPI API Gateway ]
-                                        ¦
+                                        ï¿½
                                         ?
                           [ LangGraph Workflow Engine ]
-                                        ¦
+                                        ï¿½
                   +---------------------+---------------------+
                   ?                     ?                     ?
            [Strategy Agent]     [Opportunity Agent]    [Research Agent]
-                  ¦                     ¦                     ¦
+                  ï¿½                     ï¿½                     ï¿½
                   ?                     ?                     ?
           Project Strategy        Topic Opportunity     Evidence Pack (JSON)
-                  ¦                     ¦                     ¦
+                  ï¿½                     ï¿½                     ï¿½
                   +---------------------+---------------------+
-                                        ¦
+                                        ï¿½
                                         ?
                             [Learning Architect Agent]
-                                        ¦
+                                        ï¿½
                                         ?
                              [Content Planner Agent]
-                                        ¦
+                                        ï¿½
                                         ?
                               [Writer Agent (prose)]
-                                        ¦
+                                        ï¿½
                                         ?
                          [Quality Gate / Audit Matrix]
                          - Fact, Citation, Integrity
                          - SEO, Readability, Originality
                          - GEO (AI-search readiness)
-                                        ¦
+                                        ï¿½
                         +-------------------------------+
                         ? PASS                          ? FAIL
                  [Export Engine]                 [Revision Agent]
                   (JSON + MD ZIP)                 (Max 3 iterations)
-                        ¦                               ¦
+                        ï¿½                               ï¿½
                         ?                               ?
                  [GG-CMS / LMS]                  [Needs Human Review]
 ```
@@ -81,22 +86,22 @@ Based on Section 63 of V2, the local development and deployment code layout maps
 ai-content-factory/
 +-- frontend/                 # React Agent Console SPA (Vite, TS, Tailwind)
 +-- backend/                  # FastAPI Application Monolith
-¦   +-- api/                  # REST Controllers & DTOs
-¦   +-- agents/               # Stateful LangGraph worker modules
-¦   ¦   +-- strategy/         # Audience, level, language parser
-¦   ¦   +-- opportunity/      # Demand, trend signals, content gap scorer
-¦   ¦   +-- research/         # Claim extractor, conflict resolver, Google search
-¦   ¦   +-- learning/         # instructional designer, sequencer
-¦   ¦   +-- planning/         # outline and example planner
-¦   ¦   +-- writing/          # progressive tutorial and explainer drafter
-¦   ¦   +-- quality/          # 8-dimensional deterministic/model auditor
-¦   +-- ingestion/            # EPUB, PDF, RSS, Crawler, and GitHub extractors
-¦   +-- knowledge/            # Chunking, metadata, and pgvector embeddings
-¦   +-- retrieval/            # Hybrid vector + keyword search routines
-¦   +-- models/               # Configurable ModelProvider abstractions
-¦   +-- workflows/            # Stateful graph state transitions
-¦   +-- exporters/            # ZIP package packager (JSON ? Markdown)
-¦   +-- services/             # Auth, jobs, and cost analytics
+ï¿½   +-- api/                  # REST Controllers & DTOs
+ï¿½   +-- agents/               # Stateful LangGraph worker modules
+ï¿½   ï¿½   +-- strategy/         # Audience, level, language parser
+ï¿½   ï¿½   +-- opportunity/      # Demand, trend signals, content gap scorer
+ï¿½   ï¿½   +-- research/         # Claim extractor, conflict resolver, Google search
+ï¿½   ï¿½   +-- learning/         # instructional designer, sequencer
+ï¿½   ï¿½   +-- planning/         # outline and example planner
+ï¿½   ï¿½   +-- writing/          # progressive tutorial and explainer drafter
+ï¿½   ï¿½   +-- quality/          # 8-dimensional deterministic/model auditor
+ï¿½   +-- ingestion/            # EPUB, PDF, RSS, Crawler, and GitHub extractors
+ï¿½   +-- knowledge/            # Chunking, metadata, and pgvector embeddings
+ï¿½   +-- retrieval/            # Hybrid vector + keyword search routines
+ï¿½   +-- models/               # Configurable ModelProvider abstractions
+ï¿½   +-- workflows/            # Stateful graph state transitions
+ï¿½   +-- exporters/            # ZIP package packager (JSON ? Markdown)
+ï¿½   +-- services/             # Auth, jobs, and cost analytics
 +-- prompts/                  # Versioned prompt library (.md templates)
 +-- schemas/                  # Shared Pydantic data schemas
 +-- ...
