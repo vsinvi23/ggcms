@@ -7,6 +7,7 @@ silently letting a job proceed past either limit.
 """
 
 from backend.configs.settings import settings
+from backend.services.pricing import estimate_cost
 
 
 class BudgetExceededError(Exception):
@@ -97,6 +98,19 @@ class CostTracker:
 
         self.job_cost = projected_job_cost
         return self.job_cost
+
+    def add_usage(self, *, model_name: str, input_tokens: int, output_tokens: int) -> float:
+        """Estimate the USD cost of an LLM call from its model name and
+        token counts (via backend.services.pricing.estimate_cost), then
+        delegate to add_cost() with that estimate.
+
+        Same budget-enforcement/raise behavior as add_cost -- this is a
+        convenience wrapper for callers that have token counts rather than
+        a pre-computed dollar amount. Returns the new job running total on
+        success (same as add_cost).
+        """
+        amount = estimate_cost(model_name, input_tokens, output_tokens)
+        return self.add_cost(amount)
 
     def remaining_per_item_budget(self) -> float:
         return max(0.0, self.max_cost_per_content_unit - self.job_cost)

@@ -5,7 +5,7 @@ from backend.services.model_provider import get_llm
 from backend.configs.settings import settings
 from backend.schemas.opportunity import Opportunity
 from backend.schemas.agent_error import AgentError
-from backend.agents.base import AgentExecutionError
+from backend.agents.base import AgentExecutionError, invoke_structured
 from backend.prompts.loader import load_prompt
 
 # Already implemented by the scoring workstream (SLAD_AI_CONTENT_FACTORY.md section 5.2
@@ -85,7 +85,7 @@ async def expand_statement_to_headlines(statement: str, project) -> list[Headlin
     )
 
     try:
-        result = await structured_llm.ainvoke(prompt)
+        result = await invoke_structured(structured_llm, prompt, agent_name=AGENT_NAME)
     except Exception as e:
         logger.error(f"[{AGENT_NAME}] headline expansion failed for statement '{statement}': {e}")
         raise AgentExecutionError(AgentError(
@@ -117,6 +117,9 @@ class OpportunityAgent:
         candidates: list[str],
         signals: dict[str, dict] | None = None,
         meta: dict[str, dict] | None = None,
+        tracker=None,
+        project_id=None,
+        job_id=None,
     ) -> list[Opportunity]:
         """
         For each topic candidate, fills in any missing sub-scores (demand, trend,
@@ -174,7 +177,14 @@ class OpportunityAgent:
                     business_value=raw.get("business_value", "null"),
                 )
                 try:
-                    estimate = await self.structured_llm.ainvoke(prompt)
+                    estimate = await invoke_structured(
+                        self.structured_llm,
+                        prompt,
+                        agent_name=AGENT_NAME,
+                        tracker=tracker,
+                        project_id=project_id,
+                        job_id=job_id,
+                    )
                 except Exception as e:
                     logger.error(f"[{AGENT_NAME}] LLM call failed for candidate '{topic}': {e}")
                     raise AgentExecutionError(AgentError(

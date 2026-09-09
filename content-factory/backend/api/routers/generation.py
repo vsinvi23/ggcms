@@ -16,14 +16,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/generate", tags=["Generation"])
 
-# No per-call token metering exists yet (no LLM call site records
-# usage_metadata anywhere in this codebase), so CostTracker can't be fed a
-# precise figure. Using a conservative flat per-job estimate is still far
-# better than the previous state (cost_estimate always None, no cap ever
-# enforced) -- it's what lets settings.max_monthly_ai_budget actually mean
-# something. Revisit if/when real token usage is threaded through.
-_ESTIMATED_COST_PER_GENERATION_JOB = 0.05
-
 
 def _monthly_spend_so_far() -> float:
     """Sums GenerationJob.cost_estimate across every project for jobs
@@ -130,10 +122,23 @@ async def run_pipeline_job(
         logger.error(f"GenerationJob {job_id} vanished before pipeline start")
         return
 
-    tracker = CostTracker(str(job_id), monthly_spend_so_far=_monthly_spend_so_far())
-    try:
-        tracker.add_cost(_ESTIMATED_COST_PER_GENERATION_JOB)
-    except BudgetExceededError as e:
+    monthly_spend_so_far = _monthly_spend_so_far()
+    tracker = CostTracker(str(job_id), monthly_spend_so_far=monthly_spend_so_far)
+
+    # There's no flat pre-flight charge anymore -- real per-call cost accrues
+    # token-by-token as the pipeline runs (CostTracker.add_usage, called from
+    # invoke_structured). But a project that's *already* over its monthly cap
+    # should still be blocked before wasting any API calls, so this check
+    # mirrors the previous pre-flight guard using the same
+    # _monthly_spend_so_far() function and BudgetExceededError pattern.
+    if monthly_spend_so_far >= tracker.max_monthly_ai_budget:
+        e = BudgetExceededError(
+            f"Job '{job_id}' blocked: monthly spend {monthly_spend_so_far:.4f} "
+            f"already at/over cap {tracker.max_monthly_ai_budget:.4f}",
+            cap_type="monthly",
+            current=monthly_spend_so_far,
+            limit=tracker.max_monthly_ai_budget,
+        )
         logger.error(f"GenerationJob {job_id} blocked before start: {e}")
         job.status = "FAILED"
         job.error_type = e.error_type
@@ -145,7 +150,6 @@ async def run_pipeline_job(
 
     job.status = "RUNNING"
     job.started_at = utcnow()
-    job.cost_estimate = tracker.job_cost
     await file_store.save_job(project_id, job)
 
     # For an existing content item (refresh), fall back to whatever
@@ -173,6 +177,7 @@ async def run_pipeline_job(
         "content_plan": None,
         "draft_json": None,
         "quality_report": None,
+        "cost_tracker": tracker,
     }
 
     final_state: dict = dict(initial_state)
@@ -266,15 +271,30 @@ async def run_pipeline_job(
             overall_score=quality.get("overall_score"),
             passed=bool(quality.get("passed", is_approved)),
             issues=quality.get("issues", []) or [],
+            is_grounded=quality.get("is_grounded"),
+            narrative_voice_score=quality.get("narrative_voice_score"),
+            source_overlap_ratio=quality.get("source_overlap_ratio"),
+            near_copy_flag=bool(quality.get("near_copy_flag", False)),
         ))
 
         job.content_item_id = content_item.id
         job.status = "SUCCEEDED"
         job.current_node = "export_package"
+        job.cost_estimate = tracker.job_cost
         job.completed_at = utcnow()
         await file_store.save_job(project_id, job)
 
         logger.info(f"--- PIPELINE COMPLETED (job={job_id}). Approved: {final_state.get('is_approved')} ---")
+    except BudgetExceededError as e:
+        logger.error(f"--- PIPELINE FAILED (job={job_id}): budget exceeded mid-run: {e} ---")
+        job = file_store.get_job(project_id, job_id)
+        if job is not None:
+            job.status = "FAILED"
+            job.error_type = e.error_type
+            job.error_message = str(e)
+            job.cost_estimate = tracker.job_cost
+            job.completed_at = utcnow()
+            await file_store.save_job(project_id, job)
     except Exception as e:
         logger.error(f"--- PIPELINE FAILED (job={job_id}): {e} ---")
         job = file_store.get_job(project_id, job_id)
@@ -282,6 +302,7 @@ async def run_pipeline_job(
             job.status = "FAILED"
             job.error_type = type(e).__name__
             job.error_message = str(e)
+            job.cost_estimate = tracker.job_cost
             job.completed_at = utcnow()
             await file_store.save_job(project_id, job)
 

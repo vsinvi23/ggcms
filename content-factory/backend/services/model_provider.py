@@ -85,6 +85,17 @@ def _build_chat_model(model_name: str, temperature: float):
     )
 
 
+def get_model_name(role: str) -> str:
+    """
+    Resolves just the model name string for a role (planner/researcher/
+    writer/reviewer), without constructing a chat model -- used by agents'
+    settings.mock_mode branches to pass a real, price-lookup-able model name
+    into CostTracker.add_usage()/backend.agents.base.record_mock_usage.
+    """
+    model_by_role = _CLAUDE_MODEL_BY_ROLE if settings.llm_provider == "claude" else _GEMINI_MODEL_BY_ROLE
+    return model_by_role[role]()
+
+
 def get_llm(role: str, temperature: float = 0.7):
     """
     Returns an initialized LangChain chat model for the given agent role

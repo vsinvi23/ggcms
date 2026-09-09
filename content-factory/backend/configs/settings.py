@@ -64,6 +64,13 @@ class Settings(BaseSettings):
     gdrive_enabled: bool = Field(default=False, validation_alias="GDRIVE_ENABLED")
     # SA key JSON string mounted from GCP Secret Manager (base64 or raw JSON)
     gdrive_service_account_key: str = Field(default="", validation_alias="GDRIVE_SA_KEY")
+    # ── Fact-check retrieval ────────────────────────────────────────────────
+    fact_check_context_top_k: int = Field(default=10, validation_alias="FACT_CHECK_CONTEXT_TOP_K")
+    # ── Image provider ──────────────────────────────────────────────────────
+    image_provider: str = Field(default="pexels", validation_alias="IMAGE_PROVIDER")
+    # Optional -- image generation soft-fails when unset, never hard-fails startup.
+    pexels_api_key: str | None = Field(default=None, validation_alias="PEXELS_API_KEY")
+    image_generation_enabled: bool = Field(default=True, validation_alias="IMAGE_GENERATION_ENABLED")
 
     model_config = SettingsConfigDict(
         env_file=".env",

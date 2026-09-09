@@ -20,6 +20,10 @@ OVERRIDABLE_FIELDS = [
     "mock_mode",
     "tavily_api_key",
     "web_search_max_results",
+    "fact_check_context_top_k",
+    "image_provider",
+    "pexels_api_key",
+    "image_generation_enabled",
 ]
 
 # Internal/infra fields — returned read-only in GET for visibility,
@@ -46,7 +50,7 @@ RESTART_REQUIRED_FIELDS = {
 
 # Secret fields — values are NEVER returned in plaintext in any API response.
 # factory_sync_secret is intentionally excluded from this view entirely.
-SECRET_FIELDS = {"gemini_api_key", "tavily_api_key"}
+SECRET_FIELDS = {"gemini_api_key", "tavily_api_key", "pexels_api_key"}
 
 
 def get_row() -> AppSetting:

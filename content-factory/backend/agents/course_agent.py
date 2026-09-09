@@ -4,7 +4,7 @@ from backend.services.model_provider import get_llm
 from backend.configs.settings import settings
 from backend.schemas.course import CourseOutline, CourseOutlineLesson, CourseOutlineSection
 from backend.schemas.agent_error import AgentError
-from backend.agents.base import AgentExecutionError
+from backend.agents.base import AgentExecutionError, invoke_structured
 from backend.prompts.loader import load_prompt
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,14 @@ logger = logging.getLogger(__name__)
 AGENT_NAME = "CourseAgent"
 
 
-async def plan_course_outline(topic: str, details: str, project) -> CourseOutline:
+async def plan_course_outline(
+    topic: str,
+    details: str,
+    project,
+    tracker=None,
+    project_id=None,
+    job_id=None,
+) -> CourseOutline:
     """
     Plans a first-class CourseOutline (sections -> lessons, each lesson
     carrying a `summary` brief rather than a written body) for `topic`,
@@ -56,7 +63,14 @@ async def plan_course_outline(topic: str, details: str, project) -> CourseOutlin
     )
 
     try:
-        result = await structured_llm.ainvoke(prompt)
+        result = await invoke_structured(
+            structured_llm,
+            prompt,
+            agent_name=AGENT_NAME,
+            tracker=tracker,
+            project_id=project_id,
+            job_id=job_id,
+        )
     except Exception as e:
         logger.error(f"[{AGENT_NAME}] course outline planning failed for topic '{topic}': {e}")
         raise AgentExecutionError(AgentError(

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import uuid
-from typing import TypedDict, Annotated, Optional
+from typing import TypedDict, Annotated, Any, Optional
 from langgraph.graph import StateGraph, END
 from backend.schemas.evidence_pack import EvidencePack, Claim
 from backend.schemas.learning_plan import LearningPlan
@@ -15,7 +15,8 @@ from backend.agents.writer_agent import WriterAgent
 from backend.agents.fact_checker_agent import FactCheckerAgent
 from backend.agents.citation_checker_agent import CitationCheckerAgent
 from backend.agents.quality_agent import QualityAgent
-from backend.services.image_service import generate_placeholder_image
+from backend.agents.style_guide_agent import StyleGuideAgent
+from backend.services.image_service import get_section_image
 from backend.configs.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,17 @@ class PipelineState(TypedDict):
     quality_report: Optional[dict]
     revisions_count: int
     is_approved: bool
+    # Optional per-job cost tracker (backend/services/cost_tracker.py::CostTracker)
+    # threaded through to every agent .run() call that accepts a `tracker`
+    # kwarg, so LLM spend across the whole pipeline run is metered against
+    # the same job budget. None when the caller (e.g. tests) doesn't wire one.
+    cost_tracker: Optional[Any]
+    # Human-readable feedback string built by `revise` from the previous
+    # QualityReport's issues/narrative_voice_issues, consumed by
+    # generate_draft's writer.run(..., revision_feedback=...) so the loop
+    # back to generate_draft actually acts on what failed review instead of
+    # blindly re-running the same prompt.
+    revision_feedback: Optional[str]
 
 # Initialize Agent Singletons
 researcher = ResearchAgent()
@@ -227,7 +239,12 @@ async def build_evidence_pack(state: PipelineState) -> dict:
 
 async def design_learning_structure(state: PipelineState) -> dict:
     print(f"[*] Running Learning Architect for: {state['topic']}")
-    l_plan = await architect.run(evidence=state["evidence_pack"])
+    l_plan = await architect.run(
+        evidence=state["evidence_pack"],
+        tracker=state.get("cost_tracker"),
+        project_id=state.get("project_id"),
+        job_id=state.get("content_job_id"),
+    )
     return {"learning_plan": l_plan}
 
 async def create_content_plan(state: PipelineState) -> dict:
@@ -237,15 +254,36 @@ async def create_content_plan(state: PipelineState) -> dict:
         # so skip the extra planner LLM call.
         return {"content_plan": None}
     print(f"[*] Running Content Planner for: {state['topic']}")
-    c_plan = await planner.run(evidence=state["evidence_pack"], learning_plan=state["learning_plan"])
+    c_plan = await planner.run(
+        evidence=state["evidence_pack"],
+        learning_plan=state["learning_plan"],
+        tracker=state.get("cost_tracker"),
+        project_id=state.get("project_id"),
+        job_id=state.get("content_job_id"),
+    )
     return {"content_plan": c_plan}
 
-async def _write_lesson_body(evidence: EvidencePack, section_title: str, lesson: dict) -> str:
+style_guide_agent = StyleGuideAgent()
+
+
+async def _write_lesson_body(
+    evidence: EvidencePack,
+    section_title: str,
+    lesson: dict,
+    brand_voice: str = "Not specified",
+    tracker: Any | None = None,
+    project_id: Any | None = None,
+    job_id: Any | None = None,
+) -> str:
     """
     Runs the Writer Agent for a single course lesson: wraps the lesson's
     planning-time `summary` brief into a one-section ContentPlan (mirroring
     the flat-article path's plan -> draft call) and returns the resulting
     markdown body for that lesson alone.
+
+    `brand_voice`, when set to a real voice fingerprint (see
+    StyleGuideAgent.run), is threaded into WriterAgent.run so later lessons
+    in the same course stay stylistically consistent with the first one.
     """
     lesson_plan = ContentPlan(
         content_type="course",
@@ -256,29 +294,54 @@ async def _write_lesson_body(evidence: EvidencePack, section_title: str, lesson:
             "content": lesson.get("summary", ""),
         }],
     )
-    draft = await writer.run(evidence=evidence, plan=lesson_plan)
+    draft = await writer.run(
+        evidence=evidence,
+        plan=lesson_plan,
+        brand_voice=brand_voice,
+        tracker=tracker,
+        project_id=project_id,
+        job_id=job_id,
+    )
     sections = draft.model_dump().get("sections") or []
     return "\n\n".join(s.get("body_markdown", "") for s in sections)
 
 
 async def generate_draft(state: PipelineState) -> dict:
+    tracker = state.get("cost_tracker")
+    project_id = state.get("project_id")
+    job_id = state.get("content_job_id")
     course_outline = state.get("course_outline")
     if state.get("content_type") == "course" and course_outline:
         print(f"[*] Running Writer Agent per-lesson (course) for: {state['topic']}")
         sections_out = []
+        # Brand voice fingerprint: generated once, from the very first lesson
+        # written, then reused verbatim for every subsequent lesson so the
+        # whole course reads in one consistent voice instead of drifting
+        # lesson-to-lesson.
+        brand_voice = "Not specified"
+        voice_established = False
         for section in course_outline.get("sections", []) or []:
             lessons_out = []
             for lesson in section.get("lessons", []) or []:
                 markdown_body = await _write_lesson_body(
-                    state["evidence_pack"], section.get("title", ""), lesson
+                    state["evidence_pack"],
+                    section.get("title", ""),
+                    lesson,
+                    brand_voice=brand_voice,
+                    tracker=tracker,
+                    project_id=project_id,
+                    job_id=job_id,
                 )
+                if not voice_established:
+                    brand_voice = await style_guide_agent.run(markdown_body)
+                    voice_established = True
                 image_prompt = lesson.get("title", "") or section.get("title", "")
                 lessons_out.append({
                     "title": lesson.get("title", ""),
                     "markdown_body": markdown_body,
                     "sort_order": lesson.get("sort_order", 0),
                     "image_prompt": image_prompt,
-                    "image_url": generate_placeholder_image(image_prompt),
+                    "image_url": await get_section_image(image_prompt),
                 })
             sections_out.append({
                 "title": section.get("title", ""),
@@ -293,34 +356,188 @@ async def generate_draft(state: PipelineState) -> dict:
         return {"draft_json": draft_json}
 
     print(f"[*] Running Writer Agent for: {state['topic']}")
-    draft = await writer.run(evidence=state["evidence_pack"], plan=state["content_plan"])
+    draft = await writer.run(
+        evidence=state["evidence_pack"],
+        plan=state["content_plan"],
+        revision_feedback=state.get("revision_feedback", ""),
+        tracker=tracker,
+        project_id=project_id,
+        job_id=job_id,
+    )
     draft_json = draft.model_dump()
     for section in draft_json.get("sections", []) or []:
         image_prompt = section.get("title", "")
         section["image_prompt"] = image_prompt
-        section["image_url"] = generate_placeholder_image(image_prompt)
+        section["image_url"] = await get_section_image(image_prompt)
     return {"draft_json": draft_json}
 
+def _flatten_draft_markdown(draft: dict) -> str:
+    """
+    Flattens a draft dict's `sections` into one plain markdown blob, used as
+    the query text for the second (draft-aware) retrieval pass in
+    run_fact_check. Mirrors the exact shape logic already duplicated in
+    backend/api/routers/generation.py::_flatten_sections_markdown and
+    backend/agents/quality_agent.py::_flatten_draft_text (flat article
+    sections are `{title, body_markdown}`, course sections are
+    `{title, lessons: [{title, markdown_body}, ...]}`) -- kept as a local
+    copy rather than importing from the router module, since routers/
+    generation.py is not a stable import target for the workflows package
+    (router modules pull in FastAPI app wiring) and this file already can't
+    cleanly reuse quality_agent's private helper either.
+    """
+    parts = []
+    for section in draft.get("sections") or []:
+        title = section.get("title", "")
+        lessons = section.get("lessons")
+        if lessons is not None:
+            parts.append(f"## {title}")
+            for lesson in lessons:
+                lesson_title = lesson.get("title", "")
+                lesson_body = (
+                    lesson.get("markdown_body")
+                    or lesson.get("markdown")
+                    or lesson.get("content")
+                    or ""
+                )
+                parts.append(f"### {lesson_title}\n\n{lesson_body}")
+        else:
+            body = section.get("body_markdown", "")
+            parts.append(f"## {title}\n\n{body}")
+    return "\n\n".join(parts)
+
+
+def _dedupe_chunks(*chunk_lists: list[str] | None) -> list[str]:
+    """
+    Unions multiple chunk-text lists, deduplicating by exact text while
+    preserving first-seen order. Used to union the pipeline's existing
+    (web-discovered + approved) context_chunks with a second, draft-aware
+    retrieval pass in run_fact_check without dropping either side --
+    replacing context_chunks outright would drop PENDING web-discovered
+    chunks that similarity_search's APPROVED/AUTO_APPROVED-only filter
+    excludes.
+    """
+    seen: set[str] = set()
+    out: list[str] = []
+    for chunks in chunk_lists:
+        for chunk in chunks or []:
+            if chunk not in seen:
+                seen.add(chunk)
+                out.append(chunk)
+    return out
+
+
 async def run_fact_check(state: PipelineState) -> dict:
+    from backend.retrieval import vector_store
+
     print(f"[*] Fact Checking...")
-    res = await fact_checker.run(draft=state["draft_json"], evidence=state["evidence_pack"])
-    return {"is_approved": res.passed}
+
+    draft = state["draft_json"]
+    project_id_raw = state.get("project_id")
+    knowledge_pack_id_raw = _resolve_knowledge_pack_id(state)
+
+    draft_aware_chunks: list[str] = []
+    if project_id_raw:
+        try:
+            project_id = uuid.UUID(project_id_raw)
+            knowledge_pack_id = uuid.UUID(knowledge_pack_id_raw) if knowledge_pack_id_raw else None
+            query_text = _flatten_draft_markdown(draft)
+            if query_text.strip():
+                results = vector_store.similarity_search(
+                    project_id,
+                    query=query_text,
+                    knowledge_pack_id=knowledge_pack_id,
+                    top_k=settings.fact_check_context_top_k,
+                )
+                for chunk in results:
+                    draft_aware_chunks.append(f"[Source: {chunk['url']}]\n{chunk['text']}")
+        except Exception as e:
+            logger.error(f"[run_fact_check] draft-aware retrieval failed: {e}")
+
+    source_chunks = _dedupe_chunks(state.get("context_chunks"), draft_aware_chunks)
+
+    res = await fact_checker.run(
+        draft=draft,
+        evidence=state["evidence_pack"],
+        source_chunks=source_chunks,
+        tracker=state.get("cost_tracker"),
+        project_id=state.get("project_id"),
+        job_id=state.get("content_job_id"),
+    )
+    return {"is_approved": res.passed, "context_chunks": source_chunks}
 
 async def run_citation_check(state: PipelineState) -> dict:
     if not state.get("is_approved", True): return state
     print(f"[*] Citation Checking...")
-    res = await citation_checker.run(draft=state["draft_json"])
+    res = await citation_checker.run(
+        draft=state["draft_json"],
+        tracker=state.get("cost_tracker"),
+        project_id=state.get("project_id"),
+        job_id=state.get("content_job_id"),
+    )
     return {"is_approved": res.passed}
 
 async def quality_check(state: PipelineState) -> dict:
     if not state.get("is_approved", True): return state
     print(f"[*] Quality Auditing...")
-    report = await auditor.run(draft=state["draft_json"])
+
+    evidence_pack = state.get("evidence_pack")
+    # Grounding proxy: the pipeline is considered "grounded" when the
+    # Evidence Pack actually carries real source citations rather than
+    # having been synthesized purely from the ResearchAgent's own internal
+    # knowledge with no external context (see ResearchAgent.run: with no
+    # context_chunks, the prompt is told to "rely on internal knowledge
+    # safely" and the resulting EvidencePack.citations comes back empty/
+    # placeholder). `citations` non-empty is the only signal EvidencePack
+    # models today for "were real sources used."
+    is_grounded = bool(evidence_pack and evidence_pack.citations)
+
+    report = await auditor.run(
+        draft=state["draft_json"],
+        source_chunks=state.get("context_chunks"),
+        is_grounded=is_grounded,
+        tracker=state.get("cost_tracker"),
+        project_id=state.get("project_id"),
+        job_id=state.get("content_job_id"),
+    )
     return {"quality_report": report.model_dump(), "is_approved": report.passed}
+
+
+def _format_revision_feedback(quality_report: dict | None) -> str:
+    """
+    Builds a human-readable revision_feedback string from a stored
+    QualityReport dict's `issues` and `narrative_voice_issues`, so the next
+    generate_draft -> writer.run call actually receives concrete, actionable
+    feedback instead of the loop silently discarding the report (the bug
+    this closes -- `revise` previously only incremented revisions_count).
+    """
+    if not quality_report:
+        return ""
+
+    lines: list[str] = []
+
+    feedback = quality_report.get("feedback")
+    if feedback:
+        lines.append(f"- {feedback}")
+
+    for issue in quality_report.get("issues") or []:
+        lines.append(f"- {issue}")
+
+    for voice_issue in quality_report.get("narrative_voice_issues") or []:
+        section_title = voice_issue.get("section_title", "")
+        rule = voice_issue.get("rule_violated", "")
+        detail = voice_issue.get("detail", "")
+        lines.append(f"- [{section_title}] {rule}: {detail}")
+
+    return "\n".join(lines)
+
 
 async def revise(state: PipelineState) -> dict:
     print(f"[*] Revisions count incremented: {state['revisions_count']} -> {state['revisions_count'] + 1}")
-    return {"revisions_count": state["revisions_count"] + 1}
+    revision_feedback = _format_revision_feedback(state.get("quality_report"))
+    return {
+        "revisions_count": state["revisions_count"] + 1,
+        "revision_feedback": revision_feedback,
+    }
 
 def should_revise(state: PipelineState) -> str:
     """
