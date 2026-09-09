@@ -47,10 +47,29 @@ QUALITY_WEIGHTS_V1 = {
     "geo_score": 0.05,
 }
 
+# v2 adds a ninth dimension, "narrative_voice_score" -- does the content read
+# in a consistent, engaging voice rather than generic/robotic prose. All
+# weights are rebalanced (still summing to 1.0) so the new dimension carries
+# real weight without disturbing the relative ordering established in v1
+# (factuality/citation/source_integrity still weighted highest; seo/geo still
+# smallest).
+QUALITY_WEIGHTS_V2 = {
+    "factuality_score": 0.22,
+    "citation_score": 0.13,
+    "source_integrity_score": 0.13,
+    "learning_quality_score": 0.13,
+    "narrative_voice_score": 0.13,
+    "originality_score": 0.09,
+    "readability_score": 0.09,
+    "seo_score": 0.04,
+    "geo_score": 0.04,
+}
+
 QUALITY_SCORING_VERSION = "v1"
 
 QUALITY_WEIGHTS_BY_VERSION = {
-    QUALITY_SCORING_VERSION: QUALITY_WEIGHTS_V1,
+    "v1": QUALITY_WEIGHTS_V1,
+    "v2": QUALITY_WEIGHTS_V2,
 }
 
 # Deterministic PASS/FAIL constants (plan section 8). `passed` is computed
@@ -100,28 +119,30 @@ def compute_overall_quality_score(
             `report_scores`, if any score is outside [0, 100], if `weights`
             contains an unknown key, or if `version` is not known.
     """
-    missing = set(QUALITY_WEIGHTS_V1) - set(report_scores)
-    if missing:
-        raise ValueError(f"Missing required quality dimension(s): {sorted(missing)}")
-
-    scores = {key: report_scores[key] for key in QUALITY_WEIGHTS_V1}
-    for name, value in scores.items():
-        if value is None or not 0 <= value <= 100:
-            raise ValueError(f"{name} must be between 0 and 100, got {value!r}")
-
     base_weights = QUALITY_WEIGHTS_BY_VERSION.get(version)
     if base_weights is None:
         raise ValueError(f"Unknown quality scoring version: {version!r}")
 
+    required_keys = set(base_weights)
+
+    missing = required_keys - set(report_scores)
+    if missing:
+        raise ValueError(f"Missing required quality dimension(s): {sorted(missing)}")
+
+    scores = {key: report_scores[key] for key in required_keys}
+    for name, value in scores.items():
+        if value is None or not 0 <= value <= 100:
+            raise ValueError(f"{name} must be between 0 and 100, got {value!r}")
+
     effective_weights = dict(base_weights)
     if weights:
-        unknown = set(weights) - set(QUALITY_WEIGHTS_V1)
+        unknown = set(weights) - required_keys
         if unknown:
             raise ValueError(f"Unknown weight key(s): {sorted(unknown)}")
         effective_weights.update(weights)
 
     overall_score = sum(
-        scores[key] * effective_weights[key] for key in QUALITY_WEIGHTS_V1
+        scores[key] * effective_weights[key] for key in required_keys
     )
     return {
         "overall_score": round(overall_score, 4),
@@ -138,18 +159,37 @@ def determine_pass(
     overall_score: float,
     pass_threshold: float = QUALITY_PASS_THRESHOLD,
     min_dimension_floor: float = QUALITY_MIN_DIMENSION_FLOOR,
+    version: str = QUALITY_SCORING_VERSION,
 ) -> bool:
     """Deterministically decide PASS/FAIL for a QualityReport.
 
     Pure function of numbers already computed -- no LLM judgment call. A
     report passes only if the weighted overall score clears
-    `pass_threshold` AND every individual dimension clears
-    `min_dimension_floor` (so no single very-low dimension can be masked by
-    strong scores elsewhere in the weighted average).
+    `pass_threshold` AND every individual dimension required by `version`
+    clears `min_dimension_floor` (so no single very-low dimension can be
+    masked by strong scores elsewhere in the weighted average).
+
+    `version` determines which set of dimension keys must be present and
+    checked against the floor -- it must match the version that was used to
+    produce `overall_score` (see `compute_overall_quality_score`), since a
+    different version may score a different set of dimensions (e.g. v2 adds
+    "narrative_voice_score").
+
+    Raises:
+        ValueError: if `version` is not known, or if any dimension required
+            by that version is missing from `report_scores`.
     """
+    required_keys = QUALITY_WEIGHTS_BY_VERSION.get(version)
+    if required_keys is None:
+        raise ValueError(f"Unknown quality scoring version: {version!r}")
+
+    missing = set(required_keys) - set(report_scores)
+    if missing:
+        raise ValueError(f"Missing required quality dimension(s): {sorted(missing)}")
+
     if overall_score < pass_threshold:
         return False
     return all(
         report_scores.get(key) is not None and report_scores[key] >= min_dimension_floor
-        for key in QUALITY_WEIGHTS_V1
+        for key in required_keys
     )
