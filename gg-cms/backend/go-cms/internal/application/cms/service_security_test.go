@@ -107,6 +107,13 @@ func (r *stubCategoryRepo) FindByReviewerGroupID(_ context.Context, _ uint) ([]*
 }
 func (r *stubCategoryRepo) AddReviewerGroup(_ context.Context, _, _ uint) error    { return nil }
 func (r *stubCategoryRepo) RemoveReviewerGroup(_ context.Context, _, _ uint) error { return nil }
+func (r *stubCategoryRepo) GetContentCategories(_ context.Context, _ uint, _ string) ([]*entity.ContentCategory, error) {
+	return nil, nil
+}
+func (r *stubCategoryRepo) SetContentCategories(_ context.Context, _ uint, _ string, _ []entity.ContentCategory) error {
+	return nil
+}
+
 
 // stubGroupRepo implements repository.GroupRepository.
 // FindByUserID is the only method that matters for security tests.

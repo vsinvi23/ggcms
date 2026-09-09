@@ -145,7 +145,7 @@ func main() {
 		LearningPath:    lpsvc.NewService(learningPathRepo),
 		Audit:           auditsvc.NewService(auditLogRepo),
 		Settings:        settingsSvc,
-		Personalization: personalizationsvc.NewService(userProfileRepo, articleRepo, courseRepo, enrollmentRepo, tagRepo),
+		Personalization: personalizationsvc.NewService(userProfileRepo, articleRepo, courseRepo, enrollmentRepo, tagRepo, topicRepo),
 	}
 
 	// ── HTTP Router ───────────────────────────────────────────────────────

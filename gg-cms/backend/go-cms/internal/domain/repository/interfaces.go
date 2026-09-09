@@ -71,6 +71,15 @@ type GroupRepository interface {
 	FindByUserID(ctx context.Context, userID uint) ([]entity.Group, error)
 }
 
+type DomainRepository interface {
+	Create(ctx context.Context, domain *entity.Domain) error
+	Update(ctx context.Context, domain *entity.Domain) error
+	Delete(ctx context.Context, id uint) error
+	FindByID(ctx context.Context, id uint) (*entity.Domain, error)
+	FindBySlug(ctx context.Context, slug string) (*entity.Domain, error)
+	FindAll(ctx context.Context) ([]*entity.Domain, error)
+}
+
 type CategoryRepository interface {
 	Create(ctx context.Context, category *entity.Category) error
 	Update(ctx context.Context, category *entity.Category) error
@@ -93,7 +102,11 @@ type CategoryRepository interface {
 	AddReviewerGroup(ctx context.Context, categoryID, groupID uint) error
 	// RemoveReviewerGroup removes a group from the category's reviewer pool.
 	RemoveReviewerGroup(ctx context.Context, categoryID, groupID uint) error
+	// ContentCategory multi-category assignments
+	GetContentCategories(ctx context.Context, contentID uint, contentType string) ([]*entity.ContentCategory, error)
+	SetContentCategories(ctx context.Context, contentID uint, contentType string, categories []entity.ContentCategory) error
 }
+
 
 type ArticleRepository interface {
 	Create(ctx context.Context, article *entity.Article) error

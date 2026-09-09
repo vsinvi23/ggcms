@@ -550,3 +550,83 @@ export interface WorkflowEventResponse {
   titleSnapshot?: string;
   createdAt: string;
 }
+
+// ============================================
+// DOMAIN & TOPIC TYPES
+// ============================================
+
+export interface DomainDto {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TopicDto {
+  id: number;
+  name: string;
+  slug: string;
+  entity_type: string;
+  description?: string;
+  status: string;
+  merged_into_topic_id?: number;
+  parent_topic_id?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TopicAliasDto {
+  id: number;
+  topic_id: number;
+  alias: string;
+  normalized_alias?: string;
+  status: string;
+}
+
+export interface TopicRelationshipDto {
+  id?: number;
+  source_topic_id: number;
+  target_topic_id: number;
+  relationship_type: string;
+  weight: number;
+  confidence: number;
+  source_type: string;
+  source_reference?: string;
+  status: string;
+}
+
+export interface ContentTopicDto {
+  content_id: number;
+  content_type: string;
+  topic_id: number;
+  role: string;
+  weight: number;
+}
+
+export interface TopicResolutionDto {
+  status: 'MATCH' | 'SUGGESTION' | 'NEW';
+  matched_topic?: TopicDto;
+  suggested_topics?: TopicDto[];
+  confidence: number;
+  raw_input: string;
+}
+
+export interface RecommendationScoreDto {
+  content_id: number;
+  content_type: string;
+  title?: string;
+  description?: string;
+  thumbnail_url?: string;
+  score: number;
+  reason_code: string;
+  reason: string;
+}
+
+export interface RecommendationResponseDto {
+  content_id: number;
+  recommendations: RecommendationScoreDto[];
+}
+
