@@ -537,4 +537,8 @@ class AppSetting(BaseModel):
     factory_sync_secret: str | None = None
     tavily_api_key: str | None = None
     web_search_max_results: int | None = None
+    fact_check_context_top_k: int | None = None
+    image_provider: str | None = None
+    pexels_api_key: str | None = None
+    image_generation_enabled: bool | None = None
     updated_at: datetime = Field(default_factory=utcnow)
