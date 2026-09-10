@@ -406,6 +406,82 @@ A separate implementation/UI specification proposing a default category tree, a 
 
 ---
 
+## 14. Implementation audit — P0/P1 backend, gg-cms (2026-09-09)
+
+P0 (knowledge-graph hardening, provenance table, category seed) and part of P1 (domains/content_categories schema, recommendation candidate generators) were implemented against this document between the previous revision and this one. A direct code audit — not a document review — found the schema/migration layer solid but the recommendation-engine *service* layer had real logic bugs, since fixed and covered by new tests.
+
+### 14.1 Schema layer — confirmed correct, no changes needed
+
+Migrations `031_p0_knowledge_graph.sql` (topics.status/merged_into_topic_id/parent_topic_id, topic_aliases.normalized_alias, topic_relationships weight/confidence/source_type/etc., content_topics.role/weight), `032_seed_default_categories.sql` (the §7 tree, idempotent), `033_content_generation_runs.sql`, `034_domains_and_content_categories.sql` (domains table, `categories.domain_id`, `content_categories` junction, Phase-A backfill) all match §4/§5/§7 exactly, verified column-by-column against the actual entity structs. `topic_repository.go`'s `ResolveTopic` (MATCH/SUGGESTION/NEW) and `FindReachable` (recursive CTE) are correctly implemented per §4.
+
+### 14.2 Recommendation service — bugs found and fixed
+
+`internal/application/personalization/service.go` had four real defects, not just missing features — confirmed by `go vet` flagging one directly:
+
+1. **`RankCandidates` dead-code dedup bug** — `scored = append(scored)` was a no-op (flagged by `go vet`: "append with no values") followed by a broken peek-back conditional that compared the wrong loop iteration's state. Fixed: the loop now appends exactly one `RecommendationScore` per deduplicated candidate, unconditionally.
+2. **`GenerateTopicCandidates` returned topic IDs as if they were content** — it emitted `ContentID: <topic's ID>`, `ContentType: "TOPIC"` for every topic attached to the current content, instead of finding *other content* sharing that topic. Fixed: added `TopicRepository.FindContentByTopicIDs` (new repository method) and rewired the generator to look up other `content_topics` rows sharing any of the current content's topics, using `content_topics.weight` as the signal strength per the §4 worked example.
+3. **`GenerateRelationshipCandidates` had the same class of bug** — it traversed the graph correctly via `FindReachable` but then returned the *reachable topic's* ID as `ContentID` with `ContentType: "TOPIC_RELATION"`. Fixed: for each reachable topic, look up content tagged with it (via the same new `FindContentByTopicIDs`) and return that content, carrying the relationship's weight as the signal value.
+4. **`GenerateCategoryCandidates` ignored the current content's actual category** — it fetched up to 50 published articles unconditionally with a flat `0.5` score, considering no courses and no category filter at all. Fixed: resolves the current content's `CategoryID` via the existing `FindByID`, then filters both articles and courses to that category using `ArticleFilter.CategoryID`/`CourseFilter.CategoryID`, which already existed on the filter structs and simply weren't being passed.
+
+Fix verification: `go build ./...`, `go vet ./...` (the flagged warning is gone), and `go test ./internal/... -short -count=1` all pass with zero regressions. `internal/application/personalization/recommendation_test.go` was rewritten with realistic fixtures — a `stubTopicRepository` with actual content-topic/relationship graph data (previously passed as `nil`, which made the two topic-based generators unconditionally short-circuit to `nil` and never actually execute), and category-filter-honoring article/course stubs (previously hardcoded to ignore whatever filter was passed) — with new test cases asserting the generators return the *content* IDs/types the fixtures expect, which the pre-fix code could not have produced (it returned `ContentType: "TOPIC"`/`"TOPIC_RELATION"`, never `"ARTICLE"`/`"COURSE"`, for those two generators).
+
+### 14.3 Confirmed gaps — not fixed in this pass, flagged for a follow-up implementation pass
+
+- **No caching layer.** §6's Redis + `singleflight` caching requirement (to ship concurrently with, not after, richer candidate generation) has not been implemented — no Redis/`singleflight` reference exists anywhere in the recommendation path. This is real infrastructure work (introducing a Redis client/wiring), not a logic fix, and was correctly scoped out of this bug-fix pass rather than folded in silently.
+- **`content_categories`/`domains` are schema-only.** No `DomainRepository`/`ContentCategoryRepository` consumers exist at the service/handler layer — only the raw repository files. The staged `CategoryID` → `content_categories` migration (§5, phases A–D) is still at Phase A (the backfill in migration 034); `RequiredApprovals` resolution still reads the single `CategoryID`-resolved category directly, which is correct per the locked approval-policy decision but confirms phases B–D haven't started. This is a substantial follow-up (new repository + service + handler + routes), not a quick fix.
+- **No admin/editor frontend beyond the service/hook layer.** `topicService.ts`/`useTopics.ts` exist; no `TopicMultiSelect`, admin CRUD page, or category-picker updates yet.
+
+## 15. Content-factory autonomous topic-flow — investigation and redesign proposal (2026-09-09, analysis only, not implemented)
+
+§5's P2 "factory classification ownership" decision states the factory must only *propose* free-text topic/category candidates, with gg-cms resolving every proposal via the MATCH/SUGGESTION/NEW workflow (§4) before it becomes canonical. A direct trace of the actual content-factory pipeline confirms this has not been implemented, and reveals the problem is more nuanced than originally assumed.
+
+### 15.1 What the pipeline actually does today (verified, file:line cited)
+
+Two disconnected topic representations exist inside content-factory, neither reconciled against gg-cms:
+
+1. **`Opportunity.canonical_topic`** (`models/domain.py:243`) is computed by `canonicalize_topic()` (`services/dedup.py:125-146` — pure local lowercase/punctuation-strip/stopword-removal) and used *only* for factory-internal duplicate-`Opportunity` detection (`api/routers/opportunities.py:180-226` → `dedup.py:185-205`, string-matching against other `Opportunity` rows in the same project's own file store). It is never read again after that dedup step.
+2. **The raw `opportunity.topic` string** (free text, zero normalization) is what actually drives generation: `orchestration/scheduler.py:84-104` (`_select_topic`) finds-or-creates a `KnowledgePack` keyed by exact string match against `KnowledgePack.topic` (`domain.py:183` — which has no `canonical_topic` field at all), and that raw string flows into `orchestration/content_job_orchestrator.py:169/182` and ultimately the LLM prompt in `agents/content_planner_agent.py:46`.
+
+Net effect: an autonomous run generating content for "OAuth2" and a separate run for "OAuth 2.0" creates two entirely disconnected `KnowledgePack`s — no dedup, no resolution — because pack-keying happens on the raw string, and the local `canonicalize_topic()` normalization that *does* exist is wired to a different, downstream-irrelevant dedup step.
+
+There is also **no gg-cms-side endpoint to call yet.** `TopicRepository.ResolveTopic` (`topic_repository.go:141-203`) implements the MATCH/SUGGESTION/NEW logic correctly at the repository layer, but is not wired to any HTTP handler or route — confirmed by grep, zero hits in `topic_handler.go`/`router.go`. And on the factory side, `schemas/sync_payload.py` and `exporters/ggcms_client.py`'s `build_sync_payload` (lines 74-183) send no topic or category field to gg-cms at all — not even the free-text proposal §5's P2 decision assumed would already be flowing. The gap is not "the proposal is unresolved" — it's "the proposal is never sent, and there's nothing on the gg-cms side yet to send it to."
+
+### 15.2 Proposed redesign
+
+1. **Expose topic resolution as a gg-cms HTTP endpoint** (e.g. `POST /api/topics/resolve`, request `{raw_name: string}`, response mirroring `TopicResolutionResult`: `status: MATCH|SUGGESTION|NEW`, `matched_topic`/`suggested_topics`, `confidence`). This is a prerequisite for everything below and is itself a small, well-scoped gg-cms gap — the logic already exists in `topic_repository.go`, only the handler/route wiring is missing. Candidate for the next gg-cms implementation pass, not built in this turn.
+
+2. **Insert resolution into `_select_topic`** (`scheduler.py:84-104`), before pack lookup/creation — this is the single chokepoint where a raw topic string is about to become a `KnowledgePack` key. Call the new resolve endpoint with `opportunity.topic`; on `MATCH`, use the *canonical topic slug* (not the raw string) as the `KnowledgePack.topic` key. This alone fixes the OAuth2/OAuth-2.0-create-separate-packs problem, independent of anything involving `canonical_topic`.
+
+3. **Retire or explicitly repurpose `canonicalize_topic()`/`Opportunity.canonical_topic`.** Once real resolution exists, the local string-normalization mechanism is either redundant (gg-cms's resolver does the same job, better, against the actual canonical registry) or should be demoted to a cheap pre-filter that only catches *identical* raw strings before the real resolution call, to avoid a network round-trip for exact duplicates within the same discovery batch. This needs to be an explicit decision made in the next implementation pass — not silently deleted, and not left as dead/misleading code that looks like it's doing canonicalization when it isn't.
+
+4. **Governance policy for a fully autonomous pipeline.** §4's `SUGGESTION` tier assumes a human editor decides — but a scheduler-driven autonomous run has no human in the loop by design. Proposed policy: `MATCH` and `NEW` proceed automatically; `SUGGESTION` results **pause that specific content job** (not the whole scheduler pass) and queue it for editor review, rather than either blocking the entire autonomous run or silently guessing. This is a genuinely new decision this document has not made yet and should be locked explicitly before factory integration ships, the same way the approval-policy and ContentResource decisions were locked explicitly rather than left implicit.
+
+5. **Extend `SyncPayload`/`build_sync_payload`** with a `topic_slugs: list[str]` field, populated from the resolved (not raw) topic per step 2, so gg-cms's `content_topics` table actually gets populated on import — today it gets nothing.
+
+```
+Content Factory                                    GG-CMS
+  Opportunity.topic (raw)
+        │
+        ▼
+  _select_topic()  ──── POST /api/topics/resolve ──▶  ResolveTopic (MATCH/SUGGESTION/NEW)
+        │                                                    │
+        │◀───────────── canonical slug or SUGGESTION ────────┘
+        ▼
+  KnowledgePack.topic = canonical slug (on MATCH)
+        │                                          SUGGESTION → queue content job for editor review
+        ▼                                          (does not block the scheduler pass)
+  ContentJob → generation pipeline
+        │
+        ▼
+  SyncPayload{ ..., topic_slugs: [...] } ──POST /api/import/ingest──▶ content_topics populated
+```
+
+**Files that would change** — content-factory: `orchestration/scheduler.py` (`_select_topic`), `services/dedup.py` (`canonicalize_topic` decision), `models/domain.py` (`Opportunity`/`KnowledgePack`), `schemas/sync_payload.py`, `exporters/ggcms_client.py`. gg-cms: `internal/interfaces/http/handler/topic_handler.go`, `internal/interfaces/http/router.go` (new resolve route).
+
+This is an analysis and proposal only, per the request — no code has been changed for Part 2. It should be reviewed and, if accepted, become its own scoped implementation pass (likely as part of §5's P2 factory-integration phase), separate from the P0/P1 backend fixes in §14.
+
+---
+
 ## Next step
 
-This document is implementation-ready per §13.4. Confirm with the user before launching the actual multi-agent implementation (via the Workflow tool) — that confirmation, not another architecture-document revision, is the next artifact.
+The P0/P1 backend bugs found in §14.2 are fixed and tested. The gaps in §14.3 (caching, content_categories/domains service layer, frontend) and the content-factory redesign in §15 require their own scoped implementation passes — none of them have been started. Confirm with the user which of these to take on next.

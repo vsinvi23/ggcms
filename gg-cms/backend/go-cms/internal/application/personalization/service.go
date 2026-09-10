@@ -420,6 +420,10 @@ func (s *service) GetRecommendationsByRequest(ctx context.Context, req Recommend
 	}, nil
 }
 
+// GenerateTopicCandidates finds other content sharing at least one topic with
+// req.ContentID/req.ContentType, via content_topics. The candidate's SignalValue
+// is the shared topic's content_topics.weight (role/weight from §4), not a flat
+// constant, so a PRIMARY-topic match scores higher than a MENTIONED one.
 func (s *service) GenerateTopicCandidates(ctx context.Context, req RecommendationRequest) ([]RecommendationCandidate, error) {
 	if req.ContentID == 0 || req.ContentType == "" || s.topicRepo == nil {
 		return nil, nil
@@ -429,22 +433,34 @@ func (s *service) GenerateTopicCandidates(ctx context.Context, req Recommendatio
 	if err != nil || len(topics) == 0 {
 		return nil, nil
 	}
+	topicIDs := make([]uint, len(topics))
+	for i, t := range topics {
+		topicIDs[i] = t.ID
+	}
+
+	entries, err := s.topicRepo.FindContentByTopicIDs(ctx, topicIDs, req.ContentID, req.ContentType, 50)
+	if err != nil {
+		return nil, err
+	}
 
 	var candidates []RecommendationCandidate
-	for _, top := range topics {
-		// Find articles & courses attached to this topic
-		// Using a simple candidates list with TOPIC_MATCH signal
+	for _, e := range entries {
 		candidates = append(candidates, RecommendationCandidate{
-			ContentID:   top.ID, // proxy signal
-			ContentType: "TOPIC",
+			ContentID:   e.ContentID,
+			ContentType: e.ContentType,
 			Signals: []CandidateSignal{
-				{SignalType: "TOPIC_MATCH", SignalValue: 0.9},
+				{SignalType: "TOPIC_MATCH", SignalValue: e.Weight},
 			},
 		})
 	}
 	return candidates, nil
 }
 
+// GenerateRelationshipCandidates traverses the topic graph one-to-two hops out from
+// req.ContentID's topics (via FindReachable) and returns other CONTENT tagged with
+// those reachable topics — not the topics themselves. Which relationship types count
+// depends on req.Mode: `next` filters to PREREQUISITE_OF/BUILDS_ON only; other modes
+// (`related`, `recommended`) consider all relationship types this generator traverses.
 func (s *service) GenerateRelationshipCandidates(ctx context.Context, req RecommendationRequest) ([]RecommendationCandidate, error) {
 	if req.ContentID == 0 || req.ContentType == "" || s.topicRepo == nil {
 		return nil, nil
@@ -465,21 +481,59 @@ func (s *service) GenerateRelationshipCandidates(ctx context.Context, req Recomm
 			if req.Mode == ModeNext && r.RelationshipType != "PREREQUISITE_OF" && r.RelationshipType != "BUILDS_ON" {
 				continue
 			}
-			candidates = append(candidates, RecommendationCandidate{
-				ContentID:   r.Topic.ID,
-				ContentType: "TOPIC_RELATION",
-				Signals: []CandidateSignal{
-					{SignalType: "RELATIONSHIP_MATCH", SignalValue: r.Weight},
-				},
-			})
+			entries, err := s.topicRepo.FindContentByTopicIDs(ctx, []uint{r.Topic.ID}, req.ContentID, req.ContentType, 20)
+			if err != nil {
+				continue
+			}
+			for _, e := range entries {
+				candidates = append(candidates, RecommendationCandidate{
+					ContentID:   e.ContentID,
+					ContentType: e.ContentType,
+					Signals: []CandidateSignal{
+						{SignalType: "RELATIONSHIP_MATCH", SignalValue: r.Weight},
+					},
+				})
+			}
 		}
 	}
 	return candidates, nil
 }
 
+// GenerateCategoryCandidates returns other published content in the same category as
+// req.ContentID (looked up via the content's own CategoryID), across both articles and
+// courses — not an unfiltered scan of all published articles.
 func (s *service) GenerateCategoryCandidates(ctx context.Context, req RecommendationRequest) ([]RecommendationCandidate, error) {
+	if req.ContentID == 0 || req.ContentType == "" {
+		return nil, nil
+	}
+
+	var categoryID *uint
+	switch req.ContentType {
+	case "ARTICLE":
+		a, err := s.articleRepo.FindByID(ctx, req.ContentID)
+		if err != nil || a == nil {
+			return nil, nil
+		}
+		categoryID = a.CategoryID
+	case "COURSE":
+		c, err := s.courseRepo.FindByID(ctx, req.ContentID)
+		if err != nil || c == nil {
+			return nil, nil
+		}
+		categoryID = c.CategoryID
+	default:
+		return nil, nil
+	}
+	if categoryID == nil {
+		return nil, nil
+	}
+
 	published := entity.CMSStatusPublished
-	articles, _, err := s.articleRepo.FindAll(ctx, repository.ArticleFilter{Status: &published}, 0, 50)
+	articles, _, err := s.articleRepo.FindAll(ctx, repository.ArticleFilter{Status: &published, CategoryID: categoryID}, 0, 50)
+	if err != nil {
+		return nil, err
+	}
+	courses, _, err := s.courseRepo.FindAll(ctx, repository.CourseFilter{Status: &published, CategoryID: categoryID}, 0, 50)
 	if err != nil {
 		return nil, err
 	}
@@ -492,6 +546,18 @@ func (s *service) GenerateCategoryCandidates(ctx context.Context, req Recommenda
 		candidates = append(candidates, RecommendationCandidate{
 			ContentID:   a.ID,
 			ContentType: "ARTICLE",
+			Signals: []CandidateSignal{
+				{SignalType: "CATEGORY_MATCH", SignalValue: 0.5},
+			},
+		})
+	}
+	for _, c := range courses {
+		if c.ID == req.ContentID && req.ContentType == "COURSE" {
+			continue
+		}
+		candidates = append(candidates, RecommendationCandidate{
+			ContentID:   c.ID,
+			ContentType: "COURSE",
 			Signals: []CandidateSignal{
 				{SignalType: "CATEGORY_MATCH", SignalValue: 0.5},
 			},
@@ -557,20 +623,17 @@ func (s *service) RankCandidates(ctx context.Context, candidates []Recommendatio
 			totalScore += 0.2
 		}
 
-		scored = append(scored)
-		if len(scored) == 0 || scored[len(scored)-1].ContentID != k.id {
-			scored = append(scored, RecommendationScore{
-				ContentID:   k.id,
-				ContentType: k.cType,
-				Score:       totalScore,
-				ReasonCode:  reasonCode,
-				Reason:      primaryReason,
-				Explanation: RecommendationExplanation{
-					Code:    reasonCode,
-					Message: primaryReason,
-				},
-			})
-		}
+		scored = append(scored, RecommendationScore{
+			ContentID:   k.id,
+			ContentType: k.cType,
+			Score:       totalScore,
+			ReasonCode:  reasonCode,
+			Reason:      primaryReason,
+			Explanation: RecommendationExplanation{
+				Code:    reasonCode,
+				Message: primaryReason,
+			},
+		})
 	}
 
 	// 4. Deterministic ordering: score DESC, content_id ASC

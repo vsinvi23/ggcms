@@ -274,6 +274,9 @@ type TopicRepository interface {
 	SetContentTopicEntries(ctx context.Context, contentID uint, contentType string, entries []entity.ContentTopic) error
 	ResolveTopic(ctx context.Context, rawName string) (*TopicResolutionResult, error)
 	FindReachable(ctx context.Context, topicID uint, maxDepth int) ([]*ReachableTopic, error)
+	// FindContentByTopicIDs returns other content_topics entries tagged with any of topicIDs,
+	// excluding the (excludeContentID, excludeContentType) pair, capped at limit rows.
+	FindContentByTopicIDs(ctx context.Context, topicIDs []uint, excludeContentID uint, excludeContentType string, limit int) ([]*entity.ContentTopic, error)
 }
 
 type ContentGenerationRunRepository interface {

@@ -84,6 +84,20 @@ func (r *topicRepository) FindBySlugs(ctx context.Context, slugs []string) ([]*e
 	return topics, err
 }
 
+func (r *topicRepository) FindContentByTopicIDs(ctx context.Context, topicIDs []uint, excludeContentID uint, excludeContentType string, limit int) ([]*entity.ContentTopic, error) {
+	if len(topicIDs) == 0 {
+		return nil, nil
+	}
+	var entries []*entity.ContentTopic
+	err := r.read.WithContext(ctx).
+		Where("topic_id IN ?", topicIDs).
+		Where("NOT (content_id = ? AND content_type = ?)", excludeContentID, excludeContentType).
+		Order("weight DESC").
+		Limit(limit).
+		Find(&entries).Error
+	return entries, err
+}
+
 func (r *topicRepository) GetContentTopics(ctx context.Context, contentID uint, contentType string) ([]*entity.Topic, error) {
 	var topics []*entity.Topic
 	err := r.read.WithContext(ctx).

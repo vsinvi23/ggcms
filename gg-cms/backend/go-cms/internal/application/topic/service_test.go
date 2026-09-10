@@ -181,6 +181,10 @@ func (m *mockTopicRepository) FindReachable(ctx context.Context, topicID uint, m
 	return reachable, nil
 }
 
+func (m *mockTopicRepository) FindContentByTopicIDs(ctx context.Context, topicIDs []uint, excludeContentID uint, excludeContentType string, limit int) ([]*entity.ContentTopic, error) {
+	return nil, nil
+}
+
 func TestTopicService_CreateAndResolve(t *testing.T) {
 	repo := newMockTopicRepository()
 	svc := topic.NewService(repo)
