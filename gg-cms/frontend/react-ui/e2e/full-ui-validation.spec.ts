@@ -91,4 +91,30 @@ test.describe('GG-CMS End-to-End Full UI & Page Validation Suite', () => {
     await page.waitForLoadState('networkidle');
     await expect(page.locator('body')).toBeVisible();
   });
+
+  test('4. Forgot Password & Reset Password UI Flow', async ({ page }) => {
+    // 1. Visit Forgot Password Page
+    await page.goto('http://localhost:8080/forgot-password');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('h2, div').filter({ hasText: /Forgot Password/i }).first()).toBeVisible();
+
+    const emailInput = page.locator('#email');
+    await emailInput.fill('geekadmin@geekgully.com');
+
+    const submitBtn = page.locator('button[type="submit"]');
+    await submitBtn.click();
+
+    // Verify submitted confirmation message
+    await expect(page.locator('text=If that email is registered')).toBeVisible();
+
+    // 2. Visit Reset Password Page with Code
+    await page.goto('http://localhost:8080/reset-password?code=test-token-code');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('h2, div').filter({ hasText: /Reset Password/i }).first()).toBeVisible();
+    await expect(page.locator('#new-password')).toBeVisible();
+    await expect(page.locator('#confirm-password')).toBeVisible();
+  });
 });
+
