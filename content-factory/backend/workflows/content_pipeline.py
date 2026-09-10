@@ -45,6 +45,11 @@ class PipelineState(TypedDict):
     # of running the flat article content-planning path.
     course_outline: Optional[dict]
     context_chunks: Optional[list[str]]
+    # Mode B (user-provided-source) flag. When true, quality_check hard-fails
+    # (forces is_approved=False) on originality_check's near_copy_flag rather
+    # than only surfacing it as a warning issue -- see quality_check below.
+    # Absent/False preserves Mode A's existing warn-only behavior exactly.
+    strict_originality: Optional[bool]
     evidence_pack: Optional[EvidencePack]
     learning_plan: Optional[LearningPlan]
     content_plan: Optional[ContentPlan]
@@ -90,11 +95,20 @@ async def research_web(state: PipelineState) -> dict:
     knowledge_pack_ids = state.get("knowledge_pack_ids") or []
     knowledge_pack_id = uuid.UUID(knowledge_pack_ids[0]) if knowledge_pack_ids else None
 
-    context_chunks: list[str] = []
+    # Preserve any chunks already seeded into state (e.g. Mode B's
+    # source_generation router seeding one user-supplied source's chunks) --
+    # this function used to build context_chunks from scratch and return it,
+    # silently dropping the seed.
+    context_chunks: list[str] = list(state.get("context_chunks") or [])
 
     approved_count = vector_store.count_approved_sources(project_id, knowledge_pack_id)
     has_sources = approved_count > 0
-    should_search = (not has_sources) or bool(state.get("enable_web_research"))
+    # Mode B (strict_originality) is single-source by design -- never falls
+    # back to web search just because the project happens to have zero (or
+    # unrelated) approved sources elsewhere.
+    should_search = not state.get("strict_originality") and (
+        (not has_sources) or bool(state.get("enable_web_research"))
+    )
 
     if has_sources:
         approved_chunks = vector_store.similarity_search(
@@ -500,7 +514,10 @@ async def quality_check(state: PipelineState) -> dict:
         project_id=state.get("project_id"),
         job_id=state.get("content_job_id"),
     )
-    return {"quality_report": report.model_dump(), "is_approved": report.passed}
+    is_approved = report.passed
+    if state.get("strict_originality") and report.near_copy_flag:
+        is_approved = False
+    return {"quality_report": report.model_dump(), "is_approved": is_approved}
 
 
 def _format_revision_feedback(quality_report: dict | None) -> str:

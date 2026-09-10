@@ -349,6 +349,13 @@ class ContentItem(BaseModel):
     # run_pipeline_job in backend/api/routers/generation.py). Managed via
     # POST/DELETE /api/content/{id}/resources in backend/api/routers/content.py.
     resources: list[ResourceLink] = Field(default_factory=list)
+    # Best-effort, non-blocking topic/category name suggestions from ggcms's
+    # existing GET /api/topics /GET /api/categories (see
+    # backend/services/taxonomy_suggest.py) -- explicitly a suggestion for a
+    # human reviewer, NOT a resolved taxonomy assignment (no MATCH/SUGGESTION/
+    # NEW resolver endpoint exists yet on either side). None if never
+    # computed (Mode A) or if the ggcms lookup failed.
+    taxonomy_suggestions: dict | None = None
     # Old 11-value CHECK constraint dropped -- no DB to enforce it. See
     # module docstring for rationale.
     status: Literal["draft", "exported"] = "draft"

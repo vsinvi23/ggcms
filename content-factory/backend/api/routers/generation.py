@@ -102,6 +102,8 @@ async def run_pipeline_job(
     course_outline: Optional[dict] = None,
     opportunity_id: Optional[uuid.UUID] = None,
     content_job_id: Optional[uuid.UUID] = None,
+    seed_context_chunks: Optional[List[str]] = None,
+    strict_originality: bool = False,
 ) -> None:
     """
     Background task: runs the LangGraph content pipeline end-to-end, keeping
@@ -116,6 +118,14 @@ async def run_pipeline_job(
     (backend/orchestration/content_job_orchestrator.py) passes it; the
     existing `/api/generate` and `/api/content/{id}/refresh` call sites are
     unaffected (it defaults to None).
+
+    `seed_context_chunks`/`strict_originality` back Mode B (user-provided-
+    source generation, see backend/api/routers/source_generation.py): when
+    given, `seed_context_chunks` becomes the pipeline's starting
+    context_chunks (so research_web's web-search branch augments rather than
+    replaces them) and `strict_originality=True` makes quality_check hard-
+    fail on originality_check's near_copy_flag instead of only warning.
+    Both default to no-ops for every existing call site.
     """
     job = file_store.get_job(project_id, job_id)
     if job is None:
@@ -169,7 +179,8 @@ async def run_pipeline_job(
         "enable_web_research": enable_web_research,
         "content_type": content_type,
         "course_outline": course_outline,
-        "context_chunks": None,
+        "context_chunks": seed_context_chunks,
+        "strict_originality": strict_originality,
         "revisions_count": 0,
         "is_approved": False,
         "evidence_pack": None,
@@ -242,6 +253,16 @@ async def run_pipeline_job(
         # Generation always leaves a content item in "draft"; only the export
         # router (a later stage) flips it to "exported".
         content_item.generated_at = utcnow()
+
+        if is_approved:
+            try:
+                from backend.services.taxonomy_suggest import suggest_taxonomy
+                content_item.taxonomy_suggestions = await suggest_taxonomy(
+                    content_item.title, content_item.summary
+                )
+            except Exception as e:
+                logger.warning(f"[run_pipeline_job] taxonomy suggestion failed (non-blocking): {e}")
+
         await file_store.save_content_item(project_id, content_item)
 
         version = ContentVersion(

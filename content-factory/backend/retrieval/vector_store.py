@@ -174,6 +174,44 @@ def similarity_search(
     ]
 
 
+def get_chunks_for_source(project_id: ProjectId, source_id: ProjectId) -> list[dict]:
+    """
+    Returns every chunk belonging to `source_id`'s KnowledgeDocument(s), in
+    chunk_index order, regardless of the source's review_status.
+
+    Unlike similarity_search/count_approved_sources, this does NOT gate on
+    APPROVED/AUTO_APPROVED -- it backs Mode B (user-provided-source
+    generation, see backend/api/routers/source_generation.py), where the
+    caller is explicitly supplying this exact source right now, so the
+    discovery-trust question similarity_search's gate exists for doesn't
+    apply.
+
+    Each result: {"chunk_id", "document_id", "text", "url"} (no "distance" --
+    this isn't ranked, it's the full set of chunks for one source).
+    """
+    documents = [
+        d for d in file_store.list_knowledge_documents(project_id)
+        if str(d.source_id) == str(source_id)
+    ]
+    if not documents:
+        return []
+    document_ids = {str(d.id) for d in documents}
+
+    source = file_store.get_source(project_id, source_id)
+    url = source.url if source else None
+
+    chunks = [
+        c for c in file_store.list_knowledge_chunks(project_id)
+        if str(c.document_id) in document_ids
+    ]
+    chunks.sort(key=lambda c: c.chunk_index)
+
+    return [
+        {"chunk_id": c.id, "document_id": c.document_id, "text": c.text, "url": url}
+        for c in chunks
+    ]
+
+
 def count_approved_sources(
     project_id: ProjectId,
     knowledge_pack_id: ProjectId | None = None,

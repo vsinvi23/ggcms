@@ -88,6 +88,15 @@ class QualityReport(BaseModel):
     # computed upstream (see QualityAgent.run's `is_grounded` param). No
     # logic on it here; the actual computation and gating happens elsewhere.
     is_grounded: bool | None = None
+    # Not LLM-scored -- populated deterministically from
+    # originality_check.compute_source_overlap when source_chunks is
+    # provided (see QualityAgent.run). Mirrors backend.models.domain.
+    # QualityReport's fields of the same name so generation.py's
+    # quality.get("source_overlap_ratio")/quality.get("near_copy_flag")
+    # (used when persisting the domain QualityReport) actually get real
+    # values instead of always falling through to the default.
+    source_overlap_ratio: float | None = None
+    near_copy_flag: bool = False
     issues: list[str] = []
     feedback: str = ""
 
@@ -171,10 +180,15 @@ class QualityAgent:
             if source_chunks is not None:
                 flattened = _flatten_draft_text(draft)
                 overlap = originality_check.compute_source_overlap(flattened, source_chunks)
+                result.source_overlap_ratio = overlap["overlap_ratio"]
+                result.near_copy_flag = overlap["near_copy_flag"]
                 # Per explicit product decision, grounded quotes legitimately
                 # overlap with source text -- this is surfaced as a WARNING
-                # only, never a hard failure (passed is not forced to False
-                # here).
+                # only here, never a hard failure. A caller that needs a hard
+                # fail (Mode B / strict_originality, see content_pipeline.py's
+                # quality_check node) enforces that itself using
+                # near_copy_flag, rather than this agent's contract changing
+                # per caller.
                 result.issues = list(result.issues) + [
                     f"WARNING: source overlap ratio={overlap['overlap_ratio']:.2f}, "
                     f"longest_verbatim_run={overlap['longest_verbatim_run']}, "

@@ -17,6 +17,7 @@ from backend.api.routers.knowledge_packs import router as knowledge_packs_router
 from backend.api.routers.opportunities import router as opportunities_router
 from backend.api.routers.portals import router as portals_router
 from backend.api.routers.projects import router as projects_router
+from backend.api.routers.source_generation import router as source_generation_router
 from backend.api.routers.sources import router as sources_router
 from backend.api.routers.system_settings import router as system_settings_router
 from backend.services import system_settings_service
@@ -48,6 +49,7 @@ app.add_middleware(
 # Include Routers
 app.include_router(projects_router)
 app.include_router(sources_router)
+app.include_router(source_generation_router)
 app.include_router(portals_router)
 app.include_router(knowledge_packs_router)
 app.include_router(opportunities_router)
