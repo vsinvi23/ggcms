@@ -854,9 +854,45 @@ gcloud secrets versions access latest --secret=gg-cms-admin-recovery-secret --pr
 > silently no-ops. This is safe (never crashes the request) but means self-service
 > reset is non-functional until SMTP is wired in.
 
-**1. Pick a provider** and get an SMTP host, port (usually `587`), a username,
-and a password/API key. Common choices: SendGrid, Mailgun, AWS SES SMTP
-credentials, or a Google Workspace SMTP relay.
+**1. Pick a provider & retrieve SMTP credentials**
+
+#### Recommended Primary Option: Hostinger Email (Domain-based)
+
+If your domain (e.g. `geekgully.com`) is hosted on Hostinger, follow these exact steps in Hostinger hPanel:
+
+1. **Log in to Hostinger**: Navigate to [hpanel.hostinger.com](https://hpanel.hostinger.com) and log in.
+2. **Access Email Management**:
+   - Go to **Emails** in the left menu.
+   - Select your domain (e.g. `geekgully.com`).
+3. **Create Dedicated Transactional Mailbox**:
+   - Click **Create Email Account**.
+   - Set Email Name: `noreply` (full address will be `noreply@geekgully.com`).
+   - Set a strong password (e.g. `YourStrongSmtpPassword!2026`).
+   - Click **Create Account**.
+4. **Verify Hostinger DNS (SPF & DKIM)**:
+   - Go to **Emails** → **DNS Records** (or **Domain Settings** → **DNS Zone Editor**).
+   - Ensure the SPF record contains: `v=spf1 include:hostinger.com ~all`
+   - Ensure DKIM status shows **Active** (Hostinger enables this automatically for created mailboxes).
+5. **Hostinger SMTP Parameters**:
+   | Env Variable | Hostinger Value |
+   |--------------|-----------------|
+   | `SMTP_HOST` | `smtp.hostinger.com` |
+   | `SMTP_PORT` | `587` |
+   | `SMTP_USERNAME` | `noreply@geekgully.com` |
+   | `SMTP_PASSWORD` | `<password created in step 3>` |
+   | `SMTP_FROM_ADDRESS` | `noreply@geekgully.com` |
+
+---
+
+#### Alternative Option A: SendGrid (GCP Marketplace Partner)
+1. Sign up at SendGrid or search **SendGrid** in GCP Marketplace.
+2. Go to **Settings** → **API Keys** → **Create API Key** with Mail Send access.
+3. Set credentials: `SMTP_HOST=smtp.sendgrid.net`, `SMTP_PORT=587`, `SMTP_USERNAME=apikey`, `SMTP_PASSWORD=<api-key>`, `SMTP_FROM_ADDRESS=noreply@geekgully.com`.
+
+#### Alternative Option B: Google Workspace SMTP Relay
+1. Enable 2-Step Verification on `noreply@geekgully.com` Google Account.
+2. Generate an App Password under **Security** → **App Passwords**.
+3. Set credentials: `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USERNAME=noreply@geekgully.com`, `SMTP_PASSWORD=<16-char-app-password>`, `SMTP_FROM_ADDRESS=noreply@geekgully.com`.
 
 **2. Store the password/API key in Secret Manager** — same tier as
 `gg-cms-jwt-secret` / `gg-cms-admin-recovery-secret`:

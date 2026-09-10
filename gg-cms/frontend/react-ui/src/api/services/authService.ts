@@ -102,8 +102,8 @@ export const authService = {
       await apiClient.post(`${AUTH_BASE}/forgot-password`, { email });
       return { success: true, message: 'Password reset email sent' };
     } catch (error: unknown) {
-      const e = error as { response?: { data?: { error?: { message?: string } } } };
-      throw new Error(e.response?.data?.error?.message || 'Failed to send reset email');
+      const e = error as { response?: { data?: { message?: string; error?: { message?: string } } } };
+      throw new Error(e.response?.data?.message || e.response?.data?.error?.message || 'Failed to send reset email');
     }
   },
 
@@ -120,8 +120,8 @@ export const authService = {
       });
       return { success: true, message: 'Password reset successful' };
     } catch (error: unknown) {
-      const e = error as { response?: { data?: { error?: { message?: string } } } };
-      throw new Error(e.response?.data?.error?.message || 'Failed to reset password');
+      const e = error as { response?: { data?: { message?: string; error?: { message?: string } } } };
+      throw new Error(e.response?.data?.message || e.response?.data?.error?.message || 'Failed to reset password');
     }
   },
 
