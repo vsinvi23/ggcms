@@ -192,11 +192,32 @@ Approval modes:
 ### 5.12 UI Screens
 Dashboard (content/jobs/opportunities/quality/knowledge-source counts) · Project Configuration · Knowledge Library (upload/status/errors) · Content Opportunity board (score/demand/trend/gap, Approve/Reject/Generate/Edit) · Generation console (live agent progress ticker) · Autonomous Factory settings.
 
+### 5.13 Mode B — User-Provided Source (added 2026-09-10)
+
+Everything above (§5.1–§5.12) describes **Mode A**: autonomous, discovery-driven — the factory finds opportunities, researches them via web search, and decides what to generate. Mode B is a second, narrower entry point for the case where a human already has one specific source (a URL) they want turned into one piece of original content, with no discovery and no web-search fallback.
+
+Flow: `POST /api/sources` (existing sync ingestion — unchanged) → `POST /api/sources/{source_id}/generate` (new) → same LangGraph pipeline (§9), single-source, evidence-only.
+
+- **Ingestion** reuses the existing `POST /api/sources` flow as-is (`backend/ingestion/pipeline.py::ingest_source`) — no new ingestion path. This corrects an earlier draft of this spec that proposed a parallel ingestion mechanism; the real gap was only on the generation side.
+- **Generation entry point**: `POST /api/sources/{source_id}/generate` (`backend/api/routers/source_generation.py`) loads the named `Source`, pulls every chunk belonging to it via `vector_store.get_chunks_for_source` (deliberately **not** gated on `review_status` — unlike `similarity_search`/`count_approved_sources` used by Mode A, since the caller is explicitly nominating this exact source right now), seeds them into the pipeline's `context_chunks` state, and runs the same `run_pipeline_job` Mode A uses — with `enable_web_research=False` (single-source, not discovery-driven) and `strict_originality=True`.
+- **Hard originality gate**: the deterministic n-gram overlap check that already existed as a Mode-A **warning** (`originality_check.compute_source_overlap`, §18 gap #4) is promoted to a **hard fail** for Mode B jobs — `content_pipeline.py`'s `quality_check` node forces `is_approved = False` whenever `strict_originality` is set and `near_copy_flag` is true, regardless of the LLM auditor's own pass/fail verdict. Mode A's behavior is completely unchanged (the flag defaults to unset/false).
+- **Taxonomy — suggestion, not resolution**: after a Mode B draft passes quality, `backend/services/taxonomy_suggest.py` does a best-effort, non-blocking lookup against ggcms's existing `GET /api/topics`/`GET /api/categories` and attaches simple token-overlap name matches to `ContentItem.taxonomy_suggestions`, for a human reviewer to act on. This is explicitly a suggestion list, not a classification decision — see "Deferred" below for the real resolver this eventually needs.
+- **Export**: unchanged — the existing idempotent `ggcms_client.push_content` (`X-Idempotency-Key`, §10) applies identically to Mode B content; no export-side changes were needed.
+
+**Deferred / not yet built** (flagged correctly by the original pasted spec, scoped out of this pass for size):
+- `robots.txt` compliance checking during ingestion — nothing in the codebase checks it today (§12's rule exists in this doc but isn't enforced in code).
+- A dedicated Classification pipeline stage/agent — Mode B currently only attaches best-effort taxonomy *suggestions* after the fact; there is no graph node that classifies content against the taxonomy before/during generation.
+- A real taxonomy resolver endpoint (name → `MATCH`/`SUGGESTION`/`NEW`) on either the factory or ggcms side — `taxonomy_suggest.py` does simple token-overlap scoring against existing names only, with no concept of proposing a genuinely new topic/category.
+- Level-2 semantic similarity scoring for external-source originality checks — the current check (§18 gap #4) is deterministic n-gram overlap only, not embedding-based.
+- A dedicated `SourceSnapshot`/`SourceSection` model layer for user-provided sources — Mode B reuses the existing `Source`/`KnowledgeDocument`/`KnowledgeChunk` entities (§7) as-is rather than introducing a parallel model just for this flow.
+
 ---
 
 ## 6. Open-Source Technology Selection
 
 Selection criteria: maturity, license (permissive preferred), operational simplicity on GCP free-tier-adjacent infra, and fit with the existing `ggcms` (Postgres) and `article_platform` (Python) stacks already in this workspace.
+
+**Correction (2026-09-10):** the rows below for "Relational DB" and "Vector search" describe the *originally planned* MVP architecture and no longer match what's actually running. There is no database of any kind — every entity (`Project`, `Source`, `KnowledgeChunk`, `ContentItem`, etc.) is a per-project YAML file under `settings.data_dir`, managed by `backend/storage/file_store.py` with one `asyncio.Lock` per project for write safety. There is no pgvector either — semantic retrieval (`backend/retrieval/vector_store.py::similarity_search`) ranks by real cosine similarity over Gemini embeddings, cached in a local SQLite store (`backend/retrieval/semantic_search.py`), not a keyword scan and not a Postgres extension. The two rows are left in the table below as a record of the original design comparison; treat "Chosen" in those two rows as historical, not current.
 
 | Layer | Chosen | Why chosen | Alternatives considered | Why not chosen |
 |---|---|---|---|---|
@@ -204,8 +225,8 @@ Selection criteria: maturity, license (permissive preferred), operational simpli
 | Data validation / schemas | **Pydantic v2** | Same models double as agent I/O contracts (§9 Agent Contract) | marshmallow, attrs | Pydantic is FastAPI's native integration, avoids duplicate schema definitions |
 | Agent orchestration | **LangGraph** | Explicit stateful graph (not a single freeform LLM call), first-class support for revision loops and structured state handoff | CrewAI, AutoGen, plain function chaining | CrewAI/AutoGen are more opinionated about agent "roles" and weaker on explicit state machines with conditional edges (needed for the Quality Gate pass/fail branch) |
 | LLM abstraction | Custom `ModelProvider` interface over **LiteLLM** | One interface, swap Gemini/OpenAI/Anthropic/local without touching agents | LangChain's built-in model classes | LiteLLM gives a thinner, provider-agnostic router with cost tracking out of the box |
-| Relational DB | **PostgreSQL** | Already the system-of-record pattern in `ggcms`; one relational engine across the ecosystem | MySQL | No feature advantage for this workload; Postgres wins on pgvector fit |
-| Vector search | **pgvector** (Postgres extension) | Avoids a second database at MVP scale; co-located with relational metadata for simple joins/filtering | Pinecone, Weaviate, Qdrant, Milvus | Dedicated vector DBs add ops burden and cost with no benefit until corpus size/QPS actually requires it (spec §13, §41 explicitly defer this) |
+| Relational DB *(superseded — see correction above)* | ~~PostgreSQL~~ → **file-based YAML store** (`file_store.py`) | Originally planned as Postgres; the implemented MVP shipped with per-project YAML files instead — no relational engine currently exists in this service | MySQL | No feature advantage for this workload; Postgres wins on pgvector fit *(moot — neither is in use)* |
+| Vector search *(superseded — see correction above)* | ~~pgvector~~ → **SQLite-cached Gemini embeddings + cosine similarity** (`semantic_search.py`) | Originally planned as a Postgres extension; the implemented MVP has no Postgres to extend, so retrieval uses a small local embedding cache instead | Pinecone, Weaviate, Qdrant, Milvus | Dedicated vector DBs add ops burden and cost with no benefit until corpus size/QPS actually requires it (spec §13, §41 explicitly defer this) |
 | Object storage | **GCP Cloud Storage** | Native to the deployment target; store PDFs/raw pages/exports cheaply | MinIO (self-hosted S3) | Only worth it if avoiding cloud lock-in is a hard requirement; not stated here |
 | Job queue / async workers | **Cloud Pub/Sub** (added at Phase 2, not MVP) | Matches GCP-native deployment; defers infra cost until volume justifies it | Celery + Redis, RQ | Redis/Celery adds a stateful component to operate; Pub/Sub is serverless and free-tier friendly |
 | Web fetch (HTTP) | **httpx** | Async, HTTP/2, modern | requests, aiohttp | requests is sync-only; aiohttp works but httpx has a friendlier async API and better typing |
@@ -227,6 +248,8 @@ Selection criteria: maturity, license (permissive preferred), operational simpli
 
 ## 7. Database Entities (minimum set)
 
+**Correction (2026-09-10):** "Database Entities" here means logical entities, not tables in a database — there is no database (see §6 correction). Each entity below is a Pydantic model in `backend/models/domain.py`, persisted as YAML by `backend/storage/file_store.py`.
+
 ```text
 Project · ProjectStrategy · Source · KnowledgeDocument · KnowledgeChunk · KnowledgePack
 Opportunity · ResearchRun · EvidencePack · LearningPlan · ContentPlan
@@ -240,6 +263,7 @@ GET/POST   /api/projects
 GET/PUT    /api/projects/{id}/strategy
 GET/POST   /api/sources
 POST       /api/sources/upload
+POST       /api/sources/{source_id}/generate   (Mode B, §5.13 — single-source, strict-originality generation)
 GET/POST   /api/knowledge-packs
 GET        /api/opportunities
 POST       /api/opportunities/{id}/approve
@@ -281,11 +305,14 @@ Reference: `docs/import-contract/CONTENT_IMPORT_SCHEMA.md` (retained — the one
 ## 11. Deployment Architecture (GCP)
 
 ### MVP
+
+**Correction (2026-09-10):** the diagram/component list below still describes the originally planned PostgreSQL+pgvector storage layer. The implemented service instead persists to the file-based YAML store (§6/§7 corrections) — read the "PostgreSQL+pgvector" line as "file-based YAML store" wherever it appears until this section is fully rewritten.
+
 ```text
-Internet → Cloud Run (FastAPI + UI) → PostgreSQL+pgvector
+Internet → Cloud Run (FastAPI + UI) → PostgreSQL+pgvector   [superseded -- see correction above; actually file-based YAML store]
                                     → Cloud Storage (sources/knowledge/generated/exports)
 ```
-Components: Cloud Run, Cloud Storage, PostgreSQL/pgvector, Secret Manager, Cloud Scheduler.
+Components: Cloud Run, Cloud Storage, PostgreSQL/pgvector *(superseded — see correction above)*, Secret Manager, Cloud Scheduler.
 
 ### Phase 2 (async, higher volume)
 ```text
@@ -384,3 +411,5 @@ A deep review of the implemented factory (which by this point had moved well pas
 3. Stand up the deferred `tests/eval/` LLM-as-judge tier for narrative-voice quality once CI/secrets infra decisions are made (§18).
 4. ~~Extend the Citation Checker agent with the same evidence-drift awareness added to the Fact Checker (§18)~~ — done (§18 follow-up, 2026-09-09).
 5. Continue MVP/Phase 2 feature buildout (§14) — trend discovery, autonomous topic selection, scheduled generation.
+6. ~~Add Mode B (user-provided-source) generation with a hard originality gate (§5.13)~~ — done, 2026-09-10.
+7. Build the deferred items listed in §5.13: `robots.txt` compliance checking, a dedicated Classification pipeline stage, a real taxonomy resolver endpoint (`MATCH`/`SUGGESTION`/`NEW`), Level-2 semantic similarity for external-source originality, and a `SourceSnapshot`/`SourceSection` model layer if/when Mode B's usage justifies moving off the reused `Source`/`KnowledgeDocument`/`KnowledgeChunk` entities.
