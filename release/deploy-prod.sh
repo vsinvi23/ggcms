@@ -94,7 +94,9 @@ echo "🔐 Checking Google Cloud Authentication..."
 echo "============================================================"
 
 export PATH="$HOME/google-cloud-sdk/bin:$PATH"
-if [[ -f "$HOME/portable-python3/python/bin/python3" ]]; then
+if [[ -f "$HOME/portable-python3/python/bin/python3.11" ]]; then
+  export CLOUDSDK_PYTHON="$HOME/portable-python3/python/bin/python3.11"
+elif [[ -f "$HOME/portable-python3/python/bin/python3" ]]; then
   export CLOUDSDK_PYTHON="$HOME/portable-python3/python/bin/python3"
 fi
 
@@ -102,6 +104,19 @@ if ! command -v gcloud >/dev/null 2>&1; then
   echo "❌ gcloud CLI is not installed or not on PATH."
   echo "   Please install Google Cloud SDK: https://cloud.google.com/sdk/docs/install"
   exit 1
+fi
+
+# --- Service Account Key non-interactive authentication support ---
+SA_KEY="${GCP_SA_KEY_PATH:-}"
+if [[ -z "$SA_KEY" && -f "$HOME/.gcp/deployer-key.json" ]]; then
+  SA_KEY="$HOME/.gcp/deployer-key.json"
+elif [[ -z "$SA_KEY" && -f "$SCRIPT_DIR/certs/gcp-sa-key.json" ]]; then
+  SA_KEY="$SCRIPT_DIR/certs/gcp-sa-key.json"
+fi
+
+if [[ -n "$SA_KEY" && -f "$SA_KEY" ]]; then
+  echo "🔑 Authenticating via GCP Service Account Key ($SA_KEY)..."
+  gcloud auth activate-service-account --key-file="$SA_KEY" --quiet >/dev/null 2>&1 || true
 fi
 
 ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null || echo "")
@@ -112,7 +127,7 @@ if [[ -z "$ACTIVE_ACCOUNT" ]]; then
   gcloud auth application-default login
 fi
 
-ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --filter=status:ACTIVE --format="value(account)" 2>/dev/null || echo "")
+ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null || echo "")
 echo "✅ Authenticated as GCP Account: $ACTIVE_ACCOUNT"
 
 gcloud config set project "$PROJECT_ID" >/dev/null 2>&1 || true
