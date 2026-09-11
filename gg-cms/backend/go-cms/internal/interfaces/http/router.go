@@ -15,6 +15,7 @@ import (
 	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	commentsvc "github.com/serenya/go-cms/internal/application/comment"
 	ctsvc "github.com/serenya/go-cms/internal/application/contenttype"
+	domainsvc "github.com/serenya/go-cms/internal/application/domain"
 	engagementsvc "github.com/serenya/go-cms/internal/application/engagement"
 	enrollmentsvc "github.com/serenya/go-cms/internal/application/enrollment"
 	groupsvc "github.com/serenya/go-cms/internal/application/group"
@@ -57,6 +58,7 @@ type Services struct {
 	Favourite       engagementsvc.FavouriteService
 	Highlight       engagementsvc.HighlightService
 	ContentType     ctsvc.Service
+	Domain          domainsvc.Service
 	LearningPath    lpsvc.Service
 	Audit           auditsvc.Service
 	OAuth           oauthsvc.Service
@@ -152,9 +154,10 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	pubH := handler.NewPublicHandler(svcs.CMS, svcs.Category, svcs.Analytics)
 	analyticsH := handler.NewAnalyticsHandler(svcs.Analytics)
 	tagH := handler.NewTagHandler(svcs.Tag)
-	topicH := handler.NewTopicHandler(svcs.Topic)
+	topicH := handler.NewTopicHandler(svcs.Topic, svcs.CMS)
 	engH := handler.NewEngagementHandler(svcs.Reaction, svcs.Note, svcs.Favourite, svcs.Highlight)
 	ctH := handler.NewContentTypeHandler(svcs.ContentType)
+	domainH := handler.NewDomainHandler(svcs.Domain)
 	lpH := handler.NewLearningPathHandler(svcs.LearningPath)
 	auditH := handler.NewAuditHandler(svcs.Audit)
 	personH := handler.NewPersonalizationHandler(svcs.Personalization)
@@ -192,6 +195,8 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		api.GET("/topics", topicH.GetAll)
 		api.GET("/topics/:id", topicH.GetByID)
 		api.GET("/topics/:id/relationships", topicH.GetRelationships)
+		api.GET("/topics/:id/content", topicH.GetTopicContent)
+		api.GET("/cms/:id/topics", topicH.GetContentTopics)
 
 		// ----- Sections (public read — course curriculum preview) -----
 		api.GET("/sections", secH.GetAll)
@@ -199,6 +204,9 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		// ----- Categories (public read) -----
 		api.GET("/categories", catH.GetAll)
 		api.GET("/categories/:id", catH.GetByID)
+
+		// ----- Domains (public read) -----
+		api.GET("/domains", domainH.GetAll)
 
 		// ----- Learning paths (public read) -----
 		api.GET("/learning-paths", lpH.GetAll)
@@ -312,7 +320,6 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.POST("cms/:id/reassign-review", cmsH.ReassignReview)
 			p.POST("cms/:id/review-note", cmsH.SaveReviewNote)
 			p.POST("cms/:id/assign-reviewer", middleware.AdminOnly(), cmsH.AssignReviewer)
-			p.GET("cms/:id/topics", topicH.GetContentTopics)
 			p.PUT("cms/:id/topics", topicH.SetContentTopics)
 
 			// Sections (GET is public — see above; write operations require auth)

@@ -5,13 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/api/hooks/useProfile';
 import { useFeatureFlags } from '@/contexts/FeatureFlagContext';
 import {
-  Search, BookOpen, Zap, ChevronRight, Clock, ArrowRight, Sparkles,
-  FileText, Play, GraduationCap,
+  Search, BookOpen, ChevronRight, ArrowRight,
+  FileText, Cloud, ShieldCheck, Database, Brain, Code2,
 } from 'lucide-react';
 import { UserLearningSection } from '@/components/home/UserLearningSection';
-import { PublicArticleCard } from '@/components/public/PublicArticleCard';
-import { useMyEnrollments } from '@/api/hooks/useEnrollments';
-import { EnrollmentDto } from '@/api/types';
+import { useDomains } from '@/api/hooks/useDomains';
+import { useTopics } from '@/api/hooks/useTopics';
+import { TopicChip } from '@/components/public/TopicChip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -20,71 +20,8 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { usePublicCmsList, usePublicLearningPaths } from '@/api/hooks/usePublicCms';
 import { useTags } from '@/api/hooks/useTags';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CmsResponseDto } from '@/api/types';
 import { buildArticleUrl, buildCourseUrl } from '@/lib/slug';
-
-// ─── Compact content card ──────────────────────────────────────────────────────
-
-function SmallContentCard({
-  item,
-  enrollment,
-}: {
-  item: CmsResponseDto;
-  enrollment?: EnrollmentDto | null;
-}) {
-  const navigate = useNavigate();
-  const isArticle = item.type === 'ARTICLE';
-  const linkPath  = isArticle ? buildArticleUrl(item) : buildCourseUrl(item);
-  const Icon      = isArticle ? FileText : Zap;
-  const iconBg    = isArticle ? 'text-violet-500 bg-violet-500/10' : 'text-amber-500 bg-amber-500/10';
-  const isEnrolled = !!enrollment;
-
-  return (
-    <Link to={linkPath}>
-      <Card className="group h-full cursor-pointer hover:shadow-md transition-all duration-200 border-border/50 hover:border-primary/30">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <div className={`p-2 rounded-lg shrink-0 ${iconBg}`}>
-              <Icon className="h-4 w-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-                {item.title || 'Untitled'}
-              </h4>
-              {item.categoryName && (
-                <p className="text-xs text-muted-foreground mt-1">{item.categoryName}</p>
-              )}
-              {item.description && (
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                  {item.description}
-                </p>
-              )}
-              <div className="flex items-center gap-2 mt-2">
-                <Clock className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {new Date(item.publishedAt ?? item.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-            {isArticle ? (
-              <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
-            ) : (
-              <button
-                onClick={e => { e.preventDefault(); e.stopPropagation(); navigate(isEnrolled ? `${buildCourseUrl(item)}?learn=true` : buildCourseUrl(item)); }}
-                title={isEnrolled ? 'Resume' : 'Enroll'}
-                className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-all hover:scale-110 active:scale-95 ${
-                  isEnrolled ? 'bg-success text-white' : 'bg-success/15 text-success border border-success/30'
-                }`}
-              >
-                {isEnrolled ? <Play size={11} fill="white" className="ml-0.5" /> : <GraduationCap size={13} />}
-              </button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
+import { DomainDto } from '@/api/types';
 
 // ─── Section wrapper ───────────────────────────────────────────────────────────
 
@@ -114,13 +51,36 @@ function Section({
   );
 }
 
-// ─── Skeleton grid ─────────────────────────────────────────────────────────────
+// ─── Domain discovery ──────────────────────────────────────────────────────────
 
-function SkeletonGrid({ cols = 4 }: { cols?: number }) {
+const DOMAIN_ICONS: Record<string, React.ElementType> = {
+  'software-engineering': Code2,
+  'cloud-infrastructure': Cloud,
+  'cybersecurity': ShieldCheck,
+  'data': Database,
+  'ai-machine-learning': Brain,
+};
+
+function DomainCard({ domain }: { domain: DomainDto }) {
+  const Icon = DOMAIN_ICONS[domain.slug] ?? BookOpen;
+  const count = (domain.articleCount ?? 0) + (domain.courseCount ?? 0);
+
   return (
-    <div className={`grid gap-3 grid-cols-1 sm:grid-cols-2 ${cols === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
-      {[...Array(cols)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
-    </div>
+    <Link to={`/explore/courses?domain=${domain.slug}`}>
+      <Card className="group h-full cursor-pointer transition-colors border-border/60 hover:border-primary/40">
+        <CardContent className="p-4 flex flex-col gap-2.5">
+          <div className="p-2 rounded-lg bg-primary/10 w-fit text-primary">
+            <Icon className="h-4 w-4" />
+          </div>
+          <h3 className="font-semibold text-sm text-foreground leading-snug">{domain.name}</h3>
+          {count > 0 && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1 group-hover:text-primary transition-colors">
+              {count}+ resources <ArrowRight className="h-3 w-3" />
+            </span>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
@@ -133,26 +93,17 @@ const PublicHome = () => {
   const { isAuthenticated } = useAuth();
   const { data: profile }   = useProfile();
 
-  const { data: tagsData }        = useTags();
+  const { data: tagsData }         = useTags();
   const { data: apiLearningPaths } = usePublicLearningPaths();
+  const { data: domains }          = useDomains();
+  const { data: topics }           = useTopics();
 
-  const popularTags    = (tagsData ?? []).slice(0, 8).map(t => t.name);
+  const trendingTags   = (tagsData ?? []).slice(0, 5).map(t => t.name);
   const learningPaths  = apiLearningPaths ?? [];
+  const popularTopics  = (topics ?? []).slice(0, 8);
 
-  const { data: articlesData, isLoading: loadingArticles } = usePublicCmsList({ type: 'ARTICLE', page: 0, size: 8 });
-  const { data: coursesData,  isLoading: loadingCourses  } = usePublicCmsList({ type: 'COURSE',  page: 0, size: 8 });
-
-  const articles = articlesData?.items ?? [];
-  const courses  = coursesData?.items  ?? [];
-
-  const { data: enrollments = [] } = useMyEnrollments(isAuthenticated);
-  const enrollmentMap = useMemo(() => {
-    const m = new Map<number, EnrollmentDto>();
-    (enrollments as EnrollmentDto[]).forEach(e => { if (e.course?.id) m.set(e.course.id, e); });
-    return m;
-  }, [enrollments]);
-
-  const featuredItems = [...courses, ...articles].slice(0, 8);
+  const { data: latestData, isLoading: loadingLatest } = usePublicCmsList({ type: 'ARTICLE', page: 0, size: 6 });
+  const latestItems = latestData?.items ?? [];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,89 +114,57 @@ const PublicHome = () => {
     <PublicLayout>
       <div>
 
-        {/* ── Hero ─────────────────────────────────────────────────────────── */}
-        <section className="relative bg-gradient-to-b from-muted/60 via-muted/30 to-background px-6 py-14 lg:py-20 text-center overflow-hidden">
-          {/* Decorative blobs */}
-          <div className="pointer-events-none absolute inset-0 -z-10">
-            <div className="absolute top-0 left-1/4 w-80 h-80 bg-muted rounded-full blur-3xl opacity-60" />
-            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-muted rounded-full blur-3xl opacity-40" />
-          </div>
-
-          <div className="max-w-3xl mx-auto space-y-7">
-
-
-            {/* Headline */}
-            <div className="space-y-3">
-              <h1 className="text-5xl lg:text-6xl font-extrabold text-foreground leading-[1.1] tracking-tight">
-                Master new skills
-                <br />
-                <span className="text-primary">3× faster</span> with expert-led content
+        {/* ── Hero (compact) ──────────────────────────────────────────────── */}
+        <section className="bg-muted/20 px-6 py-12 lg:py-16 text-center">
+          <div className="max-w-2xl mx-auto space-y-6">
+            <div className="space-y-2">
+              <h1 className="text-4xl lg:text-5xl font-extrabold text-foreground leading-[1.15] tracking-tight">
+                Build Better. <span className="text-primary">Learn Deeper.</span>
               </h1>
-              <p className="text-muted-foreground text-lg max-w-xl mx-auto leading-relaxed">
-                Structured courses, in-depth articles and hands-on projects —
-                designed to make learning engaging, effective and fun.
+              <p className="text-muted-foreground text-base max-w-lg mx-auto">
+                Practical, in-depth learning for modern developers.
               </p>
             </div>
 
-            {/* Expanded search bar */}
             <form onSubmit={handleSearch}>
-              <div className="relative bg-card rounded-2xl shadow-lg border-2 border-border focus-within:border-primary focus-within:shadow-primary/10 focus-within:shadow-xl transition-all duration-200 p-2">
-                <div className="flex items-center gap-3">
-                  <Search className="h-6 w-6 text-muted-foreground ml-2 shrink-0" />
+              <div className="relative bg-card rounded-xl border border-border focus-within:border-primary transition-colors p-1.5">
+                <div className="flex items-center gap-2">
+                  <Search className="h-5 w-5 text-muted-foreground ml-2 shrink-0" />
                   <Input
-                    placeholder="What do you want to learn today? e.g. Go, System Design, React…"
-                    className="border-0 focus-visible:ring-0 text-base lg:text-lg h-12 bg-transparent flex-1 placeholder:text-muted-foreground/60"
+                    placeholder="What do you want to learn today?"
+                    className="border-0 focus-visible:ring-0 text-base h-10 bg-transparent flex-1 placeholder:text-muted-foreground/60"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                   />
-                  <Button size="lg" className="rounded-xl px-8 h-11 shrink-0">
-                    Search
-                  </Button>
+                  <Button className="rounded-lg px-6 h-9 shrink-0">Search</Button>
                 </div>
               </div>
             </form>
 
-            {/* Trending topics */}
-            {popularTags.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
-                  Trending topics
-                </p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {popularTags.map(tag => (
-                    <button
-                      key={tag}
-                      onClick={() => navigate(`/search?q=${encodeURIComponent(tag)}`)}
-                      className="text-sm px-4 py-1.5 rounded-full border border-border bg-background/80 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-150 shadow-sm"
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
+            {trendingTags.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2">
+                {trendingTags.map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => navigate(`/search?q=${encodeURIComponent(tag)}`)}
+                    className="text-sm px-3.5 py-1 rounded-full border border-border bg-background text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+                  >
+                    {tag}
+                  </button>
+                ))}
               </div>
             )}
-
-            {/* Quick browse links */}
-            <div className="flex flex-wrap justify-center gap-4 pt-1">
-              <Link to="/explore/courses"
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors font-medium">
-                <BookOpen className="h-4 w-4" /> Browse Courses <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-              <Link to="/explore/articles"
-                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors font-medium">
-                <FileText className="h-4 w-4" /> Explore Articles <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-              {flags.learning_paths && (
-                <Link to="/explore/paths"
-                  className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors font-medium">
-                  <GraduationCap className="h-4 w-4" /> Learning Paths <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              )}
-            </div>
           </div>
         </section>
 
-        {/* ── Personalised recommendations ─────────────────────────────────── */}
+        {/* ── Continue Learning (authenticated only) ──────────────────────── */}
+        {isAuthenticated && (
+          <div className="pt-10">
+            <UserLearningSection />
+          </div>
+        )}
+
+        {/* ── Recommended for You ──────────────────────────────────────────── */}
         {isAuthenticated && profile?.onboardingCompleted && (
           <section className="border-t border-border py-10 px-6 bg-background">
             <div className="max-w-7xl mx-auto">
@@ -263,34 +182,57 @@ const PublicHome = () => {
           </section>
         )}
 
-        {/* ── User learning dashboard ───────────────────────────────────────── */}
-        <UserLearningSection />
-
-        {/* ── Featured ─────────────────────────────────────────────────────── */}
-        {(featuredItems.length > 0 || loadingArticles || loadingCourses) && (
-          <Section title="On every developer's radar" subtitle="Top picks across courses and articles">
-            {loadingArticles && loadingCourses ? <SkeletonGrid /> : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {featuredItems.map(item =>
-                  item.type === 'ARTICLE'
-                    ? <PublicArticleCard key={`f-${item.id}`} article={item} />
-                    : <SmallContentCard key={`f-${item.id}`} item={item} enrollment={enrollmentMap.get(item.id) ?? null} />
-                )}
-              </div>
-            )}
+        {/* ── Explore by Domain ────────────────────────────────────────────── */}
+        {domains && domains.length > 0 && (
+          <Section title="Explore by Domain" tinted>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {domains.map(domain => <DomainCard key={domain.id} domain={domain} />)}
+            </div>
           </Section>
         )}
 
-        {/* ── Courses ──────────────────────────────────────────────────────── */}
-        {(courses.length > 0 || loadingCourses) && (
-          <Section title="Courses" subtitle="Structured learning from beginner to advanced"
-            viewAllHref="/explore/courses" tinted>
-            {loadingCourses ? <SkeletonGrid /> : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {courses.slice(0, 8).map(c => (
-                  <SmallContentCard key={c.id} item={c} enrollment={enrollmentMap.get(c.id) ?? null} />
-                ))}
+        {/* ── Popular Topics ───────────────────────────────────────────────── */}
+        {popularTopics.length > 0 && (
+          <Section title="Popular Topics" viewAllHref="/topics">
+            <div className="flex flex-wrap gap-2">
+              {popularTopics.map(topic => (
+                <TopicChip key={topic.id} name={topic.name} slug={topic.slug} />
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* ── New & Updated ────────────────────────────────────────────────── */}
+        {(latestItems.length > 0 || loadingLatest) && (
+          <Section title="New & Updated" subtitle="Latest" tinted>
+            {loadingLatest ? (
+              <div className="space-y-3">
+                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-6 w-full" />)}
               </div>
+            ) : (
+              <ul className="divide-y divide-border">
+                {latestItems.map(item => {
+                  const isArticle = item.type === 'ARTICLE';
+                  const linkPath  = isArticle ? buildArticleUrl(item) : buildCourseUrl(item);
+                  const readMin   = Math.max(1, (item.blockCount ?? 0) * 2 || 5);
+                  return (
+                    <li key={item.id}>
+                      <Link
+                        to={linkPath}
+                        className="group flex items-center justify-between gap-4 py-3 hover:text-primary transition-colors"
+                      >
+                        <span className="flex items-center gap-2 min-w-0">
+                          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="font-medium text-foreground group-hover:text-primary truncate">
+                            {item.title || 'Untitled'}
+                          </span>
+                        </span>
+                        <span className="text-xs text-muted-foreground shrink-0">{readMin} min</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </Section>
         )}
@@ -302,7 +244,7 @@ const PublicHome = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {learningPaths.slice(0, 6).map(path => (
                 <Link key={path.id} to={`/learn/${path.id}`}>
-                  <Card className="group cursor-pointer hover:shadow-md hover:border-primary/30 transition-all h-full border-border/50">
+                  <Card className="group cursor-pointer hover:border-primary/30 transition-colors h-full border-border/50">
                     <CardContent className="p-5 flex gap-4 items-start">
                       <div className="p-2.5 rounded-xl bg-primary/10 group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
                         <BookOpen className="h-5 w-5" />
@@ -323,38 +265,6 @@ const PublicHome = () => {
             </div>
           </Section>
         )}
-
-        {/* ── CTA ──────────────────────────────────────────────────────────── */}
-        <section
-          className="px-6 py-14 text-center relative overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #0a0b14 0%, #1a1040 50%, #0d1a2e 100%)' }}
-        >
-          {/* Soft glows */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full blur-3xl"
-              style={{ background: 'rgba(124,58,237,0.25)' }} />
-            <div className="absolute bottom-0 left-1/4 w-64 h-64 rounded-full blur-3xl"
-              style={{ background: 'rgba(37,99,235,0.2)' }} />
-            <div className="absolute bottom-0 right-1/4 w-48 h-48 rounded-full blur-3xl"
-              style={{ background: 'rgba(124,58,237,0.15)' }} />
-          </div>
-          <div className="relative z-10 max-w-2xl mx-auto">
-            <h3 className="text-3xl lg:text-4xl font-bold mb-4 text-white">
-              Ready to accelerate your learning?
-            </h3>
-            <p className="mb-8 text-lg" style={{ color: 'rgba(255,255,255,0.65)' }}>
-              Join thousands of developers mastering new skills and advancing their careers.
-            </p>
-            <Button
-              size="lg"
-              onClick={() => { window.location.href = '/auth'; }}
-              className="shadow-lg px-8 font-semibold text-white border-none hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #2563eb)' }}
-            >
-              Get Started — It&apos;s Free
-            </Button>
-          </div>
-        </section>
 
       </div>
     </PublicLayout>

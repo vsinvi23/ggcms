@@ -5,6 +5,7 @@ type CategoryResponse struct {
 	Name              string             `json:"name"`
 	Slug              string             `json:"slug"`
 	ParentID          *uint              `json:"parentId,omitempty"`
+	DomainID          *uint              `json:"domainId,omitempty"`
 	IsVirtual         bool               `json:"isVirtual,omitempty"`
 	RequiredApprovals int                `json:"requiredApprovals"`
 	Children          []CategoryResponse `json:"children,omitempty"`

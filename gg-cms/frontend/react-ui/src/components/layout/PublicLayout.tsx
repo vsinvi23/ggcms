@@ -5,7 +5,7 @@ import { FloatingPersonalizationButton } from '@/components/personalization/Floa
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
-  BookOpen, GraduationCap, FileText, Briefcase, Menu, X,
+  House, Compass, BookOpen, GraduationCap, Hash, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,10 +19,11 @@ interface PublicLayoutProps {
 }
 
 const allNavItems = [
-  { icon: BookOpen,      label: 'Courses',        href: '/explore/courses',   flag: null },
+  { icon: House,         label: 'Home',            href: '/',                  flag: null },
+  { icon: Compass,       label: 'Explore',         href: '/explore/courses',   flag: null },
+  { icon: Hash,          label: 'Topics',          href: '/topics',            flag: null },
+  { icon: BookOpen,      label: 'Courses',         href: '/explore/courses',   flag: null },
   { icon: GraduationCap, label: 'Learning Paths',  href: '/explore/paths',     flag: 'learning_paths' as const },
-  { icon: FileText,      label: 'Articles',        href: '/explore/articles',  flag: null },
-  { icon: Briefcase,     label: 'Interview Prep',  href: '/explore/interview', flag: 'interview_prep' as const },
 ];
 
 export function PublicLayout({ children, hideSearch: _hideSearch = false }: PublicLayoutProps) {

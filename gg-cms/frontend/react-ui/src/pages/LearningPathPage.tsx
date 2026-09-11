@@ -1,16 +1,32 @@
+import { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { BookOpen, Clock, ChevronRight, GraduationCap } from 'lucide-react';
+import { BookOpen, Clock, ChevronRight, GraduationCap, CheckCircle2, Circle, PlayCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { usePublicLearningPathById } from '@/api/hooks/usePublicCms';
+import { useMyEnrollments } from '@/api/hooks/useEnrollments';
+import { useAuth } from '@/contexts/AuthContext';
+import { EnrollmentDto } from '@/api/types';
 import { buildCourseUrl } from '@/lib/slug';
+
+type CourseStatus = 'completed' | 'current' | 'upcoming';
 
 const LearningPathPage = () => {
   const { path: pathId } = useParams<{ path: string }>();
+  const { isAuthenticated } = useAuth();
   const { data, isLoading, isError } = usePublicLearningPathById(pathId ?? '');
+  const { data: enrollments = [] } = useMyEnrollments(isAuthenticated);
+
+  const enrollmentMap = useMemo(() => {
+    const m = new Map<number, EnrollmentDto>();
+    enrollments.forEach((e: EnrollmentDto) => {
+      if (e.course?.id) m.set(e.course.id, e);
+    });
+    return m;
+  }, [enrollments]);
 
   if (isLoading) {
     return (
@@ -40,6 +56,18 @@ const LearningPathPage = () => {
   }
 
   const courses = data.courses ?? [];
+  const hasProgress = courses.some(course => {
+    const enrollment = enrollmentMap.get(course.id);
+    return enrollment && (enrollment.status === 'completed' || enrollment.progress > 0);
+  });
+
+  const getCourseStatus = (courseId: number): CourseStatus => {
+    const enrollment = enrollmentMap.get(courseId);
+    if (!enrollment) return 'upcoming';
+    if (enrollment.status === 'completed') return 'completed';
+    if (enrollment.status === 'active' && enrollment.progress > 0) return 'current';
+    return 'upcoming';
+  };
 
   return (
     <PublicLayout>
@@ -74,15 +102,20 @@ const LearningPathPage = () => {
         {courses.length > 0 ? (
           <div className="space-y-4">
             <h2 className="text-xl font-bold">Path Curriculum</h2>
-            {courses.map((course, index) => (
+            {courses.map((course, index) => {
+              const status = getCourseStatus(course.id);
+              return (
               <Link key={course.id} to={buildCourseUrl(course)}>
                 <Card className="hover:shadow-md transition-shadow cursor-pointer group">
                   <CardContent className="p-5">
                     <div className="flex items-start gap-4">
-                      <div className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shrink-0">
-                        {index + 1}
+                      <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        {status === 'completed' && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                        {status === 'current' && <PlayCircle className="h-5 w-5 text-primary" />}
+                        {status === 'upcoming' && <Circle className="h-5 w-5 text-muted-foreground" />}
                       </div>
                       <div className="flex-1 min-w-0">
+                        <span className="text-xs font-medium text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
                         <h3 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">
                           {course.title}
                         </h3>
@@ -101,7 +134,8 @@ const LearningPathPage = () => {
                   </CardContent>
                 </Card>
               </Link>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12 border border-dashed rounded-xl">
@@ -111,7 +145,7 @@ const LearningPathPage = () => {
         )}
 
         <div className="pt-4">
-          <Button size="lg">Enroll in Path</Button>
+          <Button size="lg">{hasProgress ? 'Continue Path' : 'Start Learning Path'}</Button>
         </div>
       </div>
     </PublicLayout>

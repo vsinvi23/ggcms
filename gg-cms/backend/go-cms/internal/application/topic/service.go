@@ -25,6 +25,7 @@ type Service interface {
 	ResolveTopic(ctx context.Context, rawName string) (*repository.TopicResolutionResult, error)
 	FindBySlugs(ctx context.Context, slugs []string) ([]*entity.Topic, error)
 	FindReachable(ctx context.Context, topicID uint, maxDepth int) ([]*repository.ReachableTopic, error)
+	FindContentByTopicIDs(ctx context.Context, topicIDs []uint, excludeContentID uint, excludeContentType string, limit int) ([]*entity.ContentTopic, error)
 }
 
 type service struct {
@@ -130,5 +131,9 @@ func (s *service) FindBySlugs(ctx context.Context, slugs []string) ([]*entity.To
 
 func (s *service) FindReachable(ctx context.Context, topicID uint, maxDepth int) ([]*repository.ReachableTopic, error) {
 	return s.topicRepo.FindReachable(ctx, topicID, maxDepth)
+}
+
+func (s *service) FindContentByTopicIDs(ctx context.Context, topicIDs []uint, excludeContentID uint, excludeContentType string, limit int) ([]*entity.ContentTopic, error) {
+	return s.topicRepo.FindContentByTopicIDs(ctx, topicIDs, excludeContentID, excludeContentType, limit)
 }
 
