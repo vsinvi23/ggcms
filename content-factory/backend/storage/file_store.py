@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 File-based YAML storage layer -- replaces the SQLAlchemy/Postgres layer for
 STAGE 1 of the file-storage rewrite. This is a single-operator utility app
@@ -77,7 +78,9 @@ from backend.models.domain import (
     Source,
 )
 
-ProjectId = uuid.UUID | str
+from typing import Union
+
+ProjectId = Union[uuid.UUID, str]
 
 # ---------------------------------------------------------------------------
 # filenames

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import xml.etree.ElementTree as ET
 import httpx
 from pydantic import BaseModel

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pymupdf as fitz  # PyMuPDF (import name changed from `fitz`; alias kept for readability)
 
 

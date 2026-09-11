@@ -1,3 +1,4 @@
+from __future__ import annotations
 import trafilatura
 
 def extract_text_from_html(html_content: str) -> str:

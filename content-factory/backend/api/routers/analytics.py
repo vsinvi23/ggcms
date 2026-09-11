@@ -1,3 +1,4 @@
+from __future__ import annotations
 import uuid
 from collections import Counter
 from typing import Callable, Optional

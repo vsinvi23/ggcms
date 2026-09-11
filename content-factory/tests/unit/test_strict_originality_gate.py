@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Unit tests for content_pipeline.py's quality_check node's Mode B
 (strict_originality) hard-fail gate, and for QualityAgent now actually

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 STAGE 2 REWRITE: this module used to run pgvector cosine-distance similarity
 search (and plain inserts/counts) against the `knowledge_document`,

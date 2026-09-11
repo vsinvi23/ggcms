@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Plain Pydantic domain models for the AI Learning Content Factory.
 

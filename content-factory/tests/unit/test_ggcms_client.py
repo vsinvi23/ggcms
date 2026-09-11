@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Unit tests for backend/exporters/ggcms_client.py's retry/backoff and
 idempotency-key behavior (plan §1/§4/§17 Wave 2: "ggcms_client.py has zero

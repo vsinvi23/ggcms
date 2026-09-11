@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Unit tests for backend/workflows/content_pipeline.py's should_revise, per
 plan §1/§12: "revision-loop cap respected (settings.max_revisions, fixing

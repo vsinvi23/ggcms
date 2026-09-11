@@ -1,3 +1,4 @@
+from __future__ import annotations
 from backend.models.base import utcnow
 from backend.models.domain import (
     ContentItem,

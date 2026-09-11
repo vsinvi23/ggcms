@@ -1,3 +1,4 @@
+from __future__ import annotations
 """First-class CourseOutline model.
 
 Same shape as `CourseSpecs`/`CourseSection`/`LessonSpec` in

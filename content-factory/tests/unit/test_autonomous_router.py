@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Tests for backend.api.routers.autonomous's concurrency guard (architecture
 review finding #2): POST /api/autonomous/run must refuse to start a second

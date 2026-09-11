@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 STAGE 1 REWRITE: this module used to construct the SQLAlchemy async engine
 (from `settings.database_url`) and expose `get_db()` -- an `AsyncGenerator`

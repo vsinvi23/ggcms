@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from backend.schemas.project_strategy import ProjectStrategy
 from backend.schemas.agent_error import AgentError

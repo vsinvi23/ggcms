@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Tests for backend/services/taxonomy_suggest.py: a best-effort, non-blocking
 suggestion lookup against ggcms's existing GET /api/topics / GET /api/categories

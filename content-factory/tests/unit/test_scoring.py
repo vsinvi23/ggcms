@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Unit tests for backend/services/scoring.py's compute_opportunity_score
 determinism (plan §12: "scoring determinism (same inputs + same version ->

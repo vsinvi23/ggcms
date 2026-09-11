@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Tests for CostTracker wiring into generation.run_pipeline_job (architecture
 review finding #3): a GenerationJob's cost_estimate must actually be

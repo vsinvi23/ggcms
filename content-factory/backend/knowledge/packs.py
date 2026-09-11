@@ -1,3 +1,4 @@
+from __future__ import annotations
 import uuid
 
 from backend.retrieval import vector_store

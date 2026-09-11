@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Autonomous Scheduler (Autonomous Content Factory plan, Wave 3, §9/§16/§17).
 

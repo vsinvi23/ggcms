@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 End-to-end mocked run of the full autonomous pass (Autonomous Content
 Factory plan §12, last bullet): discover -> score -> select -> KnowledgePack

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from backend.configs.settings import settings
 from backend.models.domain import AppSetting
 from backend.storage import file_store

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Content Job orchestrator (Autonomous Content Factory plan §6.3/§9/§10,
 Wave 2 workstream 2).
