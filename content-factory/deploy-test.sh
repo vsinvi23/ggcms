@@ -19,16 +19,15 @@ LATEST_DIR="$GA_DIR/latest"
 VERSION_MANIFEST="$LATEST_DIR/version-manifest.json"
 HISTORY_FILE="$LATEST_DIR/deployment-history.json"
 
-MODE="cloud"
-CHECK_ONLY=false
-FORCE_DEPLOY=false
-BUMP_TYPE=""
+SUBMODE="integrated"
 
 usage() {
   echo "Usage: bash content-factory/deploy-test.sh [OPTIONS]"
   echo ""
   echo "Options:"
   echo "  --local                        Run local test server / test suite"
+  echo "  --standalone                   Target standalone local mode (Console UI on standalone port)"
+  echo "  --integrated                   Target GG-CMS integrated local mode (default for --local)"
   echo "  --cloud                        Deploy test environment to GCP Test Cloud Run (default)"
   echo "  --check, --status              Check deltas for test environment without deploying"
   echo "  --force, -f                    Force deployment of Content Factory test components"
@@ -43,6 +42,16 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     --local)
       MODE="local"
+      shift
+      ;;
+    --standalone)
+      MODE="local"
+      SUBMODE="standalone"
+      shift
+      ;;
+    --integrated)
+      MODE="local"
+      SUBMODE="integrated"
       shift
       ;;
     --cloud)
@@ -91,15 +100,25 @@ fi
 
 if [[ "$MODE" == "local" ]]; then
   echo "============================================================"
-  echo "🧪 Running AI Content Factory Local Test Runner"
+  echo "🧪 AI Content Factory Local Test Runner (Mode: $SUBMODE)"
   echo "============================================================"
 
   if [[ "$CHECK_ONLY" == "true" ]]; then
-    echo "✅ Local test runner configuration verified."
+    echo "✅ Local test runner configuration verified for $SUBMODE mode."
     exit 0
   fi
 
-  python3 content-factory/run_test.py
+  if [[ "$SUBMODE" == "standalone" ]]; then
+    echo "▶ Launching Content Factory in Standalone Local Mode..."
+    echo "  Backend API: http://localhost:8000"
+    echo "  Frontend Console: Run 'cd content-factory/frontend && VITE_BASE_PATH=/ npm run dev'"
+  else
+    echo "▶ Launching Content Factory in GG-CMS Integrated Local Mode..."
+    echo "  Embedded Console target: http://localhost:8000/factory/"
+    echo "  GG-CMS Integration: Route /factory in GG-CMS UI"
+  fi
+
+  python3 content-factory/run_dev_server.py
   exit 0
 fi
 

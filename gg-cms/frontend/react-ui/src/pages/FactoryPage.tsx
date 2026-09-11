@@ -9,12 +9,15 @@ export default function FactoryPage() {
   const [iframeKey, setIframeKey] = useState(0);
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
-  // Cloud Run direct URL fallback or reverse-proxy path
+  // Cloud Run direct URL fallback, local dev server, or reverse-proxy path
+  const localFactoryUrl = (import.meta.env.VITE_CONTENT_FACTORY_URL as string) || 'http://localhost:8000/factory/';
   const factoryUrl = window.location.origin.includes('localhost')
-    ? 'https://content-factory-backend-wuisbddlxq-uc.a.run.app'
+    ? localFactoryUrl
     : `${window.location.origin}/factory`;
 
-  const directUrl = 'https://content-factory-backend-wuisbddlxq-uc.a.run.app';
+  const directUrl = window.location.origin.includes('localhost')
+    ? localFactoryUrl
+    : 'https://content-factory-backend-wuisbddlxq-uc.a.run.app';
 
   const handleRefresh = () => {
     setIframeLoaded(false);

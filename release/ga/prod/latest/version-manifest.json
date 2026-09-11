@@ -1,25 +1,25 @@
 {
-  "system_version": "1.0.1",
-  "build_timestamp": "2026-09-10T01:33:25Z",
-  "git_commit": "1aafa6a",
+  "system_version": "1.0.2",
+  "build_timestamp": "2026-09-11T06:49:19Z",
+  "git_commit": "b54b868",
   "components": {
     "ui": {
-      "version": "1.0.1",
+      "version": "1.0.2",
       "package": "gg-cms/frontend/react-ui",
       "description": "GG-CMS React SPA Frontend"
     },
     "backend": {
-      "version": "1.2.1",
+      "version": "1.2.2",
       "package": "gg-cms/backend/go-cms",
       "description": "GG-CMS Go Backend API Service"
     },
     "db": {
-      "version": "1.0.1",
+      "version": "1.0.2",
       "package": "gg-cms/backend/go-cms/migrations",
       "description": "PostgreSQL & MongoDB Schemas"
     },
     "content-factory": {
-      "version": "1.0.1",
+      "version": "1.0.2",
       "package": "content-factory",
       "description": "AI Content Factory Python Service"
     }
