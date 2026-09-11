@@ -3,10 +3,12 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	authsvc "github.com/serenya/go-cms/internal/application/auth"
+	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
 	"github.com/serenya/go-cms/internal/interfaces/http/middleware"
 	"github.com/serenya/go-cms/pkg/response"
@@ -35,13 +37,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 
 	// Resolve role from group membership so frontend can use it immediately
-	role := "user"
-	for _, g := range user.Groups {
-		if g.Name == "Admin" {
-			role = "admin"
-			break
-		}
-	}
+	role := resolveUserRole(user.Groups)
 
 	setAuthCookies(c, token)
 
@@ -153,6 +149,7 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	for i, g := range user.Groups {
 		groups[i] = g.Name
 	}
+	role := resolveUserRole(user.Groups)
 
 	var lastLogin *string
 	if user.LastLogin != nil {
@@ -166,8 +163,19 @@ func (h *AuthHandler) Me(c *gin.Context) {
 		Name:      user.Name,
 		MobileNo:  user.MobileNo,
 		Status:    string(user.Status),
+		Role:      role,
 		LastLogin: lastLogin,
 		CreatedAt: user.CreatedAt.Format(time.RFC3339),
 		Groups:    groups,
 	})
+}
+
+func resolveUserRole(groups []entity.Group) string {
+	for _, g := range groups {
+		name := strings.ToLower(g.Name)
+		if name == "admin" || name == "superadmin" || name == "super_admin" || name == "super-admin" || name == "masteradmin" || name == "master_admin" {
+			return "admin"
+		}
+	}
+	return "user"
 }

@@ -142,7 +142,7 @@ var _ tasksvc.Service = (*stubTaskService)(nil)
 
 func newCMSRouter(svc cmssvc.Service, authUserID uint, role string) *gin.Engine {
 	r := gin.New()
-	h := handler.NewCMSHandler(svc, &stubTaskService{})
+	h := handler.NewCMSHandler(svc, &stubTaskService{}, nil)
 
 	auth := authMiddleware(authUserID, role) // defined in user_handler_security_test.go
 

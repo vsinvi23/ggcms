@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/serenya/go-cms/internal/domain/entity"
@@ -194,10 +195,11 @@ func (s *service) RecoverPassword(ctx context.Context, email, newPassword string
 	return s.userRepo.Update(ctx, user)
 }
 
-// resolveRole returns "admin" if user belongs to the Admin group, otherwise "user".
+// resolveRole returns "admin" if user belongs to an admin/superadmin/masteradmin group, otherwise "user".
 func (s *service) resolveRole(groups []entity.Group) string {
 	for _, g := range groups {
-		if g.Name == "Admin" {
+		name := strings.ToLower(g.Name)
+		if name == "admin" || name == "superadmin" || name == "super_admin" || name == "super-admin" || name == "masteradmin" || name == "master_admin" {
 			return "admin"
 		}
 	}

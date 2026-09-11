@@ -68,3 +68,14 @@ export function useContentTopics(contentId: number | null, contentType: string) 
     enabled: !!contentId && !!contentType,
   });
 }
+
+export function useSetContentTopics() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ contentId, contentType, topicIds }: { contentId: number; contentType: string; topicIds: number[] }) =>
+      topicService.setContentTopics(contentId, contentType, topicIds),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: [...TOPICS_QUERY_KEY, 'content', variables.contentType, variables.contentId] });
+    },
+  });
+}

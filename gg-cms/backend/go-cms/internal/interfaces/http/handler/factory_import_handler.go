@@ -8,9 +8,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	categorysvc "github.com/serenya/go-cms/internal/application/category"
 	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	lessonsvc "github.com/serenya/go-cms/internal/application/lesson"
 	sectionsvc "github.com/serenya/go-cms/internal/application/section"
+	topicsvc "github.com/serenya/go-cms/internal/application/topic"
 	usersvc "github.com/serenya/go-cms/internal/application/user"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/domain/repository"
@@ -22,23 +24,27 @@ import (
 // endpoint is protected only by the X-Factory-Sync-Secret header (see
 // middleware.FactorySecret) since the factory has no user session.
 type FactoryImportHandler struct {
-	cmsService     cmssvc.Service
-	sectionService sectionsvc.Service
-	lessonService  lessonsvc.Service
-	userService    usersvc.Service
-	genRunRepo     repository.ContentGenerationRunRepository
+	cmsService      cmssvc.Service
+	sectionService  sectionsvc.Service
+	lessonService   lessonsvc.Service
+	userService     usersvc.Service
+	categoryService categorysvc.Service
+	topicService    topicsvc.Service
+	genRunRepo      repository.ContentGenerationRunRepository
 	// systemUserEmail identifies the account attributed as CreatedByID for
 	// factory-ingested content (created_by_id is NOT NULL / FK'd to users.id,
 	// so we need a real, already-seeded user — the master admin by default).
 	systemUserEmail string
 }
 
-func NewFactoryImportHandler(cmsService cmssvc.Service, sectionService sectionsvc.Service, lessonService lessonsvc.Service, userService usersvc.Service, genRunRepo repository.ContentGenerationRunRepository, systemUserEmail string) *FactoryImportHandler {
+func NewFactoryImportHandler(cmsService cmssvc.Service, sectionService sectionsvc.Service, lessonService lessonsvc.Service, userService usersvc.Service, categoryService categorysvc.Service, topicService topicsvc.Service, genRunRepo repository.ContentGenerationRunRepository, systemUserEmail string) *FactoryImportHandler {
 	return &FactoryImportHandler{
 		cmsService:      cmsService,
 		sectionService:  sectionService,
 		lessonService:   lessonService,
 		userService:     userService,
+		categoryService: categoryService,
+		topicService:    topicService,
 		genRunRepo:      genRunRepo,
 		systemUserEmail: systemUserEmail,
 	}
@@ -73,7 +79,7 @@ func (h *FactoryImportHandler) Ingest(c *gin.Context) {
 		return
 	}
 
-	result, err := ingestSyncPayload(c.Request.Context(), h.cmsService, h.sectionService, h.lessonService, systemUserID, payload)
+	result, err := ingestSyncPayload(c.Request.Context(), h.cmsService, h.sectionService, h.lessonService, h.categoryService, h.topicService, systemUserID, payload)
 	if err != nil {
 		msg := err.Error()
 		log.Printf("[factory-import] ingest failed for content_id=%s: %v", payload.ContentID, err)
@@ -125,7 +131,7 @@ func (h *FactoryImportHandler) resolveSystemUserID(ctx context.Context) (uint, e
 // ingestSyncPayload maps a factory SyncPayload onto GG-CMS's CMS/section/lesson
 // domain and creates the corresponding DRAFT Article or Course. Kept separate from
 // the HTTP/secret-check layer so other future import sources can reuse it.
-func ingestSyncPayload(ctx context.Context, cmsService cmssvc.Service, sectionService sectionsvc.Service, lessonService lessonsvc.Service, createdByID uint, payload dto.FactorySyncPayload) (*ingestResult, error) {
+func ingestSyncPayload(ctx context.Context, cmsService cmssvc.Service, sectionService sectionsvc.Service, lessonService lessonsvc.Service, categoryService categorysvc.Service, topicService topicsvc.Service, createdByID uint, payload dto.FactorySyncPayload) (*ingestResult, error) {
 	if payload.ContentID == "" {
 		return nil, fmt.Errorf("content_id is required")
 	}
@@ -138,7 +144,22 @@ func ingestSyncPayload(ctx context.Context, cmsService cmssvc.Service, sectionSe
 		description = &payload.Metadata.Description
 	}
 
+	var categoryID *uint
+	if payload.Metadata.Category != "" && categoryService != nil {
+		if cats, _, err := categoryService.GetAll(ctx, 1, 100); err == nil {
+			catTarget := strings.ToLower(strings.TrimSpace(payload.Metadata.Category))
+			for _, c := range cats {
+				if strings.ToLower(c.Slug) == catTarget || strings.ToLower(c.Name) == catTarget {
+					id := c.ID
+					categoryID = &id
+					break
+				}
+			}
+		}
+	}
+
 	extras := factoryExtrasBlock(payload)
+	var res *ingestResult
 
 	switch payload.Type {
 	case "article":
@@ -151,6 +172,7 @@ func ingestSyncPayload(ctx context.Context, cmsService cmssvc.Service, sectionSe
 			Title:       payload.Metadata.Title,
 			Description: description,
 			Body:        bodyPtr,
+			CategoryID:  categoryID,
 			CreatedByID: createdByID,
 		})
 		if err != nil {
@@ -160,7 +182,7 @@ func ingestSyncPayload(ctx context.Context, cmsService cmssvc.Service, sectionSe
 		if !ok {
 			return nil, fmt.Errorf("unexpected result type from cms create")
 		}
-		return &ingestResult{NumericID: article.ID, ContentType: "ARTICLE", PublicID: article.PublicID, Slug: article.Slug, Version: article.Version}, nil
+		res = &ingestResult{NumericID: article.ID, ContentType: "ARTICLE", PublicID: article.PublicID, Slug: article.Slug, Version: article.Version}
 
 	case "course":
 		// Course body carries only the top-level metadata + provenance/quiz/exercise
@@ -176,6 +198,7 @@ func ingestSyncPayload(ctx context.Context, cmsService cmssvc.Service, sectionSe
 			Title:       payload.Metadata.Title,
 			Description: description,
 			Body:        bodyPtr,
+			CategoryID:  categoryID,
 			CreatedByID: createdByID,
 		})
 		if err != nil {
@@ -213,12 +236,30 @@ func ingestSyncPayload(ctx context.Context, cmsService cmssvc.Service, sectionSe
 			}
 		}
 
-		return &ingestResult{NumericID: course.ID, ContentType: "COURSE", PublicID: course.PublicID, Slug: course.Slug, Version: course.Version}, nil
-
+		res = &ingestResult{NumericID: course.ID, ContentType: "COURSE", PublicID: course.PublicID, Slug: course.Slug, Version: course.Version}
 
 	default:
 		return nil, fmt.Errorf("unsupported type %q (expected \"article\" or \"course\")", payload.Type)
 	}
+
+	// Resolve and link topics if provided
+	if res != nil && topicService != nil && len(payload.Metadata.Topics) > 0 {
+		var topicIDs []uint
+		for _, rawTopic := range payload.Metadata.Topics {
+			if rTopic, err := topicService.ResolveTopic(ctx, rawTopic); err == nil && rTopic != nil && rTopic.MatchedTopic != nil {
+				topicIDs = append(topicIDs, rTopic.MatchedTopic.ID)
+			} else if createdTopic, err := topicService.Create(ctx, rawTopic, "concept", ""); err == nil && createdTopic != nil {
+				topicIDs = append(topicIDs, createdTopic.ID)
+			}
+		}
+		if len(topicIDs) > 0 {
+			if err := topicService.SetContentTopics(ctx, res.NumericID, res.ContentType, topicIDs); err != nil {
+				log.Printf("[factory-import] warning: failed to set content topics for %s id=%d: %v", res.ContentType, res.NumericID, err)
+			}
+		}
+	}
+
+	return res, nil
 }
 
 // articleBodyFromSections joins article_body.sections into a single markdown Body,

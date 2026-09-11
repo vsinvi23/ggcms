@@ -6,6 +6,7 @@ type UserResponse struct {
 	Name      string   `json:"name"`
 	MobileNo  *string  `json:"mobileNo,omitempty"`
 	Status    string   `json:"status"`
+	Role      string   `json:"role"`
 	LastLogin *string  `json:"lastLogin,omitempty"`
 	CreatedAt string   `json:"createdAt"`
 	Groups    []string `json:"groups"`

@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import {
   ChevronRight, ChevronDown, Plus, Trash2, GripVertical,
@@ -113,6 +115,8 @@ function LessonContentEditor({
   onSaved?: () => void;
 }) {
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
+  const [type, setType] = useState<string>(lesson.type || 'text');
+  const [duration, setDuration] = useState<number>(lesson.duration || 0);
   const [saving, setSaving] = useState(false);
   const updateLesson = useUpdateLesson();
 
@@ -129,8 +133,15 @@ function LessonContentEditor({
     setSaving(true);
     try {
       const jsonContent = blocks.length > 0 ? JSON.stringify(blocks) : null;
-      await updateLesson.mutateAsync({ id: lesson.id, data: { content: jsonContent ?? undefined } });
-      toast.success('Lesson content saved');
+      await updateLesson.mutateAsync({
+        id: lesson.id,
+        data: {
+          content: jsonContent ?? undefined,
+          type: type as LessonDto['type'],
+          duration: duration || 0,
+        },
+      });
+      toast.success('Lesson saved');
       onSaved?.();
     } catch (err) {
       toast.error(toUserMessage(err, 'Failed to save lesson content'));
@@ -140,14 +151,44 @@ function LessonContentEditor({
   };
 
   return (
-    <div className="px-4 py-4 space-y-3 border-t border-border bg-muted/5">
+    <div className="px-4 py-4 space-y-4 border-t border-border bg-muted/5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Lesson Content</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Lesson Details & Content</p>
         <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1">
           {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-          Save Content
+          Save Lesson
         </Button>
       </div>
+
+      <div className="grid grid-cols-2 gap-4 bg-background p-3 rounded-md border border-border">
+        <div className="space-y-1">
+          <Label className="text-xs">Lesson Type</Label>
+          <Select value={type} onValueChange={setType}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="text">Text / Article</SelectItem>
+              <SelectItem value="video">Video</SelectItem>
+              <SelectItem value="quiz">Quiz</SelectItem>
+              <SelectItem value="assignment">Assignment</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1">
+          <Label className="text-xs">Duration (minutes)</Label>
+          <Input
+            type="number"
+            min={0}
+            value={duration || ''}
+            onChange={(e) => setDuration(parseInt(e.target.value) || 0)}
+            placeholder="e.g. 10"
+            className="h-8 text-xs"
+          />
+        </div>
+      </div>
+
       <RichContentEditor blocks={blocks} onChange={setBlocks} />
     </div>
   );

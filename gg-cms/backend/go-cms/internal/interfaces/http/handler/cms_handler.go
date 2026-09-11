@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	tasksvc "github.com/serenya/go-cms/internal/application/task"
+	topicsvc "github.com/serenya/go-cms/internal/application/topic"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/domain/repository"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
@@ -19,12 +20,13 @@ import (
 )
 
 type CMSHandler struct {
-	service     cmssvc.Service
-	taskService tasksvc.Service
+	service      cmssvc.Service
+	taskService  tasksvc.Service
+	topicService topicsvc.Service
 }
 
-func NewCMSHandler(svc cmssvc.Service, taskSvc tasksvc.Service) *CMSHandler {
-	return &CMSHandler{service: svc, taskService: taskSvc}
+func NewCMSHandler(svc cmssvc.Service, taskSvc tasksvc.Service, topicSvc topicsvc.Service) *CMSHandler {
+	return &CMSHandler{service: svc, taskService: taskSvc, topicService: topicSvc}
 }
 
 // GET /api/cms?type=ARTICLE&page=0&size=10&status=DRAFT&search=keyword&categoryId=1&courseType=BYTE
@@ -177,6 +179,11 @@ func (h *CMSHandler) Create(c *gin.Context) {
 		if err := h.taskService.UpsertOwnerTask(c.Request.Context(), contentID, taskType, req.Title, userID, "draft"); err != nil {
 			log.Printf("[cms] Create: failed to upsert owner task for %s id=%d: %v", req.Type, contentID, err)
 		}
+		if h.topicService != nil && len(req.TopicIDs) > 0 {
+			if err := h.topicService.SetContentTopics(c.Request.Context(), contentID, string(req.Type), req.TopicIDs); err != nil {
+				log.Printf("[cms] Create: failed to set content topics for %s id=%d: %v", req.Type, contentID, err)
+			}
+		}
 	}
 
 	response.Created(c, toCMSResponse(result, entity.CMSType(req.Type)))
@@ -235,6 +242,12 @@ func (h *CMSHandler) Update(c *gin.Context) {
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
+	}
+
+	if h.topicService != nil && req.TopicIDs != nil {
+		if err := h.topicService.SetContentTopics(c.Request.Context(), id, string(cmsType), req.TopicIDs); err != nil {
+			log.Printf("[cms] Update: failed to set content topics for %s id=%d: %v", cmsType, id, err)
+		}
 	}
 	response.OK(c, toCMSResponse(result, cmsType))
 	auditActionU := "article.updated"

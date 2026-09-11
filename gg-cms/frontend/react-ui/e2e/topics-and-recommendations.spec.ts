@@ -9,7 +9,7 @@ test.describe('GG-CMS Knowledge Graph & Recommendation Validation', () => {
     expect(Array.isArray(body.data)).toBe(true);
     expect(body.data.length).toBeGreaterThan(0);
 
-    const oauthTopic = body.data.find((t: any) => t.slug === 'oauth-2' || t.name === 'OAuth 2.0');
+    const oauthTopic = body.data.find((t: { slug?: string; name?: string }) => t.slug === 'oauth-2' || t.name === 'OAuth 2.0');
     expect(oauthTopic).toBeDefined();
   });
 
@@ -19,7 +19,7 @@ test.describe('GG-CMS Knowledge Graph & Recommendation Validation', () => {
     const body = await response.json();
     expect(Array.isArray(body.data)).toBe(true);
 
-    const sweCat = body.data.find((c: any) => c.slug === 'software-engineering' || c.slug === 'cloud-infrastructure');
+    const sweCat = body.data.find((c: { slug?: string }) => c.slug === 'software-engineering' || c.slug === 'cloud-infrastructure');
     expect(sweCat).toBeDefined();
   });
 

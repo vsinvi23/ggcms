@@ -19,13 +19,16 @@ type FactorySyncPayload struct {
 }
 
 type FactoryContentMetadata struct {
-	Title            string `json:"title"`
-	Slug             string `json:"slug"`
-	Description      string `json:"description"`
-	Audience         string `json:"audience"`
-	Difficulty       string `json:"difficulty"`
-	EstimatedMinutes int    `json:"estimated_minutes"`
-	Language         string `json:"language"`
+	Title            string   `json:"title"`
+	Slug             string   `json:"slug"`
+	Description      string   `json:"description"`
+	Category         string   `json:"category,omitempty"`
+	Topics           []string `json:"topics,omitempty"`
+	Tags             []string `json:"tags,omitempty"`
+	Audience         string   `json:"audience"`
+	Difficulty       string   `json:"difficulty"`
+	EstimatedMinutes int      `json:"estimated_minutes"`
+	Language         string   `json:"language"`
 }
 
 type FactoryLearningSpecs struct {

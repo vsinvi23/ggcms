@@ -94,6 +94,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	if factoryURLStr == "" {
 		factoryURLStr = "https://content-factory-backend-wuisbddlxq-uc.a.run.app"
 	}
+	var factoryHandler gin.HandlerFunc
 	if factoryTarget, err := url.Parse(factoryURLStr); err == nil {
 		factoryProxy := httputil.NewSingleHostReverseProxy(factoryTarget)
 		originalDirector := factoryProxy.Director
@@ -103,11 +104,9 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			req.URL.Scheme = factoryTarget.Scheme
 			req.URL.Host = factoryTarget.Host
 		}
-		factoryHandler := func(c *gin.Context) {
+		factoryHandler = func(c *gin.Context) {
 			factoryProxy.ServeHTTP(c.Writer, c.Request)
 		}
-		r.Any("/factory", factoryHandler)
-		r.Any("/factory/*filepath", factoryHandler)
 	}
 
 	// Set JS and CSS MIME types for static assets if needed
@@ -140,7 +139,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	userH := handler.NewUserHandler(svcs.User)
 	groupH := handler.NewGroupHandler(svcs.Group)
 	catH := handler.NewCategoryHandler(svcs.Category)
-	cmsH := handler.NewCMSHandler(svcs.CMS, svcs.Task)
+	cmsH := handler.NewCMSHandler(svcs.CMS, svcs.Task, svcs.Topic)
 	secH := handler.NewSectionHandler(svcs.Section)
 	lesH := handler.NewLessonHandler(svcs.Lesson)
 	enrH := handler.NewEnrollmentHandler(svcs.Enrollment)
@@ -159,11 +158,20 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	auditH := handler.NewAuditHandler(svcs.Audit)
 	personH := handler.NewPersonalizationHandler(svcs.Personalization)
 	importH := handler.NewImportHandler(svcs.CMS, svcs.Task, svcs.Section, svcs.Lesson)
-	factoryImportH := handler.NewFactoryImportHandler(svcs.CMS, svcs.Section, svcs.Lesson, svcs.User, nil, cfg.Admin.Email)
+	factoryImportH := handler.NewFactoryImportHandler(svcs.CMS, svcs.Section, svcs.Lesson, svcs.User, svcs.Category, svcs.Topic, nil, cfg.Admin.Email)
 
 	authMW := middleware.Auth(jwtManager)
 	factorySecretMW := middleware.FactorySecret(cfg.Import.FactorySyncSecret)
 	adminRecoveryMW := middleware.AdminRecoverySecret(cfg.Recovery.AdminRecoverySecret)
+
+	// Protected AI Content Factory reverse proxy (requires JWT auth + Admin role)
+	if factoryHandler != nil {
+		factoryGroup := r.Group("/factory")
+		factoryGroup.Use(authMW)
+		factoryGroup.Use(middleware.AdminOnly())
+		factoryGroup.Any("", factoryHandler)
+		factoryGroup.Any("/*filepath", factoryHandler)
+	}
 
 	api := r.Group("/api")
 	{

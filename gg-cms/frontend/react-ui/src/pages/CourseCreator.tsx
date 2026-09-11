@@ -39,6 +39,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { sectionKeys } from '@/api/hooks/useSections';
 import { useCmsWorkflowActions } from '@/hooks/useCmsWorkflowActions';
+import { TopicMultiSelect } from '@/components/ui/TopicMultiSelect';
+import { useContentTopics } from '@/api/hooks/useTopics';
 import { slugify } from '@/lib/slug';
 import { toUserMessage } from '@/lib/errors';
 
@@ -75,6 +77,8 @@ export default function CourseCreator() {
   const [categoryId, setCategoryId] = useState('');
   const [courseType, setCourseType] = useState('STANDARD');
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<number[]>([]);
+  const { data: initialTopics = [] } = useContentTopics(existingCmsId > 0 ? existingCmsId : null, 'COURSE');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -128,6 +132,12 @@ export default function CourseCreator() {
   }, [existingCms, isDataLoaded]);
 
   useEffect(() => {
+    if (initialTopics.length > 0 && selectedTopicIds.length === 0) {
+      setSelectedTopicIds(initialTopics.map((t) => t.id));
+    }
+  }, [initialTopics, selectedTopicIds.length]);
+
+  useEffect(() => {
     if (!isViewMode && existingBody && isDataLoaded && contentBlocks.length === 0) {
       try {
         const parsedBlocks = parseBodyToBlocks(existingBody);
@@ -161,9 +171,9 @@ export default function CourseCreator() {
       let cmsSlug: string | undefined;
       if (paramId) {
         cmsId = existingCmsId;
-        await updateCms.mutateAsync({ id: cmsId, data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined } });
+        await updateCms.mutateAsync({ id: cmsId, data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined, topicIds: selectedTopicIds } });
       } else {
-        const created = await createCms.mutateAsync({ type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined });
+        const created = await createCms.mutateAsync({ type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined, topicIds: selectedTopicIds });
         cmsId = created.id;
         cmsSlug = created.slug;
         setSavedCourseId(cmsId);
@@ -494,6 +504,16 @@ export default function CourseCreator() {
                             {courseTypes.find(ct => ct.value === courseType)?.description ?? 'Shown as a badge on the course hero and search results.'}
                           </p>
                         </div>
+                      </div>
+
+                      <div className="space-y-1.5 mt-4">
+                        <Label>Topics</Label>
+                        <TopicMultiSelect
+                          selectedTopicIds={selectedTopicIds}
+                          onChange={setSelectedTopicIds}
+                          disabled={isViewMode && !reviewerEditMode && !publisherEditMode}
+                        />
+                        <p className="text-xs text-muted-foreground">Topics associate this course with knowledge graph concepts.</p>
                       </div>
                     </CardContent>
                   </Card>

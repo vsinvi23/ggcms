@@ -186,6 +186,7 @@ export interface CmsCreateDto {
   body?: string;
   articleType?: string | null;
   courseType?: string | null;
+  topicIds?: number[];
 }
 
 export interface CmsUpdateDto {
@@ -197,6 +198,7 @@ export interface CmsUpdateDto {
   articleType?: string | null;
   courseType?: string | null;
   thumbnailUrl?: string | null;
+  topicIds?: number[];
 }
 
 export interface AttachmentDto {
