@@ -66,6 +66,9 @@ func (r *stubArticleRepo) FindPublishedByCategorySlug(_ context.Context, _ strin
 func (r *stubArticleRepo) CountPublishedByDomainID(_ context.Context, _ uint) (int64, error) {
 	return 0, nil
 }
+func (r *stubArticleRepo) CountPublishedByCategoryID(_ context.Context, _ uint) (int64, error) {
+	return 0, nil
+}
 func (r *stubArticleRepo) SaveSnapshot(_ context.Context, _ uint, _ *entity.Article) error {
 	return nil
 }

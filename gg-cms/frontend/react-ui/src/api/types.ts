@@ -153,6 +153,7 @@ export interface CategoryResponseDto {
   slug?: string;
   description?: string;
   requiredApprovals?: number;
+  articleCount?: number;
   children?: CategoryResponseDto[];
 }
 

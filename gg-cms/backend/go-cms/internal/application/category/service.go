@@ -30,15 +30,22 @@ type Service interface {
 	GetReviewers(ctx context.Context, categoryID uint) ([]*entity.User, error)
 	// GetGroupCategories returns all non-virtual categories where the given group is a reviewer.
 	GetGroupCategories(ctx context.Context, groupID uint) ([]*entity.Category, error)
+	// CountPublishedArticles returns the published article count for a single category (public browse UI).
+	CountPublishedArticles(ctx context.Context, categoryID uint) (int64, error)
 }
 
 type service struct {
 	categoryRepo repository.CategoryRepository
 	groupRepo    repository.GroupRepository
+	articleRepo  repository.ArticleRepository
 }
 
-func NewService(categoryRepo repository.CategoryRepository, groupRepo repository.GroupRepository) Service {
-	return &service{categoryRepo: categoryRepo, groupRepo: groupRepo}
+func NewService(categoryRepo repository.CategoryRepository, groupRepo repository.GroupRepository, articleRepo repository.ArticleRepository) Service {
+	return &service{categoryRepo: categoryRepo, groupRepo: groupRepo, articleRepo: articleRepo}
+}
+
+func (s *service) CountPublishedArticles(ctx context.Context, categoryID uint) (int64, error) {
+	return s.articleRepo.CountPublishedByCategoryID(ctx, categoryID)
 }
 
 func (s *service) GetAll(ctx context.Context, page, size int) ([]*entity.Category, int64, error) {

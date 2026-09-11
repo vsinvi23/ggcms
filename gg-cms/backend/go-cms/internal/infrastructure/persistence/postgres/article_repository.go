@@ -161,6 +161,14 @@ func (r *articleRepository) CountPublishedByDomainID(ctx context.Context, domain
 	return count, err
 }
 
+func (r *articleRepository) CountPublishedByCategoryID(ctx context.Context, categoryID uint) (int64, error) {
+	var count int64
+	err := r.read.WithContext(ctx).Model(&entity.Article{}).
+		Where("status = ? AND category_id = ?", entity.CMSStatusPublished, categoryID).
+		Count(&count).Error
+	return count, err
+}
+
 func (r *articleRepository) UpdateStatus(ctx context.Context, id uint, status entity.CMSStatus, reviewerID *uint, comment *string, publishedAt *time.Time) error {
 	updates := map[string]interface{}{"status": status}
 	if reviewerID != nil {

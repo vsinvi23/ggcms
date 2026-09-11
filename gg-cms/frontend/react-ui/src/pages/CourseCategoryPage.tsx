@@ -1,8 +1,8 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import {
-  BookOpen, FileText, Search, X, Check, ChevronsUpDown, Tag, Clock,
-  SlidersHorizontal, ChevronRight, Play, GraduationCap,
+  BookOpen, FileText, Search, X, Check, ChevronsUpDown, Tag,
+  SlidersHorizontal, Play, GraduationCap, Compass,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -147,44 +147,96 @@ function TagsDropdown({
   );
 }
 
-// ─── Browse by Domain strip ────────────────────────────────────────────────────
+// ─── Explore header — title, stats, domain cards ──────────────────────────────
 
-function DomainStrip({
-  domains, activeId, onSelect,
+function ExploreHeader({
+  totalArticles, totalCourses, domains, activeId, onSelect,
 }: {
+  totalArticles: number;
+  totalCourses: number;
   domains: DomainDto[];
   activeId: number | undefined;
   onSelect: (domain: DomainDto) => void;
 }) {
-  if (domains.length === 0) return null;
   return (
-    <div className="shrink-0 border-b border-border bg-card px-5 py-3">
-      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-        Browse by Domain
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {domains.map(domain => {
-          const count = domain.articleCount + domain.courseCount;
-          const active = domain.id === activeId;
-          return (
-            <button
-              key={domain.id}
-              onClick={() => onSelect(domain)}
-              className={cn(
-                'flex items-center gap-2 px-3 py-1.5 rounded-lg border text-left transition-colors',
-                active ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted',
-              )}
-            >
-              <span className="w-6 h-6 shrink-0 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
-                {domain.icon || domain.name.charAt(0).toUpperCase()}
-              </span>
-              <span className="flex flex-col leading-tight">
-                <span className="text-sm font-medium text-foreground">{domain.name}</span>
-                <span className="text-[11px] text-muted-foreground">{count}+ articles</span>
-              </span>
-            </button>
-          );
-        })}
+    <div className="shrink-0 border-b border-border bg-card px-6 py-6 space-y-5">
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Compass className="h-6 w-6 text-primary" /> Explore
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">Discover content by domain and category</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <StatBadge icon={FileText} label="Articles" value={totalArticles} />
+          <StatBadge icon={BookOpen} label="Courses" value={totalCourses} />
+        </div>
+      </div>
+
+      {domains.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {domains.map(domain => {
+            const count = domain.articleCount + domain.courseCount;
+            const active = domain.id === activeId;
+            return (
+              <button
+                key={domain.id}
+                onClick={() => onSelect(domain)}
+                className={cn(
+                  'flex flex-col items-start gap-2 p-4 rounded-xl border text-left transition-colors',
+                  active ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted',
+                )}
+              >
+                <span className="w-9 h-9 shrink-0 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold">
+                  {domain.icon || domain.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="text-sm font-semibold text-foreground leading-tight">{domain.name}</span>
+                <span className="text-xs text-muted-foreground">{count}+ resources</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatBadge({ icon: Icon, label, value }: { icon: typeof FileText; label: string; value: number }) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-background">
+      <Icon className="h-4 w-4 text-primary" />
+      <span className="text-sm font-semibold text-foreground">{value}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+// ─── Categories in [Domain] grid ───────────────────────────────────────────────
+
+function CategoryGrid({
+  categories, selectedId, onSelect,
+}: {
+  categories: { id: number; name: string; articleCount?: number }[];
+  selectedId: number | undefined;
+  onSelect: (id: number) => void;
+}) {
+  if (categories.length === 0) return null;
+  return (
+    <div className="px-6 pt-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {categories.map(cat => (
+          <button
+            key={cat.id}
+            onClick={() => onSelect(cat.id)}
+            className={cn(
+              'flex items-center justify-between gap-2 px-4 py-3 rounded-lg border text-left transition-colors',
+              selectedId === cat.id ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted',
+            )}
+          >
+            <span className="text-sm font-medium text-foreground">{cat.name}</span>
+            <span className="text-xs text-muted-foreground shrink-0">{cat.articleCount ?? 0} articles</span>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -303,6 +355,7 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
   const [sortBy, setSortBy]                         = useState<'newest' | 'oldest' | 'az'>('newest');
   const [tagsExpanded, setTagsExpanded]             = useState(false);
   const [catsExpanded, setCatsExpanded]             = useState(false);
+  const [filtersOpen, setFiltersOpen]               = useState(false);
 
   const TAGS_VISIBLE = 10;
   const CATS_VISIBLE = 8;
@@ -431,14 +484,39 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
   const visibleCats = catsExpanded ? flatCategories : flatCategories.slice(0, CATS_VISIBLE);
   const visibleTags = tagsExpanded ? allTags : allTags.slice(0, TAGS_VISIBLE);
 
+  const totalArticles = isArticle ? allItems.length : 0;
+  const totalCourses  = isArticle ? 0 : allItems.length;
+
   return (
     <PublicLayout hideSearch>
       <div className="flex flex-col h-full overflow-hidden">
 
-        <DomainStrip domains={allDomains} activeId={activeDomainId} onSelect={handleDomainSelect} />
+        <ExploreHeader
+          totalArticles={totalArticles}
+          totalCourses={totalCourses}
+          domains={allDomains}
+          activeId={activeDomainId}
+          onSelect={handleDomainSelect}
+        />
 
-        {/* ── Filter section ────────────────────────────────────────────────── */}
-        <div className="shrink-0 border-b border-border bg-card px-5 py-3 space-y-2.5">
+        <CategoryGrid
+          categories={flatCategories}
+          selectedId={selectedCategoryIds[0]}
+          onSelect={id => setSelectedCategoryIds(prev => prev.includes(id) ? [] : [id])}
+        />
+
+        {/* ── Filters toggle ───────────────────────────────────────────────── */}
+        <div className="px-6 pt-4">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setFiltersOpen(v => !v)}>
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Filters
+            {hasActiveFilters && <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px]">Active</Badge>}
+          </Button>
+        </div>
+
+        {/* ── Filter section (collapsed by default) ───────────────────────── */}
+        {filtersOpen && (
+        <div className="shrink-0 border-b border-border bg-card mx-6 mt-3 rounded-xl border px-5 py-3 space-y-2.5">
 
           {/* Row 1 — Search bar full width */}
           <form onSubmit={handleSearchSubmit}>
@@ -547,6 +625,7 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
             </div>
           )}
         </div>
+        )}
 
         {/* ── Results ───────────────────────────────────────────────────────── */}
         <main className="flex-1 overflow-y-auto px-4 py-3">

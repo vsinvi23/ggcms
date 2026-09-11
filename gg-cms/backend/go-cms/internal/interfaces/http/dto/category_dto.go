@@ -8,6 +8,7 @@ type CategoryResponse struct {
 	DomainID          *uint              `json:"domainId,omitempty"`
 	IsVirtual         bool               `json:"isVirtual,omitempty"`
 	RequiredApprovals int                `json:"requiredApprovals"`
+	ArticleCount      *int64             `json:"articleCount,omitempty"`
 	Children          []CategoryResponse `json:"children,omitempty"`
 }
 

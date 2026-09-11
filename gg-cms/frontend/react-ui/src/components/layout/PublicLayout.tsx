@@ -58,7 +58,9 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
           {/* Nav tabs */}
           <nav className="hidden sm:flex items-center flex-1 gap-0 overflow-x-auto">
             {navItems.map(item => {
-              const active = location.pathname.startsWith(item.href);
+              const active = item.href === '/'
+                ? location.pathname === '/'
+                : location.pathname.startsWith(item.href);
               return (
                 <Link
                   key={item.href}
