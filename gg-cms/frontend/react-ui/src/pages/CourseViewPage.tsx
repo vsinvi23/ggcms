@@ -15,6 +15,7 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 import { usePublicCmsById, usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useSectionsByCourse } from '@/api/hooks/useSections';
 import { useMyEnrollment, useEnroll, useUpdateProgress } from '@/api/hooks/useEnrollments';
@@ -896,8 +897,8 @@ const CourseViewPage = () => {
           description: 'You now have access to all course materials.',
         });
       },
-      onError: () => {
-        toast.error('Failed to enroll. Please try again.');
+      onError: (err) => {
+        toast.error(toUserMessage(err, 'Failed to enroll. Please try again.'));
       },
     });
   };

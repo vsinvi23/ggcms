@@ -1,0 +1,38 @@
+# AI Content Factory — Production Dockerfile for Cloud Run
+
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /build
+
+COPY content-factory/frontend/package*.json ./
+RUN npm ci --silent
+
+COPY content-factory/frontend/ ./
+ENV NODE_ENV=production
+ENV VITE_BASE_PATH=/factory/
+RUN npm run build
+
+FROM python:3.12-slim AS runtime
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY content-factory/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY content-factory/ .
+
+RUN mkdir -p /app/dist
+COPY --from=frontend-build /build/dist /app/dist
+
+RUN mkdir -p /app/data
+
+ENV PORT=8080
+
+EXPOSE 8080
+
+CMD ["sh", "-c", "uvicorn backend.api.main:app --host 0.0.0.0 --port ${PORT} --workers 1"]

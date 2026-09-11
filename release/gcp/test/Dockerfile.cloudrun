@@ -1,0 +1,38 @@
+# GG-CMS — Test/Staging Backend Dockerfile for Cloud Run
+
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache git ca-certificates tzdata
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -a -trimpath -ldflags="-w -s" -o server ./cmd/server
+
+FROM alpine:3.20
+
+RUN apk --no-cache add ca-certificates tzdata wget
+
+WORKDIR /app
+
+COPY --from=builder /app/server .
+COPY --from=builder /app/migrations ./migrations
+
+RUN mkdir -p uploads
+
+ENV PORT=8080 \
+    TLS_ENABLED=false \
+    GIN_MODE=debug \
+    LOG_LEVEL=debug
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD wget -qO- http://localhost:${PORT}/api/health || exit 1
+
+CMD ["./server"]

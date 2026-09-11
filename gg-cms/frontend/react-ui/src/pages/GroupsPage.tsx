@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Layers, Plus, Trash2, Loader2, Pencil, Users, UserPlus, RefreshCw, Eye, Search, UserMinus, Shield, ChevronRight, FolderTree, X } from 'lucide-react';
 import { GroupPermissions } from '@/api/types';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   AlertDialog,
@@ -424,8 +425,9 @@ export default function GroupsPage() {
   }, [groups]);
 
   const flatCategories = useMemo(() => {
+    type CategoryNode = { id: number; name: string; children?: CategoryNode[] };
     const flat: { id: number; name: string; parentId: number | null }[] = [];
-    const walk = (items: { id: number; name: string; children?: unknown[] }[], parentId: number | null = null) => {
+    const walk = (items: CategoryNode[], parentId: number | null = null) => {
       for (const c of items) {
         flat.push({ id: c.id, name: c.name, parentId });
         if (c.children?.length) walk(c.children, c.id);
@@ -493,8 +495,8 @@ export default function GroupsPage() {
       setFormOpen(false);
       setGroupName('');
       setEditingGroup(null);
-    } catch {
-      toast.error(editingGroup ? 'Failed to update group' : 'Failed to create group');
+    } catch (err) {
+      toast.error(toUserMessage(err, editingGroup ? 'Failed to update group' : 'Failed to create group'));
     }
   };
 
@@ -508,8 +510,8 @@ export default function GroupsPage() {
     try {
       await deleteMutation.mutateAsync(groupToDelete.id);
       toast.success(`Group "${groupToDelete.name}" deleted`);
-    } catch {
-      toast.error('Failed to delete group');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete group'));
     } finally {
       setDeleteDialogOpen(false);
       setGroupToDelete(null);
@@ -577,8 +579,8 @@ export default function GroupsPage() {
       toast.success(`Added "${userName}" to group`);
       refetchMembers();
       refetch();
-    } catch {
-      toast.error('Failed to add user to group');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to add user to group'));
     }
   };
 
@@ -589,8 +591,8 @@ export default function GroupsPage() {
       toast.success(`Removed "${userName}" from group`);
       refetchMembers();
       refetch();
-    } catch {
-      toast.error('Failed to remove user from group');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to remove user from group'));
     }
   };
 
@@ -996,7 +998,7 @@ export default function GroupsPage() {
                     { categoryId: catId, groupId: editingGroup.id },
                     {
                       onSuccess: () => toast.success('Category removed'),
-                      onError: () => toast.error('Failed to remove category'),
+                      onError: (err) => toast.error(toUserMessage(err, 'Failed to remove category')),
                     }
                   );
                 }}

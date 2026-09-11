@@ -32,6 +32,7 @@ import {
   useDeleteContentType,
 } from '@/api/hooks/useContentTypes';
 import { ContentTypeDto } from '@/api/services/contentTypeService';
+import { toUserMessage } from '@/lib/errors';
 
 interface TypeFormState {
   value: string;
@@ -91,8 +92,8 @@ function TypesSection({ kind, title, icon: Icon }: TypesSectionProps) {
         toast.success(`"${form.label}" created`);
       }
       setFormOpen(false);
-    } catch {
-      toast.error(editingType ? 'Failed to update type' : 'Failed to create type');
+    } catch (err) {
+      toast.error(toUserMessage(err, editingType ? 'Failed to update type' : 'Failed to create type'));
     }
   };
 
@@ -101,8 +102,8 @@ function TypesSection({ kind, title, icon: Icon }: TypesSectionProps) {
     try {
       await deleteMutation.mutateAsync({ id: deleteTarget.id, kind });
       toast.success(`"${deleteTarget.label}" deleted`);
-    } catch {
-      toast.error('Failed to delete type');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete type'));
     } finally {
       setDeleteTarget(null);
     }

@@ -83,7 +83,7 @@ func (r *stubCategoryRepo) FindReviewerGroups(_ context.Context, _ uint) ([]enti
 }
 func (r *stubCategoryRepo) Create(_ context.Context, _ *entity.Category) error { return nil }
 func (r *stubCategoryRepo) Update(_ context.Context, _ *entity.Category) error { return nil }
-func (r *stubCategoryRepo) Delete(_ context.Context, _ uint) error              { return nil }
+func (r *stubCategoryRepo) Delete(_ context.Context, _ uint) error             { return nil }
 func (r *stubCategoryRepo) FindByID(_ context.Context, _ uint) (*entity.Category, error) {
 	return &entity.Category{RequiredApprovals: 1}, nil
 }
@@ -107,6 +107,13 @@ func (r *stubCategoryRepo) FindByReviewerGroupID(_ context.Context, _ uint) ([]*
 }
 func (r *stubCategoryRepo) AddReviewerGroup(_ context.Context, _, _ uint) error    { return nil }
 func (r *stubCategoryRepo) RemoveReviewerGroup(_ context.Context, _, _ uint) error { return nil }
+func (r *stubCategoryRepo) GetContentCategories(_ context.Context, _ uint, _ string) ([]*entity.ContentCategory, error) {
+	return nil, nil
+}
+func (r *stubCategoryRepo) SetContentCategories(_ context.Context, _ uint, _ string, _ []entity.ContentCategory) error {
+	return nil
+}
+
 
 // stubGroupRepo implements repository.GroupRepository.
 // FindByUserID is the only method that matters for security tests.
@@ -118,11 +125,11 @@ type stubGroupRepo struct {
 func (r *stubGroupRepo) FindByUserID(_ context.Context, _ uint) ([]entity.Group, error) {
 	return r.userGroups, r.groupsErr
 }
-func (r *stubGroupRepo) Create(_ context.Context, _ *entity.Group) error    { return nil }
-func (r *stubGroupRepo) Update(_ context.Context, _ *entity.Group) error    { return nil }
-func (r *stubGroupRepo) Delete(_ context.Context, _ uint) error             { return nil }
-func (r *stubGroupRepo) AddMember(_ context.Context, _, _ uint) error       { return nil }
-func (r *stubGroupRepo) RemoveMember(_ context.Context, _, _ uint) error    { return nil }
+func (r *stubGroupRepo) Create(_ context.Context, _ *entity.Group) error           { return nil }
+func (r *stubGroupRepo) Update(_ context.Context, _ *entity.Group) error           { return nil }
+func (r *stubGroupRepo) Delete(_ context.Context, _ uint) error                    { return nil }
+func (r *stubGroupRepo) AddMember(_ context.Context, _, _ uint) error              { return nil }
+func (r *stubGroupRepo) RemoveMember(_ context.Context, _, _ uint) error           { return nil }
 func (r *stubGroupRepo) FindByID(_ context.Context, _ uint) (*entity.Group, error) { return nil, nil }
 func (r *stubGroupRepo) FindByName(_ context.Context, _ string) (*entity.Group, error) {
 	return nil, nil
@@ -157,19 +164,19 @@ var catID uint = 10
 // articleWithCategory returns a stub article with CategoryID set.
 func articleWithCategory() *entity.Article {
 	return &entity.Article{
-		Status:     entity.CMSStatusReview,
+		Status:      entity.CMSStatusReview,
 		CreatedByID: 99,
-		CategoryID: &catID,
-		Version:    1,
+		CategoryID:  &catID,
+		Version:     1,
 	}
 }
 
 // articleNoCategory returns a stub article without a CategoryID.
 func articleNoCategory() *entity.Article {
 	return &entity.Article{
-		Status:     entity.CMSStatusReview,
+		Status:      entity.CMSStatusReview,
 		CreatedByID: 99,
-		Version:    1,
+		Version:     1,
 	}
 }
 
@@ -188,6 +195,7 @@ func newService(
 		nil, // workflowEventRepo
 		nil, // userRepo
 		revRepo,
+		nil, // settingsSvc
 	)
 }
 

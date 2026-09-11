@@ -1,0 +1,17 @@
+{
+  "system_name": "AI Content Factory GA Release Registry",
+  "current_version": "1.0.0",
+  "last_build_at": "2026-09-07T21:00:00Z",
+  "releases": [
+    {
+      "version": "1.0.0",
+      "built_at": "2026-09-07T21:00:00Z",
+      "branch": "release",
+      "commit": "initial-cf-ga-build",
+      "components": {
+        "frontend": "1.0.0",
+        "backend": "1.0.0"
+      }
+    }
+  ]
+}

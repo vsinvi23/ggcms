@@ -1,8 +1,12 @@
 # GG-CMS — Codebase Overview (Graph-Derived)
 
 **Project:** `C-Vivek-Pesonal-Serenya-Project-CMS-gocms-gg-cms`  
-**Graph:** 5,158 nodes · 15,366 edges · Indexed: 2026-06-11  
-**Branch:** `InitialSetup` · 11 commits
+**Graph:** 5,461 nodes · 15,842 edges · Indexed: 2026-09-07  
+**Branch:** `alpha-0.2`
+
+**Recent addition (2026-09-07):** Full email-based forgot/reset-password flow for all users (`POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `password_reset_tokens` table, `pkg/mailer`) plus a secret-gated break-glass master-admin recovery endpoint (`POST /api/admin/recover-password`, `X-Admin-Recovery-Secret` header, mirrors the factory-sync secret pattern) — see `modules/backend-services.md` §Password Reset & Admin Recovery.
+
+**Recent addition (2026-09-02):** Factory-sync ingest endpoint (`POST /api/import/ingest`, secret-header auth) plus the standalone `content-factory/` Python/React app that calls it — see `modules/backend-services.md` §Factory Sync Ingest and `runbooks/troubleshooting.md` §Docker / Corporate Proxy Build Issues.
 
 ---
 

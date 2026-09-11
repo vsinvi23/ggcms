@@ -42,10 +42,11 @@ import { toast } from 'sonner';
 import { useTasksQuery } from '@/api/hooks/useTasks';
 import { useReviewComments, useCreateComment } from '@/api/hooks/useReviewComments';
 import { useNotifications, useMarkRead, useMarkAllRead } from '@/api/hooks/useNotifications';
-import { useApproveCms, useSendCmsBack, useRejectCms, useCmsActivity, useCmsById } from '@/api/hooks/useCms';
+import { useApproveCms, useSendCmsBack, useRejectCms, useCmsActivity, useCmsById, useSubmitCmsForReview } from '@/api/hooks/useCms';
 import { parseBodyToHtml } from '@/lib/htmlParser';
 import { useAuth } from '@/contexts/AuthContext';
 import { ReviewCommentDto } from '@/api/types';
+import { toUserMessage } from '@/lib/errors';
 
 type ContentType = 'all' | 'courses' | 'articles';
 type OwnershipFilter = 'all' | 'owned' | 'reviewing' | 'contributed';
@@ -141,6 +142,7 @@ const MyTasks = () => {
   const { mutateAsync: approveCms } = useApproveCms();
   const { mutateAsync: sendBackCms } = useSendCmsBack();
   const { mutateAsync: rejectCms } = useRejectCms();
+  const { mutateAsync: submitForReview } = useSubmitCmsForReview();
 
   // Fetch full CMS content + activity for the selected task (shown in review dialog)
   const selectedCmsId = selectedItem?.contentId ?? 0;
@@ -177,8 +179,8 @@ const MyTasks = () => {
       await approveCms({ id: cmsId, type: cmsType(item), data: undefined });
       toast.success('Content approved — ready to be published');
       setShowReviewDialog(false);
-    } catch {
-      toast.error('Failed to approve');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to approve'));
     }
   };
 
@@ -200,8 +202,8 @@ const MyTasks = () => {
       toast.success('Content sent back for revision');
       setShowReviewDialog(false);
       setReviewComment('');
-    } catch {
-      toast.error('Failed to send back');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to send back'));
     }
   };
 
@@ -220,8 +222,8 @@ const MyTasks = () => {
       toast.success('Content rejected');
       setShowReviewDialog(false);
       setReviewComment('');
-    } catch {
-      toast.error('Failed to reject');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to reject'));
     }
   };
 
@@ -785,14 +787,31 @@ const MyTasks = () => {
                 )}
 
                 {/* Owner Actions */}
-                {selectedItem.ownershipType === 'owned' && selectedItem.status === 'draft' && (
+                {selectedItem.ownershipType === 'owned' && effectiveStatus(selectedItem) === 'DRAFT' && (
                   <div className="border-t pt-4">
                     <div className="flex gap-2">
-                      <Button variant="outline">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          const id = selectedItem.contentId ?? selectedItem.id;
+                          navigate(selectedItem.type === 'course' ? `/courses/${id}/edit` : `/articles/${id}/edit`);
+                        }}
+                      >
                         <Edit className="w-4 h-4 mr-2" />
                         Continue Editing
                       </Button>
-                      <Button>
+                      <Button
+                        onClick={async () => {
+                          const cmsId = selectedItem.contentId ?? selectedItem.id;
+                          try {
+                            await submitForReview({ id: cmsId, type: cmsType(selectedItem), data: {} });
+                            toast.success('Submitted for review');
+                            setShowReviewDialog(false);
+                          } catch (err) {
+                            toast.error(toUserMessage(err, 'Failed to submit for review'));
+                          }
+                        }}
+                      >
                         <Send className="w-4 h-4 mr-2" />
                         Submit for Review
                       </Button>

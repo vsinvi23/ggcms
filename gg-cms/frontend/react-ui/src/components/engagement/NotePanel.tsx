@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNote, useUpsertNote, useDeleteNote } from '@/api/hooks/useEngagement';
+import { toUserMessage } from '@/lib/errors';
 
 type ContentType = 'article' | 'course';
 
@@ -41,8 +42,8 @@ export function NotePanel({ open, onClose, contentType, contentId }: NotePanelPr
     try {
       await upsert(body);
       toast.success('Note saved');
-    } catch {
-      toast.error('Failed to save note');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to save note'));
     }
   };
 
@@ -52,8 +53,8 @@ export function NotePanel({ open, onClose, contentType, contentId }: NotePanelPr
       await deleteNote(existingNote.id);
       setBody('');
       toast.success('Note deleted');
-    } catch {
-      toast.error('Failed to delete note');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete note'));
     }
   };
 

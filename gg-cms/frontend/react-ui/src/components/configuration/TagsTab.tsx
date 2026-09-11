@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Plus, Tag as TagIcon, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,8 +33,8 @@ export function TagsTab() {
       await createTag.mutateAsync(name);
       setNewTagInput('');
       toast.success(`Tag "${name}" created`);
-    } catch {
-      toast.error('Failed to create tag (it may already exist)');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to create tag (it may already exist)'));
     }
   };
 
@@ -46,8 +47,8 @@ export function TagsTab() {
     try {
       await deleteTag.mutateAsync(deleteTarget.id);
       toast.success(`Tag "${deleteTarget.name}" deleted`);
-    } catch {
-      toast.error('Failed to delete tag');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete tag'));
     } finally {
       setDeleteTarget(null);
     }

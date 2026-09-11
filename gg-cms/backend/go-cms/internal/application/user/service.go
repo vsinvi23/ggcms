@@ -12,6 +12,7 @@ import (
 type Service interface {
 	GetAll(ctx context.Context, page, size int) ([]*entity.User, int64, error)
 	GetByID(ctx context.Context, id uint) (*entity.User, error)
+	GetByEmail(ctx context.Context, email string) (*entity.User, error)
 	CreateUser(ctx context.Context, email, pass, name string, groupID *uint) (*entity.User, error)
 	Update(ctx context.Context, id uint, name string, mobileNo *string, status *string, groupID *uint) (*entity.User, error)
 	Delete(ctx context.Context, id uint) error
@@ -35,6 +36,10 @@ func (s *service) GetAll(ctx context.Context, page, size int) ([]*entity.User, i
 
 func (s *service) GetByID(ctx context.Context, id uint) (*entity.User, error) {
 	return s.userRepo.FindByID(ctx, id)
+}
+
+func (s *service) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
+	return s.userRepo.FindByEmail(ctx, email)
 }
 
 func (s *service) CreateUser(ctx context.Context, email, pass, name string, groupID *uint) (*entity.User, error) {

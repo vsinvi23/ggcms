@@ -14,21 +14,29 @@ let tokenCache: string | null = null;
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
-  // Auth is handled via the Authorization: Bearer header set by the request interceptor.
-  // withCredentials: false prevents the browser from attaching session cookies to
-  // cross-origin requests, eliminating a CSRF attack surface.
-  withCredentials: false,
+  // Auth is carried via the HttpOnly "jwt" cookie set by the backend.
+  // withCredentials: true is required so the browser attaches that cookie.
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor — attach JWT token to every request
+const getCsrfTokenFromCookie = (): string | null => {
+  const match = document.cookie.match(/(?:^|; )csrf_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
+// Request interceptor — attach JWT token (legacy fallback) and CSRF header
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = getAuthToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    const csrfToken = getCsrfTokenFromCookie();
+    if (csrfToken && config.headers) {
+      config.headers['X-CSRF-Token'] = csrfToken;
     }
     return config;
   },
@@ -63,21 +71,22 @@ export const setAuthToken = (token: string): void => {
   tokenCache = token;
   try {
     sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
   } catch {
-    console.warn('sessionStorage unavailable, using memory only');
+    console.warn('Storage unavailable, using memory only');
   }
 };
 
 export const getAuthToken = (): string | null => {
   if (tokenCache) return tokenCache;
   try {
-    const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
+    const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY) || localStorage.getItem(TOKEN_STORAGE_KEY);
     if (stored) {
       tokenCache = stored;
       return stored;
     }
   } catch {
-    // sessionStorage unavailable
+    // Storage unavailable
   }
   return null;
 };
@@ -86,8 +95,9 @@ export const clearAuthToken = (): void => {
   tokenCache = null;
   try {
     sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
   } catch {
-    // sessionStorage unavailable
+    // Storage unavailable
   }
 };
 

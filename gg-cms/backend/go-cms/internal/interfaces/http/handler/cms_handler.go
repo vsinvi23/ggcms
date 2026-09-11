@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	tasksvc "github.com/serenya/go-cms/internal/application/task"
+	topicsvc "github.com/serenya/go-cms/internal/application/topic"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/domain/repository"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
@@ -19,12 +20,13 @@ import (
 )
 
 type CMSHandler struct {
-	service     cmssvc.Service
-	taskService tasksvc.Service
+	service      cmssvc.Service
+	taskService  tasksvc.Service
+	topicService topicsvc.Service
 }
 
-func NewCMSHandler(svc cmssvc.Service, taskSvc tasksvc.Service) *CMSHandler {
-	return &CMSHandler{service: svc, taskService: taskSvc}
+func NewCMSHandler(svc cmssvc.Service, taskSvc tasksvc.Service, topicSvc topicsvc.Service) *CMSHandler {
+	return &CMSHandler{service: svc, taskService: taskSvc, topicService: topicSvc}
 }
 
 // GET /api/cms?type=ARTICLE&page=0&size=10&status=DRAFT&search=keyword&categoryId=1&courseType=BYTE
@@ -93,11 +95,16 @@ func (h *CMSHandler) GetByID(c *gin.Context) {
 	var result interface{}
 	var err error
 
-	// Try numeric ID first; if the param is a UUID, fall back to publicId lookup.
-	if numID, parseErr := parseID(c, "id"); parseErr == nil {
-		result, err = h.service.GetByID(c.Request.Context(), numID, cmsType)
-	} else {
-		result, err = h.service.GetBySlug(c.Request.Context(), idStr, cmsType)
+	// Try numeric ID first; if the param is a UUID, use publicId lookup; otherwise treat as a slug.
+	switch {
+	case isUUID(idStr):
+		result, err = h.service.GetByPublicID(c.Request.Context(), idStr, cmsType)
+	default:
+		if numID, parseErr := parseID(c, "id"); parseErr == nil {
+			result, err = h.service.GetByID(c.Request.Context(), numID, cmsType)
+		} else {
+			result, err = h.service.GetBySlug(c.Request.Context(), idStr, cmsType)
+		}
 	}
 
 	if err != nil {
@@ -136,16 +143,17 @@ func (h *CMSHandler) Create(c *gin.Context) {
 	atts := mapAttachmentInputs(req.Attachments)
 
 	result, err := h.service.Create(c.Request.Context(), cmssvc.CreateRequest{
-		Type:         entity.CMSType(req.Type),
-		Title:        req.Title,
-		Description:  req.Description,
-		Body:         req.Body,
-		ArticleType:  req.ArticleType,
-		CourseType:   req.CourseType,
-		CategoryID:   req.CategoryID,
-		CreatedByID:  userID,
-		ThumbnailURL: req.ThumbnailURL,
-		Attachments:  atts,
+		Type:                entity.CMSType(req.Type),
+		Title:               req.Title,
+		Description:         req.Description,
+		Body:                req.Body,
+		ArticleType:         req.ArticleType,
+		CourseType:          req.CourseType,
+		CategoryID:          req.CategoryID,
+		CreatedByID:         userID,
+		ThumbnailURL:        req.ThumbnailURL,
+		ThumbnailStorageKey: req.ThumbnailStorageKey,
+		Attachments:         atts,
 	})
 	if err != nil {
 		response.InternalError(c, err.Error())
@@ -171,6 +179,11 @@ func (h *CMSHandler) Create(c *gin.Context) {
 		if err := h.taskService.UpsertOwnerTask(c.Request.Context(), contentID, taskType, req.Title, userID, "draft"); err != nil {
 			log.Printf("[cms] Create: failed to upsert owner task for %s id=%d: %v", req.Type, contentID, err)
 		}
+		if h.topicService != nil && len(req.TopicIDs) > 0 {
+			if err := h.topicService.SetContentTopics(c.Request.Context(), contentID, string(req.Type), req.TopicIDs); err != nil {
+				log.Printf("[cms] Create: failed to set content topics for %s id=%d: %v", req.Type, contentID, err)
+			}
+		}
 	}
 
 	response.Created(c, toCMSResponse(result, entity.CMSType(req.Type)))
@@ -194,7 +207,11 @@ func (h *CMSHandler) Update(c *gin.Context) {
 	if !middleware.IsAdmin(c) {
 		existing, fetchErr := h.service.GetByID(c.Request.Context(), id, cmsType)
 		if fetchErr != nil {
-			response.NotFound(c, "not found")
+			if strings.Contains(fetchErr.Error(), "not found") {
+				response.NotFound(c, "not found")
+			} else {
+				response.InternalError(c, fetchErr.Error())
+			}
 			return
 		}
 		_, ownerID := extractCMSTitleAndOwner(existing, cmsType)
@@ -211,19 +228,26 @@ func (h *CMSHandler) Update(c *gin.Context) {
 	}
 
 	result, err := h.service.Update(c.Request.Context(), id, cmsType, cmssvc.UpdateRequest{
-		Title:        req.Title,
-		Description:  req.Description,
-		Body:         req.Body,
-		ArticleType:  req.ArticleType,
-		CourseType:   req.CourseType,
-		CategoryID:   req.CategoryID,
-		ThumbnailURL: req.ThumbnailURL,
-		Attachments:  mapAttachmentInputs(req.Attachments),
-		ActorID:      middleware.GetUserID(c),
+		Title:               req.Title,
+		Description:         req.Description,
+		Body:                req.Body,
+		ArticleType:         req.ArticleType,
+		CourseType:          req.CourseType,
+		CategoryID:          req.CategoryID,
+		ThumbnailURL:        req.ThumbnailURL,
+		ThumbnailStorageKey: req.ThumbnailStorageKey,
+		Attachments:         mapAttachmentInputs(req.Attachments),
+		ActorID:             middleware.GetUserID(c),
 	})
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
+	}
+
+	if h.topicService != nil && req.TopicIDs != nil {
+		if err := h.topicService.SetContentTopics(c.Request.Context(), id, string(cmsType), req.TopicIDs); err != nil {
+			log.Printf("[cms] Update: failed to set content topics for %s id=%d: %v", cmsType, id, err)
+		}
 	}
 	response.OK(c, toCMSResponse(result, cmsType))
 	auditActionU := "article.updated"
@@ -246,7 +270,11 @@ func (h *CMSHandler) Delete(c *gin.Context) {
 	if !middleware.IsAdmin(c) {
 		existing, fetchErr := h.service.GetByID(c.Request.Context(), id, cmsType)
 		if fetchErr != nil {
-			response.NotFound(c, "not found")
+			if strings.Contains(fetchErr.Error(), "not found") {
+				response.NotFound(c, "not found")
+			} else {
+				response.InternalError(c, fetchErr.Error())
+			}
 			return
 		}
 		_, ownerID := extractCMSTitleAndOwner(existing, cmsType)
@@ -398,7 +426,11 @@ func (h *CMSHandler) Publish(c *gin.Context) {
 	if !middleware.IsAdmin(c) {
 		existing, fetchErr := h.service.GetByID(c.Request.Context(), id, cmsType)
 		if fetchErr != nil {
-			response.NotFound(c, "not found")
+			if strings.Contains(fetchErr.Error(), "not found") {
+				response.NotFound(c, "not found")
+			} else {
+				response.InternalError(c, fetchErr.Error())
+			}
 			return
 		}
 		assignedReviewerID := extractCMSReviewerID(existing, cmsType)
@@ -486,7 +518,11 @@ func (h *CMSHandler) SendBack(c *gin.Context) {
 	if !middleware.IsAdmin(c) {
 		existing, fetchErr := h.service.GetByID(c.Request.Context(), id, cmsType)
 		if fetchErr != nil {
-			response.NotFound(c, "not found")
+			if strings.Contains(fetchErr.Error(), "not found") {
+				response.NotFound(c, "not found")
+			} else {
+				response.InternalError(c, fetchErr.Error())
+			}
 			return
 		}
 		assignedReviewerID := extractCMSReviewerID(existing, cmsType)
@@ -663,7 +699,11 @@ func (h *CMSHandler) SaveReviewNote(c *gin.Context) {
 	if !middleware.IsAdmin(c) {
 		existing, fetchErr := h.service.GetByID(c.Request.Context(), id, cmsType)
 		if fetchErr != nil {
-			response.NotFound(c, "not found")
+			if strings.Contains(fetchErr.Error(), "not found") {
+				response.NotFound(c, "not found")
+			} else {
+				response.InternalError(c, fetchErr.Error())
+			}
 			return
 		}
 		assignedReviewerID := extractCMSReviewerID(existing, cmsType)
@@ -726,26 +766,32 @@ func articleToCMS(a *entity.Article) dto.CMSResponse {
 		publishedTitle = &a.PublishedTitle
 	}
 	return dto.CMSResponse{
-		ID:              a.ID,
-		PublicID:        a.PublicID,
-		Slug:            a.Slug,
-		Type:            "ARTICLE",
-		Title:           a.Title,
-		Description:     a.Description,
-		Body:            a.Body,
-		ArticleType:     articleType,
-		BlockCount:      blockCount,
-		Status:          string(a.Status),
-		CategoryID:      a.CategoryID,
-		CategoryName:    categoryName,
-		CreatedBy:       a.CreatedByID,
-		CreatedByName:   a.CreatedBy.Name,
-		ReviewerID:      a.ReviewerID,
-		ReviewerName:    func() *string { if a.Reviewer != nil { n := a.Reviewer.Name; return &n }; return nil }(),
-		ReviewerComment: a.ReviewerComment,
-		ThumbnailURL:    a.ThumbnailURL,
-		PublishedAt:     publishedAt,
-		Version:         a.Version,
+		ID:            a.ID,
+		PublicID:      a.PublicID,
+		Slug:          a.Slug,
+		Type:          "ARTICLE",
+		Title:         a.Title,
+		Description:   a.Description,
+		Body:          a.Body,
+		ArticleType:   articleType,
+		BlockCount:    blockCount,
+		Status:        string(a.Status),
+		CategoryID:    a.CategoryID,
+		CategoryName:  categoryName,
+		CreatedBy:     a.CreatedByID,
+		CreatedByName: a.CreatedBy.Name,
+		ReviewerID:    a.ReviewerID,
+		ReviewerName: func() *string {
+			if a.Reviewer != nil {
+				n := a.Reviewer.Name
+				return &n
+			}
+			return nil
+		}(),
+		ReviewerComment:           a.ReviewerComment,
+		ThumbnailURL:              a.ThumbnailURL,
+		PublishedAt:               publishedAt,
+		Version:                   a.Version,
 		HasPendingDraft:           a.HasPendingDraft,
 		PublishedVersion:          a.PublishedVersion,
 		PublishedTitle:            publishedTitle,
@@ -754,9 +800,9 @@ func articleToCMS(a *entity.Article) dto.CMSResponse {
 		ReviewBaselineTitle:       reviewBaselineTitle,
 		ReviewBaselineDescription: a.ReviewBaselineDescription,
 		ReviewBaselineBody:        a.ReviewBaselineBody,
-		CreatedAt:       a.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:       a.UpdatedAt.Format(time.RFC3339),
-		Attachments:     attachments,
+		CreatedAt:                 a.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:                 a.UpdatedAt.Format(time.RFC3339),
+		Attachments:               attachments,
 	}
 }
 
@@ -788,26 +834,32 @@ func courseToCMS(c *entity.Course) dto.CMSResponse {
 		publishedTitleC = &c.PublishedTitle
 	}
 	return dto.CMSResponse{
-		ID:              c.ID,
-		PublicID:        c.PublicID,
-		Slug:            c.Slug,
-		Type:            "COURSE",
-		Title:           c.Title,
-		Description:     c.Description,
-		Body:            c.Body,
-		CourseType:      &courseType,
-		BlockCount:      blockCount,
-		Status:          string(c.Status),
-		CategoryID:      c.CategoryID,
-		CategoryName:    categoryName,
-		CreatedBy:       c.CreatedByID,
-		CreatedByName:   c.CreatedBy.Name,
-		ReviewerID:      c.ReviewerID,
-		ReviewerName:    func() *string { if c.Reviewer != nil { n := c.Reviewer.Name; return &n }; return nil }(),
-		ReviewerComment: c.ReviewerComment,
-		ThumbnailURL:    c.ThumbnailURL,
-		PublishedAt:     publishedAt,
-		Version:         c.Version,
+		ID:            c.ID,
+		PublicID:      c.PublicID,
+		Slug:          c.Slug,
+		Type:          "COURSE",
+		Title:         c.Title,
+		Description:   c.Description,
+		Body:          c.Body,
+		CourseType:    &courseType,
+		BlockCount:    blockCount,
+		Status:        string(c.Status),
+		CategoryID:    c.CategoryID,
+		CategoryName:  categoryName,
+		CreatedBy:     c.CreatedByID,
+		CreatedByName: c.CreatedBy.Name,
+		ReviewerID:    c.ReviewerID,
+		ReviewerName: func() *string {
+			if c.Reviewer != nil {
+				n := c.Reviewer.Name
+				return &n
+			}
+			return nil
+		}(),
+		ReviewerComment:           c.ReviewerComment,
+		ThumbnailURL:              c.ThumbnailURL,
+		PublishedAt:               publishedAt,
+		Version:                   c.Version,
 		HasPendingDraft:           c.HasPendingDraft,
 		PublishedVersion:          c.PublishedVersion,
 		PublishedTitle:            publishedTitleC,
@@ -818,9 +870,9 @@ func courseToCMS(c *entity.Course) dto.CMSResponse {
 		ReviewBaselineBody:        c.ReviewBaselineBody,
 		PublishedChaptersSnapshot: c.PublishedChaptersSnapshot,
 		ReviewBaselineChapters:    c.ReviewBaselineChapters,
-		CreatedAt:       c.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:       c.UpdatedAt.Format(time.RFC3339),
-		Attachments:     attachments,
+		CreatedAt:                 c.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:                 c.UpdatedAt.Format(time.RFC3339),
+		Attachments:               attachments,
 	}
 }
 
@@ -867,7 +919,7 @@ func countBodyBlocks(body *string) int {
 func mapAttachmentInputs(atts []dto.AttachmentResponse) []cmssvc.AttachmentInput {
 	result := make([]cmssvc.AttachmentInput, len(atts))
 	for i, a := range atts {
-		result[i] = cmssvc.AttachmentInput{Name: a.Name, URL: a.URL, MimeType: a.MimeType, Size: a.Size}
+		result[i] = cmssvc.AttachmentInput{Name: a.Name, URL: a.URL, MimeType: a.MimeType, Size: a.Size, StorageKey: a.StorageKey}
 	}
 	return result
 }

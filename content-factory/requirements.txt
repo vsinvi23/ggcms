@@ -1,0 +1,28 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+langgraph
+langchain-core
+langchain-google-genai
+langchain-anthropic
+trafilatura
+pymupdf
+python-docx
+feedparser
+beautifulsoup4
+httpx
+python-multipart
+litellm
+pyyaml
+# Google Drive integration
+google-api-python-client>=2.100.0
+google-auth>=2.23.0
+google-auth-httplib2>=0.2.0
+# JWT validation (shared secret with gg-cms Go backend)
+PyJWT>=2.8.0
+
+# Test suite
+pytest>=8.4
+pytest-asyncio>=0.23.0
+

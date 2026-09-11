@@ -20,6 +20,19 @@ gg-cms/e2e/playwright-report/
 # ── Secrets — never commit live .env files ────────────────────────────────────
 # .env.example files ARE committed (they are templates)
 gg-cms/backend/go-cms/.env
+gg-cms/.env
+gg-cms/backend/go-cms/zscaler-root-ca.crt
+gg-cms/backend/go-cms/corporate-ca-bundle.crt
+gg-cms/backend/go-cms/ca-bundle/*
+!gg-cms/backend/go-cms/ca-bundle/.gitkeep
+content-factory/.env
+content-factory/frontend/.env.local
+
+# ── content-factory (Python) build/runtime artifacts ──────────────────────────
+content-factory/.venv/
+content-factory/**/__pycache__/
+content-factory/frontend/dist/
+content-factory/data/
 
 # ── Node modules ─────────────────────────────────────────────────────────────
 node_modules/

@@ -75,6 +75,11 @@ describe('AppSidebar — admin-only items visible only to admins', () => {
     expect(screen.getByText('Settings')).toBeInTheDocument();
   });
 
+  it('admin sees AI Content Factory nav item', () => {
+    renderSidebar(true);
+    expect(screen.getByText('AI Content Factory')).toBeInTheDocument();
+  });
+
   it('admin sees Analytics nav item', () => {
     renderSidebar(true);
     expect(screen.getByText('Analytics')).toBeInTheDocument();
@@ -117,6 +122,11 @@ describe('AppSidebar — admin items hidden from regular users', () => {
   it('regular user does NOT see Analytics', () => {
     renderSidebar(false);
     expect(screen.queryByText('Analytics')).toBeNull();
+  });
+
+  it('regular user does NOT see AI Content Factory', () => {
+    renderSidebar(false);
+    expect(screen.queryByText('AI Content Factory')).toBeNull();
   });
 
   it('regular user does NOT see System Settings', () => {

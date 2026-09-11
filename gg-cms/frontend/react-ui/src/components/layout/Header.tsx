@@ -1,4 +1,4 @@
-import { Bell, Search, ChevronDown, LogOut, User, Settings, Sparkles } from 'lucide-react';
+import { Bell, Search, ChevronDown, LogOut, User, Settings, Sparkles, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { OnboardingWizard } from '@/components/personalization/OnboardingWizard';
@@ -17,7 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export function Header() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { data: profile } = useProfile();
   const [personalizationOpen, setPersonalizationOpen] = useState(false);
@@ -106,11 +106,20 @@ export function Header() {
             </DropdownMenuItem>
             <DropdownMenuItem 
               className="cursor-pointer"
-              onSelect={() => navigate('/settings')}
+              onSelect={() => navigate('/account-settings')}
             >
               <Settings className="w-4 h-4 mr-2" />
-              Settings
+              Account Settings
             </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onSelect={() => navigate('/settings')}
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                System Settings
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-destructive cursor-pointer"

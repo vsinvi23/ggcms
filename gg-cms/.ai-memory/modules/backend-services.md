@@ -53,7 +53,34 @@
 | `personalization_handler.go` | `personalization.Service` | `/api/personalization/` |
 | `public_handler.go` | `cms.Service`, `category.Service`, `analytics.Service` | `/api/public/` |
 | `media_handler.go` | `settings.Service` | `/api/media/` |
-| `import_handler.go` | `cms.Service`, `task.Service` | `/api/import/` |
+| `import_handler.go` | `cms.Service`, `task.Service` | `/api/import/preview`, `/api/import/confirm` (JWT-auth, human-driven bulk import) |
+| `factory_import_handler.go` | `cms.Service`, `section.Service`, `lesson.Service`, `user.Service` | `POST /api/import/ingest` (secret-header auth, machine-to-machine) |
+
+---
+
+## Factory Sync Ingest (added 2026-09-02)
+
+Separate, unauthenticated-by-JWT ingest path for the standalone `content-factory/` Python app (repo root `content-factory/`, not part of this Go module) to push generated articles/courses into the CMS without a user session:
+
+- Route: `api.POST("/import/ingest", factorySecretMW, factoryImportH.Ingest)` — registered in `router.go` directly on the `api` group, outside the JWT-protected `p := api.Group("/")` block.
+- Middleware: `internal/interfaces/http/middleware/factory_secret.go` — `FactorySecret(configuredSecret string) gin.HandlerFunc`, compares the `X-Factory-Sync-Secret` header via `crypto/subtle.ConstantTimeCompare` against `cfg.Import.FactorySyncSecret`.
+- Config: `pkg/config/config.go` → `ImportConfig.FactorySyncSecret`, loaded from env var `FACTORY_SYNC_SECRET` (viper). Empty value → middleware rejects all requests (non-fatal startup warning logged).
+- Handler: `internal/interfaces/http/handler/factory_import_handler.go` — maps the factory's `SyncPayload` DTO (`internal/interfaces/http/dto/factory_sync_dto.go`) onto `cmssvc.CreateRequest`; articles become a single CMS item, courses fan out into `Section`/`Lesson` rows via `section.Service`/`lesson.Service`. Uses `user.Service.GetByEmail` (added to the `Service` interface) to resolve `cfg.Admin.Email` into an attributed user ID. All ingested items land as `DRAFT` — same review pipeline as human-created content.
+- Response: `SyncResult{success, imported_id, slug, version, message}`.
+- Verified end-to-end (2026-09-02) via curl for both `article` and `course` payload shapes against the dockerized backend — see `runbooks/troubleshooting.md`.
+
+---
+
+## Password Reset & Admin Recovery (added 2026-09-07)
+
+Two distinct paths, both in `internal/application/auth/service.go`:
+
+- **Self-service reset (all users)**: `POST /auth/forgot-password` → `Service.RequestReset(email)` — anti-enumeration (always returns nil), generates a 32-byte random hex token, stores only its SHA-256 hash in `password_reset_tokens` (1-hour TTL via `resetTokenTTL`), emails a `{FRONTEND_URL}/reset-password?code=...` link via `pkg/mailer`. `POST /auth/reset-password` → `Service.ConfirmReset(code, newPassword)` — hashes the incoming code, looks up via `PasswordResetTokenRepository.FindValidByHash` (unused + unexpired), re-hashes the password, updates the user, marks the token used. Both routes are public + `middleware.AuthRateLimit()`, registered in `router.go` right after `/auth/local/register`.
+- **Break-glass master-admin recovery**: `POST /admin/recover-password`, gated by `middleware.AdminRecoverySecret` (`internal/interfaces/http/middleware/admin_recovery_secret.go`) — exact mirror of `factory_secret.go`: compares `X-Admin-Recovery-Secret` header via `crypto/subtle.ConstantTimeCompare` against `cfg.Recovery.AdminRecoverySecret` (env `ADMIN_RECOVERY_SECRET`, empty → all requests rejected, non-fatal startup warning). Calls `Service.RecoverPassword(email, newPassword)` — looks up by email, hashes, updates directly; no token/email round-trip. Registered outside the JWT-protected block, same pattern as `/import/ingest`. Audited via `middleware.LogAudit(c, "admin.password_recovered", ...)`.
+- Mailer: `pkg/mailer/mailer.go` — minimal stdlib `net/smtp` sender (`Send(to, subject, body)`), config via `MailerConfig` (`SMTP_HOST`/`SMTP_PORT`/`SMTP_USERNAME`/`SMTP_PASSWORD`/`SMTP_FROM_ADDRESS`), non-fatal if `SMTP_HOST` unset.
+- Migration: `migrations/postgres/027_password_reset_tokens.sql` (+ mirrored copy in `release/dist/native/migrations/postgres/`).
+- Frontend: `pages/ForgotPassword.tsx`, `pages/ResetPassword.tsx`, routes in `App.tsx`, "Forgot password?" link in `pages/Auth.tsx`'s login tab — wired to the pre-existing `authService.forgotPassword`/`resetPassword`.
+- Operational doc: `release/CONFIGURATION.md` §11 "Rotate the master admin password (break-glass)" has the exact curl command and the GCP Secret Manager path (`gg-cms-admin-recovery-secret`, auto-created by `release/gcp/deploy.sh`).
 
 ---
 

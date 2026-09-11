@@ -2,6 +2,8 @@ package http
 
 import (
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"strings"
 
@@ -17,14 +19,15 @@ import (
 	enrollmentsvc "github.com/serenya/go-cms/internal/application/enrollment"
 	groupsvc "github.com/serenya/go-cms/internal/application/group"
 	lpsvc "github.com/serenya/go-cms/internal/application/learningpath"
-	personalizationsvc "github.com/serenya/go-cms/internal/application/personalization"
 	lessonsvc "github.com/serenya/go-cms/internal/application/lesson"
 	notificationsvc "github.com/serenya/go-cms/internal/application/notification"
 	oauthsvc "github.com/serenya/go-cms/internal/application/oauth"
+	personalizationsvc "github.com/serenya/go-cms/internal/application/personalization"
 	sectionsvc "github.com/serenya/go-cms/internal/application/section"
 	settingssvc "github.com/serenya/go-cms/internal/application/settings"
 	tagsvc "github.com/serenya/go-cms/internal/application/tag"
 	tasksvc "github.com/serenya/go-cms/internal/application/task"
+	topicsvc "github.com/serenya/go-cms/internal/application/topic"
 	usersvc "github.com/serenya/go-cms/internal/application/user"
 	gqlhandler "github.com/serenya/go-cms/internal/interfaces/graphql"
 	"github.com/serenya/go-cms/internal/interfaces/http/handler"
@@ -35,25 +38,26 @@ import (
 
 // Services groups all application service interfaces needed by the router.
 type Services struct {
-	Auth         authsvc.Service
-	User         usersvc.Service
-	Group        groupsvc.Service
-	Category     categorysvc.Service
-	CMS          cmssvc.Service
-	Section      sectionsvc.Service
-	Lesson       lessonsvc.Service
-	Enrollment   enrollmentsvc.Service
-	Task         tasksvc.Service
-	Notification notificationsvc.Service
-	Comment      commentsvc.Service
-	Analytics    analyticssvc.Service
-	Tag          tagsvc.Service
-	Reaction     engagementsvc.ReactionService
-	Note         engagementsvc.NoteService
-	Favourite    engagementsvc.FavouriteService
-	Highlight    engagementsvc.HighlightService
-	ContentType  ctsvc.Service
-	LearningPath lpsvc.Service
+	Auth            authsvc.Service
+	User            usersvc.Service
+	Group           groupsvc.Service
+	Category        categorysvc.Service
+	CMS             cmssvc.Service
+	Section         sectionsvc.Service
+	Lesson          lessonsvc.Service
+	Enrollment      enrollmentsvc.Service
+	Task            tasksvc.Service
+	Notification    notificationsvc.Service
+	Comment         commentsvc.Service
+	Analytics       analyticssvc.Service
+	Tag             tagsvc.Service
+	Topic           topicsvc.Service
+	Reaction        engagementsvc.ReactionService
+	Note            engagementsvc.NoteService
+	Favourite       engagementsvc.FavouriteService
+	Highlight       engagementsvc.HighlightService
+	ContentType     ctsvc.Service
+	LearningPath    lpsvc.Service
 	Audit           auditsvc.Service
 	OAuth           oauthsvc.Service
 	Settings        settingssvc.Service
@@ -85,6 +89,26 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	// Serve uploaded files statically
 	r.Static("/uploads", cfg.Upload.Dir)
 
+	// Reverse proxy /factory and /factory/* to Content Factory Cloud Run service
+	factoryURLStr := os.Getenv("CONTENT_FACTORY_URL")
+	if factoryURLStr == "" {
+		factoryURLStr = "https://content-factory-backend-wuisbddlxq-uc.a.run.app"
+	}
+	var factoryHandler gin.HandlerFunc
+	if factoryTarget, err := url.Parse(factoryURLStr); err == nil {
+		factoryProxy := httputil.NewSingleHostReverseProxy(factoryTarget)
+		originalDirector := factoryProxy.Director
+		factoryProxy.Director = func(req *http.Request) {
+			originalDirector(req)
+			req.Host = factoryTarget.Host
+			req.URL.Scheme = factoryTarget.Scheme
+			req.URL.Host = factoryTarget.Host
+		}
+		factoryHandler = func(c *gin.Context) {
+			factoryProxy.ServeHTTP(c.Writer, c.Request)
+		}
+	}
+
 	// Set JS and CSS MIME types for static assets if needed
 	r.Use(func(c *gin.Context) {
 		if strings.HasPrefix(c.Request.URL.Path, "/assets/") {
@@ -115,7 +139,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	userH := handler.NewUserHandler(svcs.User)
 	groupH := handler.NewGroupHandler(svcs.Group)
 	catH := handler.NewCategoryHandler(svcs.Category)
-	cmsH := handler.NewCMSHandler(svcs.CMS, svcs.Task)
+	cmsH := handler.NewCMSHandler(svcs.CMS, svcs.Task, svcs.Topic)
 	secH := handler.NewSectionHandler(svcs.Section)
 	lesH := handler.NewLessonHandler(svcs.Lesson)
 	enrH := handler.NewEnrollmentHandler(svcs.Enrollment)
@@ -127,20 +151,35 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	pubH := handler.NewPublicHandler(svcs.CMS, svcs.Category, svcs.Analytics)
 	analyticsH := handler.NewAnalyticsHandler(svcs.Analytics)
 	tagH := handler.NewTagHandler(svcs.Tag)
+	topicH := handler.NewTopicHandler(svcs.Topic)
 	engH := handler.NewEngagementHandler(svcs.Reaction, svcs.Note, svcs.Favourite, svcs.Highlight)
 	ctH := handler.NewContentTypeHandler(svcs.ContentType)
 	lpH := handler.NewLearningPathHandler(svcs.LearningPath)
 	auditH := handler.NewAuditHandler(svcs.Audit)
 	personH := handler.NewPersonalizationHandler(svcs.Personalization)
-	importH := handler.NewImportHandler(svcs.CMS, svcs.Task)
+	importH := handler.NewImportHandler(svcs.CMS, svcs.Task, svcs.Section, svcs.Lesson)
+	factoryImportH := handler.NewFactoryImportHandler(svcs.CMS, svcs.Section, svcs.Lesson, svcs.User, svcs.Category, svcs.Topic, nil, cfg.Admin.Email)
 
 	authMW := middleware.Auth(jwtManager)
+	factorySecretMW := middleware.FactorySecret(cfg.Import.FactorySyncSecret)
+	adminRecoveryMW := middleware.AdminRecoverySecret(cfg.Recovery.AdminRecoverySecret)
+
+	// Protected AI Content Factory reverse proxy (requires JWT auth + Admin role)
+	if factoryHandler != nil {
+		factoryGroup := r.Group("/factory")
+		factoryGroup.Use(authMW)
+		factoryGroup.Use(middleware.AdminOnly())
+		factoryGroup.Any("", factoryHandler)
+		factoryGroup.Any("/*filepath", factoryHandler)
+	}
 
 	api := r.Group("/api")
 	{
 		// ----- Auth (public) — email/password -----
 		api.POST("/auth/local", middleware.AuthRateLimit(), authH.Login)
 		api.POST("/auth/local/register", middleware.AuthRateLimit(), authH.Register)
+		api.POST("/auth/forgot-password", middleware.AuthRateLimit(), authH.ForgotPassword)
+		api.POST("/auth/reset-password", middleware.AuthRateLimit(), authH.ResetPassword)
 
 		// ----- Auth (public) — OAuth social login -----
 		api.GET("/auth/google", oauthH.GoogleRedirect)
@@ -157,6 +196,11 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		// ----- Tags (public read) -----
 		api.GET("/tags", tagH.GetAll)
 
+		// ----- Topics (public read) -----
+		api.GET("/topics", topicH.GetAll)
+		api.GET("/topics/:id", topicH.GetByID)
+		api.GET("/topics/:id/relationships", topicH.GetRelationships)
+
 		// ----- Sections (public read — course curriculum preview) -----
 		api.GET("/sections", secH.GetAll)
 
@@ -171,6 +215,16 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		// ----- Review comments (public read, protected write) -----
 		api.GET("/review-comments", commH.GetByContent)
 		api.GET("/review-comments/:id/replies", commH.ListReplies)
+
+		// ----- Factory sync ingest (secret-header auth, NOT JWT) -----
+		// Called machine-to-machine by the Python "content factory" app, which has
+		// no user session — protected by X-Factory-Sync-Secret instead of authMW.
+		api.POST("/import/ingest", factorySecretMW, factoryImportH.Ingest)
+
+		// ----- Admin break-glass password recovery (secret-header auth, NOT JWT) -----
+		// For when the master admin is locked out and can't rely on email delivery
+		// or a JWT — protected by X-Admin-Recovery-Secret instead of authMW.
+		api.POST("/admin/recover-password", adminRecoveryMW, authH.RecoverPassword)
 
 		// ----- Public content (no auth) -----
 		pub := api.Group("/public")
@@ -189,9 +243,11 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		// ----- Protected routes -----
 		p := api.Group("/")
 		p.Use(authMW)
+		p.Use(middleware.CSRF())
 		{
 			// Current user
 			p.GET("users/me", authH.Me)
+			p.POST("auth/logout", authH.Logout)
 
 			// Users — read: any authenticated user; write: admin only
 			// PUT /users/:id is intentionally not AdminOnly — ownership check is in the handler
@@ -231,6 +287,12 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.POST("tags", tagH.Create)
 			p.DELETE("tags/:id", tagH.Delete)
 
+			// Topics (GET is public — see above; write operations are admin only)
+			p.POST("topics", middleware.AdminOnly(), topicH.Create)
+			p.PUT("topics/:id", middleware.AdminOnly(), topicH.Update)
+			p.DELETE("topics/:id", middleware.AdminOnly(), topicH.Delete)
+			p.PUT("topics/:id/relationships", middleware.AdminOnly(), topicH.SetRelationships)
+
 			// Content Types (admin only)
 			p.POST("content-types", middleware.AdminOnly(), ctH.Create)
 			p.PUT("content-types/:id", middleware.AdminOnly(), ctH.Update)
@@ -258,6 +320,8 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.POST("cms/:id/reassign-review", cmsH.ReassignReview)
 			p.POST("cms/:id/review-note", cmsH.SaveReviewNote)
 			p.POST("cms/:id/assign-reviewer", middleware.AdminOnly(), cmsH.AssignReviewer)
+			p.GET("cms/:id/topics", topicH.GetContentTopics)
+			p.PUT("cms/:id/topics", topicH.SetContentTopics)
 
 			// Sections (GET is public — see above; write operations require auth)
 			p.POST("sections", secH.Create)

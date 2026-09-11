@@ -1,0 +1,53 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 1 — Build React / Vite frontend
+# ─────────────────────────────────────────────────────────────────────────────
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /build
+
+# Install dependencies first (layer cache)
+COPY content-factory/frontend/package*.json ./
+RUN npm ci --silent
+
+# Copy all frontend source and build
+# VITE_BASE_PATH must be /factory/ so all assets resolve correctly
+COPY content-factory/frontend/ ./
+ENV NODE_ENV=production
+ENV VITE_BASE_PATH=/factory/
+RUN npm run build
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 2 — Python / FastAPI backend + embedded static assets
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:3.12-slim AS runtime
+
+WORKDIR /app
+
+# System deps (for pymupdf, python-docx, etc.)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY content-factory/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the full content-factory source (backend + configs)
+COPY content-factory/ .
+
+# Overwrite the frontend dist with the production build from Stage 1
+# FastAPI will serve this as static files under /factory
+RUN mkdir -p /app/dist
+COPY --from=frontend-build /build/dist /app/dist
+
+# Default data directory for file-backed storage
+RUN mkdir -p /app/data
+
+# Cloud Run requires the server to bind to PORT env var (default 8080)
+ENV PORT=8080
+
+EXPOSE 8080
+
+# Run FastAPI via uvicorn; PORT is injected by Cloud Run at runtime
+CMD ["sh", "-c", "uvicorn backend.api.main:app --host 0.0.0.0 --port ${PORT} --workers 1"]

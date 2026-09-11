@@ -63,7 +63,7 @@ steps:
       - --no-allow-unauthenticated
       - --ingress=all
       # Secrets from Secret Manager
-      - --set-secrets=JWT_SECRET=gg-cms-jwt-secret:latest,ADMIN_PASSWORD=gg-cms-admin-password:latest,POSTGRES_PASSWORD=gg-cms-pg-password:latest,MONGO_PASSWORD=gg-cms-mongo-password:latest
+      - --set-secrets=JWT_SECRET=gg-cms-jwt-secret:latest,ADMIN_PASSWORD=gg-cms-admin-password:latest,POSTGRES_PASSWORD=gg-cms-pg-password:latest,MONGO_PASSWORD=gg-cms-mongo-password:latest,ADMIN_RECOVERY_SECRET=gg-cms-admin-recovery-secret:latest
       # Non-secret env vars
       - --set-env-vars=GIN_MODE=release,TLS_ENABLED=false,LOG_LEVEL=info,MONGO_DATABASE=gg_cms,ADMIN_EMAIL=${_ADMIN_EMAIL},ADMIN_NAME=Super Admin,VITE_APP_NAME=GeekGully CMS
     waitFor: [push-backend]
@@ -104,9 +104,10 @@ steps:
     waitFor: [build-frontend, deploy-backend]
 
 # ── Substitutions (set in trigger or --substitutions flag) ────────────────────
+# _ADMIN_EMAIL must match release/gcp/deploy.sh — keep all three deploy paths in sync
 substitutions:
   _REGION: us-central1
-  _ADMIN_EMAIL: admin@gg-cms.local
+  _ADMIN_EMAIL: info@serenyax.com
 
 # ── Secret references (for Firebase token) ────────────────────────────────────
 availableSecrets:

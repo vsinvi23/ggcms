@@ -153,3 +153,27 @@ func (r *categoryRepository) FindByReviewerGroupID(ctx context.Context, groupID 
 		Find(&cats).Error
 	return cats, err
 }
+
+func (r *categoryRepository) GetContentCategories(ctx context.Context, contentID uint, contentType string) ([]*entity.ContentCategory, error) {
+	var categories []*entity.ContentCategory
+	err := r.read.WithContext(ctx).
+		Where("content_id = ? AND content_type = ?", contentID, contentType).
+		Find(&categories).Error
+	return categories, err
+}
+
+func (r *categoryRepository) SetContentCategories(ctx context.Context, contentID uint, contentType string, categories []entity.ContentCategory) error {
+	return r.write.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("content_id = ? AND content_type = ?", contentID, contentType).Delete(&entity.ContentCategory{}).Error; err != nil {
+			return err
+		}
+		if len(categories) == 0 {
+			return nil
+		}
+		for i := range categories {
+			categories[i].ContentID = contentID
+			categories[i].ContentType = contentType
+		}
+		return tx.Create(&categories).Error
+	})
+}

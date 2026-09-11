@@ -31,6 +31,7 @@ import { Search, Loader2, CheckCircle, Globe, MoreHorizontal, Undo2, Eye, Clipbo
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 
 
 type ContentType = 'ARTICLE' | 'COURSE';
@@ -66,7 +67,7 @@ function AssignReviewerCell({ item, contentType }: { item: CmsResponseDto; conte
                 assignReviewer.mutate(
                   { id: item.id, userId: r.id, type: contentType },
                   { onSuccess: () => { setOpen(false); toast.success(`Assigned to ${r.name}`); },
-                    onError: () => toast.error('Failed to assign reviewer') }
+                    onError: (err) => toast.error(toUserMessage(err, 'Failed to assign reviewer')) }
                 );
               }}
             >
@@ -112,8 +113,8 @@ function ContentTable({
     try {
       await approveMutation.mutateAsync({ id: item.id, type: item.type });
       toast.success(`"${item.title}" approved`);
-    } catch {
-      toast.error('Failed to approve');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to approve'));
     }
   };
 
@@ -121,8 +122,8 @@ function ContentTable({
     try {
       await publishMutation.mutateAsync({ id: item.id, type: item.type });
       toast.success(`"${item.title}" published`);
-    } catch {
-      toast.error('Failed to publish');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to publish'));
     }
   };
 
@@ -133,8 +134,8 @@ function ContentTable({
       toast.success('Sent back for revision');
       setSendBackItem(null);
       setSendBackComment('');
-    } catch {
-      toast.error('Failed to send back');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to send back'));
     }
   };
 

@@ -46,6 +46,12 @@ func (h *UserHandler) GetByID(c *gin.Context) {
 		response.BadRequest(c, "invalid user ID")
 		return
 	}
+	authenticatedID := middleware.GetUserID(c)
+	isAdmin := middleware.IsAdmin(c)
+	if id != authenticatedID && !isAdmin {
+		response.Forbidden(c, "cannot view another user's profile")
+		return
+	}
 	user, err := h.service.GetByID(c.Request.Context(), id)
 	if err != nil {
 		response.NotFound(c, "user not found")
@@ -60,6 +66,12 @@ func (h *UserHandler) GetGroups(c *gin.Context) {
 	id, err := parseID(c, "id")
 	if err != nil {
 		response.BadRequest(c, "invalid user ID")
+		return
+	}
+	authenticatedID := middleware.GetUserID(c)
+	isAdmin := middleware.IsAdmin(c)
+	if id != authenticatedID && !isAdmin {
+		response.Forbidden(c, "cannot view another user's groups")
 		return
 	}
 	groups, err := h.service.GetGroups(c.Request.Context(), id)

@@ -124,7 +124,7 @@ func (h *PersonalizationHandler) ActivateProfile(c *gin.Context) {
 	response.OK(c, dto.MapProfileToResponse(profile))
 }
 
-// GET /api/personalization/recommendations?limit=10
+// GET /api/personalization/recommendations?limit=10&mode=related|recommended|next&content_id=123&content_type=ARTICLE
 func (h *PersonalizationHandler) GetRecommendations(c *gin.Context) {
 	userID := middleware.GetUserID(c)
 
@@ -135,6 +135,39 @@ func (h *PersonalizationHandler) GetRecommendations(c *gin.Context) {
 		}
 	}
 
+	modeStr := c.Query("mode")
+	if modeStr == "" {
+		modeStr = "related"
+	}
+	mode := personalization.RecommendationMode(modeStr)
+
+	var contentID uint
+	if cidStr := c.Query("content_id"); cidStr != "" {
+		if parsed, err := strconv.ParseUint(cidStr, 10, 32); err == nil {
+			contentID = uint(parsed)
+		}
+	}
+	cType := c.Query("content_type")
+
+	if mode == personalization.ModeRelated || mode == personalization.ModeNext || contentID > 0 {
+		var uidPtr *uint
+		if userID > 0 {
+			uidPtr = &userID
+		}
+		req := personalization.RecommendationRequest{
+			ContentID:   contentID,
+			ContentType: cType,
+			UserID:      uidPtr,
+			Mode:        mode,
+			Limit:       limit,
+		}
+		res, err := h.svc.GetRecommendationsByRequest(c.Request.Context(), req)
+		if err == nil {
+			response.OK(c, res)
+			return
+		}
+	}
+
 	items, err := h.svc.GetRecommendations(c.Request.Context(), userID, limit)
 	if err != nil {
 		response.InternalError(c, "failed to compute recommendations")
@@ -142,3 +175,4 @@ func (h *PersonalizationHandler) GetRecommendations(c *gin.Context) {
 	}
 	response.OK(c, items)
 }
+

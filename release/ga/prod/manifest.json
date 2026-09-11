@@ -1,0 +1,56 @@
+{
+  "system_name": "GG-CMS Production Release Registry",
+  "environment": "prod",
+  "current_version": "1.0.3",
+  "last_build_at": "2026-09-11T10:46:07Z",
+  "releases": [
+    {
+      "version": "1.0.3",
+      "built_at": "2026-09-11T10:46:07Z",
+      "branch": "release",
+      "commit": "daa66bd",
+      "components": {
+        "ui": "1.0.6",
+        "backend": "1.2.6",
+        "db": "1.0.4",
+        "content-factory": "1.0.2"
+      }
+    },
+    {
+      "version": "1.0.2",
+      "built_at": "2026-09-11T06:49:19Z",
+      "branch": "release",
+      "commit": "b54b868",
+      "components": {
+        "ui": "1.0.2",
+        "backend": "1.2.2",
+        "db": "1.0.2",
+        "content-factory": "1.0.2"
+      }
+    },
+    {
+      "version": "1.0.1",
+      "built_at": "2026-09-10T01:33:25Z",
+      "branch": "release",
+      "commit": "1aafa6a",
+      "components": {
+        "ui": "1.0.1",
+        "backend": "1.2.1",
+        "db": "1.0.1",
+        "content-factory": "1.0.1"
+      }
+    },
+    {
+      "version": "1.0.0",
+      "built_at": "2026-09-07T21:00:00Z",
+      "branch": "release",
+      "commit": "initial-prod-build",
+      "components": {
+        "ui": "1.0.0",
+        "backend": "1.0.0",
+        "db": "1.0.0",
+        "content-factory": "1.0.0"
+      }
+    }
+  ]
+}
