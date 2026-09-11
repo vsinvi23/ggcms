@@ -128,7 +128,7 @@ func main() {
 		OAuth:           oauthsvc.NewService(userRepo, groupRepo, jwtManager, &cfg.OAuth),
 		User:            usersvc.NewService(userRepo, groupRepo),
 		Group:           groupsvc.NewService(groupRepo, userRepo),
-		Category:        categorysvc.NewService(categoryRepo, groupRepo),
+		Category:        categorysvc.NewService(categoryRepo, groupRepo, articleRepo),
 		CMS:             cmssvc.NewService(articleRepo, courseRepo, sectionRepo, groupRepo, categoryRepo, workflowEventRepo, userRepo, contentReviewRepo, settingsSvc),
 		Section:         sectionsvc.NewService(sectionRepo),
 		Lesson:          lessonsvc.NewService(lessonRepo),

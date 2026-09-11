@@ -34,6 +34,7 @@ func (h *CategoryHandler) GetAll(c *gin.Context) {
 		result := make([]dto.CategoryResponse, len(cats))
 		for i, cat := range cats {
 			result[i] = mapCategoryToDTO(cat)
+			h.attachArticleCounts(c, &result[i])
 		}
 		response.OK(c, result)
 		return
@@ -227,6 +228,17 @@ func (h *CategoryHandler) GetGroupCategories(c *gin.Context) {
 		result[i] = mapCategoryToDTO(cat)
 	}
 	response.OK(c, result)
+}
+
+// attachArticleCounts recursively populates ArticleCount on a category and its children.
+func (h *CategoryHandler) attachArticleCounts(c *gin.Context, cat *dto.CategoryResponse) {
+	count, err := h.service.CountPublishedArticles(c.Request.Context(), cat.ID)
+	if err == nil {
+		cat.ArticleCount = &count
+	}
+	for i := range cat.Children {
+		h.attachArticleCounts(c, &cat.Children[i])
+	}
 }
 
 func mapCategoryToDTO(c *entity.Category) dto.CategoryResponse {
