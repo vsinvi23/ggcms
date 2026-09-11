@@ -16,9 +16,10 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useCategories } from '@/api/hooks/useCategories';
 import { useTags } from '@/api/hooks/useTags';
+import { useDomains } from '@/api/hooks/useDomains';
 import { useMyEnrollments } from '@/api/hooks/useEnrollments';
 import { useAuth } from '@/contexts/AuthContext';
-import { CmsResponseDto, TagDto, EnrollmentDto } from '@/api/types';
+import { CmsResponseDto, TagDto, EnrollmentDto, DomainDto } from '@/api/types';
 import { cn } from '@/lib/utils';
 import { buildArticleUrl, buildCourseUrl } from '@/lib/slug';
 import { PublicArticleCard } from '@/components/public/PublicArticleCard';
@@ -146,6 +147,49 @@ function TagsDropdown({
   );
 }
 
+// ─── Browse by Domain strip ────────────────────────────────────────────────────
+
+function DomainStrip({
+  domains, activeId, onSelect,
+}: {
+  domains: DomainDto[];
+  activeId: number | undefined;
+  onSelect: (domain: DomainDto) => void;
+}) {
+  if (domains.length === 0) return null;
+  return (
+    <div className="shrink-0 border-b border-border bg-card px-5 py-3">
+      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+        Browse by Domain
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {domains.map(domain => {
+          const count = domain.articleCount + domain.courseCount;
+          const active = domain.id === activeId;
+          return (
+            <button
+              key={domain.id}
+              onClick={() => onSelect(domain)}
+              className={cn(
+                'flex items-center gap-2 px-3 py-1.5 rounded-lg border text-left transition-colors',
+                active ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted',
+              )}
+            >
+              <span className="w-6 h-6 shrink-0 rounded-md bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">
+                {domain.icon || domain.name.charAt(0).toUpperCase()}
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span className="text-sm font-medium text-foreground">{domain.name}</span>
+                <span className="text-[11px] text-muted-foreground">{count}+ articles</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Card result (icon + title + description, like Backup & Restore UI) ───────
 
 function ExploreCard({
@@ -253,6 +297,7 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
 
   const [searchQuery, setSearchQuery]               = useState('');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const [activeDomainId, setActiveDomainId]         = useState<number | undefined>(undefined);
   const [selectedTypes, setSelectedTypes]           = useState<string[]>(initialCourseType ? [initialCourseType] : []);
   const [selectedTagIds, setSelectedTagIds]         = useState<number[]>([]);
   const [sortBy, setSortBy]                         = useState<'newest' | 'oldest' | 'az'>('newest');
@@ -265,17 +310,30 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
   const { data, isLoading }  = usePublicCmsList({ type, size: 200, courseType: initialCourseType });
   const { data: categories } = useCategories();
   const { data: tagsData }   = useTags();
+  const { data: domainsData } = useDomains();
 
   const allItems    = useMemo(() => data?.items ?? [], [data]);
   const allTags     = useMemo(() => tagsData ?? [], [tagsData]);
+  const allDomains  = useMemo(() => domainsData ?? [], [domainsData]);
   const typeOptions = isArticle ? ARTICLE_TYPE_OPTIONS : COURSE_TYPE_OPTIONS;
 
-  const flatCategories = useMemo(() => {
+  const flatCategoriesAll = useMemo(() => {
     if (!categories) return [];
     const flatten = (cats: typeof categories): typeof categories =>
       cats.flatMap(c => [c, ...flatten(c.children ?? [])]);
     return flatten(categories);
   }, [categories]);
+
+  const flatCategories = useMemo(() => {
+    if (activeDomainId === undefined) return flatCategoriesAll;
+    const underDomain = flatCategoriesAll.filter(c => c.domainId === activeDomainId);
+    return underDomain.length > 0 ? underDomain : flatCategoriesAll;
+  }, [flatCategoriesAll, activeDomainId]);
+
+  const handleDomainSelect = (domain: DomainDto) => {
+    setActiveDomainId(prev => (prev === domain.id ? undefined : domain.id));
+    setSelectedCategoryIds([]);
+  };
 
   const filteredItems = useMemo(() => {
     let result = allItems;
@@ -316,7 +374,8 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
   const hasActiveFilters = selectedCategoryIds.length > 0 ||
     selectedTagIds.length > 0 ||
     selectedTypes.some(t => t !== initialCourseType) ||
-    sortBy !== 'newest';
+    sortBy !== 'newest' ||
+    activeDomainId !== undefined;
 
   const toggleType = (t: string) =>
     setSelectedTypes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
@@ -328,6 +387,7 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
     setSelectedTagIds([]);
     setSortBy('newest');
     setSearchQuery('');
+    setActiveDomainId(undefined);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -338,6 +398,12 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
   };
 
   const activeChips: { label: string; onRemove: () => void }[] = [
+    ...(activeDomainId !== undefined
+      ? [{
+          label: allDomains.find(d => d.id === activeDomainId)?.name ?? 'Domain',
+          onRemove: () => setActiveDomainId(undefined),
+        }]
+      : []),
     ...flatCategories.filter(c => selectedCategoryIds.includes(c.id)).map(c => ({ label: c.name, onRemove: () => toggleCategory(c.id) })),
     ...allTags.filter(t => selectedTagIds.includes(t.id)).map(t => ({ label: t.name, onRemove: () => toggleTag(t.id) })),
     ...selectedTypes.filter(t => t !== initialCourseType).map(t => ({
@@ -368,6 +434,8 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
   return (
     <PublicLayout hideSearch>
       <div className="flex flex-col h-full overflow-hidden">
+
+        <DomainStrip domains={allDomains} activeId={activeDomainId} onSelect={handleDomainSelect} />
 
         {/* ── Filter section ────────────────────────────────────────────────── */}
         <div className="shrink-0 border-b border-border bg-card px-5 py-3 space-y-2.5">

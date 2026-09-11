@@ -239,6 +239,7 @@ func mapCategoryToDTO(c *entity.Category) dto.CategoryResponse {
 		Name:              c.Name,
 		Slug:              c.Slug,
 		ParentID:          c.ParentID,
+		DomainID:          c.DomainID,
 		IsVirtual:         c.IsVirtual,
 		RequiredApprovals: c.RequiredApprovals,
 		Children:          children,

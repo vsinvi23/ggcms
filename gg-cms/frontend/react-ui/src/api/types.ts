@@ -148,11 +148,22 @@ export interface CategoryResponseDto {
   id: number;
   name: string;
   parentId: number | null;
+  domainId?: number | null;
   isVirtual?: boolean;
   slug?: string;
   description?: string;
   requiredApprovals?: number;
   children?: CategoryResponseDto[];
+}
+
+export interface DomainDto {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  icon?: string;
+  articleCount: number;
+  courseCount: number;
 }
 
 export type CategoryListResponse = CategoryResponseDto[];

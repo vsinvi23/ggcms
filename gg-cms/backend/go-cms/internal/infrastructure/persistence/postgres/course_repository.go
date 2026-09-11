@@ -158,6 +158,15 @@ func (r *courseRepository) FindPublishedByCategorySlug(ctx context.Context, slug
 	return courses, total, err
 }
 
+func (r *courseRepository) CountPublishedByDomainID(ctx context.Context, domainID uint) (int64, error) {
+	var count int64
+	err := r.read.WithContext(ctx).Model(&entity.Course{}).
+		Joins("JOIN categories ON categories.id = courses.category_id").
+		Where("courses.status = ? AND categories.domain_id = ?", entity.CMSStatusPublished, domainID).
+		Count(&count).Error
+	return count, err
+}
+
 func (r *courseRepository) UpdateStatus(ctx context.Context, id uint, status entity.CMSStatus, reviewerID *uint, comment *string, publishedAt *time.Time) error {
 	updates := map[string]interface{}{"status": status}
 	if reviewerID != nil {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	"github.com/serenya/go-cms/internal/application/topic"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
@@ -12,11 +13,12 @@ import (
 )
 
 type TopicHandler struct {
-	service topic.Service
+	service    topic.Service
+	cmsService cmssvc.Service
 }
 
-func NewTopicHandler(svc topic.Service) *TopicHandler {
-	return &TopicHandler{service: svc}
+func NewTopicHandler(svc topic.Service, cmsService cmssvc.Service) *TopicHandler {
+	return &TopicHandler{service: svc, cmsService: cmsService}
 }
 
 func toTopicResponse(t *entity.Topic) dto.TopicResponse {
@@ -182,6 +184,44 @@ func (h *TopicHandler) GetContentTopics(c *gin.Context) {
 	items := make([]dto.TopicResponse, len(topics))
 	for i, t := range topics {
 		items[i] = toTopicResponse(t)
+	}
+	response.OK(c, items)
+}
+
+// GET /api/topics/:id/content?type=ARTICLE|COURSE&size=20
+// Returns published content tagged with the given topic, for the public Topic page.
+func (h *TopicHandler) GetTopicContent(c *gin.Context) {
+	id, err := parseID(c, "id")
+	if err != nil {
+		response.BadRequest(c, "invalid topic ID")
+		return
+	}
+	size := 20
+	entries, err := h.service.FindContentByTopicIDs(c.Request.Context(), []uint{id}, 0, "", size)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+	contentType := c.Query("type")
+	items := make([]dto.CMSResponse, 0, len(entries))
+	for _, e := range entries {
+		if contentType != "" && e.ContentType != contentType {
+			continue
+		}
+		item, err := h.cmsService.GetByID(c.Request.Context(), e.ContentID, entity.CMSType(e.ContentType))
+		if err != nil {
+			continue
+		}
+		switch v := item.(type) {
+		case *entity.Article:
+			if v.Status == entity.CMSStatusPublished {
+				items = append(items, articleToCMS(v))
+			}
+		case *entity.Course:
+			if v.Status == entity.CMSStatusPublished {
+				items = append(items, courseToCMS(v))
+			}
+		}
 	}
 	response.OK(c, items)
 }

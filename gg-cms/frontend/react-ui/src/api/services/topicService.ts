@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import { ApiResponse, TopicDto, TopicRelationshipDto, ContentTopicDto, TopicResolutionDto } from '../types';
+import { ApiResponse, TopicDto, TopicRelationshipDto, ContentTopicDto, TopicResolutionDto, CmsResponseDto } from '../types';
 
 export const topicService = {
   async getAll(): Promise<TopicDto[]> {
@@ -53,6 +53,13 @@ export const topicService = {
 
   async setContentTopics(contentId: number, contentType: string, topicIds: number[]): Promise<void> {
     await apiClient.put(`/cms/${contentId}/topics`, { contentType, topicIds });
+  },
+
+  async getTopicContent(topicId: number, contentType?: 'ARTICLE' | 'COURSE'): Promise<CmsResponseDto[]> {
+    const response = await apiClient.get<ApiResponse<CmsResponseDto[]>>(`/topics/${topicId}/content`, {
+      params: contentType ? { type: contentType } : undefined,
+    });
+    return response.data.data || [];
   },
 
   async resolveTopic(rawName: string): Promise<TopicResolutionDto> {

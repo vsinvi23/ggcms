@@ -34,6 +34,8 @@ const TechnologyPage = lazy(() => import('./pages/TechnologyPage'));
 const CourseCategoryPage = lazy(() => import('./pages/CourseCategoryPage'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
 const LearningPathPage = lazy(() => import('./pages/LearningPathPage'));
+const TopicsPage = lazy(() => import('./pages/TopicsPage'));
+const TopicDetailPage = lazy(() => import('./pages/TopicDetailPage'));
 const ArticleViewPage = lazy(() => import('./pages/ArticleViewPage'));
 const CourseViewPage = lazy(() => import('./pages/CourseViewPage'));
 const PublicArticleView = lazy(() => import('./pages/PublicArticleView'));
@@ -93,6 +95,8 @@ const App = () => (
                 <Route path="/article/*" element={<PublicArticleView />} />
                 <Route path="/course/*" element={<CourseViewPage />} />
                 <Route path="/learn/:path" element={<LearningPathPage />} />
+                <Route path="/topics" element={<TopicsPage />} />
+                <Route path="/topics/:slug" element={<TopicDetailPage />} />
 
                 {/* Protected Admin Routes */}
                 <Route path="/admin" element={<ProtectedRoute><ContentManagement /></ProtectedRoute>} />

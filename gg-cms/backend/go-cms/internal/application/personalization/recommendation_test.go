@@ -60,6 +60,9 @@ func (s *stubArticleRepo) FindPublished(ctx context.Context, page, size int) ([]
 func (s *stubArticleRepo) FindPublishedByCategorySlug(ctx context.Context, slug string, page, size int) ([]*entity.Article, int64, error) {
 	return nil, 0, nil
 }
+func (s *stubArticleRepo) CountPublishedByDomainID(ctx context.Context, domainID uint) (int64, error) {
+	return 0, nil
+}
 func (s *stubArticleRepo) UpdateStatus(ctx context.Context, id uint, status entity.CMSStatus, reviewerID *uint, comment *string, publishedAt *time.Time) error {
 	return nil
 }
@@ -121,6 +124,9 @@ func (s *stubCourseRepo) FindPublished(ctx context.Context, page, size int) ([]*
 }
 func (s *stubCourseRepo) FindPublishedByCategorySlug(ctx context.Context, slug string, page, size int) ([]*entity.Course, int64, error) {
 	return nil, 0, nil
+}
+func (s *stubCourseRepo) CountPublishedByDomainID(ctx context.Context, domainID uint) (int64, error) {
+	return 0, nil
 }
 func (s *stubCourseRepo) UpdateStatus(ctx context.Context, id uint, status entity.CMSStatus, reviewerID *uint, comment *string, publishedAt *time.Time) error {
 	return nil

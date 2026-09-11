@@ -118,6 +118,8 @@ type ArticleRepository interface {
 	FindAll(ctx context.Context, filter ArticleFilter, page, size int) ([]*entity.Article, int64, error)
 	FindPublished(ctx context.Context, page, size int) ([]*entity.Article, int64, error)
 	FindPublishedByCategorySlug(ctx context.Context, slug string, page, size int) ([]*entity.Article, int64, error)
+	// CountPublishedByDomainID counts published articles whose category belongs to the given domain.
+	CountPublishedByDomainID(ctx context.Context, domainID uint) (int64, error)
 	UpdateStatus(ctx context.Context, id uint, status entity.CMSStatus, reviewerID *uint, comment *string, publishedAt *time.Time) error
 	// SaveSnapshot stores the current published state before overwriting with a new draft.
 	SaveSnapshot(ctx context.Context, id uint, a *entity.Article) error
@@ -140,6 +142,8 @@ type CourseRepository interface {
 	FindAll(ctx context.Context, filter CourseFilter, page, size int) ([]*entity.Course, int64, error)
 	FindPublished(ctx context.Context, page, size int) ([]*entity.Course, int64, error)
 	FindPublishedByCategorySlug(ctx context.Context, slug string, page, size int) ([]*entity.Course, int64, error)
+	// CountPublishedByDomainID counts published courses whose category belongs to the given domain.
+	CountPublishedByDomainID(ctx context.Context, domainID uint) (int64, error)
 	UpdateStatus(ctx context.Context, id uint, status entity.CMSStatus, reviewerID *uint, comment *string, publishedAt *time.Time) error
 	// SaveSnapshot stores the current published state before overwriting with a new draft.
 	SaveSnapshot(ctx context.Context, id uint, c *entity.Course) error

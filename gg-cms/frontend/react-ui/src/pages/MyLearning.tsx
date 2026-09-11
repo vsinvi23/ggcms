@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { HomePersonalizationWidget } from '@/components/personalization/HomePersonalizationWidget';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -556,16 +556,18 @@ const MyLearning = () => {
   const navigate = useNavigate();
   const { data: enrollments = [] } = useMyEnrollments();
   const { data: articlesData } = useCmsList({ type: 'ARTICLE', size: 50 });
+  const { data: favouritesData } = useMyFavourites();
 
-  const totalEnrolled = enrollments.length;
+  const inProgress = enrollments.filter((e: EnrollmentDto) => e.status === 'active');
   const completedCourses = enrollments.filter((e: EnrollmentDto) => e.status === 'completed').length;
   const totalArticles = articlesData?.items?.length ?? 0;
+  const totalBookmarks = favouritesData?.items?.length ?? 0;
 
   const stats = [
     {
-      label: 'Enrolled Courses',
-      value: totalEnrolled,
-      icon: BookOpen,
+      label: 'In Progress',
+      value: inProgress.length,
+      icon: PlayCircle,
       color: 'text-primary',
       bg: 'bg-primary/10',
     },
@@ -577,6 +579,13 @@ const MyLearning = () => {
       bg: 'bg-green-600/10',
     },
     {
+      label: 'Bookmarks',
+      value: totalBookmarks,
+      icon: Star,
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
+    },
+    {
       label: 'My Articles',
       value: totalArticles,
       icon: FileText,
@@ -586,18 +595,18 @@ const MyLearning = () => {
   ];
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
+    <PublicLayout>
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">My Learning</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back, {user?.name ?? 'Learner'}! Track your courses, articles and notes.
+            Welcome back, {user?.name ?? 'Learner'}! Track your progress and continue learning.
           </p>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {stats.map((s) => {
             const Icon = s.icon;
             return (
@@ -616,12 +625,44 @@ const MyLearning = () => {
           })}
         </div>
 
+        {/* Continue Learning */}
+        {inProgress.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-3">Continue Learning</h2>
+            <div className="space-y-3">
+              {inProgress.slice(0, 4).map((e: EnrollmentDto) => {
+                const title = e.course?.title || `Course #${e.course?.id ?? '?'}`;
+                const progress = Math.round(e.progress ?? 0);
+                return (
+                  <Card
+                    key={e.id}
+                    className="hover:shadow-sm transition-shadow cursor-pointer"
+                    onClick={() => e.course?.id && navigate(`/course/${e.course.id}`)}
+                  >
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate mb-1.5">{title}</p>
+                        <Progress value={progress} className="h-1.5" />
+                      </div>
+                      <span className="text-xs text-muted-foreground shrink-0">{progress}%</span>
+                      <Button size="sm" variant="outline" className="shrink-0">Continue</Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Personalised Recommendations */}
-        <HomePersonalizationWidget
-          onItemClick={(item) =>
-            navigate(item.contentType === 'course' ? `/course/${item.publicId}` : `/article/${item.publicId}`)
-          }
-        />
+        <div>
+          <h2 className="text-lg font-semibold mb-3">Recommended for You</h2>
+          <HomePersonalizationWidget
+            onItemClick={(item) =>
+              navigate(item.contentType === 'course' ? `/course/${item.publicId}` : `/article/${item.publicId}`)
+            }
+          />
+        </div>
 
         {/* Tabs */}
         <Tabs defaultValue="courses">
@@ -629,9 +670,9 @@ const MyLearning = () => {
             <TabsTrigger value="courses" className="gap-2">
               <BookOpen className="w-4 h-4" />
               Enrolled Courses
-              {totalEnrolled > 0 && (
+              {enrollments.length > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                  {totalEnrolled}
+                  {enrollments.length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -675,7 +716,7 @@ const MyLearning = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    </PublicLayout>
   );
 };
 
