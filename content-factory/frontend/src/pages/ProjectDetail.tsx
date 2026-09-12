@@ -1580,12 +1580,32 @@ export default function ProjectDetail({
   onNavigate: (page: Page) => void
 }) {
   const [tab, setTab] = useState<Tab>("overview")
-  const { projects, projectsLoading, projectsError, backendOffline, refreshProjects } = useAppContext()
+  const { projects, projectsLoading, projectsError, backendOffline, selectProject, refreshProjects } = useAppContext()
   const project = projects.find((p) => p.id === projectId) ?? null
 
   if (projectsLoading) return <Spinner label="Loading project..." />
   if (projectsError) return <ErrorState message={projectsError} isOffline={backendOffline} onRetry={refreshProjects} />
-  if (!project) return <ErrorState message="This project could not be found." onRetry={refreshProjects} />
+  if (!project) {
+    const firstProject = projects[0]
+    return (
+      <Card className="p-8 text-center space-y-4">
+        <EmptyState
+          title="Project not found"
+          description="The requested project could not be found. It may have been removed or replaced during a deployment."
+        />
+        <div className="flex justify-center gap-3">
+          {firstProject && (
+            <Button onClick={() => selectProject(firstProject.id)}>
+              Open active project "{firstProject.name}"
+            </Button>
+          )}
+          <Button variant="secondary" onClick={onBack}>
+            View all projects
+          </Button>
+        </div>
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-6">

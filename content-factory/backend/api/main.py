@@ -80,6 +80,8 @@ async def load_system_settings_overrides():
     via backend.storage.file_store) onto the in-memory `settings` singleton
     so a restart picks up UI-configured values."""
     apply_overrides(system_settings_service.get_row())
+    from backend.storage import file_store
+    await file_store.ensure_default_project()
 
 
 @app.on_event("startup")

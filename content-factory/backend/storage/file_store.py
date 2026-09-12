@@ -224,6 +224,53 @@ async def save_project_strategy(strategy: ProjectStrategy) -> ProjectStrategy:
     return strategy
 
 
+async def ensure_default_project() -> Project:
+    """Ensures at least one valid default project exists in storage on startup."""
+    existing = list_projects()
+    if existing:
+        return existing[0]
+
+    project = Project(
+        name="Developer Learning Hub",
+        niche=["python", "devops", "system-design"],
+        audience=["backend engineers", "system architects"],
+        language="en",
+        levels=["beginner", "intermediate", "advanced"],
+        content_types=["tutorial", "how-to", "concept-guide"],
+        brand_voice="Authoritative yet conversational technical guide",
+        autonomy_enabled=True,
+        min_opportunity_score=70,
+        daily_limit=5,
+        require_human_approval=False,
+    )
+    await save_project(project)
+
+    strategy = ProjectStrategy(
+        project_id=project.id,
+        content_goals=[
+            "Produce fact-checked, high-authority technical content",
+            "Target zero hallucination & strict source citation",
+            "Provide verified code samples and step-by-step instructions",
+            "Build long-term domain authority and search trust",
+        ],
+        prohibited_topics=[
+            "Unverified technical claims or unvetted benchmark numbers",
+            "Plagiarized content or direct copy-pasting from low-quality blogs",
+            "Deprecated APIs without explicit version disclaimers",
+            "Speculative, unsafe, or non-functional code snippets",
+        ],
+        preferred_sources=[
+            "Official framework & library documentation",
+            "Peer-reviewed RFCs, W3C specifications, and official GitHub repos",
+            "Established academic & engineering blogs (e.g. AWS, Google Cloud, Cloudflare)",
+            "Internal verified RAG knowledge packs",
+        ],
+        publishing_frequency="3x per week (high accuracy focus)",
+    )
+    await save_project_strategy(strategy)
+    return project
+
+
 # ---------------------------------------------------------------------------
 # sources
 # ---------------------------------------------------------------------------
