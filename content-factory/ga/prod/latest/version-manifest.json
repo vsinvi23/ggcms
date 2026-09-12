@@ -1,7 +1,7 @@
 {
   "system_version": "1.0.2",
-  "build_timestamp": "2026-09-12T06:12:42Z",
-  "git_commit": "f2e90b4",
+  "build_timestamp": "2026-09-12T06:38:04Z",
+  "git_commit": "d7593ea",
   "components": {
     "frontend": {
       "version": "1.0.6",
@@ -9,7 +9,7 @@
       "description": "AI Content Factory React Frontend SPA"
     },
     "backend": {
-      "version": "1.0.4",
+      "version": "1.0.5",
       "package": "content-factory/backend",
       "description": "AI Content Factory FastAPI Backend Service"
     }
