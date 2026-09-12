@@ -88,7 +88,11 @@ interface RequestOptions {
 }
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
-  const url = new URL(`${API_BASE_URL}${path}`)
+  const fullPath = `${API_BASE_URL}${path}`
+  const base = fullPath.startsWith("http://") || fullPath.startsWith("https://")
+    ? undefined
+    : (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000")
+  const url = new URL(fullPath, base)
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value === undefined || value === null || value === "") continue

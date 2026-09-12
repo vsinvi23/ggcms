@@ -17,7 +17,7 @@ export default function FactoryPage() {
 
   const directUrl = window.location.origin.includes('localhost')
     ? localFactoryUrl
-    : 'https://content-factory-backend-wuisbddlxq-uc.a.run.app';
+    : `${window.location.origin}/factory/`;
 
   const handleRefresh = () => {
     setIframeLoaded(false);
