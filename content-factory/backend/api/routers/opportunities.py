@@ -297,18 +297,33 @@ async def discover_opportunities(payload: OpportunityDiscoverIn):
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    if payload.topics:
-        rows = await _discover_from_statements(project, payload.topics)
-    else:
-        if not project.niche:
+    try:
+        if payload.topics:
+            rows = await _discover_from_statements(project, payload.topics)
+        else:
+            if not project.niche:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No topics to discover from -- set a niche on the project or pass explicit topics.",
+                )
+            agent = OpportunityAgent()
+            results = await agent.run(project.niche, meta={})
+            rows = await _persist_opportunity_results(project.id, results)
+        return [OpportunityOut.from_orm_with_signals(row) for row in rows]
+    except HTTPException:
+        raise
+    except Exception as e:
+        err_msg = str(e)
+        logger.error(f"Opportunity discovery failed: {err_msg}")
+        if any(k in err_msg for k in ["API key not valid", "INVALID_ARGUMENT", "API_KEY_INVALID", "400"]):
             raise HTTPException(
                 status_code=400,
-                detail="No topics to discover from -- set a niche on the project or pass explicit topics.",
-            )
-        agent = OpportunityAgent()
-        results = await agent.run(project.niche, meta={})
-        rows = await _persist_opportunity_results(project.id, results)
-    return [OpportunityOut.from_orm_with_signals(row) for row in rows]
+                detail="Gemini API key is invalid or missing. Please configure a valid Gemini API key in System Settings.",
+            ) from e
+        raise HTTPException(
+            status_code=500,
+            detail=f"Opportunity discovery failed: {err_msg}",
+        ) from e
 
 
 async def run_bulk_discover_job(job_id: uuid.UUID, project_id: uuid.UUID, topics: List[str]) -> None:

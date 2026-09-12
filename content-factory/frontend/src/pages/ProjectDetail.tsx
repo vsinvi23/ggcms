@@ -56,8 +56,31 @@ import type {
   SourceCreatePayload,
   SourceType,
 } from "../services/types"
+import { FIELD_INFO } from "../constants/fieldInfo"
 
 const LEVEL_OPTIONS = ["beginner", "intermediate", "advanced"]
+
+const RECOMMENDED_GOALS = [
+  "Produce fact-checked, high-authority technical content",
+  "Target zero hallucination & strict source citation",
+  "Provide verified code samples and step-by-step instructions",
+  "Build long-term domain authority and search trust",
+]
+
+const RECOMMENDED_PROHIBITED = [
+  "Unverified technical claims or unvetted benchmark numbers",
+  "Plagiarized content or direct copy-pasting from low-quality blogs",
+  "Deprecated APIs without explicit version disclaimers",
+  "Speculative, unsafe, or non-functional code snippets",
+]
+
+const RECOMMENDED_SOURCES = [
+  "Official framework & library documentation",
+  "Peer-reviewed RFCs, W3C specifications, and official GitHub repos",
+  "Established academic & engineering blogs (e.g. AWS, Google Cloud, Cloudflare)",
+  "Internal verified RAG knowledge packs",
+]
+
 const URL_SOURCE_TYPES: { value: SourceType; label: string }[] = [
   { value: "url", label: "Web page (URL)" },
   { value: "website", label: "Website (crawl)" },
@@ -271,24 +294,24 @@ function ConfigTab({ projectId, project, onSaved }: { projectId: string; project
         {error && <InlineError message={error} onDismiss={() => setError(null)} />}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Project name" htmlFor="cfg-name">
+          <Field label="Project name" htmlFor="cfg-name" info={FIELD_INFO.projectName}>
             <Input id="cfg-name" value={form.name} onChange={(e) => setForm((f) => f && { ...f, name: e.target.value })} />
           </Field>
-          <Field label="Language" htmlFor="cfg-lang">
+          <Field label="Language" htmlFor="cfg-lang" info={FIELD_INFO.language}>
             <Input id="cfg-lang" value={form.language} onChange={(e) => setForm((f) => f && { ...f, language: e.target.value })} />
           </Field>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Niche(s)">
+          <Field label="Niche(s)" info={FIELD_INFO.niche}>
             <TagInput values={form.niche} onChange={(niche) => setForm((f) => f && { ...f, niche })} placeholder="e.g. python, devops" />
           </Field>
-          <Field label="Audience">
+          <Field label="Audience" info={FIELD_INFO.audience}>
             <TagInput values={form.audience} onChange={(audience) => setForm((f) => f && { ...f, audience })} placeholder="e.g. backend engineers" />
           </Field>
         </div>
 
-        <Field label="Levels covered">
+        <Field label="Levels covered" info={FIELD_INFO.levels}>
           <div className="flex flex-wrap gap-2">
             {LEVEL_OPTIONS.map((level) => (
               <button
@@ -307,11 +330,11 @@ function ConfigTab({ projectId, project, onSaved }: { projectId: string; project
           </div>
         </Field>
 
-        <Field label="Content types">
+        <Field label="Content types" info={FIELD_INFO.contentTypes}>
           <TagInput values={form.content_types} onChange={(content_types) => setForm((f) => f && { ...f, content_types })} placeholder="e.g. tutorial, how-to" />
         </Field>
 
-        <Field label="Brand voice" htmlFor="cfg-voice" hint="Optional guidance passed to the writer agent">
+        <Field label="Brand voice" htmlFor="cfg-voice" hint="Optional guidance passed to the writer agent" info={FIELD_INFO.brandVoice}>
           <Textarea id="cfg-voice" rows={2} value={form.brand_voice} onChange={(e) => setForm((f) => f && { ...f, brand_voice: e.target.value })} />
         </Field>
 
@@ -321,7 +344,7 @@ function ConfigTab({ projectId, project, onSaved }: { projectId: string; project
             Autonomy
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="Min. opportunity score" htmlFor="cfg-score" hint="0-100, gates auto-approval">
+            <Field label="Min. opportunity score" htmlFor="cfg-score" hint="0-100, gates auto-approval" info={FIELD_INFO.minScore}>
               <Input
                 id="cfg-score"
                 type="number"
@@ -331,7 +354,7 @@ function ConfigTab({ projectId, project, onSaved }: { projectId: string; project
                 onChange={(e) => setForm((f) => f && { ...f, min_opportunity_score: Number(e.target.value) })}
               />
             </Field>
-            <Field label="Daily generation limit" htmlFor="cfg-limit">
+            <Field label="Daily generation limit" htmlFor="cfg-limit" info={FIELD_INFO.dailyLimit}>
               <Input
                 id="cfg-limit"
                 type="number"
@@ -387,13 +410,18 @@ function StrategyTab({ projectId }: { projectId: string }) {
   useEffect(() => {
     if (data) {
       setForm({
-        content_goals: data.content_goals,
-        prohibited_topics: data.prohibited_topics,
-        preferred_sources: data.preferred_sources,
-        publishing_frequency: data.publishing_frequency ?? "",
+        content_goals: data.content_goals && data.content_goals.length > 0 ? data.content_goals : RECOMMENDED_GOALS,
+        prohibited_topics: data.prohibited_topics && data.prohibited_topics.length > 0 ? data.prohibited_topics : RECOMMENDED_PROHIBITED,
+        preferred_sources: data.preferred_sources && data.preferred_sources.length > 0 ? data.preferred_sources : RECOMMENDED_SOURCES,
+        publishing_frequency: data.publishing_frequency ?? "3x per week (high accuracy focus)",
       })
-    } else if (!loading && loadError) {
-      setForm({ content_goals: [], prohibited_topics: [], preferred_sources: [], publishing_frequency: "" })
+    } else if (!loading) {
+      setForm({
+        content_goals: RECOMMENDED_GOALS,
+        prohibited_topics: RECOMMENDED_PROHIBITED,
+        preferred_sources: RECOMMENDED_SOURCES,
+        publishing_frequency: "3x per week (high accuracy focus)",
+      })
     }
   }, [data, loading, loadError])
 
@@ -406,13 +434,18 @@ function StrategyTab({ projectId }: { projectId: string }) {
     )
   }
 
-  if (!form) return null
+  const activeForm = form ?? {
+    content_goals: RECOMMENDED_GOALS,
+    prohibited_topics: RECOMMENDED_PROHIBITED,
+    preferred_sources: RECOMMENDED_SOURCES,
+    publishing_frequency: "3x per week (high accuracy focus)",
+  }
 
   const save = async () => {
     setSaving(true)
     setSaveError(null)
     try {
-      await api.updateProjectStrategy(projectId, { ...form, publishing_frequency: form.publishing_frequency || undefined })
+      await api.updateProjectStrategy(projectId, { ...activeForm, publishing_frequency: activeForm.publishing_frequency || undefined })
       showToast("Strategy saved.", "success")
     } catch (err) {
       setSaveError(err instanceof ApiError ? err.message : "Could not save the content strategy.")
@@ -421,37 +454,67 @@ function StrategyTab({ projectId }: { projectId: string }) {
     }
   }
 
+  const applyRecommended = () => {
+    setForm({
+      content_goals: RECOMMENDED_GOALS,
+      prohibited_topics: RECOMMENDED_PROHIBITED,
+      preferred_sources: RECOMMENDED_SOURCES,
+      publishing_frequency: "3x per week (high accuracy focus)",
+    })
+    showToast("Applied recommended quality strategy guidelines.", "info")
+  }
+
   return (
     <Card>
-      <CardHeader title="Content strategy" subtitle="Goals, guardrails, and preferred sources for this project." />
+      <CardHeader title="Content strategy" subtitle="Goals, guardrails, and preferred sources for validated, reviewed, and correct content." />
       <div className="space-y-5 p-5">
         {saveError && <InlineError message={saveError} onDismiss={() => setSaveError(null)} />}
-        <Field label="Content goals">
+
+        <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4 space-y-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 font-semibold text-purple-300 text-xs uppercase tracking-wide">
+              <Sparkles size={14} className="text-purple-400" /> Recommended High-Accuracy Quality Protocol
+            </div>
+            <button
+              type="button"
+              onClick={applyRecommended}
+              className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-purple-200 bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/50 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+            >
+              <Sparkles size={13} />
+              Apply Recommended Guidelines
+            </button>
+          </div>
+          <p className="text-xs text-zinc-300 leading-relaxed">
+            These recommended guidelines ensure that writer and reviewer agents target strict factual accuracy, verified source retrieval (RAG), complete code samples, and zero-hallucination guardrails.
+          </p>
+        </div>
+
+        <Field label="Content goals" info={FIELD_INFO.contentGoals}>
           <TagInput
-            values={form.content_goals}
-            onChange={(content_goals) => setForm((f) => f && { ...f, content_goals })}
-            placeholder="e.g. grow organic search traffic"
+            values={activeForm.content_goals}
+            onChange={(content_goals) => setForm((f) => ({ ...(f ?? activeForm), content_goals }))}
+            placeholder="e.g. produce fact-checked high-authority articles"
           />
         </Field>
-        <Field label="Prohibited topics">
+        <Field label="Prohibited topics" info={FIELD_INFO.prohibitedTopics}>
           <TagInput
-            values={form.prohibited_topics}
-            onChange={(prohibited_topics) => setForm((f) => f && { ...f, prohibited_topics })}
+            values={activeForm.prohibited_topics}
+            onChange={(prohibited_topics) => setForm((f) => ({ ...(f ?? activeForm), prohibited_topics }))}
             placeholder="Topics to avoid"
           />
         </Field>
-        <Field label="Preferred sources">
+        <Field label="Preferred sources" info={FIELD_INFO.preferredSources}>
           <TagInput
-            values={form.preferred_sources}
-            onChange={(preferred_sources) => setForm((f) => f && { ...f, preferred_sources })}
+            values={activeForm.preferred_sources}
+            onChange={(preferred_sources) => setForm((f) => ({ ...(f ?? activeForm), preferred_sources }))}
             placeholder="Domains or publishers to prioritize"
           />
         </Field>
-        <Field label="Publishing frequency" htmlFor="cfg-freq" hint="Optional, e.g. 3x per week">
+        <Field label="Publishing frequency" htmlFor="cfg-freq" hint="Optional, e.g. 3x per week" info={FIELD_INFO.publishingFrequency}>
           <Input
             id="cfg-freq"
-            value={form.publishing_frequency}
-            onChange={(e) => setForm((f) => f && { ...f, publishing_frequency: e.target.value })}
+            value={activeForm.publishing_frequency}
+            onChange={(e) => setForm((f) => ({ ...(f ?? activeForm), publishing_frequency: e.target.value }))}
           />
         </Field>
         <Button icon={<Save size={15} />} loading={saving} onClick={save}>
@@ -499,7 +562,7 @@ function AddUrlSourceCard({ projectId, onAdded }: { projectId: string; onAdded: 
       <CardHeader title="Add a source by URL" subtitle="Website, RSS feed, sitemap, or GitHub repository." />
       <form onSubmit={submit} className="space-y-4 p-5">
         {error && <InlineError message={error} onDismiss={() => setError(null)} />}
-        <Field label="Source type" htmlFor="src-type">
+        <Field label="Source type" htmlFor="src-type" info={FIELD_INFO.sourceType}>
           <Select id="src-type" value={sourceType} onChange={(e) => setSourceType(e.target.value as SourceType)}>
             {URL_SOURCE_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
@@ -508,7 +571,7 @@ function AddUrlSourceCard({ projectId, onAdded }: { projectId: string; onAdded: 
             ))}
           </Select>
         </Field>
-        <Field label="URL" htmlFor="src-url">
+        <Field label="URL" htmlFor="src-url" info={FIELD_INFO.sourceUrl}>
           <Input id="src-url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com/docs" />
         </Field>
         <Button type="submit" icon={<Link2 size={15} />} loading={submitting}>
@@ -565,7 +628,7 @@ function BulkAddUrlsCard({ projectId, onAdded }: { projectId: string; onAdded: (
       <CardHeader title="Bulk-add sources" subtitle="Paste many URLs at once, one per line -- each is ingested as a source." />
       <form onSubmit={submit} className="space-y-4 p-5">
         {error && <InlineError message={error} onDismiss={() => setError(null)} />}
-        <Field label="Source type" htmlFor="bulk-src-type">
+        <Field label="Source type" htmlFor="bulk-src-type" info={FIELD_INFO.sourceType}>
           <Select id="bulk-src-type" value={sourceType} onChange={(e) => setSourceType(e.target.value as SourceType)}>
             {URL_SOURCE_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
@@ -574,7 +637,7 @@ function BulkAddUrlsCard({ projectId, onAdded }: { projectId: string; onAdded: (
             ))}
           </Select>
         </Field>
-        <Field label="URLs (one per line)" htmlFor="bulk-src-urls">
+        <Field label="URLs (one per line)" htmlFor="bulk-src-urls" info={FIELD_INFO.bulkUrls}>
           <Textarea
             id="bulk-src-urls"
             rows={6}
@@ -635,7 +698,7 @@ function UploadSourceCard({ projectId, onAdded }: { projectId: string; onAdded: 
       <CardHeader title="Upload a file" subtitle="PDF, Word, Markdown, or plain text." />
       <form onSubmit={submit} className="space-y-4 p-5">
         {error && <InlineError message={error} onDismiss={() => setError(null)} />}
-        <Field label="File" htmlFor="src-file">
+        <Field label="File" htmlFor="src-file" info={FIELD_INFO.sourceFile}>
           <input
             id="src-file"
             ref={fileInputRef}
@@ -696,7 +759,7 @@ function UploadFolderCard({ projectId, onAdded }: { projectId: string; onAdded: 
       <CardHeader title="Ingest a local folder" subtitle="Point at a folder on this machine -- every PDF, Word, Markdown, or text file inside is ingested." />
       <form onSubmit={submit} className="space-y-4 p-5">
         {error && <InlineError message={error} onDismiss={() => setError(null)} />}
-        <Field label="Folder path" htmlFor="src-folder" hint="Absolute path, e.g. C:\Docs\research">
+        <Field label="Folder path" htmlFor="src-folder" hint="Absolute path, e.g. C:\Docs\research" info={FIELD_INFO.sourceFolder}>
           <Input
             id="src-folder"
             value={folderPath}
@@ -918,10 +981,10 @@ function KnowledgePacksSection({ projectId, sources, refreshKey, onReload }: { p
       {creating && (
         <form onSubmit={submit} className="space-y-4 border-b border-zinc-800 p-5">
           {formError && <InlineError message={formError} onDismiss={() => setFormError(null)} />}
-          <Field label="Topic" htmlFor="pack-topic">
+          <Field label="Topic" htmlFor="pack-topic" info={FIELD_INFO.packTopic}>
             <Input id="pack-topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. Python asyncio internals" />
           </Field>
-          <Field label="Source IDs" hint={sources.length > 0 ? `Available: ${sources.slice(0, 5).join(", ")}${sources.length > 5 ? "…" : ""}` : "No ingested sources yet"}>
+          <Field label="Source IDs" hint={sources.length > 0 ? `Available: ${sources.slice(0, 5).join(", ")}${sources.length > 5 ? "…" : ""}` : "No ingested sources yet"} info={FIELD_INFO.packSources}>
             <TagInput values={sourceIds} onChange={setSourceIds} placeholder="Paste source IDs" />
           </Field>
           <div className="flex items-center gap-3">
@@ -1037,13 +1100,13 @@ function AddPortalCard({ projectId, onAdded }: { projectId: string; onAdded: () 
       <CardHeader title="Add a portal" subtitle="A listing page or RSS feed to periodically re-scan for new articles." />
       <form onSubmit={submit} className="space-y-4 p-5">
         {error && <InlineError message={error} onDismiss={() => setError(null)} />}
-        <Field label="Name" htmlFor="portal-name">
+        <Field label="Name" htmlFor="portal-name" info={FIELD_INFO.portalName}>
           <Input id="portal-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Engineering Blog" />
         </Field>
-        <Field label="URL" htmlFor="portal-url">
+        <Field label="URL" htmlFor="portal-url" info={FIELD_INFO.portalUrl}>
           <Input id="portal-url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://example.com/blog" />
         </Field>
-        <Field label="Type" htmlFor="portal-type">
+        <Field label="Type" htmlFor="portal-type" info={FIELD_INFO.sourceType}>
           <Select id="portal-type" value={portalType} onChange={(e) => setPortalType(e.target.value as PortalType)}>
             {PORTAL_TYPE_OPTIONS.map((t) => (
               <option key={t.value} value={t.value}>
@@ -1052,7 +1115,7 @@ function AddPortalCard({ projectId, onAdded }: { projectId: string; onAdded: () 
             ))}
           </Select>
         </Field>
-        <Field label="Scan interval (minutes)" htmlFor="portal-interval" hint="Default 360 (6 hours)">
+        <Field label="Scan interval (minutes)" htmlFor="portal-interval" hint="Default 360 (6 hours)" info={FIELD_INFO.portalInterval}>
           <Input
             id="portal-interval"
             type="number"
@@ -1366,7 +1429,7 @@ function BulkDiscoverCard({ projectId, onDone }: { projectId: string; onDone: ()
       <CardHeader title="Bulk-add topics" subtitle="Paste many topic ideas at once, one per line -- each is analyzed into an opportunity." />
       <form onSubmit={submit} className="space-y-4 p-5">
         {error && <InlineError message={error} onDismiss={() => setError(null)} />}
-        <Field label="Topics (one per line)" htmlFor="bulk-topics">
+        <Field label="Topics (one per line)" htmlFor="bulk-topics" info={FIELD_INFO.bulkTopics}>
           <Textarea
             id="bulk-topics"
             rows={6}

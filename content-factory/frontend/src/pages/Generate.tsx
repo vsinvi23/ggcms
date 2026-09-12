@@ -20,6 +20,8 @@ import {
 } from "../components/ui"
 import { PIPELINE_STAGES, type JobStatusResponse } from "../services/types"
 
+import { FIELD_INFO } from "../constants/fieldInfo"
+
 const DIFFICULTIES = ["beginner", "intermediate", "advanced"]
 const DEFAULT_CONTENT_TYPES = ["tutorial", "how-to", "concept-guide", "reference", "quiz", "comparison"]
 const POLL_INTERVAL_MS = 2500
@@ -206,7 +208,7 @@ export default function Generate() {
           <form onSubmit={submit} className="space-y-4 p-5">
             {formError && <InlineError message={formError} onDismiss={() => setFormError(null)} />}
 
-            <Field label="Opportunity" htmlFor="gen-opp" hint={!oppLoading && opportunities?.length === 0 ? "No approved opportunities yet -- approve one first." : undefined}>
+            <Field label="Opportunity" htmlFor="gen-opp" hint={!oppLoading && opportunities?.length === 0 ? "No approved opportunities yet -- approve one first." : undefined} info={FIELD_INFO.opportunity}>
               <Select id="gen-opp" value={opportunityId} onChange={(e) => setOpportunityId(e.target.value)} disabled={oppLoading}>
                 <option value="">{oppLoading ? "Loading..." : "Select an approved opportunity"}</option>
                 {opportunities?.map((o) => (
@@ -218,7 +220,7 @@ export default function Generate() {
             </Field>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Content type" htmlFor="gen-type">
+              <Field label="Content type" htmlFor="gen-type" info={FIELD_INFO.contentTypes}>
                 <Select id="gen-type" value={contentType} onChange={(e) => setContentType(e.target.value)}>
                   {contentTypeOptions.map((t) => (
                     <option key={t} value={t}>
@@ -227,7 +229,7 @@ export default function Generate() {
                   ))}
                 </Select>
               </Field>
-              <Field label="Difficulty" htmlFor="gen-difficulty">
+              <Field label="Difficulty" htmlFor="gen-difficulty" info={FIELD_INFO.difficulty}>
                 <Select id="gen-difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
                   {DIFFICULTIES.map((d) => (
                     <option key={d} value={d}>
@@ -239,15 +241,15 @@ export default function Generate() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Audience" htmlFor="gen-audience" hint="Optional">
+              <Field label="Audience" htmlFor="gen-audience" hint="Optional" info={FIELD_INFO.audience}>
                 <Input id="gen-audience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="e.g. backend engineers" />
               </Field>
-              <Field label="Target length (words)" htmlFor="gen-length" hint="Optional">
+              <Field label="Target length (words)" htmlFor="gen-length" hint="Optional" info={FIELD_INFO.targetLength}>
                 <Input id="gen-length" type="number" min={0} value={targetLength} onChange={(e) => setTargetLength(e.target.value)} placeholder="e.g. 1500" />
               </Field>
             </div>
 
-            <Field label="Knowledge packs" hint={packsLoading ? "Loading..." : packs?.length === 0 ? "No knowledge packs yet -- optional" : "Select the packs to ground this piece in"}>
+            <Field label="Knowledge packs" hint={packsLoading ? "Loading..." : packs?.length === 0 ? "No knowledge packs yet -- optional" : "Select the packs to ground this piece in"} info={FIELD_INFO.knowledgePacks}>
               <div className="flex flex-wrap gap-2">
                 {packs?.map((p) => (
                   <button

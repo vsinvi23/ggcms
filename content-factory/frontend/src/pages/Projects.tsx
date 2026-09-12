@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react"
-import { ArrowRight, CheckCircle2, FolderKanban, Globe2, Plus, X } from "lucide-react"
+import { ArrowRight, CheckCircle2, FolderKanban, Globe2, Plus, Sparkles, Wand2, X } from "lucide-react"
 import { useAppContext } from "../context/AppContext"
 import { useToast } from "../components/Toast"
 import * as api from "../services/api"
@@ -7,10 +7,218 @@ import { ApiError } from "../services/api"
 import { Button, Card, EmptyState, Field, Input, InlineError, PageHeader, TagInput } from "../components/ui"
 import type { ProjectCreatePayload } from "../services/types"
 
+import { FIELD_INFO } from "../constants/fieldInfo"
+
 const LEVEL_OPTIONS = ["beginner", "intermediate", "advanced"]
+const QUICK_START_STOP_WORDS = new Set([
+  "the",
+  "a",
+  "an",
+  "for",
+  "and",
+  "with",
+  "want",
+  "create",
+  "content",
+  "project",
+  "build",
+  "about",
+  "using",
+  "into",
+  "from",
+  "that",
+  "this",
+  "idea",
+  "website",
+  "platform",
+])
 
 function emptyForm(): ProjectCreatePayload {
   return { name: "", niche: [], audience: [], language: "en", country: "", levels: [], content_types: ["article", "tutorial"] }
+}
+
+function toTitleCase(value: string): string {
+  return value
+    .split(/[-\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+function inferProjectSettings(goal: string) {
+  const raw = goal.trim()
+  const lower = raw.toLowerCase()
+
+  const cleaned = lower.replace(/[^a-z0-9\s-]/g, " ")
+  const words = cleaned
+    .split(/\s+/)
+    .filter((word) => word.length > 2 && !QUICK_START_STOP_WORDS.has(word))
+
+  const niche = Array.from(new Set(words.slice(0, 4).map((word) => word.trim())))
+  const finalNiche = niche.length > 0 ? niche.map((word) => word.replace(/-/g, " ")) : ["general"]
+
+  const audienceMap: Array<{ keywords: string[]; audience: string[] }> = [
+    { keywords: ["developer", "engineer", "software", "cloud", "devops", "api"], audience: ["developers", "engineering teams"] },
+    { keywords: ["founder", "startup", "saas", "business", "marketing"], audience: ["founders", "business teams"] },
+    { keywords: ["student", "learn", "education", "course"], audience: ["students", "career changers"] },
+    { keywords: ["finance", "fintech", "bank", "invest"], audience: ["finance professionals", "decision makers"] },
+  ]
+
+  const audience =
+    audienceMap.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))?.audience ?? ["general audience"]
+
+  const projectName =
+    raw
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 3)
+      .map((segment) => segment.replace(/[^a-zA-Z0-9]/g, ""))
+      .filter(Boolean)
+      .map((segment) => toTitleCase(segment))
+      .join(" ") || "New Content Project"
+
+  const contentTypeHints = [
+    { keywords: ["comparison", "compare", "vs"], types: ["comparison", "how-to"] },
+    { keywords: ["tutorial", "guide", "step", "walkthrough"], types: ["tutorial", "how-to"] },
+    { keywords: ["newsletter", "news", "updates"], types: ["article", "newsletter"] },
+    { keywords: ["course", "learning", "academy"], types: ["course", "tutorial"] },
+  ]
+
+  const content_types =
+    contentTypeHints.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))?.types ?? ["article", "tutorial"]
+
+  const frequency = /weekly|week/.test(lower) ? "1x per week" : /daily|day/.test(lower) ? "5x per week" : "3x per week"
+
+  return {
+    name: `${projectName} Studio`,
+    niche: finalNiche,
+    audience,
+    language: "en",
+    country: "",
+    levels: ["beginner", "intermediate"],
+    content_types,
+    strategy: {
+      content_goals: [
+        "Create fact-checked, useful content tailored to the target audience",
+        "Focus on practical takeaways and clear examples",
+        "Build trust through strong structure and verified sources",
+      ],
+      prohibited_topics: ["low-quality speculation", "unsupported claims", "off-topic fluff"],
+      preferred_sources: ["official docs", "trusted publications", "industry reports", "github repos"],
+      publishing_frequency: frequency,
+      brand_voice: "clear, practical, expert but approachable",
+    },
+  }
+}
+
+function QuickStartProjectForm({ onDone, onCancel }: { onDone: (id: string) => void; onCancel: () => void }) {
+  const [goal, setGoal] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { refreshProjects, selectProject } = useAppContext()
+  const { showToast } = useToast()
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    const trimmed = goal.trim()
+    if (!trimmed) {
+      setError("Tell us what this project should create content about.")
+      return
+    }
+
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      const config = inferProjectSettings(trimmed)
+      const project = await api.createProject({
+        name: config.name,
+        niche: config.niche,
+        audience: config.audience,
+        language: config.language,
+        country: config.country || undefined,
+        levels: config.levels,
+        content_types: config.content_types,
+      })
+
+      await api.updateProjectSettings(project.id, {
+        name: project.name,
+        niche: project.niche,
+        audience: project.audience,
+        language: project.language,
+        country: project.country ?? undefined,
+        levels: project.levels,
+        content_types: project.content_types,
+        brand_voice: config.strategy.brand_voice,
+        autonomy_enabled: false,
+        min_opportunity_score: 70,
+        daily_limit: 3,
+        require_human_approval: true,
+      })
+
+      await api.updateProjectStrategy(project.id, {
+        content_goals: config.strategy.content_goals,
+        prohibited_topics: config.strategy.prohibited_topics,
+        preferred_sources: config.strategy.preferred_sources,
+        publishing_frequency: config.strategy.publishing_frequency,
+      })
+
+      refreshProjects()
+      selectProject(project.id)
+      showToast("Project created and configured for you.", "success")
+      onDone(project.id)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not create the project automatically.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Card className="p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-zinc-100">Quick start</h3>
+        <button type="button" onClick={onCancel} aria-label="Cancel" className="text-zinc-500 hover:text-zinc-200">
+          <X size={16} />
+        </button>
+      </div>
+
+      <form onSubmit={submit} className="space-y-4">
+        {error && <InlineError message={error} onDismiss={() => setError(null)} />}
+
+        <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-3">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-purple-300">
+            <Wand2 size={14} /> Recommended for new users
+          </div>
+          <p className="text-xs text-zinc-300 leading-relaxed">
+            We’ll infer the project domain, audience, content style, and source rules for you and create the project in the background.
+          </p>
+        </div>
+
+        <Field label="What should this project create content about?" htmlFor="quick-goal" info={FIELD_INFO.projectName}>
+          <Input
+            id="quick-goal"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            placeholder="e.g. Developer tutorials for AI tools for startup founders"
+          />
+        </Field>
+
+        <div className="text-xs text-zinc-500">
+          We’ll set up a default audience, content types, and quality guardrails automatically.
+        </div>
+
+        <div className="flex items-center gap-3 pt-1">
+          <Button type="submit" loading={submitting} icon={<Sparkles size={15} />}>
+            Create project
+          </Button>
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Card>
+  )
 }
 
 function CreateProjectForm({ onDone, onCancel }: { onDone: (id: string) => void; onCancel: () => void }) {
@@ -58,7 +266,7 @@ function CreateProjectForm({ onDone, onCancel }: { onDone: (id: string) => void;
       <form onSubmit={submit} className="space-y-4">
         {error && <InlineError message={error} onDismiss={() => setError(null)} />}
 
-        <Field label="Project name" htmlFor="proj-name">
+        <Field label="Project name" htmlFor="proj-name" info={FIELD_INFO.projectName}>
           <Input
             id="proj-name"
             value={form.name}
@@ -69,16 +277,16 @@ function CreateProjectForm({ onDone, onCancel }: { onDone: (id: string) => void;
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Niche(s)" hint="Press Enter or comma to add">
+          <Field label="Niche(s)" hint="Press Enter or comma to add" info={FIELD_INFO.niche}>
             <TagInput values={form.niche} onChange={(niche) => setForm((f) => ({ ...f, niche }))} placeholder="e.g. python, devops" />
           </Field>
-          <Field label="Audience" hint="Who is this content for?">
+          <Field label="Audience" hint="Who is this content for?" info={FIELD_INFO.audience}>
             <TagInput values={form.audience} onChange={(audience) => setForm((f) => ({ ...f, audience }))} placeholder="e.g. backend engineers" />
           </Field>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Language" htmlFor="proj-lang">
+          <Field label="Language" htmlFor="proj-lang" info={FIELD_INFO.language}>
             <Input
               id="proj-lang"
               value={form.language}
@@ -86,7 +294,7 @@ function CreateProjectForm({ onDone, onCancel }: { onDone: (id: string) => void;
               placeholder="en"
             />
           </Field>
-          <Field label="Country" htmlFor="proj-country" hint="Optional">
+          <Field label="Country" htmlFor="proj-country" hint="Optional" info={FIELD_INFO.country}>
             <Input
               id="proj-country"
               value={form.country}
@@ -96,7 +304,7 @@ function CreateProjectForm({ onDone, onCancel }: { onDone: (id: string) => void;
           </Field>
         </div>
 
-        <Field label="Levels covered">
+        <Field label="Levels covered" info={FIELD_INFO.levels}>
           <div className="flex flex-wrap gap-2">
             {LEVEL_OPTIONS.map((level) => (
               <button
@@ -115,7 +323,7 @@ function CreateProjectForm({ onDone, onCancel }: { onDone: (id: string) => void;
           </div>
         </Field>
 
-        <Field label="Content types" hint="e.g. tutorial, how-to, concept-guide, quiz">
+        <Field label="Content types" hint="e.g. tutorial, how-to, concept-guide, quiz" info={FIELD_INFO.contentTypes}>
           <TagInput
             values={form.content_types}
             onChange={(content_types) => setForm((f) => ({ ...f, content_types }))}
@@ -141,11 +349,13 @@ export default function Projects({ onOpen }: { onOpen: (id: string) => void }) {
     useAppContext()
   const { showToast } = useToast()
   const [creating, setCreating] = useState(false)
+  const [quickStartOpen, setQuickStartOpen] = useState(false)
 
   const handleCreated = (id: string) => {
     refreshProjects()
     selectProject(id)
     setCreating(false)
+    setQuickStartOpen(false)
     showToast("Project created.", "success")
   }
 
@@ -155,14 +365,20 @@ export default function Projects({ onOpen }: { onOpen: (id: string) => void }) {
         title="Projects"
         subtitle="Each project has its own strategy, sources, and content pipeline."
         action={
-          !creating && (
-            <Button icon={<Plus size={15} />} onClick={() => setCreating(true)}>
-              New project
-            </Button>
+          !creating && !quickStartOpen && (
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" icon={<Sparkles size={15} />} onClick={() => setQuickStartOpen(true)}>
+                Quick start
+              </Button>
+              <Button icon={<Plus size={15} />} onClick={() => setCreating(true)}>
+                Advanced
+              </Button>
+            </div>
           )
         }
       />
 
+      {quickStartOpen && <QuickStartProjectForm onDone={handleCreated} onCancel={() => setQuickStartOpen(false)} />}
       {creating && <CreateProjectForm onDone={handleCreated} onCancel={() => setCreating(false)} />}
 
       {projectsLoading ? (

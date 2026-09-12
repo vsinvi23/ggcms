@@ -6,6 +6,7 @@ import * as api from "../services/api"
 import { ApiError } from "../services/api"
 import { Button, Card, CardHeader, ErrorState, Field, InlineError, Input, PageHeader, Spinner } from "../components/ui"
 import type { SystemSettingField, SystemSettings, SystemSettingsPayload } from "../services/types"
+import { FIELD_INFO } from "../constants/fieldInfo"
 
 const SECRET_FIELDS: (keyof SystemSettingsPayload)[] = ["gemini_api_key", "tavily_api_key"]
 
@@ -178,7 +179,7 @@ function GoogleDriveCard() {
           </div>
         )}
 
-        <Field label="Drive Folder URL or ID" htmlFor="gdrive-folder" hint="Paste full Google Drive folder URL or folder ID">
+        <Field label="Drive Folder URL or ID" htmlFor="gdrive-folder" hint="Paste full Google Drive folder URL or folder ID" info={FIELD_INFO.gdriveFolder}>
           <Input
             id="gdrive-folder"
             value={folderUrl}
@@ -188,7 +189,7 @@ function GoogleDriveCard() {
           />
         </Field>
 
-        <Field label="Target Project ID" htmlFor="gdrive-project" hint="Content Factory project ID to ingest files into">
+        <Field label="Target Project ID" htmlFor="gdrive-project" hint="Content Factory project ID to ingest files into" info={FIELD_INFO.gdriveProjectId}>
           <Input
             id="gdrive-project"
             value={projectId}
@@ -324,16 +325,16 @@ export default function SystemSettingsPage() {
             <ReadonlyInfraField label="Embedding Model" settingField={data.settings.embedding_model} />
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Planner model" htmlFor="ss-model-planner">
+            <Field label="Planner model" htmlFor="ss-model-planner" info={FIELD_INFO.plannerModel}>
               <Input id="ss-model-planner" value={form.gemini_model_planner ?? ""} onChange={(e) => set("gemini_model_planner", e.target.value)} />
             </Field>
-            <Field label="Researcher model" htmlFor="ss-model-researcher">
+            <Field label="Researcher model" htmlFor="ss-model-researcher" info={FIELD_INFO.researcherModel}>
               <Input id="ss-model-researcher" value={form.gemini_model_researcher ?? ""} onChange={(e) => set("gemini_model_researcher", e.target.value)} />
             </Field>
-            <Field label="Writer model" htmlFor="ss-model-writer">
+            <Field label="Writer model" htmlFor="ss-model-writer" info={FIELD_INFO.writerModel}>
               <Input id="ss-model-writer" value={form.gemini_model_writer ?? ""} onChange={(e) => set("gemini_model_writer", e.target.value)} />
             </Field>
-            <Field label="Reviewer model" htmlFor="ss-model-reviewer">
+            <Field label="Reviewer model" htmlFor="ss-model-reviewer" info={FIELD_INFO.reviewerModel}>
               <Input id="ss-model-reviewer" value={form.gemini_model_reviewer ?? ""} onChange={(e) => set("gemini_model_reviewer", e.target.value)} />
             </Field>
           </div>
@@ -373,7 +374,7 @@ export default function SystemSettingsPage() {
       <Card>
         <CardHeader title="Limits & Budget" subtitle="Cost guardrails and revision/ingestion limits." />
         <div className="grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
-          <Field label="Max monthly AI budget ($)" htmlFor="ss-budget">
+          <Field label="Max monthly AI budget ($)" htmlFor="ss-budget" info={FIELD_INFO.monthlyBudget}>
             <Input
               id="ss-budget"
               type="number"
@@ -383,7 +384,7 @@ export default function SystemSettingsPage() {
               onChange={(e) => set("max_monthly_ai_budget", Number(e.target.value))}
             />
           </Field>
-          <Field label="Max cost per content unit ($)" htmlFor="ss-unit-cost">
+          <Field label="Max cost per content unit ($)" htmlFor="ss-unit-cost" info={FIELD_INFO.costPerUnit}>
             <Input
               id="ss-unit-cost"
               type="number"
@@ -393,7 +394,7 @@ export default function SystemSettingsPage() {
               onChange={(e) => set("max_cost_per_content_unit", Number(e.target.value))}
             />
           </Field>
-          <Field label="Max revisions" htmlFor="ss-revisions">
+          <Field label="Max revisions" htmlFor="ss-revisions" info={FIELD_INFO.maxRevisions}>
             <Input
               id="ss-revisions"
               type="number"
