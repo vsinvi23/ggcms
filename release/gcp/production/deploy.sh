@@ -114,7 +114,7 @@ gcloud run deploy $SERVICE_NAME \
   --ingress=all \
   --service-account=${SA_EMAIL} \
   --set-secrets=JWT_SECRET=gg-cms-jwt-secret:latest,ADMIN_PASSWORD=gg-cms-admin-password:latest,ADMIN_RECOVERY_SECRET=gg-cms-admin-recovery-secret:latest \
-  --set-env-vars="DB_WRITE_URL=postgres://gg_cms_user:${PG_PASS}@${VM_IP}:5432/gg_cms?sslmode=require,MONGO_URI=mongodb://gg_cms_user:${MONGO_PASS}@${VM_IP}:27017/?authSource=admin&tls=true&tlsInsecure=true,GIN_MODE=release,TLS_ENABLED=false,LOG_LEVEL=info,MONGO_DATABASE=gg_cms,ADMIN_EMAIL=info@serenyax.com,ADMIN_NAME=Super Admin" \
+  --set-env-vars="DB_WRITE_URL=postgres://gg_cms_user:${PG_PASS}@${VM_IP}:5432/gg_cms?sslmode=require,MONGO_URI=mongodb://gg_cms_user:${MONGO_PASS}@${VM_IP}:27017/?authSource=admin&tls=true&tlsInsecure=true,GIN_MODE=release,TLS_ENABLED=false,LOG_LEVEL=info,MONGO_DATABASE=gg_cms,ADMIN_EMAIL=info@serenyax.com,ADMIN_NAME=Super Admin,CONTENT_FACTORY_URL=https://content-factory-backend-274495931884.us-central1.run.app" \
   --network=default \
   --subnet=default \
   --vpc-egress=private-ranges-only

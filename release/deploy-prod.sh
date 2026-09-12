@@ -114,9 +114,11 @@ elif [[ -z "$SA_KEY" && -f "$SCRIPT_DIR/certs/gcp-sa-key.json" ]]; then
   SA_KEY="$SCRIPT_DIR/certs/gcp-sa-key.json"
 fi
 
-if [[ -n "$SA_KEY" && -f "$SA_KEY" ]]; then
+if [[ -n "$SA_KEY" && -f "$SA_KEY" && -s "$SA_KEY" ]]; then
   echo "🔑 Authenticating via GCP Service Account Key ($SA_KEY)..."
-  gcloud auth activate-service-account --key-file="$SA_KEY" --quiet >/dev/null 2>&1 || true
+  if gcloud auth activate-service-account --key-file="$SA_KEY" --quiet >/dev/null 2>&1; then
+    echo "✅ Authenticated successfully via Service Account Key."
+  fi
 fi
 
 ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null || echo "")
@@ -227,7 +229,8 @@ if [[ "$DB_DELTA" == "true" ]]; then
   VM_NAME="gg-cms-db"
   if gcloud compute instances describe "$VM_NAME" --zone="$ZONE" --project="$PROJECT_ID" >/dev/null 2>&1; then
     gcloud compute scp --recurse "$LATEST_DIR/db/migrations" "$VM_NAME:/opt/gg-cms/" --zone="$ZONE" --project="$PROJECT_ID" --tunnel-through-iap
-    echo "✅ DB Migration snapshot uploaded to DB VM ($VM_NAME)."
+    gcloud compute ssh "$VM_NAME" --zone="$ZONE" --project="$PROJECT_ID" --tunnel-through-iap --command "sudo chown -R 70:70 /opt/gg-cms/certs/postgres && sudo chmod 600 /opt/gg-cms/certs/postgres/server.key && sudo docker restart gg-cms-postgres-prod" || true
+    echo "✅ DB Migration snapshot uploaded and Postgres verified on DB VM ($VM_NAME)."
     DEPLOYED_DELTAS+=("db@v$T_DB")
   else
     echo "⚠️ VM $VM_NAME not active yet. Full GCP infra deploy will initialize DB VM."

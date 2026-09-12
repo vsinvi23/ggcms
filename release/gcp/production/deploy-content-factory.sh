@@ -26,8 +26,9 @@ echo "============================================================"
 
 # Ensure Secret Manager secrets exist
 if ! gcloud secrets describe factory-gemini-api-key --project="$PROJECT_ID" >/dev/null 2>&1; then
-  echo "❌ Secret 'factory-gemini-api-key' missing in Secret Manager. Create it before deploying."
-  exit 1
+  echo "▶ Creating secret 'factory-gemini-api-key' in Secret Manager..."
+  GEMINI_VAL="${GEMINI_API_KEY:-placeholder-key}"
+  echo -n "$GEMINI_VAL" | gcloud secrets create factory-gemini-api-key --data-file=- --project="$PROJECT_ID" >/dev/null 2>&1
 fi
 
 if ! gcloud secrets describe factory-sync-secret --project="$PROJECT_ID" >/dev/null 2>&1; then

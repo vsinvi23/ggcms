@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/serenya/go-cms/pkg/config"
@@ -22,15 +23,23 @@ func NewMongoDB(cfg *config.MongoConfig, tlsCfg *config.TLSConfig) (*MongoDB, er
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	clientOpts := options.Client().ApplyURI(cfg.URI)
+	tc := &tls.Config{
+		MinVersion:         tls.VersionTLS12,
+		InsecureSkipVerify: true,
+	}
 
 	if tlsCfg != nil && tlsCfg.Enabled {
-		tc, err := buildMongoTLSConfig(tlsCfg)
+		var err error
+		tc, err = buildMongoTLSConfig(tlsCfg)
 		if err != nil {
 			return nil, fmt.Errorf("mongodb TLS config: %w", err)
 		}
-		clientOpts.SetTLSConfig(tc)
+		if containsStr(cfg.URI, "tlsInsecure=true") || containsStr(cfg.URI, "sslInsecure=true") {
+			tc.InsecureSkipVerify = true
+		}
 	}
+
+	clientOpts := options.Client().ApplyURI(cfg.URI).SetTLSConfig(tc)
 
 	client, err := mongo.Connect(ctx, clientOpts)
 	if err != nil {
@@ -48,7 +57,10 @@ func NewMongoDB(cfg *config.MongoConfig, tlsCfg *config.TLSConfig) (*MongoDB, er
 }
 
 func buildMongoTLSConfig(cfg *config.TLSConfig) (*tls.Config, error) {
-	tc := &tls.Config{MinVersion: tls.VersionTLS12}
+	tc := &tls.Config{
+		MinVersion:         tls.VersionTLS12,
+		InsecureSkipVerify: true,
+	}
 
 	if cfg.CAFile != "" {
 		pem, err := os.ReadFile(cfg.CAFile)
@@ -75,4 +87,8 @@ func buildMongoTLSConfig(cfg *config.TLSConfig) (*tls.Config, error) {
 
 func (m *MongoDB) Collection(name string) *mongo.Collection {
 	return m.Database.Collection(name)
+}
+
+func containsStr(s, substr string) bool {
+	return strings.Contains(s, substr)
 }

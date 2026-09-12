@@ -2,7 +2,7 @@ from __future__ import annotations
 import asyncio
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from backend.configs.settings import settings
@@ -30,6 +30,15 @@ app = FastAPI(
     description="Autonomous multi-agent research & content generation pipeline",
     version="2.0.0"
 )
+
+# ── Rewrite /factory/api prefix so routes like /factory/api/projects resolve to /api/projects
+@app.middleware("http")
+async def rewrite_factory_prefix(request: Request, call_next):
+    if request.url.path.startswith("/factory/api/"):
+        request.scope["path"] = request.url.path[8:]
+    elif request.url.path == "/factory/api":
+        request.scope["path"] = "/api"
+    return await call_next(request)
 
 # ── JWT auth middleware (validates gg-cms tokens) ───────────────────────────────
 app.add_middleware(JWTAuthMiddleware)

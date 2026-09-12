@@ -38,7 +38,14 @@ import type {
   SystemSettingsUpdateResponse,
 } from "./types"
 
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "")
+const envApiUrl = import.meta.env.VITE_API_BASE_URL
+export const API_BASE_URL = (
+  envApiUrl !== undefined && envApiUrl !== ""
+    ? envApiUrl
+    : typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1"
+      ? "/factory"
+      : "http://localhost:8000"
+).replace(/\/+$/, "")
 
 export class ApiError extends Error {
   status: number

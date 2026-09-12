@@ -49,9 +49,10 @@ services:
       - /opt/gg-cms/certs/mongodb:/etc/mongodb/certs:ro
     command: >
       mongod
-      --tlsMode requireTLS
+      --tlsMode allowTLS
       --tlsCertificateKeyFile /etc/mongodb/certs/mongodb.pem
       --tlsCAFile /etc/mongodb/certs/ca.crt
+      --tlsAllowConnectionsWithoutCertificates
       --bind_ip_all
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]

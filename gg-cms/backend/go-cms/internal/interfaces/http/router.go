@@ -92,7 +92,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	// Reverse proxy /factory and /factory/* to Content Factory Cloud Run service
 	factoryURLStr := os.Getenv("CONTENT_FACTORY_URL")
 	if factoryURLStr == "" {
-		factoryURLStr = "https://content-factory-backend-wuisbddlxq-uc.a.run.app"
+		factoryURLStr = "https://content-factory-backend-274495931884.us-central1.run.app"
 	}
 	var factoryHandler gin.HandlerFunc
 	if factoryTarget, err := url.Parse(factoryURLStr); err == nil {

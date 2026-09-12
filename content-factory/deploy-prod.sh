@@ -101,9 +101,11 @@ if [[ -z "$SA_KEY" && -f "$HOME/.gcp/deployer-key.json" ]]; then
   SA_KEY="$HOME/.gcp/deployer-key.json"
 fi
 
-if [[ -n "$SA_KEY" && -f "$SA_KEY" ]]; then
+if [[ -n "$SA_KEY" && -f "$SA_KEY" && -s "$SA_KEY" ]]; then
   echo "🔑 Authenticating via GCP Service Account Key ($SA_KEY)..."
-  gcloud auth activate-service-account --key-file="$SA_KEY" --quiet >/dev/null 2>&1 || true
+  if gcloud auth activate-service-account --key-file="$SA_KEY" --quiet >/dev/null 2>&1; then
+    echo "✅ Authenticated successfully via Service Account Key."
+  fi
 fi
 
 ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null || echo "")
