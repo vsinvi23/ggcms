@@ -81,6 +81,7 @@ async def load_system_settings_overrides():
     so a restart picks up UI-configured values."""
     apply_overrides(system_settings_service.get_row())
     from backend.storage import file_store
+    file_store.restore_data_from_gcs()
     await file_store.ensure_default_project()
 
 

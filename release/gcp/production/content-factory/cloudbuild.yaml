@@ -35,7 +35,7 @@ steps:
       - >-
         --set-secrets=GEMINI_API_KEY=factory-gemini-api-key:latest,FACTORY_SYNC_SECRET=factory-sync-secret:latest,JWT_SECRET=gg-cms-jwt-secret:latest
       - >-
-        --set-env-vars=GGCMS_BASE_URL=$_GGCMS_BASE_URL,MOCK_MODE=false,GEMINI_MODEL_PLANNER=gemini-2.0-flash,GEMINI_MODEL_RESEARCHER=gemini-2.0-flash,GEMINI_MODEL_WRITER=gemini-2.0-flash,GEMINI_MODEL_REVIEWER=gemini-2.0-flash,GDRIVE_ENABLED=true,LOG_LEVEL=info,DATA_DIR=/app/data
+        --set-env-vars=GGCMS_BASE_URL=$_GGCMS_BASE_URL,MOCK_MODE=false,GEMINI_MODEL_PLANNER=gemini-2.0-flash,GEMINI_MODEL_RESEARCHER=gemini-2.0-flash,GEMINI_MODEL_WRITER=gemini-2.0-flash,GEMINI_MODEL_REVIEWER=gemini-2.0-flash,GDRIVE_ENABLED=true,LOG_LEVEL=info,DATA_DIR=/app/data,GCS_BUCKET=ggcms-free-tier-vivek-content-factory-data
     waitFor: ['push-image']
 
 substitutions:

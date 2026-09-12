@@ -127,6 +127,57 @@ def _read_yaml(path: Path):
         return yaml.safe_load(f)
 
 
+import logging
+logger = logging.getLogger(__name__)
+
+
+def _sync_file_to_gcs(path: Path) -> None:
+    """Best-effort upload of path to GCS bucket for data retention across deployments."""
+    bucket_name = getattr(_config, "gcs_bucket", None)
+    if not bucket_name or bucket_name == "local-bucket":
+        return
+    try:
+        from google.cloud import storage
+        rel_path = path.relative_to(_data_dir())
+        blob_name = f"data/{rel_path.as_posix()}"
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(blob_name)
+        blob.upload_from_filename(str(path))
+        logger.info(f"Synced file to GCS gs://{bucket_name}/{blob_name}")
+    except Exception as e:
+        logger.warning(f"GCS file sync failed for '{path}': {e}")
+
+
+def restore_data_from_gcs() -> None:
+    """Restores all project data files from GCS bucket to data_dir on container startup."""
+    bucket_name = getattr(_config, "gcs_bucket", None)
+    if not bucket_name or bucket_name == "local-bucket":
+        return
+    try:
+        from google.cloud import storage
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        blobs = list(bucket.list_blobs(prefix="data/"))
+        if not blobs:
+            logger.info(f"No GCS backup data found in gs://{bucket_name}/data/")
+            return
+
+        data_dir = _data_dir()
+        restored_count = 0
+        for blob in blobs:
+            if blob.name.endswith("/"):
+                continue
+            rel_path = blob.name[5:]  # strip 'data/' prefix
+            dest_path = data_dir / rel_path
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            blob.download_to_filename(str(dest_path))
+            restored_count += 1
+        logger.info(f"Restored {restored_count} data files from GCS bucket gs://{bucket_name}")
+    except Exception as e:
+        logger.warning(f"GCS data restoration failed: {e}")
+
+
 def _atomic_write_yaml(path: Path, data) -> None:
     """
     Writes `data` as YAML to `path` atomically: dump to a temp file in the
@@ -142,6 +193,7 @@ def _atomic_write_yaml(path: Path, data) -> None:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True, default_flow_style=False)
         os.replace(tmp_path, path)
+        _sync_file_to_gcs(path)
     except BaseException:
         try:
             os.unlink(tmp_path)
