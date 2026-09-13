@@ -5,9 +5,9 @@ export PATH="$HOME/google-cloud-sdk/bin:$PATH"
 export CLOUDSDK_PYTHON="$HOME/portable-python3/python/bin/python3"
 
 echo "============================================================"
-echo "🔐 Step 1: Logging into GCP (No-Browser Mode to prevent 404)..."
+echo "🔐 Step 1: Logging into GCP (No Launch Browser Mode)..."
 echo "============================================================"
-gcloud auth login --no-browser
+gcloud auth login --no-launch-browser
 
 echo ""
 echo "============================================================"
