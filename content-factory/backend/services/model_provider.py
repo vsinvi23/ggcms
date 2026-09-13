@@ -81,7 +81,7 @@ def _build_chat_model(model_name: str, temperature: float):
         model=model_name,
         google_api_key=api_key,
         temperature=temperature,
-        max_retries=2,
+        max_retries=5,
         base_url=settings.gemini_base_url or None,
     )
 
