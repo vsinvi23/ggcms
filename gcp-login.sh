@@ -16,7 +16,7 @@ echo "============================================================"
 mkdir -p "$HOME/.gcp"
 gcloud iam service-accounts keys create "$HOME/.gcp/deployer-key.json" \
   --iam-account=content-factory-sa@ggcms-free-tier-vivek.iam.gserviceaccount.com \
-  --project=ggcms-free-tier-vivek --force || true
+  --project=ggcms-free-tier-vivek || true
 
 echo ""
 echo "============================================================"
