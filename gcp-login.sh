@@ -5,10 +5,11 @@ export PATH="$HOME/google-cloud-sdk/bin:$PATH"
 export CLOUDSDK_PYTHON="$HOME/portable-python3/python/bin/python3"
 
 echo "============================================================"
-echo "🔐 Step 1: Logging into GCP via Browser..."
+echo "🔐 Step 1: Logging into GCP (No-Browser Mode to prevent 404)..."
 echo "============================================================"
-gcloud auth login
+gcloud auth login --no-browser
 
+echo ""
 echo "============================================================"
 echo "🔑 Step 2: Generating Permanent SA Key at ~/.gcp/deployer-key.json..."
 echo "============================================================"
@@ -17,6 +18,7 @@ gcloud iam service-accounts keys create "$HOME/.gcp/deployer-key.json" \
   --iam-account=content-factory-sa@ggcms-free-tier-vivek.iam.gserviceaccount.com \
   --project=ggcms-free-tier-vivek --force || true
 
+echo ""
 echo "============================================================"
 echo "🚀 Step 3: Deploying AI Content Factory to GCP Cloud Run..."
 echo "============================================================"
