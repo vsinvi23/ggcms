@@ -7,40 +7,46 @@ import (
 	"strings"
 	"time"
 
+	settingssvc "github.com/serenya/go-cms/internal/application/settings"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/domain/repository"
+	"github.com/serenya/go-cms/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type AttachmentInput struct {
-	Name     string
-	URL      string
-	MimeType string
-	Size     int64
+	Name       string
+	URL        string
+	MimeType   string
+	Size       int64
+	StorageKey *string
 }
 
 type CreateRequest struct {
-	Type         entity.CMSType
-	Title        string
-	Description  *string
-	Body         *string
-	ArticleType  *string
-	CourseType   *string
-	CategoryID   *uint
-	CreatedByID  uint
-	ThumbnailURL *string
-	Attachments  []AttachmentInput
+	Type                entity.CMSType
+	Title               string
+	Description         *string
+	Body                *string
+	ArticleType         *string
+	CourseType          *string
+	CategoryID          *uint
+	CreatedByID         uint
+	ThumbnailURL        *string
+	ThumbnailStorageKey *string
+	Attachments         []AttachmentInput
 }
 
 type UpdateRequest struct {
-	Title        *string
-	Description  *string
-	Body         *string
-	ArticleType  *string
-	CourseType   *string
-	CategoryID   *uint
-	ThumbnailURL *string
-	Attachments  []AttachmentInput
-	ActorID      uint // populated by handler; used for EDIT event recording
+	Title               *string
+	Description         *string
+	Body                *string
+	ArticleType         *string
+	CourseType          *string
+	CategoryID          *uint
+	ThumbnailURL        *string
+	ThumbnailStorageKey *string
+	Attachments         []AttachmentInput
+	ActorID             uint // populated by handler; used for EDIT event recording
 }
 
 type Service interface {
@@ -71,17 +77,18 @@ type Service interface {
 }
 
 type service struct {
-	articleRepo         repository.ArticleRepository
-	courseRepo          repository.CourseRepository
-	sectionRepo         repository.SectionRepository
-	groupRepo           repository.GroupRepository
-	categoryRepo        repository.CategoryRepository
-	workflowEventRepo   repository.WorkflowEventRepository
-	userRepo            repository.UserRepository
-	contentReviewRepo   repository.ContentReviewRepository
+	articleRepo       repository.ArticleRepository
+	courseRepo        repository.CourseRepository
+	sectionRepo       repository.SectionRepository
+	groupRepo         repository.GroupRepository
+	categoryRepo      repository.CategoryRepository
+	workflowEventRepo repository.WorkflowEventRepository
+	userRepo          repository.UserRepository
+	contentReviewRepo repository.ContentReviewRepository
+	settingsSvc       settingssvc.Service
 }
 
-func NewService(articleRepo repository.ArticleRepository, courseRepo repository.CourseRepository, sectionRepo repository.SectionRepository, groupRepo repository.GroupRepository, categoryRepo repository.CategoryRepository, workflowEventRepo repository.WorkflowEventRepository, userRepo repository.UserRepository, contentReviewRepo repository.ContentReviewRepository) Service {
+func NewService(articleRepo repository.ArticleRepository, courseRepo repository.CourseRepository, sectionRepo repository.SectionRepository, groupRepo repository.GroupRepository, categoryRepo repository.CategoryRepository, workflowEventRepo repository.WorkflowEventRepository, userRepo repository.UserRepository, contentReviewRepo repository.ContentReviewRepository, settingsSvc settingssvc.Service) Service {
 	return &service{
 		articleRepo:       articleRepo,
 		courseRepo:        courseRepo,
@@ -91,6 +98,7 @@ func NewService(articleRepo repository.ArticleRepository, courseRepo repository.
 		workflowEventRepo: workflowEventRepo,
 		userRepo:          userRepo,
 		contentReviewRepo: contentReviewRepo,
+		settingsSvc:       settingsSvc,
 	}
 }
 
@@ -122,7 +130,9 @@ func (s *service) recordEvent(ctx context.Context, entityType string, entityID u
 			ev.User.Name = user.Name
 		}
 	}
-	_ = s.workflowEventRepo.Create(ctx, ev)
+	if err := s.workflowEventRepo.Create(ctx, ev); err != nil {
+		logger.Error("cms: failed to record workflow event", zap.String("entityType", entityType), zap.Uint("entityID", entityID), zap.String("action", action), zap.Error(err))
+	}
 }
 
 func (s *service) GetAll(ctx context.Context, cmsType entity.CMSType, filter repository.ArticleFilter, page, size int) (interface{}, int64, error) {
@@ -208,16 +218,17 @@ func (s *service) Create(ctx context.Context, req CreateRequest) (interface{}, e
 			courseType = entity.CourseType(*req.CourseType)
 		}
 		course := &entity.Course{
-			Title:        req.Title,
-			Description:  req.Description,
-			Body:         req.Body,
-			CourseType:   courseType,
-			Status:       entity.CMSStatusDraft,
-			CategoryID:   req.CategoryID,
-			CreatedByID:  req.CreatedByID,
-			ThumbnailURL: req.ThumbnailURL,
-			Version:      1,
-			Attachments:  attachments,
+			Title:               req.Title,
+			Description:         req.Description,
+			Body:                req.Body,
+			CourseType:          courseType,
+			Status:              entity.CMSStatusDraft,
+			CategoryID:          req.CategoryID,
+			CreatedByID:         req.CreatedByID,
+			ThumbnailURL:        req.ThumbnailURL,
+			ThumbnailStorageKey: req.ThumbnailStorageKey,
+			Version:             1,
+			Attachments:         attachments,
 		}
 		if err := s.courseRepo.Create(ctx, course); err != nil {
 			return nil, fmt.Errorf("failed to create course: %w", err)
@@ -230,16 +241,17 @@ func (s *service) Create(ctx context.Context, req CreateRequest) (interface{}, e
 		articleType = *req.ArticleType
 	}
 	article := &entity.Article{
-		Title:        req.Title,
-		Description:  req.Description,
-		Body:         req.Body,
-		ArticleType:  articleType,
-		Status:       entity.CMSStatusDraft,
-		CategoryID:   req.CategoryID,
-		CreatedByID:  req.CreatedByID,
-		ThumbnailURL: req.ThumbnailURL,
-		Version:      1,
-		Attachments:  attachments,
+		Title:               req.Title,
+		Description:         req.Description,
+		Body:                req.Body,
+		ArticleType:         articleType,
+		Status:              entity.CMSStatusDraft,
+		CategoryID:          req.CategoryID,
+		CreatedByID:         req.CreatedByID,
+		ThumbnailURL:        req.ThumbnailURL,
+		ThumbnailStorageKey: req.ThumbnailStorageKey,
+		Version:             1,
+		Attachments:         attachments,
 	}
 	if err := s.articleRepo.Create(ctx, article); err != nil {
 		return nil, fmt.Errorf("failed to create article: %w", err)
@@ -303,8 +315,12 @@ func (s *service) Update(ctx context.Context, id uint, cmsType entity.CMSType, r
 		if req.CategoryID != nil {
 			course.CategoryID = req.CategoryID
 		}
+		if len(req.Attachments) > 0 || req.ThumbnailURL != nil {
+			s.cleanupRemovedStorageKeys(ctx, course.Attachments, course.ThumbnailStorageKey, req.Attachments, req.ThumbnailStorageKey, len(req.Attachments) > 0, req.ThumbnailURL != nil)
+		}
 		if req.ThumbnailURL != nil {
 			course.ThumbnailURL = req.ThumbnailURL
+			course.ThumbnailStorageKey = req.ThumbnailStorageKey
 		}
 		if req.CourseType != nil && *req.CourseType != "" {
 			course.CourseType = entity.CourseType(*req.CourseType)
@@ -374,8 +390,12 @@ func (s *service) Update(ctx context.Context, id uint, cmsType entity.CMSType, r
 	if req.CategoryID != nil {
 		article.CategoryID = req.CategoryID
 	}
+	if len(req.Attachments) > 0 || req.ThumbnailURL != nil {
+		s.cleanupRemovedStorageKeys(ctx, article.Attachments, article.ThumbnailStorageKey, req.Attachments, req.ThumbnailStorageKey, len(req.Attachments) > 0, req.ThumbnailURL != nil)
+	}
 	if req.ThumbnailURL != nil {
 		article.ThumbnailURL = req.ThumbnailURL
+		article.ThumbnailStorageKey = req.ThumbnailStorageKey
 	}
 	if req.ArticleType != nil {
 		article.ArticleType = *req.ArticleType
@@ -438,7 +458,6 @@ func (s *service) Submit(ctx context.Context, id uint, cmsType entity.CMSType, r
 	}
 	return err
 }
-
 
 // isUserReviewerForCategory returns true if the user belongs to at least one reviewer
 // group linked to the given category.
@@ -910,16 +929,67 @@ func buildSSnap(s *entity.Section) sSnap {
 	}
 }
 
+func (s *service) cleanupRemovedStorageKeys(ctx context.Context, oldAttachments []entity.Attachment, oldThumbnailKey *string, newAttachments []AttachmentInput, newThumbnailKey *string, attachmentsChanged bool, thumbnailChanged bool) {
+	if s.settingsSvc == nil {
+		return
+	}
+	oldKeys := make(map[string]bool)
+	if attachmentsChanged {
+		for _, a := range oldAttachments {
+			if a.StorageKey != nil && *a.StorageKey != "" {
+				oldKeys[*a.StorageKey] = true
+			}
+		}
+	}
+	if thumbnailChanged && oldThumbnailKey != nil && *oldThumbnailKey != "" {
+		oldKeys[*oldThumbnailKey] = true
+	}
+	if len(oldKeys) == 0 {
+		return
+	}
+	newKeys := make(map[string]bool)
+	if attachmentsChanged {
+		for _, a := range newAttachments {
+			if a.StorageKey != nil && *a.StorageKey != "" {
+				newKeys[*a.StorageKey] = true
+			}
+		}
+	}
+	if thumbnailChanged && newThumbnailKey != nil && *newThumbnailKey != "" {
+		newKeys[*newThumbnailKey] = true
+	}
+	var toDelete []string
+	for k := range oldKeys {
+		if !newKeys[k] {
+			toDelete = append(toDelete, k)
+		}
+	}
+	if len(toDelete) == 0 {
+		return
+	}
+	storageProvider, err := s.settingsSvc.GetStorageProvider(ctx)
+	if err != nil {
+		logger.Error("cms: failed to resolve storage provider for cleanup", zap.Error(err))
+		return
+	}
+	for _, k := range toDelete {
+		if err := storageProvider.Delete(k); err != nil {
+			logger.Error("cms: failed to delete removed storage object", zap.String("key", k), zap.Error(err))
+		}
+	}
+}
+
 func toAttachmentEntities(inputs []AttachmentInput, articleID, courseID *uint) []entity.Attachment {
 	atts := make([]entity.Attachment, len(inputs))
 	for i, a := range inputs {
 		atts[i] = entity.Attachment{
-			ArticleID: articleID,
-			CourseID:  courseID,
-			Name:      a.Name,
-			URL:       a.URL,
-			MimeType:  a.MimeType,
-			Size:      a.Size,
+			ArticleID:  articleID,
+			CourseID:   courseID,
+			Name:       a.Name,
+			URL:        a.URL,
+			MimeType:   a.MimeType,
+			Size:       a.Size,
+			StorageKey: a.StorageKey,
 		}
 	}
 	return atts

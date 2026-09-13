@@ -1,5 +1,19 @@
 import apiClient from '../client';
 
+export interface ImportLessonItem {
+  title: string;
+  type: string;
+  duration: number;
+  order: number;
+  body: string;
+}
+
+export interface ImportSectionItem {
+  title: string;
+  order: number;
+  lessons: ImportLessonItem[];
+}
+
 export interface ImportPreviewItem {
   fileName: string;
   index: number;
@@ -7,11 +21,13 @@ export interface ImportPreviewItem {
   title: string;
   description: string;
   body: string;
+  bodyFormat: string;
   categorySlug: string;
   categoryId?: number;
   articleType: string;
   courseType: string;
   tags: string[];
+  sections: ImportSectionItem[];
   valid: boolean;
   error?: string;
 }
@@ -31,6 +47,7 @@ export interface ImportConfirmItem {
   categoryId?: number;
   articleType: string;
   courseType: string;
+  sections: ImportSectionItem[];
 }
 
 export interface ImportConfirmResult {

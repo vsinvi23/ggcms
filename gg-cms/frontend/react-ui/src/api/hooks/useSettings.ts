@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { settingsService, StorageSettings } from '../services/settingsService';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 
 export function useSettings() {
   const queryClient = useQueryClient();
@@ -21,14 +22,14 @@ export function useSettings() {
       toast.success('Settings saved');
     },
     onError: (err: Error) => {
-      toast.error(err.message || 'Failed to save settings');
+      toast.error(toUserMessage(err, 'Failed to save settings'));
     },
   });
 
   const testStorageMutation = useMutation({
     mutationFn: () => settingsService.testStorage(),
     onSuccess: (msg) => toast.success(msg),
-    onError: (err: Error) => toast.error(err.message || 'Storage test failed'),
+    onError: (err: Error) => toast.error(toUserMessage(err, 'Storage test failed')),
   });
 
   return {

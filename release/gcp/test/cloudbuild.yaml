@@ -1,0 +1,48 @@
+# GG-CMS — Test/Staging Cloud Build CI/CD Pipeline
+
+steps:
+  # ── Step 1: Build test backend image ──────────────────────────────────────
+  - id: build-backend-test
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file=release/gcp/test/Dockerfile.cloudrun
+      - --tag=${_REGION}-docker.pkg.dev/${PROJECT_ID}/gg-cms/backend:test
+      - gg-cms/backend/go-cms
+    dir: .
+
+  # ── Step 2: Push test image ────────────────────────────────────────────────
+  - id: push-backend-test
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/gg-cms/backend:test
+    waitFor: [build-backend-test]
+
+  # ── Step 3: Deploy to test service ─────────────────────────────────────────
+  - id: deploy-backend-test
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - gg-cms-backend-test
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/gg-cms/backend:test
+      - --region=${_REGION}
+      - --platform=managed
+      - --port=8080
+      - --memory=512Mi
+      - --cpu=1
+      - --min-instances=0
+      - --max-instances=2
+      - --allow-unauthenticated
+      - --ingress=all
+      - --set-secrets=JWT_SECRET=gg-cms-jwt-secret-test:latest,ADMIN_PASSWORD=gg-cms-admin-password-test:latest
+      - --set-env-vars=GIN_MODE=debug,TLS_ENABLED=false,LOG_LEVEL=debug,MONGO_DATABASE=gg_cms_test,ADMIN_EMAIL=testadmin@serenyax.com,ADMIN_NAME=Test Admin
+    waitFor: [push-backend-test]
+
+substitutions:
+  _REGION: us-central1
+
+options:
+  logging: CLOUD_LOGGING_ONLY

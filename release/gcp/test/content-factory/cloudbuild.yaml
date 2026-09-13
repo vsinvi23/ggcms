@@ -1,0 +1,46 @@
+steps:
+  # ── Build and push the Test Docker image ────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-image-test
+    args:
+      - build
+      - --file=release/gcp/test/content-factory/Dockerfile.cloudrun
+      - --tag=$_IMAGE
+      - .
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-image-test
+    args: ['push', '$_IMAGE']
+    waitFor: ['build-image-test']
+
+  # ── Deploy to Test Cloud Run ────────────────────────────────────────────────
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: deploy-cloudrun-test
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - content-factory-backend-test
+      - --image=$_IMAGE
+      - --region=$_REGION
+      - --port=8080
+      - --memory=512Mi
+      - --cpu=1
+      - --min-instances=0
+      - --max-instances=2
+      - --allow-unauthenticated
+      - --ingress=all
+      - --service-account=$_SA_EMAIL
+      - >-
+        --set-secrets=GEMINI_API_KEY=factory-gemini-api-key:latest,FACTORY_SYNC_SECRET=factory-sync-secret-test:latest,JWT_SECRET=gg-cms-jwt-secret-test:latest
+      - >-
+        --set-env-vars=GGCMS_BASE_URL=http://localhost:8085,MOCK_MODE=true,LOG_LEVEL=debug,DATA_DIR=/app/data
+    waitFor: ['push-image-test']
+
+substitutions:
+  _REGION: us-central1
+  _IMAGE: us-central1-docker.pkg.dev/${PROJECT_ID}/gg-cms/content-factory:test
+  _SA_EMAIL: content-factory-sa-test@${PROJECT_ID}.iam.gserviceaccount.com
+
+options:
+  logging: CLOUD_LOGGING_ONLY

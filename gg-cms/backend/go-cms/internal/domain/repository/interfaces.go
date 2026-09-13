@@ -71,6 +71,15 @@ type GroupRepository interface {
 	FindByUserID(ctx context.Context, userID uint) ([]entity.Group, error)
 }
 
+type DomainRepository interface {
+	Create(ctx context.Context, domain *entity.Domain) error
+	Update(ctx context.Context, domain *entity.Domain) error
+	Delete(ctx context.Context, id uint) error
+	FindByID(ctx context.Context, id uint) (*entity.Domain, error)
+	FindBySlug(ctx context.Context, slug string) (*entity.Domain, error)
+	FindAll(ctx context.Context) ([]*entity.Domain, error)
+}
+
 type CategoryRepository interface {
 	Create(ctx context.Context, category *entity.Category) error
 	Update(ctx context.Context, category *entity.Category) error
@@ -93,7 +102,11 @@ type CategoryRepository interface {
 	AddReviewerGroup(ctx context.Context, categoryID, groupID uint) error
 	// RemoveReviewerGroup removes a group from the category's reviewer pool.
 	RemoveReviewerGroup(ctx context.Context, categoryID, groupID uint) error
+	// ContentCategory multi-category assignments
+	GetContentCategories(ctx context.Context, contentID uint, contentType string) ([]*entity.ContentCategory, error)
+	SetContentCategories(ctx context.Context, contentID uint, contentType string, categories []entity.ContentCategory) error
 }
+
 
 type ArticleRepository interface {
 	Create(ctx context.Context, article *entity.Article) error
@@ -221,6 +234,57 @@ type TagRepository interface {
 	GetCategoryTags(ctx context.Context, categoryID uint) ([]*entity.Tag, error)
 }
 
+type TopicResolutionStatus string
+
+const (
+	TopicResolutionMatch      TopicResolutionStatus = "MATCH"
+	TopicResolutionSuggestion TopicResolutionStatus = "SUGGESTION"
+	TopicResolutionNew        TopicResolutionStatus = "NEW"
+)
+
+type TopicResolutionResult struct {
+	Status          TopicResolutionStatus `json:"status"`
+	MatchedTopic    *entity.Topic         `json:"matched_topic,omitempty"`
+	SuggestedTopics []*entity.Topic       `json:"suggested_topics,omitempty"`
+	Confidence      float64               `json:"confidence"`
+	RawInput        string                `json:"raw_input"`
+}
+
+type ReachableTopic struct {
+	Topic            *entity.Topic             `json:"topic"`
+	Depth            int                       `json:"depth"`
+	RelationshipType string                    `json:"relationship_type"`
+	Weight           float64                   `json:"weight"`
+	Path             []uint                    `json:"path"`
+}
+
+type TopicRepository interface {
+	Create(ctx context.Context, topic *entity.Topic) error
+	FindAll(ctx context.Context) ([]*entity.Topic, error)
+	FindByID(ctx context.Context, id uint) (*entity.Topic, error)
+	FindBySlug(ctx context.Context, slug string) (*entity.Topic, error)
+	FindBySlugs(ctx context.Context, slugs []string) ([]*entity.Topic, error)
+	Update(ctx context.Context, topic *entity.Topic) error
+	Delete(ctx context.Context, id uint) error
+	ListRelationships(ctx context.Context, topicID uint) ([]*entity.TopicRelationship, error)
+	SetRelationships(ctx context.Context, topicID uint, relationships []entity.TopicRelationship) error
+	GetContentTopics(ctx context.Context, contentID uint, contentType string) ([]*entity.Topic, error)
+	GetContentTopicEntries(ctx context.Context, contentID uint, contentType string) ([]*entity.ContentTopic, error)
+	SetContentTopics(ctx context.Context, contentID uint, contentType string, topicIDs []uint) error
+	SetContentTopicEntries(ctx context.Context, contentID uint, contentType string, entries []entity.ContentTopic) error
+	ResolveTopic(ctx context.Context, rawName string) (*TopicResolutionResult, error)
+	FindReachable(ctx context.Context, topicID uint, maxDepth int) ([]*ReachableTopic, error)
+	// FindContentByTopicIDs returns other content_topics entries tagged with any of topicIDs,
+	// excluding the (excludeContentID, excludeContentType) pair, capped at limit rows.
+	FindContentByTopicIDs(ctx context.Context, topicIDs []uint, excludeContentID uint, excludeContentType string, limit int) ([]*entity.ContentTopic, error)
+}
+
+type ContentGenerationRunRepository interface {
+	Create(ctx context.Context, run *entity.ContentGenerationRun) error
+	FindByContent(ctx context.Context, contentID uint, contentType string) ([]*entity.ContentGenerationRun, error)
+}
+
+
 // --- MongoDB Repository Interfaces ---
 
 type CommentRepository interface {
@@ -332,4 +396,11 @@ type AppSettingsRepository interface {
 	GetAll(ctx context.Context) (map[string]string, error)
 	Set(ctx context.Context, key, value string) error
 	SetMany(ctx context.Context, settings map[string]string) error
+}
+
+// PasswordResetTokenRepository manages password-reset tokens.
+type PasswordResetTokenRepository interface {
+	Create(ctx context.Context, token *entity.PasswordResetToken) error
+	FindValidByHash(ctx context.Context, tokenHash string) (*entity.PasswordResetToken, error)
+	MarkUsed(ctx context.Context, id string) error
 }

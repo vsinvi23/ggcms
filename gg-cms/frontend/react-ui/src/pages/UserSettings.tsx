@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 import {
   User,
   Bell,
@@ -102,15 +103,15 @@ export default function UserSettings() {
 
   const handleChangePassword = () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      toast.error('Please fill in all password fields');
+      toast.error(toUserMessage(undefined, 'Please fill in all password fields'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error(toUserMessage(undefined, 'New passwords do not match'));
       return;
     }
     if (newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error(toUserMessage(undefined, 'Password must be at least 8 characters'));
       return;
     }
     toast.success('Password changed successfully');
@@ -120,7 +121,7 @@ export default function UserSettings() {
   };
 
   const handleDeleteAccount = () => {
-    toast.error('Account deletion is not available in demo mode');
+    toast.error(toUserMessage(undefined, 'Account deletion is not available in demo mode'));
   };
 
   return (

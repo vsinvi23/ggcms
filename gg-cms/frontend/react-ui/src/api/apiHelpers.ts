@@ -4,39 +4,42 @@ export const transformUser = (u: RawRecord) => {
   if (!u) return null;
   const role = u.role as RawRecord | undefined;
   return {
-    id: u.id,
-    name: u.name || u.username,
-    email: u.email,
-    username: u.username,
-    role: role?.name || u.roleType || 'User',
-    roleType: u.roleType || 'user',
-    status: u.status || (u.blocked ? 'deactivated' : 'active'),
-    groups: (u.groups as RawRecord[] | undefined)?.map((g) => g.name || g) || [],
-    groupIds: u.groupIds || (u.groups as RawRecord[] | undefined)?.map((g) => g.id).filter(Boolean) || [],
-    mobileNo: u.mobileNo || u.phone || '',
-    blocked: u.blocked || false,
+    id: u.id as number,
+    name: (u.name as string | undefined) || (u.username as string | undefined),
+    email: u.email as string,
+    username: u.username as string | undefined,
+    role: (role?.name as string | undefined) || (u.roleType as string | undefined) || 'User',
+    roleType: (u.roleType as string | undefined) || 'user',
+    status: (u.status as string | undefined) || (u.blocked ? 'deactivated' : 'active'),
+    groups: (u.groups as RawRecord[] | undefined)?.map((g) => (g.name as string | undefined) || String(g)) || [],
+    groupIds: (u.groupIds as number[] | undefined) || (u.groups as RawRecord[] | undefined)?.map((g) => g.id as number).filter(Boolean) || [],
+    mobileNo: (u.mobileNo as string | undefined) || (u.phone as string | undefined) || '',
+    blocked: (u.blocked as boolean | undefined) || false,
     confirmed: u.confirmed !== false,
-    lastLogin: u.lastLogin || null,
-    createdAt: u.createdAt,
-    updatedAt: u.updatedAt,
+    lastLogin: (u.lastLogin as string | null | undefined) || null,
+    createdAt: u.createdAt as string,
+    updatedAt: u.updatedAt as string | undefined,
   };
 };
 
 export const transformGroup = (g: RawRecord) => {
   if (!g) return null;
   const membersData = g.members as RawRecord | undefined;
-  const members = (membersData?.data as RawRecord[] | undefined)?.map(transformUser) || g.users || g.members || [];
+  const members = ((membersData?.data as RawRecord[] | undefined)?.map(transformUser) ||
+    (g.users as RawRecord[] | undefined) ||
+    (g.members as RawRecord[] | undefined) ||
+    []) as ReturnType<typeof transformUser>[];
   return {
-    id: g.id,
-    name: g.name,
-    role: g.role || 'viewer',
+    id: g.id as number,
+    name: g.name as string,
+    role: (g.role as string | undefined) || 'viewer',
     permissions: g.permissions || {},
-    description: g.description,
+    description: g.description as string | undefined,
     members,
     users: members,
-    memberCount: (members as unknown[]).length,
-    createdAt: g.createdAt,
-    updatedAt: g.updatedAt,
+    memberCount: members.length,
+    createdAt: g.createdAt as string | undefined,
+    updatedAt: g.updatedAt as string | undefined,
   };
 };
 
@@ -44,15 +47,15 @@ export const transformCategory = (c: RawRecord) => {
   if (!c) return null;
   const parent = c.parent as RawRecord | undefined;
   return {
-    id: c.id,
-    name: c.name,
-    slug: c.slug,
-    description: c.description,
-    parentId: parent?.id || c.parentId || null,
-    isVirtual: c.isVirtual ?? false,
-    requiredApprovals: c.requiredApprovals ?? 1,
+    id: c.id as number,
+    name: c.name as string,
+    slug: c.slug as string | undefined,
+    description: c.description as string | undefined,
+    parentId: (parent?.id as number | undefined) ?? (c.parentId as number | undefined) ?? null,
+    isVirtual: (c.isVirtual as boolean | undefined) ?? false,
+    requiredApprovals: (c.requiredApprovals as number | undefined) ?? 1,
     children: (c.children as RawRecord[] | undefined)?.map(transformCategory) || [],
-    createdAt: c.createdAt,
-    updatedAt: c.updatedAt,
+    createdAt: c.createdAt as string | undefined,
+    updatedAt: c.updatedAt as string | undefined,
   };
 };

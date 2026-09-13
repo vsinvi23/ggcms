@@ -10,6 +10,7 @@ import { useEnroll, useMyEnrollment } from '@/api/hooks/useEnrollments';
 import { useSectionsByCourse } from '@/api/hooks/useSections';
 import { toast } from 'sonner';
 import { buildCourseUrl } from '@/lib/slug';
+import { toUserMessage } from '@/lib/errors';
 
 interface ExploreContentCardProps {
   item: CmsResponseDto;
@@ -60,8 +61,8 @@ export function ExploreContentCard({ item, className }: ExploreContentCardProps)
     try {
       await enroll.mutateAsync(item.id);
       toast.success('Enrolled successfully');
-    } catch {
-      toast.error('Failed to enroll');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to enroll'));
     }
   };
 

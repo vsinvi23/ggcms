@@ -1,6 +1,70 @@
 # GG-CMS Deployment Guide
 
+## 📦 GA Release Building & Production Delta Deployment Pipeline
+
+GG-CMS uses an automated Generally Available (GA) release build generator and a differential delta deployment script. All package versions are tracked in individual package directories and recorded on the release branch under `release/ga/`.
+
+---
+
+### Package Version Files
+
+Each component maintains its own Semantic Version (`version.json`):
+1. **React UI**: [version.json](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/frontend/react-ui/version.json)
+2. **Go Backend**: [version.json](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/version.json)
+3. **Content Factory**: [version.json](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/content-factory/version.json)
+4. **DB Migrations**: [version.json](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/version.json)
+
+---
+
+### 1. Generating a GA Release Build (`release/build-ga-release.sh`)
+
+To build a release package, bump SemVer numbers, compile UI SPA assets into backend `dist`, and update the checked-in GA release folder `release/ga/`:
+
+```bash
+# Bump patch level for all packages (e.g. 1.0.0 -> 1.0.1)
+bash release/build-ga-release.sh --bump patch
+
+# Bump minor level for a specific package (e.g. ui)
+bash release/build-ga-release.sh --package ui --bump minor
+
+# Force rebuild GA release payload without bumping versions
+bash release/build-ga-release.sh --force
+```
+
+This updates:
+- Master release registry: [release/ga/manifest.json](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/release/ga/manifest.json)
+- Target package manifest: [release/ga/latest/version-manifest.json](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/release/ga/latest/version-manifest.json)
+
+---
+
+### 2. Production Delta Deployment (`release/deploy-prod.sh`)
+
+The production deployment script checks authentication, inspects component deltas against the local deployment audit log ([release/ga/latest/deployment-history.json](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/release/ga/latest/deployment-history.json)), and deploys **ONLY updated packages**:
+
+```bash
+# Check version deltas and deployment status without deploying
+bash release/deploy-prod.sh --check
+
+# Automatically deploy updated deltas
+bash release/deploy-prod.sh
+
+# Force deploy all components regardless of version diff
+bash release/deploy-prod.sh --force
+
+# Deploy only specific package(s)
+bash release/deploy-prod.sh --component ui
+bash release/deploy-prod.sh --component backend
+bash release/deploy-prod.sh --component db
+bash release/deploy-prod.sh --component content-factory
+
+# Bump version and deploy in a single command
+bash release/deploy-prod.sh --bump patch
+```
+
+---
+
 ## Release folder structure
+
 
 ```
 release/

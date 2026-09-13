@@ -32,6 +32,7 @@ interface NavItem {
   href: string;
   adminOnly?: boolean;
   contentOnly?: boolean; // For non-admin users with groups
+  external?: boolean;
 }
 
 interface NavSection {
@@ -42,12 +43,13 @@ interface NavSection {
   adminOnly?: boolean;
 }
 
-import { BookOpen, FileText, ListTodo, Layers, GraduationCap, Settings2, Upload } from 'lucide-react';
+import { BookOpen, FileText, ListTodo, Layers, GraduationCap, Settings2, Upload, Factory } from 'lucide-react';
 
 // All menu items with access control flags
 const standaloneItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' }, // visible to all authenticated users
-  { icon: ListTodo, label: 'My Tasks', href: '/my-tasks', contentOnly: true }, // users with groups
+  { icon: Factory, label: 'AI Content Factory', href: '/factory', adminOnly: true },
+  { icon: ListTodo, label: 'My Tasks', href: '/my-tasks', contentOnly: true },
   { icon: BookOpen, label: 'Courses', href: '/courses', contentOnly: true },
   { icon: FileText, label: 'Articles', href: '/articles', contentOnly: true },
   { icon: GraduationCap, label: 'My Learning', href: '/my-learning', contentOnly: true },
@@ -118,21 +120,38 @@ export function AppSidebar() {
   const renderNavItem = (item: NavItem, isNested: boolean = false) => (
     <Tooltip key={item.href} delayDuration={0}>
       <TooltipTrigger asChild>
-        <NavLink
-          to={item.href}
-          className={cn(
-            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
-            isNested && !collapsed && 'ml-4'
-          )}
-          activeClassName="bg-sidebar-accent text-sidebar-foreground"
-        >
-          <item.icon className="w-5 h-5 flex-shrink-0" />
-          {!collapsed && (
-            <span className="text-sm font-medium animate-fade-in">
-              {item.label}
-            </span>
-          )}
-        </NavLink>
+        {item.external ? (
+          <a
+            href={item.href}
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
+              isNested && !collapsed && 'ml-4'
+            )}
+          >
+            <item.icon className="w-5 h-5 flex-shrink-0" />
+            {!collapsed && (
+              <span className="text-sm font-medium animate-fade-in">
+                {item.label}
+              </span>
+            )}
+          </a>
+        ) : (
+          <NavLink
+            to={item.href}
+            className={cn(
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
+              isNested && !collapsed && 'ml-4'
+            )}
+            activeClassName="bg-sidebar-accent text-sidebar-foreground"
+          >
+            <item.icon className="w-5 h-5 flex-shrink-0" />
+            {!collapsed && (
+              <span className="text-sm font-medium animate-fade-in">
+                {item.label}
+              </span>
+            )}
+          </NavLink>
+        )}
       </TooltipTrigger>
       {collapsed && (
         <TooltipContent side="right" className="bg-sidebar text-sidebar-foreground">

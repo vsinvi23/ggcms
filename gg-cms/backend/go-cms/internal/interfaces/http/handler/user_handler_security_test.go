@@ -38,6 +38,12 @@ func (s *stubUserService) GetByID(_ context.Context, id uint) (*entity.User, err
 	}
 	return &entity.User{ID: id}, nil
 }
+func (s *stubUserService) GetByEmail(_ context.Context, _ string) (*entity.User, error) {
+	if s.user != nil {
+		return s.user, nil
+	}
+	return &entity.User{}, nil
+}
 func (s *stubUserService) CreateUser(_ context.Context, _, _, _ string, _ *uint) (*entity.User, error) {
 	return &entity.User{}, nil
 }
@@ -47,8 +53,8 @@ func (s *stubUserService) Update(_ context.Context, id uint, _ string, _ *string
 	}
 	return &entity.User{ID: id, Groups: []entity.Group{}}, nil
 }
-func (s *stubUserService) Delete(_ context.Context, _ uint) error   { return nil }
-func (s *stubUserService) Activate(_ context.Context, _ uint) error { return nil }
+func (s *stubUserService) Delete(_ context.Context, _ uint) error     { return nil }
+func (s *stubUserService) Activate(_ context.Context, _ uint) error   { return nil }
 func (s *stubUserService) Deactivate(_ context.Context, _ uint) error { return nil }
 func (s *stubUserService) GetGroups(_ context.Context, _ uint) ([]entity.Group, error) {
 	return nil, nil
@@ -153,9 +159,9 @@ func TestUserUpdate_Admin_AnyUser_Allowed(t *testing.T) {
 	r := newUserRouter(&stubUserService{}, adminID, "admin")
 
 	w := putJSON(r, "/api/users/99", map[string]interface{}{
-		"name":     "Admin Updated",
-		"status":   "active",
-		"groupId":  2,
+		"name":    "Admin Updated",
+		"status":  "active",
+		"groupId": 2,
 	})
 	if w.Code != http.StatusOK {
 		t.Errorf("admin updating any user: expected 200, got %d — body: %s", w.Code, w.Body)

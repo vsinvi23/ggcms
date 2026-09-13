@@ -1,0 +1,53 @@
+# GG-CMS — Production Cloud Build CI/CD Pipeline
+
+steps:
+  # ── Step 1: Build backend Docker image ──────────────────────────────────────
+  - id: build-backend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file=release/gcp/production/Dockerfile.cloudrun
+      - --tag=${_REGION}-docker.pkg.dev/${PROJECT_ID}/gg-cms/backend:${SHORT_SHA}
+      - --tag=${_REGION}-docker.pkg.dev/${PROJECT_ID}/gg-cms/backend:latest
+      - --cache-from=${_REGION}-docker.pkg.dev/${PROJECT_ID}/gg-cms/backend:latest
+      - gg-cms/backend/go-cms
+    dir: .
+
+  # ── Step 2: Push backend image to Artifact Registry ──────────────────────────
+  - id: push-backend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/gg-cms/backend
+    waitFor: [build-backend]
+
+  # ── Step 3: Deploy backend to Cloud Run ─────────────────────────────────────
+  - id: deploy-backend
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - gg-cms-backend
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/gg-cms/backend:${SHORT_SHA}
+      - --region=${_REGION}
+      - --platform=managed
+      - --port=8080
+      - --memory=512Mi
+      - --cpu=1
+      - --min-instances=0
+      - --max-instances=3
+      - --concurrency=80
+      - --timeout=30
+      - --allow-unauthenticated
+      - --ingress=all
+      - --set-secrets=JWT_SECRET=gg-cms-jwt-secret:latest,ADMIN_PASSWORD=gg-cms-admin-password:latest,POSTGRES_PASSWORD=gg-cms-pg-password:latest,MONGO_PASSWORD=gg-cms-mongo-password:latest,ADMIN_RECOVERY_SECRET=gg-cms-admin-recovery-secret:latest
+      - --set-env-vars=GIN_MODE=release,TLS_ENABLED=false,LOG_LEVEL=info,MONGO_DATABASE=gg_cms,ADMIN_EMAIL=info@serenyax.com,ADMIN_NAME=Super Admin,VITE_APP_NAME=GeekGully CMS
+    waitFor: [push-backend]
+
+substitutions:
+  _REGION: us-central1
+
+options:
+  logging: CLOUD_LOGGING_ONLY

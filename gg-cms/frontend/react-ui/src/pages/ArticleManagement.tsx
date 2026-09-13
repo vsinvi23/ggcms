@@ -44,6 +44,7 @@ import {
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 
 
 const STATUS_OPTIONS = [
@@ -66,8 +67,8 @@ function AssignDialog({ item, open, onClose }: { item: CmsResponseDto | null; op
       toast.success('Reviewer assigned');
       setSelectedId('');
       onClose();
-    } catch {
-      toast.error('Failed to assign reviewer');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to assign reviewer'));
     }
   };
 
@@ -144,8 +145,8 @@ export default function ArticleManagement() {
     try {
       await reassignReview.mutateAsync({ id: article.id, type: 'ARTICLE', note: '' });
       toast.success('Assignee removed');
-    } catch {
-      toast.error('Failed to remove assignee');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to remove assignee'));
     }
   };
 
@@ -159,8 +160,8 @@ export default function ArticleManagement() {
       toast.success('Article deleted');
       setDeleteDialog({ open: false, article: null });
       refetch();
-    } catch {
-      toast.error('Failed to delete article');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete article'));
     }
   };
 
@@ -171,8 +172,8 @@ export default function ArticleManagement() {
       toast.success('Article submitted for review');
       setSubmitDialog({ open: false, article: null });
       refetch();
-    } catch {
-      toast.error('Failed to submit article for review');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to submit article for review'));
     }
   };
 
@@ -180,8 +181,8 @@ export default function ArticleManagement() {
     try {
       await claimReview.mutateAsync({ id: article.id, type: 'ARTICLE' });
       navigate(`/articles/${article.slug ?? article.id}/edit?mode=view`);
-    } catch {
-      toast.error('Failed to claim — it may have been taken by someone else');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to claim — it may have been taken by someone else'));
     }
   };
 

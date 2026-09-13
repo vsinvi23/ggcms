@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -74,9 +75,13 @@ func (h *MediaHandler) Upload(c *gin.Context) {
 		if err != nil {
 			continue
 		}
-		mime := fh.Header.Get("Content-Type")
-		if mime == "" {
-			mime = "application/octet-stream"
+		sniffBuf := make([]byte, 512)
+		n, _ := f.Read(sniffBuf)
+		mime := http.DetectContentType(sniffBuf[:n])
+		if _, err := f.Seek(0, io.SeekStart); err != nil {
+			f.Close()
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": fmt.Sprintf("upload failed: %v", err)})
+			return
 		}
 		// Strip any parameters (e.g. "image/jpeg; charset=utf-8" → "image/jpeg")
 		if idx := strings.Index(mime, ";"); idx != -1 {

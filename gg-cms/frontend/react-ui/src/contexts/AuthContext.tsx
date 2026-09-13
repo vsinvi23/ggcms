@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import { authService } from '@/api/services';
 import { userService } from '@/api/services/userService';
@@ -6,12 +6,8 @@ import { toUserMessage } from '@/lib/errors';
 import { profileService } from '@/api/services/profileService';
 import { getVisitorProfile, clearVisitorProfile } from '@/lib/visitorProfile';
 import {
-  getAuthToken,
-  setAuthToken,
   clearAllAuthData,
   setUserData,
-  getUserData,
-  isAuthenticated as checkStoredToken,
 } from '@/api/client';
 import { UserStatus, GroupResponseDto } from '@/api/types';
 import { ADMIN_GROUP_NAME, GROUPS_STORAGE_KEY } from '@/config/api';
@@ -32,7 +28,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ error?: string }>;
   signup: (email: string, password: string, name: string, mobileNo?: string) => Promise<{ error?: string }>;
   socialLogin: (provider: 'google' | 'github') => Promise<{ error?: string }>;
-  loginWithToken: (token: string) => Promise<{ error?: string }>;
+  loginWithToken: (token?: string) => Promise<{ error?: string }>;
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -79,23 +75,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Helper to decode JWT and extract user info
-const decodeToken = (token: string): { sub?: string; email?: string; userId?: number; role?: string; exp?: number } | null => {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch {
-    return null;
-  }
-};
-
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -125,10 +104,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
   }, []);
 
-  // Stores the token expiry so onForcedLogout can check it even after the old axios
-  // interceptor (pre-HMR) has already cleared the token from sessionStorage.
-  const tokenExpiryRef = useRef<number | null>(null);
-
   // Fetch user groups from API and cache them
   const fetchUserGroups = useCallback(async (userId: number) => {
     if (!userId || userId <= 0) return;
@@ -149,34 +124,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUserGroups([]);
   }, []);
 
-  // Keep tokenExpiryRef in sync with the active session.
-  // This must run whenever user changes so the ref reflects the latest expiry.
-  useEffect(() => {
-    if (!user) {
-      tokenExpiryRef.current = null;
-      return;
-    }
-    const token = getAuthToken();
-    if (token) {
-      const decoded = decodeToken(token);
-      tokenExpiryRef.current = decoded?.exp ?? null;
-    }
-  }, [user]);
+  // Helper to check admin/superadmin role variations
+  const isAdminRole = useCallback((roleStr?: string) => {
+    if (!roleStr) return false;
+    const r = roleStr.toLowerCase();
+    return r === 'admin' || r === 'superadmin' || r === 'super_admin' || r === 'super-admin';
+  }, []);
 
   // Listen for the 'auth:logout' event dispatched by the 401 Axios interceptor.
-  // CRITICAL: The old pre-HMR interceptor clears the token BEFORE dispatching this
-  // event, so checkIsAuthenticated() would return false even for valid sessions.
-  // Instead we check tokenExpiryRef which is set when the user logs in and persists
-  // in memory even after sessionStorage is cleared by the old interceptor.
+  // The JWT now lives in an HttpOnly cookie we cannot read client-side, so a 401
+  // that reaches here (client.ts already filters out permission-only 401s) means
+  // the session cookie is missing or expired — force logout.
   useEffect(() => {
     const onForcedLogout = () => {
-      const expiry = tokenExpiryRef.current;
-      if (expiry && Date.now() < expiry * 1000) {
-        // Token was still valid when this fired → permissions error, not auth failure.
-        // Do NOT log the user out.
-        return;
-      }
-      // Token expired or no session → real auth failure, force logout.
       setUser(null);
       clearAllAuthData();
       clearUserGroups();
@@ -185,42 +145,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => window.removeEventListener('auth:logout', onForcedLogout);
   }, [clearUserGroups]);
 
-  // Check for existing session on mount
+  // Check for existing session on mount by rehydrating from the backend
+  // (the JWT lives in an HttpOnly cookie, so we ask the server who we are).
   useEffect(() => {
     const checkAuth = async () => {
-      if (checkStoredToken()) {
-        const storedUser = getUserData<AuthUser>();
-        if (storedUser) {
-          setUser(storedUser);
-          // Groups are memory-only (not cached in sessionStorage) to prevent
-          // XSS payloads from reading permission data via sessionStorage.
-          fetchUserGroups(storedUser.id);
-        } else {
-          clearAllAuthData();
+      try {
+        const userData = await authService.getCurrentUser() as {
+          id?: number; email?: string; name?: string; status?: string; role?: string;
+        };
+        const authUser: AuthUser = {
+          id: userData?.id || 0,
+          email: userData?.email || '',
+          name: userData?.name || '',
+          status: (userData?.status as UserStatus) || 'ACTIVE',
+          role: isAdminRole(userData?.role) ? 'admin' : 'user',
+        };
+        if (authUser.id > 0) {
+          setUser(authUser);
+          setUserData(authUser);
+          fetchUserGroups(authUser.id);
         }
+      } catch {
+        clearAllAuthData();
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
     checkAuth();
-  }, [fetchUserGroups]);
-
-  // Auto-logout when JWT expires
-  useEffect(() => {
-    if (!user) return;
-    const token = getAuthToken();
-    if (!token) return;
-    const decoded = decodeToken(token);
-    if (!decoded?.exp) return;
-
-    const timeUntilExpiry = decoded.exp * 1000 - Date.now();
-    if (timeUntilExpiry <= 0) {
-      handleLogout();
-      return;
-    }
-    const timer = setTimeout(() => handleLogout(), timeUntilExpiry);
-    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [fetchUserGroups]);
 
   const handleLogout = useCallback(() => {
     authService.logout();
@@ -239,13 +192,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authService.login({ email, password });
 
       if (response.token) {
+        const respUser = response.user as {
+          id?: number; email?: string; name?: string; username?: string;
+          avatar?: string; blocked?: boolean; roleType?: string; role?: string;
+        } | undefined;
         const authUser: AuthUser = {
-          id: response.user?.id || 0,
-          email: response.user?.email || email,
-          name: response.user?.name || response.user?.username || email.split('@')[0],
-          avatar: response.user?.avatar,
-          status: response.user?.blocked ? 'DEACTIVATED' : 'ACTIVE' as UserStatus,
-          role: response.user?.roleType === 'admin' || response.user?.role === 'admin' ? 'admin' : 'user',
+          id: respUser?.id || 0,
+          email: respUser?.email || email,
+          name: respUser?.name || respUser?.username || email.split('@')[0],
+          avatar: respUser?.avatar,
+          status: respUser?.blocked ? 'DEACTIVATED' : 'ACTIVE' as UserStatus,
+          role: (isAdminRole(respUser?.roleType) || isAdminRole(respUser?.role) ? 'admin' : 'user'),
         };
 
         // flushSync ensures state is committed before navigate('/dashboard') runs in caller
@@ -296,12 +253,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
       if (response.token) {
+        const respUser = response.user as {
+          id?: number; email?: string; name?: string; role?: string; roleType?: string;
+        } | undefined;
         const authUser: AuthUser = {
-          id: response.user?.id || 0,
-          email: response.user?.email || email,
-          name: response.user?.name || name,
+          id: respUser?.id || 0,
+          email: respUser?.email || email,
+          name: respUser?.name || name,
           status: 'ACTIVE' as UserStatus,
-          role: (response.user?.role === 'admin' ? 'admin' : 'user'),
+          role: (isAdminRole(respUser?.role) || isAdminRole(respUser?.roleType) ? 'admin' : 'user'),
         };
 
         flushSync(() => {
@@ -349,20 +309,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Called by OAuthCallback page after the backend redirects back with a JWT.
-  // Stores the token, fetches the full user profile, and hydrates context state.
-  const loginWithToken = useCallback(async (token: string): Promise<{ error?: string }> => {
+  // Called by OAuthCallback page after the backend redirects back — the JWT is
+  // already set as an HttpOnly cookie server-side, so this just confirms the
+  // session by fetching the current user and hydrating context state.
+  const loginWithToken = useCallback(async (): Promise<{ error?: string }> => {
     setIsLoading(true);
     try {
-      setAuthToken(token);
-      const decoded = decodeToken(token);
       const userData = await authService.getCurrentUser();
       const authUser: AuthUser = {
-        id: userData?.id || decoded?.userId || 0,
-        email: userData?.email || decoded?.email || '',
+        id: userData?.id || 0,
+        email: userData?.email || '',
         name: userData?.name || '',
         status: (userData?.status as UserStatus) || 'ACTIVE',
-        role: (decoded?.role as 'admin' | 'user') || 'user',
+        role: isAdminRole(userData?.role) ? 'admin' : 'user',
       };
       flushSync(() => setUser(authUser));
       setUserData(authUser);
@@ -378,12 +337,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchUserGroups]);
+  }, [fetchUserGroups, isAdminRole]);
 
   const groupNames = userGroups.map(g => g.name.toUpperCase());
+  const adminGroupNames = [ADMIN_GROUP_NAME.toUpperCase(), 'ADMIN', 'SUPERADMIN', 'SUPER_ADMIN', 'SUPER-ADMIN'];
   // isAdmin: primary check is role stored on user object (from JWT/login response),
   // supplemented by group membership check so either alone is sufficient
-  const isAdmin = user?.role === 'admin' || groupNames.includes(ADMIN_GROUP_NAME.toUpperCase());
+  const isAdmin = isAdminRole(user?.role) || groupNames.some(g => adminGroupNames.includes(g));
   const hasNoGroups = userGroups.length === 0;
   const hasGroup = useCallback(
     (groupName: string) => groupNames.includes(groupName.toUpperCase()),

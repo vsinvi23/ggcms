@@ -16,6 +16,9 @@ type Config struct {
 	Admin    AdminConfig
 	OAuth    OAuthConfig
 	TLS      TLSConfig
+	Import   ImportConfig
+	Mailer   MailerConfig
+	Recovery RecoveryConfig
 }
 
 type TLSConfig struct {
@@ -62,6 +65,35 @@ type AdminConfig struct {
 	GeekAdminEmail    string
 	GeekAdminPassword string
 	GeekAdminName     string
+}
+
+// ImportConfig holds settings for third-party content ingest (e.g. the Python
+// "content factory" app that POSTs generated articles/courses to /api/import/ingest).
+type ImportConfig struct {
+	// FactorySyncSecret is compared against the X-Factory-Sync-Secret request header.
+	// Required — there is intentionally no default value. If unset, the ingest
+	// endpoint is disabled (every request gets 401) rather than crashing local dev.
+	FactorySyncSecret string
+}
+
+// MailerConfig holds SMTP settings for outbound transactional email
+// (currently only forgot-password). Not fatal if unset — local dev
+// shouldn't require SMTP setup to run the server.
+type MailerConfig struct {
+	SMTPHost     string
+	SMTPPort     string
+	SMTPUsername string
+	SMTPPassword string
+	FromAddress  string
+}
+
+// RecoveryConfig holds the shared secret for the break-glass master-admin
+// password-recovery endpoint.
+type RecoveryConfig struct {
+	// AdminRecoverySecret is compared against the X-Admin-Recovery-Secret
+	// request header. Required — there is intentionally no default value.
+	// If unset, the recovery endpoint is disabled (every request gets 401).
+	AdminRecoverySecret string
 }
 
 type OAuthConfig struct {
@@ -145,6 +177,19 @@ func Load() *Config {
 			ClientCertFile: viper.GetString("TLS_CLIENT_CERT_FILE"),
 			ClientKeyFile:  viper.GetString("TLS_CLIENT_KEY_FILE"),
 		},
+		Import: ImportConfig{
+			FactorySyncSecret: viper.GetString("FACTORY_SYNC_SECRET"),
+		},
+		Mailer: MailerConfig{
+			SMTPHost:     viper.GetString("SMTP_HOST"),
+			SMTPPort:     viper.GetString("SMTP_PORT"),
+			SMTPUsername: viper.GetString("SMTP_USERNAME"),
+			SMTPPassword: viper.GetString("SMTP_PASSWORD"),
+			FromAddress:  viper.GetString("SMTP_FROM_ADDRESS"),
+		},
+		Recovery: RecoveryConfig{
+			AdminRecoverySecret: viper.GetString("ADMIN_RECOVERY_SECRET"),
+		},
 		OAuth: OAuthConfig{
 			GoogleClientID:     viper.GetString("GOOGLE_CLIENT_ID"),
 			GoogleClientSecret: viper.GetString("GOOGLE_CLIENT_SECRET"),
@@ -163,6 +208,20 @@ func Load() *Config {
 
 	if cfg.JWT.Secret == "" {
 		log.Fatal("JWT_SECRET environment variable is required")
+	}
+
+	if cfg.Import.FactorySyncSecret == "" {
+		// Not fatal — local dev shouldn't have to set this up just to run the server.
+		// The factory-sync middleware rejects every request with 401 while it's unset.
+		log.Println("WARNING: FACTORY_SYNC_SECRET is not set — /api/import/ingest will reject all requests")
+	}
+
+	if cfg.Mailer.SMTPHost == "" {
+		log.Println("WARNING: SMTP_HOST is not set — forgot-password emails will fail to send")
+	}
+
+	if cfg.Recovery.AdminRecoverySecret == "" {
+		log.Println("WARNING: ADMIN_RECOVERY_SECRET is not set — /api/admin/recover-password will reject all requests")
 	}
 
 	return cfg

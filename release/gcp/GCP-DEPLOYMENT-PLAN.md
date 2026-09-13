@@ -282,3 +282,167 @@ Automated database backups run directly on the `gg-cms-db` Compute Engine VM and
   bash /opt/gg-cms/backup/restore.sh --mongo-latest
   ```
 
+---
+
+## Content Factory — AI Content Generation Service
+
+*Added: 2026-09-06*
+
+### Overview
+
+A second Cloud Run service (`content-factory-backend`) is co-deployed alongside `gg-cms-backend`. It provides an AI-powered content generation pipeline accessible at `https://geekgully.com/factory`.
+
+### Architecture
+
+```
+geekgully.com/factory/**  →  Firebase Hosting rewrite
+                          →  Cloud Run: content-factory-backend
+                               ├── React SPA (static, served by FastAPI)
+                               ├── FastAPI backend (Python 3.12)
+                               ├── Gemini API (AI generation)
+                               ├── Google Drive API v3 (source ingestion)
+                               └── POST /api/import/ingest → gg-cms-backend (DRAFT)
+```
+
+### GCP Resources
+
+| Resource | Name | Spec |
+|---|---|---|
+| Cloud Run | `content-factory-backend` | 1Gi RAM, 1 vCPU, 0–2 instances, `us-central1` |
+| Service Account | `content-factory-sa@ggcms-free-tier-vivek.iam.gserviceaccount.com` | `roles/secretmanager.secretAccessor` |
+| Secret | `factory-gemini-api-key` | Gemini API key (from AI Studio free tier) |
+| Secret | `factory-sync-secret` | Shared GGCMS ↔ Factory machine-to-machine token |
+| Docker image | `us-central1-docker.pkg.dev/ggcms-free-tier-vivek/gg-cms/content-factory:latest` | Multi-stage (Node 20 + Python 3.12) |
+
+| Field | Value |
+|---|---|
+| Direct Service URL | `https://content-factory-backend-wuisbddlxq-uc.a.run.app` |
+| Custom Domain URL | `https://geekgully.com/factory` |
+| Login | `https://geekgully.com/auth` |
+| Email | `info@serenyax.com` |
+| Password | stored in Secret Manager as `gg-cms-admin-password` (`Admin@12345`) |
+
+Same gg-cms JWT grants Content Factory access — no second login.
+
+### Deploy / Update
+
+```bash
+# Full deploy (first time or after code changes)
+bash release/gcp/deploy-content-factory.sh
+
+# After deploy, update Firebase Hosting to activate /factory rewrite
+firebase deploy --only hosting
+```
+
+The deploy script:
+1. Creates GCP Secrets (`factory-gemini-api-key`, `factory-sync-secret`)
+2. Prompts for Gemini API key → stored securely in Secret Manager
+3. Creates Service Account with least-privilege Secret Accessor role
+4. Wires `FACTORY_SYNC_SECRET` into `gg-cms-backend`
+5. Builds Docker image via Cloud Build (context = repo root)
+6. Deploys `content-factory-backend` Cloud Run service
+
+### Environment Variables
+
+**From Secret Manager (--set-secrets):**
+```
+GEMINI_API_KEY   → factory-gemini-api-key
+FACTORY_SYNC_SECRET → factory-sync-secret
+JWT_SECRET       → gg-cms-jwt-secret (shared with gg-cms-backend)
+```
+
+**Non-secret env vars (--set-env-vars):**
+```
+GGCMS_BASE_URL=https://gg-cms-backend-274495931884.us-central1.run.app
+MOCK_MODE=false
+GEMINI_MODEL_PLANNER=gemini-2.0-flash
+GEMINI_MODEL_RESEARCHER=gemini-2.0-flash
+GEMINI_MODEL_WRITER=gemini-2.0-flash
+GEMINI_MODEL_REVIEWER=gemini-2.0-flash
+GDRIVE_ENABLED=true
+LOG_LEVEL=info
+DATA_DIR=/app/data
+PORT=8080
+```
+
+### Security Controls
+
+| Control | Implementation |
+|---|---|
+| **Authentication** | JWT middleware validates gg-cms Bearer tokens on all `/api/*` routes |
+| **CORS** | Restricted to `geekgully.com` + localhost dev only |
+| **IDOR Prevention** | `project_id` required on all scoped list endpoints |
+| **Path Traversal** | `upload-folder` validates path within `/app/data` only |
+| **Secret Key Protection** | API never returns key chars; only `is_set: true/false` returned |
+| **Sync Secret** | `FACTORY_SYNC_SECRET` not exposed in UI — GCP Secret Manager only |
+
+### Content Push to GGCMS
+
+```
+POST /api/content/{id}/export (Content Factory)
+  → backend/exporters/ggcms_client.py
+  → POST https://geekgully.com/api/import/ingest
+     Header: X-Factory-Sync-Secret: <FACTORY_SYNC_SECRET>
+  → gg-cms creates content as STATUS=DRAFT ✅
+```
+
+Review at: `https://geekgully.com/admin`
+
+### Google Drive Integration (Future)
+
+When SA key is ready:
+```bash
+# Store SA JSON key
+gcloud secrets create factory-gdrive-sa-key \
+  --data-file=service-account-key.json \
+  --project=ggcms-free-tier-vivek
+
+# Grant access
+gcloud secrets add-iam-policy-binding factory-gdrive-sa-key \
+  --member="serviceAccount:content-factory-sa@ggcms-free-tier-vivek.iam.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor" \
+  --project=ggcms-free-tier-vivek
+
+# Add to Cloud Run + redeploy
+gcloud run services update content-factory-backend \
+  --update-secrets="GDRIVE_SA_KEY=factory-gdrive-sa-key:latest" \
+  --region=us-central1 --project=ggcms-free-tier-vivek
+```
+
+Then in UI: System Settings → Google Drive → paste folder URL → Sync.
+
+### Useful Commands
+
+```bash
+# View live logs
+gcloud run services logs read content-factory-backend \
+  --region=us-central1 --project=ggcms-free-tier-vivek --limit=50
+
+# Check service status
+gcloud run services describe content-factory-backend \
+  --region=us-central1 --project=ggcms-free-tier-vivek
+
+# Rotate Gemini API key
+echo -n "NEW_KEY" | gcloud secrets versions add factory-gemini-api-key \
+  --data-file=- --project=ggcms-free-tier-vivek
+# Then: bash release/gcp/deploy-content-factory.sh
+
+# List all factory secrets
+gcloud secrets list --project=ggcms-free-tier-vivek --filter="name:factory"
+
+# Smoke test
+curl https://geekgully.com/factory/api/health
+# Expected: {"status":"healthy","version":"2.0.0","settings_loaded":true}
+```
+
+### Files Added (Content Factory GCP Release)
+
+```
+release/gcp/
+├── content-factory/
+│   ├── Dockerfile.cloudrun    ← Multi-stage: Node 20 → Python 3.12 + FastAPI
+│   ├── cloudbuild.yaml        ← Cloud Build: build → push → deploy
+│   └── .env.cloudrun          ← Non-secret env vars template
+├── deploy-content-factory.sh  ← One-click deploy
+└── firebase.json              ← MODIFIED: /factory/** rewrite added
+```

@@ -38,6 +38,13 @@
         }
       },
       {
+        "source": "/factory/**",
+        "run": {
+          "serviceId": "content-factory-backend",
+          "region": "us-central1"
+        }
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

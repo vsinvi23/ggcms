@@ -10,6 +10,7 @@ import { ROLE_PRESETS, type RolePreset } from '@/lib/rolePresets';
 import type { ExperienceLevel, RoleType } from '@/api/types';
 import { toast } from 'sonner';
 import { CheckCircle2 } from 'lucide-react';
+import { toUserMessage } from '@/lib/errors';
 
 const EXPERIENCE_OPTIONS: { value: ExperienceLevel; label: string; desc: string }[] = [
   { value: 'beginner',     label: 'Beginner',     desc: 'New to this field' },
@@ -106,8 +107,8 @@ export function OnboardingWizard({
       });
       toast.success('Learning profile saved');
       onComplete?.();
-    } catch {
-      toast.error('Failed to save profile');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to save profile'));
     }
   };
 

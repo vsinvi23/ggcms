@@ -29,6 +29,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { EnrollmentDto, CmsResponseDto } from '@/api/types';
 import { useMyNotes, useDeleteNote, useMyFavourites, useToggleFavourite, useMyHighlights, useDeleteHighlight } from '@/api/hooks/useEngagement';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 
 // ── Enrolled Courses Tab ──────────────────────────────────────────────────────
 
@@ -226,8 +227,8 @@ function Notes() {
     try {
       await deleteNote(id);
       toast.success('Note deleted');
-    } catch {
-      toast.error('Failed to delete note');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete note'));
     }
   };
 
@@ -369,7 +370,7 @@ function FavouriteCard({
     e.preventDefault();
     toggleFav(undefined, {
       onSuccess: () => toast.success('Removed from saved'),
-      onError: () => toast.error('Failed to remove'),
+      onError: (err) => toast.error(toUserMessage(err, 'Failed to remove')),
     });
   };
 

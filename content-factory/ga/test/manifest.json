@@ -1,0 +1,28 @@
+{
+  "system_name": "AI Content Factory Test Release Registry",
+  "environment": "test",
+  "current_version": "1.0.1",
+  "last_build_at": "2026-09-11T07:03:55Z",
+  "releases": [
+    {
+      "version": "1.0.1",
+      "built_at": "2026-09-11T07:03:55Z",
+      "branch": "release",
+      "commit": "b54b868",
+      "components": {
+        "frontend": "1.0.2",
+        "backend": "1.0.2"
+      }
+    },
+    {
+      "version": "1.0.0-test",
+      "built_at": "2026-09-07T21:00:00Z",
+      "branch": "release",
+      "commit": "initial-cf-test-build",
+      "components": {
+        "frontend": "1.0.0-test",
+        "backend": "1.0.0-test"
+      }
+    }
+  ]
+}

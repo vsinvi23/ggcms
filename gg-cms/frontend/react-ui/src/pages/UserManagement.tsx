@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { UserPlus, Search, Loader2 } from 'lucide-react';
 import { UserStatus, UserResponse } from '@/api/types';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,8 +102,7 @@ export default function UserManagementPage() {
       }
       fetchUsers({ page: currentPage, size: pageSize });
     } catch (error: unknown) {
-      const e = error as { response?: { data?: { message?: string } } };
-      toast.error(e?.response?.data?.message || 'Failed to update user status');
+      toast.error(toUserMessage(error, 'Failed to update user status'));
     }
   };
 
@@ -122,8 +122,7 @@ export default function UserManagementPage() {
       toast.success(`User "${userToDelete.name}" deleted successfully`);
       fetchUsers({ page: currentPage, size: pageSize });
     } catch (error: unknown) {
-      const e = error as { response?: { data?: { message?: string } } };
-      toast.error(e?.response?.data?.message || 'Failed to delete user');
+      toast.error(toUserMessage(error, 'Failed to delete user'));
     } finally {
       setDeleteDialogOpen(false);
       setUserToDelete(null);
@@ -148,15 +147,14 @@ export default function UserManagementPage() {
       fetchUsers({ page: currentPage, size: pageSize });
       return true;
     } catch (error: unknown) {
-      const e = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
-      toast.error(e?.response?.data?.error?.message || e?.message || 'Failed to update user');
+      toast.error(toUserMessage(error, 'Failed to update user'));
       return false;
     }
   };
 
   const handleUserCreated = () => fetchUsers({ page: 0, size: pageSize });
 
-  if (error) toast.error(error);
+  if (error) toast.error(toUserMessage(error, 'Failed to load users'));
 
   return (
     <DashboardLayout>

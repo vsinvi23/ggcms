@@ -30,8 +30,6 @@ import { ContentBlock } from '@/types/content';
 import {
   useCreateCms, useUpdateCms, useUploadCmsBody, useUploadCmsThumbnail,
   useCmsBySlug, useSubmitCmsForReview, useDownloadCmsBody, useCmsActivity,
-  useApproveCms, useSendCmsBack, useRejectCms, usePublishCms,
-  useClaimReview, useReassignReview, useSaveReviewNote,
 } from '@/api/hooks/useCms';
 import { useCategories } from '@/api/hooks/useCategories';
 import { useContentTypes } from '@/api/hooks/useContentTypes';
@@ -40,6 +38,11 @@ import { useAllowedCategories } from '@/hooks/useAllowedCategories';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { sectionKeys } from '@/api/hooks/useSections';
+import { useCmsWorkflowActions } from '@/hooks/useCmsWorkflowActions';
+import { TopicMultiSelect } from '@/components/ui/TopicMultiSelect';
+import { useContentTopics } from '@/api/hooks/useTopics';
+import { slugify } from '@/lib/slug';
+import { toUserMessage } from '@/lib/errors';
 
 export default function CourseCreator() {
   const navigate = useNavigate();
@@ -58,15 +61,6 @@ export default function CourseCreator() {
   const uploadThumbnail = useUploadCmsThumbnail();
   const submitForReview = useSubmitCmsForReview();
 
-  // API hooks — review actions
-  const { mutateAsync: approveCms } = useApproveCms();
-  const { mutateAsync: sendBackCms } = useSendCmsBack();
-  const { mutateAsync: rejectCms } = useRejectCms();
-  const { mutateAsync: publishCms } = usePublishCms();
-  const { mutateAsync: claimReview } = useClaimReview();
-  const { mutateAsync: reassignReview } = useReassignReview();
-  const { mutateAsync: saveReviewNote } = useSaveReviewNote();
-
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
   const { data: courseTypes = [] } = useContentTypes('course');
   const { data: existingCms, isLoading: cmsLoading, isError: cmsError } = useCmsBySlug(paramId, !!paramId, 'COURSE');
@@ -83,15 +77,13 @@ export default function CourseCreator() {
   const [categoryId, setCategoryId] = useState('');
   const [courseType, setCourseType] = useState('STANDARD');
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<number[]>([]);
+  const { data: initialTopics = [] } = useContentTopics(existingCmsId > 0 ? existingCmsId : null, 'COURSE');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [savedCourseId, setSavedCourseId] = useState<number | null>(null);
-  const [reviewComment, setReviewComment] = useState('');
-  const [isReviewActing, setIsReviewActing] = useState(false);
-  const [reassignNote, setReassignNote] = useState('');
-  const [showReassignPanel, setShowReassignPanel] = useState(false);
   const [reviewerEditMode, setReviewerEditMode] = useState(false);
   const [reviewerEditBaseline, setReviewerEditBaseline] = useState<{ title: string; description: string; bodyHtml: string } | null>(null);
   const [publisherEditMode, setPublisherEditMode] = useState(false);
@@ -140,6 +132,12 @@ export default function CourseCreator() {
   }, [existingCms, isDataLoaded]);
 
   useEffect(() => {
+    if (initialTopics.length > 0 && selectedTopicIds.length === 0) {
+      setSelectedTopicIds(initialTopics.map((t) => t.id));
+    }
+  }, [initialTopics, selectedTopicIds.length]);
+
+  useEffect(() => {
     if (!isViewMode && existingBody && isDataLoaded && contentBlocks.length === 0) {
       try {
         const parsedBlocks = parseBodyToBlocks(existingBody);
@@ -173,9 +171,9 @@ export default function CourseCreator() {
       let cmsSlug: string | undefined;
       if (paramId) {
         cmsId = existingCmsId;
-        await updateCms.mutateAsync({ id: cmsId, data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined } });
+        await updateCms.mutateAsync({ id: cmsId, data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined, topicIds: selectedTopicIds } });
       } else {
-        const created = await createCms.mutateAsync({ type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined });
+        const created = await createCms.mutateAsync({ type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined, topicIds: selectedTopicIds });
         cmsId = created.id;
         cmsSlug = created.slug;
         setSavedCourseId(cmsId);
@@ -192,100 +190,48 @@ export default function CourseCreator() {
       }
     } catch (error) {
       console.error('Save error:', error);
-      toast.error('Failed to save course');
+      toast.error(toUserMessage(error, 'Failed to save course'));
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Review action handlers
-  const handleApprove = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await approveCms({ id: existingCmsId, type: 'COURSE', data: undefined });
-      toast.success('Course approved — it is now ready to publish');
-      // Stay in view mode so reviewer can publish directly
-    } catch { toast.error('Failed to approve'); }
-    finally { setIsReviewActing(false); }
-  };
+  const buildUpdateData = () => ({
+    type: 'COURSE' as const, categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined,
+  });
 
-  const handlePublish = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await publishCms({ id: existingCmsId, type: 'COURSE', data: undefined });
-      toast.success('Course published successfully');
-      navigate('/courses');
-    } catch { toast.error('Failed to publish'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleSendBack = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await sendBackCms({ id: existingCmsId, type: 'COURSE', data: { reviewerId: user?.id ?? 0, comment: reviewComment } });
-      toast.success('Course sent back for revision');
-      navigate('/my-tasks');
-    } catch { toast.error('Failed to send back'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleReject = async () => {
-    if (!existingCmsId) return;
-    if (!reviewComment.trim()) { toast.error('Please provide a reason for rejection'); return; }
-    setIsReviewActing(true);
-    try {
-      await rejectCms({ id: existingCmsId, type: 'COURSE', data: { reviewerId: user?.id ?? 0, comment: reviewComment } });
-      toast.success('Course rejected');
-      navigate('/my-tasks');
-    } catch { toast.error('Failed to reject'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleClaimReview = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await claimReview({ id: existingCmsId, type: 'COURSE' });
-      toast.success('You are now the assigned reviewer');
-    } catch { toast.error('Failed to claim review — it may have been claimed by someone else'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleClaimForPublishing = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await claimReview({ id: existingCmsId, type: 'COURSE' });
-      toast.success('You are now the assigned publisher');
-    } catch { toast.error('Failed to claim — it may have been taken by someone else'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleReassignReview = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await reassignReview({ id: existingCmsId, type: 'COURSE', note: reassignNote });
-      toast.success('Review released — another reviewer can now claim it');
-      setShowReassignPanel(false);
-      setReassignNote('');
-      navigate('/my-tasks');
-    } catch { toast.error('Failed to release review'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleSaveReviewNote = async () => {
-    if (!existingCmsId || !reviewComment.trim()) return;
-    setIsReviewActing(true);
-    try {
-      await saveReviewNote({ id: existingCmsId, type: 'COURSE', note: reviewComment });
-      toast.success('Review notes saved');
-    } catch { toast.error('Failed to save review notes'); }
-    finally { setIsReviewActing(false); }
-  };
+  const {
+    reviewComment,
+    setReviewComment,
+    isReviewActing,
+    reassignNote,
+    setReassignNote,
+    showReassignPanel,
+    setShowReassignPanel,
+    handleApprove,
+    handlePublish,
+    handleSendBack,
+    handleReject,
+    handleClaimReview,
+    handleClaimForPublishing,
+    handleReassignReview,
+    handleSaveReviewNote,
+    handleSaveAndApprove,
+    handleSaveAndPublish,
+  } = useCmsWorkflowActions({
+    cmsType: 'COURSE',
+    cmsId: existingCmsId,
+    userId: user?.id,
+    contentBlocks,
+    buildUpdateData,
+    // Stay in view mode so reviewer can publish directly
+    onSaveAndApproveSuccess: () => { refreshSections(); setReviewerEditMode(false); },
+    onPublishSuccess: () => navigate('/courses'),
+    onSaveAndPublishSuccess: () => { refreshSections(); navigate('/courses'); setPublisherEditMode(false); },
+    onSendBackSuccess: () => navigate('/my-tasks'),
+    onRejectSuccess: () => navigate('/my-tasks'),
+    onReassignSuccess: () => navigate('/my-tasks'),
+  });
 
   const enterReviewerEditMode = () => {
     setReviewerEditBaseline({ title, description, bodyHtml });
@@ -300,28 +246,6 @@ export default function CourseCreator() {
     setReviewerEditMode(true);
   };
 
-  const handleSaveAndApprove = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await updateCms.mutateAsync({
-        id: existingCmsId,
-        data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined },
-      });
-      if (contentBlocks.length > 0) {
-        await uploadBody.mutateAsync({ id: existingCmsId, content: JSON.stringify(contentBlocks), type: 'COURSE' });
-      }
-      await approveCms({ id: existingCmsId, type: 'COURSE', data: undefined });
-      toast.success('Course saved and approved — ready to publish');
-      refreshSections();
-      setReviewerEditMode(false);
-    } catch {
-      toast.error('Failed to save and approve');
-    } finally {
-      setIsReviewActing(false);
-    }
-  };
-
   const enterPublisherEditMode = () => {
     setPublisherEditBaseline({ title, description, bodyHtml });
     if (contentBlocks.length === 0 && existingBody) {
@@ -331,29 +255,6 @@ export default function CourseCreator() {
       } catch (e) { console.error('Failed to parse body:', e); }
     }
     setPublisherEditMode(true);
-  };
-
-  const handleSaveAndPublish = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await updateCms.mutateAsync({
-        id: existingCmsId,
-        data: { type: 'COURSE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined },
-      });
-      if (contentBlocks.length > 0) {
-        await uploadBody.mutateAsync({ id: existingCmsId, content: JSON.stringify(contentBlocks), type: 'COURSE' });
-      }
-      await publishCms({ id: existingCmsId, type: 'COURSE', data: undefined });
-      toast.success('Course saved and published');
-      refreshSections();
-      navigate('/courses');
-      setPublisherEditMode(false);
-    } catch {
-      toast.error('Failed to save and publish');
-    } finally {
-      setIsReviewActing(false);
-    }
   };
 
   const isLoading = !!paramId && (cmsLoading || (!isDataLoaded && !!existingCms));
@@ -424,7 +325,7 @@ export default function CourseCreator() {
                 <Button
                   variant="ghost" size="sm"
                   onClick={() => {
-                    const s = existingCms?.slug || (existingCms?.title ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                    const s = existingCms?.slug || slugify(existingCms?.title);
                     window.open(`/course/${s}?preview=true`, '_blank');
                   }}
                   className="flex-1 sm:flex-none gap-2"
@@ -603,6 +504,16 @@ export default function CourseCreator() {
                             {courseTypes.find(ct => ct.value === courseType)?.description ?? 'Shown as a badge on the course hero and search results.'}
                           </p>
                         </div>
+                      </div>
+
+                      <div className="space-y-1.5 mt-4">
+                        <Label>Topics</Label>
+                        <TopicMultiSelect
+                          selectedTopicIds={selectedTopicIds}
+                          onChange={setSelectedTopicIds}
+                          disabled={isViewMode && !reviewerEditMode && !publisherEditMode}
+                        />
+                        <p className="text-xs text-muted-foreground">Topics associate this course with knowledge graph concepts.</p>
                       </div>
                     </CardContent>
                   </Card>

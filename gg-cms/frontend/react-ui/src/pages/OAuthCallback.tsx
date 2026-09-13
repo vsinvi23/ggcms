@@ -8,13 +8,14 @@ import { Loader2 } from 'lucide-react';
  *
  * The backend's /api/auth/{provider}/callback handler exchanges the
  * authorization code, creates / finds the local user, generates a JWT,
- * then does a 302 redirect to:
+ * sets it as an HttpOnly cookie, then does a 302 redirect to:
  *
- *   {FRONTEND_URL}/auth/callback?token=<jwt>
+ *   {FRONTEND_URL}/auth/callback
  *   {FRONTEND_URL}/auth/callback?error=<message>
  *
- * This page reads those query params, hydrates the AuthContext, and
- * navigates to /dashboard on success or back to /auth on failure.
+ * This page confirms the session against the backend, hydrates the
+ * AuthContext, and navigates to /dashboard on success or back to /auth
+ * on failure.
  */
 const OAuthCallback = () => {
   const navigate = useNavigate();
@@ -27,7 +28,6 @@ const OAuthCallback = () => {
     handled.current = true;
 
     const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
     const error = params.get('error');
 
     if (error) {
@@ -36,12 +36,7 @@ const OAuthCallback = () => {
       return;
     }
 
-    if (!token) {
-      navigate('/auth?oauthError=Sign-in+failed.+Please+try+again.', { replace: true });
-      return;
-    }
-
-    loginWithToken(token).then(({ error: loginErr }) => {
+    loginWithToken().then(({ error: loginErr }) => {
       if (loginErr) {
         navigate(`/auth?oauthError=${encodeURIComponent(loginErr)}`, { replace: true });
       } else {

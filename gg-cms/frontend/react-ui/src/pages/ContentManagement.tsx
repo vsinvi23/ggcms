@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Settings, Users, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 
 // ─── Adapters ──────────────────────────────────────────────────────────────────
 
@@ -120,8 +121,8 @@ export default function ContentManagement() {
       await deleteCategoryMutation(Number(category.id));
       if (selectedCategoryId === category.id) setSelectedCategoryId(null);
       toast.success('Category deleted');
-    } catch {
-      toast.error('Failed to delete category');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete category'));
     }
   };
 
@@ -141,8 +142,8 @@ export default function ContentManagement() {
         toast.success('Category created');
       }
       setModalOpen(false);
-    } catch {
-      toast.error(editingCategory ? 'Failed to update category' : 'Failed to create category');
+    } catch (err) {
+      toast.error(toUserMessage(err, editingCategory ? 'Failed to update category' : 'Failed to create category'));
     }
   };
 

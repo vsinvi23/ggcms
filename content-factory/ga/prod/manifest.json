@@ -1,0 +1,108 @@
+{
+  "system_name": "AI Content Factory Production Release Registry",
+  "environment": "prod",
+  "current_version": "1.0.2",
+  "last_build_at": "2026-09-12T06:41:41Z",
+  "releases": [
+    {
+      "version": "1.0.2",
+      "built_at": "2026-09-12T06:41:41Z",
+      "branch": "release",
+      "commit": "2696a53",
+      "components": {
+        "frontend": "1.0.6",
+        "backend": "1.0.5"
+      }
+    },
+    {
+      "version": "1.0.2",
+      "built_at": "2026-09-12T06:38:04Z",
+      "branch": "release",
+      "commit": "d7593ea",
+      "components": {
+        "frontend": "1.0.6",
+        "backend": "1.0.5"
+      }
+    },
+    {
+      "version": "1.0.2",
+      "built_at": "2026-09-12T06:12:42Z",
+      "branch": "release",
+      "commit": "f2e90b4",
+      "components": {
+        "frontend": "1.0.6",
+        "backend": "1.0.4"
+      }
+    },
+    {
+      "version": "1.0.2",
+      "built_at": "2026-09-12T06:10:10Z",
+      "branch": "release",
+      "commit": "6f362c8",
+      "components": {
+        "frontend": "1.0.6",
+        "backend": "1.0.4"
+      }
+    },
+    {
+      "version": "1.0.2",
+      "built_at": "2026-09-12T06:06:13Z",
+      "branch": "release",
+      "commit": "1b9b9bd",
+      "components": {
+        "frontend": "1.0.6",
+        "backend": "1.0.4"
+      }
+    },
+    {
+      "version": "1.0.2",
+      "built_at": "2026-09-11T15:43:20Z",
+      "branch": "release",
+      "commit": "098b5b5",
+      "components": {
+        "frontend": "1.0.3",
+        "backend": "1.0.2"
+      }
+    },
+    {
+      "version": "1.0.2",
+      "built_at": "2026-09-11T15:25:09Z",
+      "branch": "release",
+      "commit": "098b5b5",
+      "components": {
+        "frontend": "1.0.3",
+        "backend": "1.0.2"
+      }
+    },
+    {
+      "version": "1.0.2",
+      "built_at": "2026-09-11T10:46:14Z",
+      "branch": "release",
+      "commit": "daa66bd",
+      "components": {
+        "frontend": "1.0.3",
+        "backend": "1.0.3"
+      }
+    },
+    {
+      "version": "1.0.1",
+      "built_at": "2026-09-11T06:51:21Z",
+      "branch": "release",
+      "commit": "b54b868",
+      "components": {
+        "frontend": "1.0.1",
+        "backend": "1.0.1"
+      }
+    },
+    {
+      "version": "1.0.0",
+      "built_at": "2026-09-07T21:00:00Z",
+      "branch": "release",
+      "commit": "initial-cf-prod-build",
+      "components": {
+        "frontend": "1.0.0",
+        "backend": "1.0.0"
+      }
+    }
+  ]
+}

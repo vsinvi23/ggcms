@@ -46,6 +46,7 @@ import {
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 
 
 function AssignDialog({ item, open, onClose }: { item: CmsResponseDto | null; open: boolean; onClose: () => void }) {
@@ -60,8 +61,8 @@ function AssignDialog({ item, open, onClose }: { item: CmsResponseDto | null; op
       toast.success('Reviewer assigned');
       setSelectedId('');
       onClose();
-    } catch {
-      toast.error('Failed to assign reviewer');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to assign reviewer'));
     }
   };
 
@@ -146,8 +147,8 @@ export default function CourseManagement() {
     try {
       await reassignReview.mutateAsync({ id: course.id, type: 'COURSE', note: '' });
       toast.success('Assignee removed');
-    } catch {
-      toast.error('Failed to remove assignee');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to remove assignee'));
     }
   };
 
@@ -161,8 +162,8 @@ export default function CourseManagement() {
       toast.success('Course deleted');
       setDeleteDialog({ open: false, course: null });
       refetch();
-    } catch {
-      toast.error('Failed to delete course');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete course'));
     }
   };
 
@@ -173,8 +174,8 @@ export default function CourseManagement() {
       toast.success('Course submitted for review');
       setSubmitDialog({ open: false, course: null });
       refetch();
-    } catch {
-      toast.error('Failed to submit course for review');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to submit course for review'));
     }
   };
 
@@ -182,8 +183,8 @@ export default function CourseManagement() {
     try {
       await claimReview.mutateAsync({ id: course.id, type: 'COURSE' });
       navigate(`/courses/${course.slug ?? course.id}/edit?mode=view`);
-    } catch {
-      toast.error('Failed to claim — it may have been taken by someone else');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to claim — it may have been taken by someone else'));
     }
   };
 

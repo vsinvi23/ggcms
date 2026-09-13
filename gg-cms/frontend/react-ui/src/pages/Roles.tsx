@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Plus, Trash2, Loader2 } from 'lucide-react';
 import { UserGroupFormModal } from '@/components/roles/UserGroupFormModal';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useGroups } from '@/api/hooks/useGroups';
@@ -34,7 +35,7 @@ export default function RolesPage() {
     if (roleToDelete) {
       const success = await deleteGroup(roleToDelete);
       if (success) toast.success('Role deleted');
-      else toast.error('Failed to delete role');
+      else toast.error(toUserMessage(undefined, 'Failed to delete role'));
       setDeleteDialogOpen(false);
       setRoleToDelete(null);
     }

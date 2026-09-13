@@ -53,19 +53,17 @@ import {
   useSubmitCmsForReview,
   useDownloadCmsBody,
   useCmsActivity,
-  useApproveCms,
-  useSendCmsBack,
-  useRejectCms,
-  usePublishCms,
-  useClaimReview,
-  useReassignReview,
-  useSaveReviewNote,
 } from '@/api/hooks/useCms';
 import { useCategories } from '@/api/hooks/useCategories';
 import { useContentTypes } from '@/api/hooks/useContentTypes';
 import { parseBodyToBlocks, parseBodyToHtml, stripHtmlTags } from '@/lib/htmlParser';
 import { useAllowedCategories } from '@/hooks/useAllowedCategories';
 import { useAuth } from '@/contexts/AuthContext';
+import { TopicMultiSelect } from '@/components/ui/TopicMultiSelect';
+import { useContentTopics } from '@/api/hooks/useTopics';
+import { useCmsWorkflowActions } from '@/hooks/useCmsWorkflowActions';
+import { slugify } from '@/lib/slug';
+import { toUserMessage } from '@/lib/errors';
 
 export default function ArticleCreator() {
   const navigate = useNavigate();
@@ -83,15 +81,6 @@ export default function ArticleCreator() {
   const uploadThumbnail = useUploadCmsThumbnail();
   const submitForReview = useSubmitCmsForReview();
 
-  // API hooks — review actions
-  const { mutateAsync: approveCms } = useApproveCms();
-  const { mutateAsync: sendBackCms } = useSendCmsBack();
-  const { mutateAsync: rejectCms } = useRejectCms();
-  const { mutateAsync: publishCms } = usePublishCms();
-  const { mutateAsync: claimReview } = useClaimReview();
-  const { mutateAsync: reassignReview } = useReassignReview();
-  const { mutateAsync: saveReviewNote } = useSaveReviewNote();
-
   const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
   const { data: articleTypes = [] } = useContentTypes('article');
   const { data: existingCms, isLoading: cmsLoading, isError: cmsError } = useCmsBySlug(paramId, !!paramId);
@@ -108,14 +97,12 @@ export default function ArticleCreator() {
   const [articleType, setArticleType] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<number[]>([]);
+  const { data: initialTopics = [] } = useContentTopics(existingCmsId > 0 ? existingCmsId : null, 'ARTICLE');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [reviewComment, setReviewComment] = useState('');
-  const [isReviewActing, setIsReviewActing] = useState(false);
-  const [reassignNote, setReassignNote] = useState('');
-  const [showReassignPanel, setShowReassignPanel] = useState(false);
   const [reviewerEditMode, setReviewerEditMode] = useState(false);
   const [reviewerEditBaseline, setReviewerEditBaseline] = useState<{ title: string; description: string; bodyHtml: string } | null>(null);
   const [publisherEditMode, setPublisherEditMode] = useState(false);
@@ -167,6 +154,12 @@ export default function ArticleCreator() {
   }, [existingCms, isDataLoaded]);
 
   useEffect(() => {
+    if (initialTopics.length > 0 && selectedTopicIds.length === 0) {
+      setSelectedTopicIds(initialTopics.map((t) => t.id));
+    }
+  }, [initialTopics, selectedTopicIds.length]);
+
+  useEffect(() => {
     if (!isViewMode && existingBody && isDataLoaded && contentBlocks.length === 0) {
       try {
         const parsedBlocks = parseBodyToBlocks(existingBody);
@@ -198,11 +191,11 @@ export default function ArticleCreator() {
         cmsId = existingCmsId;
         await updateCms.mutateAsync({
           id: cmsId,
-          data: { type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined },
+          data: { type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined, topicIds: selectedTopicIds },
         });
       } else {
         const created = await createCms.mutateAsync({
-          type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined,
+          type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined, topicIds: selectedTopicIds,
         });
         cmsId = created.id;
         cmsSlug = created.slug;
@@ -219,100 +212,48 @@ export default function ArticleCreator() {
       }
     } catch (error) {
       console.error('Save error:', error);
-      toast.error('Failed to save article');
+      toast.error(toUserMessage(error, 'Failed to save article'));
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Review action handlers
-  const handleApprove = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await approveCms({ id: existingCmsId, type: 'ARTICLE', data: undefined });
-      toast.success('Article approved — a publisher will pick it up from the queue');
-      navigate('/my-tasks');
-    } catch { toast.error('Failed to approve'); }
-    finally { setIsReviewActing(false); }
-  };
+  const buildUpdateData = () => ({
+    type: 'ARTICLE' as const, categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined,
+  });
 
-  const handlePublish = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await publishCms({ id: existingCmsId, type: 'ARTICLE', data: undefined });
-      toast.success('Article published successfully');
-      navigate('/articles');
-    } catch { toast.error('Failed to publish'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleSendBack = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await sendBackCms({ id: existingCmsId, type: 'ARTICLE', data: { reviewerId: user?.id ?? 0, comment: reviewComment } });
-      toast.success('Article sent back for revision');
-      navigate('/my-tasks');
-    } catch { toast.error('Failed to send back'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleReject = async () => {
-    if (!existingCmsId) return;
-    if (!reviewComment.trim()) { toast.error('Please provide a reason for rejection'); return; }
-    setIsReviewActing(true);
-    try {
-      await rejectCms({ id: existingCmsId, type: 'ARTICLE', data: { reviewerId: user?.id ?? 0, comment: reviewComment } });
-      toast.success('Article rejected');
-      navigate('/my-tasks');
-    } catch { toast.error('Failed to reject'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleClaimReview = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await claimReview({ id: existingCmsId, type: 'ARTICLE' });
-      toast.success('You are now the assigned reviewer');
-    } catch { toast.error('Failed to claim review — it may have been claimed by someone else'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleClaimForPublishing = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await claimReview({ id: existingCmsId, type: 'ARTICLE' });
-      toast.success('You are now the assigned publisher');
-    } catch { toast.error('Failed to claim — it may have been taken by someone else'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleReassignReview = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await reassignReview({ id: existingCmsId, type: 'ARTICLE', note: reassignNote });
-      toast.success('Review released — another reviewer can now claim it');
-      setShowReassignPanel(false);
-      setReassignNote('');
-      navigate('/my-tasks');
-    } catch { toast.error('Failed to release review'); }
-    finally { setIsReviewActing(false); }
-  };
-
-  const handleSaveReviewNote = async () => {
-    if (!existingCmsId || !reviewComment.trim()) return;
-    setIsReviewActing(true);
-    try {
-      await saveReviewNote({ id: existingCmsId, type: 'ARTICLE', note: reviewComment });
-      toast.success('Review notes saved');
-    } catch { toast.error('Failed to save review notes'); }
-    finally { setIsReviewActing(false); }
-  };
+  const {
+    reviewComment,
+    setReviewComment,
+    isReviewActing,
+    reassignNote,
+    setReassignNote,
+    showReassignPanel,
+    setShowReassignPanel,
+    handleApprove,
+    handlePublish,
+    handleSendBack,
+    handleReject,
+    handleClaimReview,
+    handleClaimForPublishing,
+    handleReassignReview,
+    handleSaveReviewNote,
+    handleSaveAndApprove,
+    handleSaveAndPublish,
+  } = useCmsWorkflowActions({
+    cmsType: 'ARTICLE',
+    cmsId: existingCmsId,
+    userId: user?.id,
+    contentBlocks,
+    buildUpdateData,
+    onApproveSuccess: () => navigate('/my-tasks'),
+    onSaveAndApproveSuccess: () => navigate('/my-tasks'),
+    onPublishSuccess: () => navigate('/articles'),
+    onSaveAndPublishSuccess: () => { navigate('/articles'); setPublisherEditMode(false); },
+    onSendBackSuccess: () => navigate('/my-tasks'),
+    onRejectSuccess: () => navigate('/my-tasks'),
+    onReassignSuccess: () => navigate('/my-tasks'),
+  });
 
   const enterReviewerEditMode = () => {
     setReviewerEditBaseline({ title, description, bodyHtml });
@@ -327,27 +268,6 @@ export default function ArticleCreator() {
     setReviewerEditMode(true);
   };
 
-  const handleSaveAndApprove = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await updateCms.mutateAsync({
-        id: existingCmsId,
-        data: { type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined },
-      });
-      if (contentBlocks.length > 0) {
-        await uploadBody.mutateAsync({ id: existingCmsId, content: JSON.stringify(contentBlocks) });
-      }
-      await approveCms({ id: existingCmsId, type: 'ARTICLE', data: undefined });
-      toast.success('Article saved and approved — a publisher will pick it up from the queue');
-      navigate('/my-tasks');
-    } catch {
-      toast.error('Failed to save and approve');
-    } finally {
-      setIsReviewActing(false);
-    }
-  };
-
   const enterPublisherEditMode = () => {
     setPublisherEditBaseline({ title, description, bodyHtml });
     if (contentBlocks.length === 0 && existingBody) {
@@ -357,28 +277,6 @@ export default function ArticleCreator() {
       } catch (e) { console.error('Failed to parse body:', e); }
     }
     setPublisherEditMode(true);
-  };
-
-  const handleSaveAndPublish = async () => {
-    if (!existingCmsId) return;
-    setIsReviewActing(true);
-    try {
-      await updateCms.mutateAsync({
-        id: existingCmsId,
-        data: { type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined },
-      });
-      if (contentBlocks.length > 0) {
-        await uploadBody.mutateAsync({ id: existingCmsId, content: JSON.stringify(contentBlocks) });
-      }
-      await publishCms({ id: existingCmsId, type: 'ARTICLE', data: undefined });
-      toast.success('Article saved and published');
-      navigate('/articles');
-      setPublisherEditMode(false);
-    } catch {
-      toast.error('Failed to save and publish');
-    } finally {
-      setIsReviewActing(false);
-    }
   };
 
   const isLoading = !!paramId && (cmsLoading || (!isDataLoaded && !!existingCms));
@@ -444,7 +342,7 @@ export default function ArticleCreator() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    const s = existingCms?.slug || (existingCms?.title ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+                    const s = existingCms?.slug || slugify(existingCms?.title);
                     window.open(`/article/${s}?preview=true`, '_blank');
                   }}
                   className="flex-1 sm:flex-none gap-2"
@@ -598,6 +496,14 @@ export default function ArticleCreator() {
                         disabled={isViewMode && !reviewerEditMode && !publisherEditMode}
                       />
                     )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Topics</Label>
+                    <TopicMultiSelect
+                      selectedTopicIds={selectedTopicIds}
+                      onChange={setSelectedTopicIds}
+                      disabled={isViewMode && !reviewerEditMode && !publisherEditMode}
+                    />
                   </div>
                 </CardContent>
               </Card>

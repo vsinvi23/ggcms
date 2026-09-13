@@ -84,7 +84,7 @@ jobs:
             --min-instances=0 \
             --max-instances=3 \
             --no-allow-unauthenticated \
-            --set-secrets=JWT_SECRET=gg-cms-jwt-secret:latest,ADMIN_PASSWORD=gg-cms-admin-password:latest \
+            --set-secrets=JWT_SECRET=gg-cms-jwt-secret:latest,ADMIN_PASSWORD=gg-cms-admin-password:latest,ADMIN_RECOVERY_SECRET=gg-cms-admin-recovery-secret:latest \
             --set-env-vars="\
               GIN_MODE=release,\
               TLS_ENABLED=false,\
@@ -92,7 +92,8 @@ jobs:
               MONGO_DATABASE=gg_cms,\
               DB_WRITE_URL=${{ secrets.CLOUDRUN_DB_WRITE_URL }},\
               MONGO_URI=${{ secrets.CLOUDRUN_MONGO_URI }},\
-              ADMIN_EMAIL=admin@gg-cms.local"
+              ADMIN_EMAIL=info@serenyax.com"
+              # Must match release/gcp/deploy.sh — keep all three deploy paths in sync
 
       - name: Get Cloud Run URL
         run: |

@@ -1,0 +1,522 @@
+import { useState, type FormEvent } from "react"
+import { ArrowRight, CheckCircle2, FolderKanban, Globe2, Plus, Sparkles, Wand2, X } from "lucide-react"
+import { useAppContext } from "../context/AppContext"
+import { useToast } from "../components/Toast"
+import * as api from "../services/api"
+import { ApiError } from "../services/api"
+import { Button, Card, EmptyState, Field, Input, InlineError, PageHeader, TagInput } from "../components/ui"
+import type { ProjectCreatePayload } from "../services/types"
+
+import { FIELD_INFO } from "../constants/fieldInfo"
+
+const LEVEL_OPTIONS = ["beginner", "intermediate", "advanced"]
+const QUICK_START_STOP_WORDS = new Set([
+  "the",
+  "a",
+  "an",
+  "for",
+  "and",
+  "with",
+  "want",
+  "create",
+  "content",
+  "project",
+  "build",
+  "about",
+  "using",
+  "into",
+  "from",
+  "that",
+  "this",
+  "idea",
+  "website",
+  "platform",
+  "articles",
+  "article",
+  "blog",
+  "posts",
+  "post",
+  "topics",
+  "topic",
+])
+
+const TOPIC_PRESETS: Array<{
+  keywords: string[]
+  niche: string[]
+  audience: string[]
+  content_types: string[]
+  brand_voice: string
+  primary_topic: string
+}> = [
+  {
+    keywords: ["oauth", "openid", "oidc", "jwt", "authentication", "auth"],
+    niche: ["oauth", "authentication", "identity security"],
+    audience: ["backend developers", "security engineers", "product teams"],
+    content_types: ["tutorial", "how-to", "comparison"],
+    primary_topic: "OAuth & identity",
+    brand_voice:
+      "best teacher voice: start with a real authentication problem, explain the flow clearly, compare trade-offs, and show the practical secure pattern with pros, cons, and clear takeaways",
+  },
+  {
+    keywords: ["ai", "llm", "machine learning", "generative ai"],
+    niche: ["ai systems", "llm workflows", "practical automation"],
+    audience: ["product builders", "developers", "startup teams"],
+    content_types: ["tutorial", "concept-guide", "comparison"],
+    primary_topic: "AI workflows",
+    brand_voice:
+      "best teacher voice: start with the real-world AI problem, break down the architecture step by step, compare the options, and explain the practical trade-offs in a way beginners and experts can both use",
+  },
+  {
+    keywords: ["security", "cyber", "compliance", "zero trust"],
+    niche: ["security", "risk reduction", "secure architecture"],
+    audience: ["security teams", "engineers", "founders"],
+    content_types: ["tutorial", "concept-guide", "reference"],
+    primary_topic: "Security engineering",
+    brand_voice:
+      "best teacher voice: start with the attack pattern or incident, explain the underlying security principle, compare viable approaches, and close with a practical risk-aware recommendation",
+  },
+  {
+    keywords: ["marketing", "seo", "growth", "brand"],
+    niche: ["growth marketing", "content strategy", "audience acquisition"],
+    audience: ["founders", "marketing teams", "operators"],
+    content_types: ["article", "how-to", "strategy-guide"],
+    primary_topic: "Growth marketing",
+    brand_voice:
+      "best teacher voice: start with a real growth problem, explain the pattern behind the decision, compare the trade-offs, and give a practical execution plan for the reader",
+  },
+]
+
+function emptyForm(): ProjectCreatePayload {
+  return { name: "", niche: [], audience: [], language: "en", country: "", levels: [], content_types: ["article", "tutorial"] }
+}
+
+function toTitleCase(value: string): string {
+  return value
+    .split(/[-\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+function extractTopicPhrase(raw: string): string {
+  const lower = raw.toLowerCase()
+  const preset = TOPIC_PRESETS.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))
+  if (preset) return preset.primary_topic
+
+  const cleaned = lower.replace(/[^a-z0-9\s-]/g, " ")
+  const words = cleaned
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter((word) => word.length > 2 && !QUICK_START_STOP_WORDS.has(word))
+
+  const phrase = Array.from(new Set(words)).slice(0, 4).join(" ")
+  return phrase ? phrase : "General content"
+}
+
+function inferProjectSettings(goal: string) {
+  const raw = goal.trim()
+  const lower = raw.toLowerCase()
+
+  const preset = TOPIC_PRESETS.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))
+
+  const niche = preset ? preset.niche : (() => {
+    const cleaned = lower.replace(/[^a-z0-9\s-]/g, " ")
+    const words = cleaned
+      .split(/\s+/)
+      .map((word) => word.trim())
+      .filter((word) => word.length > 2 && !QUICK_START_STOP_WORDS.has(word))
+
+    const topicWords = Array.from(new Set(words)).slice(0, 4)
+    return topicWords.length > 0 ? topicWords.map((word) => word.replace(/-/g, " ")) : ["general"]
+  })()
+
+  const audienceMap: Array<{ keywords: string[]; audience: string[] }> = [
+    { keywords: ["developer", "engineer", "software", "cloud", "devops", "api", "oauth", "jwt", "auth"], audience: ["developers", "engineering teams", "platform engineers"] },
+    { keywords: ["founder", "startup", "saas", "business", "marketing", "growth"], audience: ["founders", "product teams", "business operators"] },
+    { keywords: ["student", "learn", "education", "course", "academy"], audience: ["students", "career changers"] },
+    { keywords: ["finance", "fintech", "bank", "invest"], audience: ["finance professionals", "decision makers"] },
+    { keywords: ["security", "compliance", "risk", "zero trust"], audience: ["security teams", "engineering leaders"] },
+  ]
+
+  const audience = preset?.audience ?? audienceMap.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))?.audience ?? ["general audience"]
+
+  const projectName = `${toTitleCase(extractTopicPhrase(raw))} Studio`
+
+  const contentTypeHints = [
+    { keywords: ["comparison", "compare", "vs", "tradeoff", "trade-off"], types: ["comparison", "how-to", "tutorial"] },
+    { keywords: ["tutorial", "guide", "step", "walkthrough", "implementation"], types: ["tutorial", "how-to", "concept-guide"] },
+    { keywords: ["newsletter", "news", "updates", "release"], types: ["article", "newsletter"] },
+    { keywords: ["course", "learning", "academy", "training"], types: ["course", "tutorial", "concept-guide"] },
+  ]
+
+  const content_types =
+    preset?.content_types ?? contentTypeHints.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))?.types ?? ["article", "tutorial"]
+
+  const frequency = /weekly|week/.test(lower) ? "1x per week" : /daily|day/.test(lower) ? "5x per week" : "3x per week"
+
+  return {
+    name: projectName,
+    niche,
+    audience,
+    language: "en",
+    country: "",
+    levels: ["beginner", "intermediate"],
+    content_types,
+    strategy: {
+      content_goals: [
+        `Explain the core ${extractTopicPhrase(raw).toLowerCase()} problem clearly and practically for the target audience`,
+        "Teach with real scenarios, decision-making, and trade-offs before presenting the solution",
+        "Focus on useful, fact-checked takeaways with examples that readers can apply quickly",
+      ],
+      prohibited_topics: ["low-quality speculation", "unsupported claims", "off-topic fluff"],
+      preferred_sources: ["official docs", "trusted publications", "industry reports", "github repos"],
+      publishing_frequency: frequency,
+      brand_voice: preset?.brand_voice ??
+        "best teacher voice: start with a real scenario and problem, explain the approach and trade-offs, then walk through the solution with practical examples, pros and cons, and a clear takeaway for readers at all levels",
+    },
+  }
+}
+
+function QuickStartProjectForm({ onDone, onCancel }: { onDone: (id: string) => void; onCancel: () => void }) {
+  const [goal, setGoal] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { refreshProjects, selectProject } = useAppContext()
+  const { showToast } = useToast()
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    const trimmed = goal.trim()
+    if (!trimmed) {
+      setError("Tell us what this project should create content about.")
+      return
+    }
+
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      const config = inferProjectSettings(trimmed)
+      const project = await api.createProject({
+        name: config.name,
+        niche: config.niche,
+        audience: config.audience,
+        language: config.language,
+        country: config.country || undefined,
+        levels: config.levels,
+        content_types: config.content_types,
+      })
+
+      await api.updateProjectSettings(project.id, {
+        name: project.name,
+        niche: project.niche,
+        audience: project.audience,
+        language: project.language,
+        country: project.country ?? undefined,
+        levels: project.levels,
+        content_types: project.content_types,
+        brand_voice: config.strategy.brand_voice,
+        autonomy_enabled: false,
+        min_opportunity_score: 70,
+        daily_limit: 3,
+        require_human_approval: true,
+      })
+
+      await api.updateProjectStrategy(project.id, {
+        content_goals: config.strategy.content_goals,
+        prohibited_topics: config.strategy.prohibited_topics,
+        preferred_sources: config.strategy.preferred_sources,
+        publishing_frequency: config.strategy.publishing_frequency,
+      })
+
+      refreshProjects()
+      selectProject(project.id)
+      showToast("Project created and configured for you.", "success")
+      onDone(project.id)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not create the project automatically.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Card className="p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-zinc-100">Quick start</h3>
+        <button type="button" onClick={onCancel} aria-label="Cancel" className="text-zinc-500 hover:text-zinc-200">
+          <X size={16} />
+        </button>
+      </div>
+
+      <form onSubmit={submit} className="space-y-4">
+        {error && <InlineError message={error} onDismiss={() => setError(null)} />}
+
+        <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-3">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-purple-300">
+            <Wand2 size={14} /> Recommended for new users
+          </div>
+          <p className="text-xs text-zinc-300 leading-relaxed">
+            We’ll infer the project domain, audience, content style, and source rules for you and create the project in the background.
+          </p>
+        </div>
+
+        <Field label="What should this project create content about?" htmlFor="quick-goal" info={FIELD_INFO.projectName}>
+          <Input
+            id="quick-goal"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            placeholder="e.g. Developer tutorials for AI tools for startup founders"
+          />
+        </Field>
+
+        <div className="text-xs text-zinc-500">
+          We’ll set up a default audience, content types, and quality guardrails automatically.
+        </div>
+
+        <div className="flex items-center gap-3 pt-1">
+          <Button type="submit" loading={submitting} icon={<Sparkles size={15} />}>
+            Create project
+          </Button>
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Card>
+  )
+}
+
+function CreateProjectForm({ onDone, onCancel }: { onDone: (id: string) => void; onCancel: () => void }) {
+  const [form, setForm] = useState<ProjectCreatePayload>(emptyForm())
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const toggleLevel = (level: string) => {
+    setForm((f) => ({
+      ...f,
+      levels: f.levels.includes(level) ? f.levels.filter((l) => l !== level) : [...f.levels, level],
+    }))
+  }
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!form.name.trim()) {
+      setError("Give the project a name.")
+      return
+    }
+    setSubmitting(true)
+    setError(null)
+    try {
+      const project = await api.createProject({
+        ...form,
+        country: form.country?.trim() ? form.country.trim() : undefined,
+      })
+      onDone(project.id)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not create the project.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <Card className="p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-zinc-100">New project</h3>
+        <button type="button" onClick={onCancel} aria-label="Cancel" className="text-zinc-500 hover:text-zinc-200">
+          <X size={16} />
+        </button>
+      </div>
+
+      <form onSubmit={submit} className="space-y-4">
+        {error && <InlineError message={error} onDismiss={() => setError(null)} />}
+
+        <Field label="Project name" htmlFor="proj-name" info={FIELD_INFO.projectName}>
+          <Input
+            id="proj-name"
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            placeholder="e.g. Developer Learning Hub"
+            required
+          />
+        </Field>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Niche(s)" hint="Press Enter or comma to add" info={FIELD_INFO.niche}>
+            <TagInput values={form.niche} onChange={(niche) => setForm((f) => ({ ...f, niche }))} placeholder="e.g. python, devops" />
+          </Field>
+          <Field label="Audience" hint="Who is this content for?" info={FIELD_INFO.audience}>
+            <TagInput values={form.audience} onChange={(audience) => setForm((f) => ({ ...f, audience }))} placeholder="e.g. backend engineers" />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Language" htmlFor="proj-lang" info={FIELD_INFO.language}>
+            <Input
+              id="proj-lang"
+              value={form.language}
+              onChange={(e) => setForm((f) => ({ ...f, language: e.target.value }))}
+              placeholder="en"
+            />
+          </Field>
+          <Field label="Country" htmlFor="proj-country" hint="Optional" info={FIELD_INFO.country}>
+            <Input
+              id="proj-country"
+              value={form.country}
+              onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
+              placeholder="Optional"
+            />
+          </Field>
+        </div>
+
+        <Field label="Levels covered" info={FIELD_INFO.levels}>
+          <div className="flex flex-wrap gap-2">
+            {LEVEL_OPTIONS.map((level) => (
+              <button
+                type="button"
+                key={level}
+                onClick={() => toggleLevel(level)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
+                  form.levels.includes(level)
+                    ? "border-purple-500 bg-purple-500/15 text-purple-300"
+                    : "border-zinc-700 text-zinc-400 hover:border-zinc-600"
+                }`}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
+        </Field>
+
+        <Field label="Content types" hint="e.g. tutorial, how-to, concept-guide, quiz" info={FIELD_INFO.contentTypes}>
+          <TagInput
+            values={form.content_types}
+            onChange={(content_types) => setForm((f) => ({ ...f, content_types }))}
+            placeholder="e.g. tutorial, how-to"
+          />
+        </Field>
+
+        <div className="flex items-center gap-3 pt-1">
+          <Button type="submit" loading={submitting}>
+            Create project
+          </Button>
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Card>
+  )
+}
+
+export default function Projects({ onOpen }: { onOpen: (id: string) => void }) {
+  const { projects, projectsLoading, projectsError, backendOffline, selectedProjectId, selectProject, refreshProjects } =
+    useAppContext()
+  const { showToast } = useToast()
+  const [creating, setCreating] = useState(false)
+  const [quickStartOpen, setQuickStartOpen] = useState(false)
+
+  const handleCreated = (id: string) => {
+    refreshProjects()
+    selectProject(id)
+    setCreating(false)
+    setQuickStartOpen(false)
+    showToast("Project created.", "success")
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Projects"
+        subtitle="Each project has its own strategy, sources, and content pipeline."
+        action={
+          !creating && !quickStartOpen && (
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" icon={<Sparkles size={15} />} onClick={() => setQuickStartOpen(true)}>
+                Quick start
+              </Button>
+              <Button icon={<Plus size={15} />} onClick={() => setCreating(true)}>
+                Advanced
+              </Button>
+            </div>
+          )
+        }
+      />
+
+      {quickStartOpen && <QuickStartProjectForm onDone={handleCreated} onCancel={() => setQuickStartOpen(false)} />}
+      {creating && <CreateProjectForm onDone={handleCreated} onCancel={() => setCreating(false)} />}
+
+      {projectsLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-32 animate-pulse rounded-xl border border-zinc-800 bg-zinc-900" />
+          ))}
+        </div>
+      ) : projectsError ? (
+        <Card>
+          <div className="p-2">
+            <p className="px-4 pt-4 text-sm text-red-300">{projectsError}</p>
+            {backendOffline && <p className="px-4 text-xs text-zinc-500">Is the backend running?</p>}
+            <div className="p-4">
+              <Button variant="secondary" onClick={refreshProjects}>
+                Try again
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ) : projects.length === 0 && !creating ? (
+        <Card>
+          <EmptyState
+            icon={<FolderKanban size={22} />}
+            title="No projects yet"
+            description="A project holds your niche, audience, and knowledge sources. Create one to get started."
+            action={
+              <Button icon={<Plus size={15} />} onClick={() => setCreating(true)}>
+                New project
+              </Button>
+            }
+          />
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((p) => {
+            const active = p.id === selectedProjectId
+            return (
+              <Card key={p.id} className={`flex flex-col gap-3 p-5 ${active ? "ring-1 ring-purple-500" : ""}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-semibold text-zinc-100">{p.name}</h3>
+                  {active && <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-purple-400" />}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {p.niche.length === 0 ? (
+                    <span className="text-xs text-zinc-600">No niche set</span>
+                  ) : (
+                    p.niche.map((n) => (
+                      <span key={n} className="rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] text-zinc-300">
+                        {n}
+                      </span>
+                    ))
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                  <Globe2 size={13} />
+                  {p.language}
+                  {p.country ? ` · ${p.country}` : ""}
+                </div>
+                <div className="mt-auto flex flex-col gap-2 pt-2">
+                  <Button icon={<ArrowRight size={14} />} className="w-full" onClick={() => onOpen(p.id)}>
+                    Open project
+                  </Button>
+                  <Button variant="secondary" disabled={active} className="w-full" onClick={() => selectProject(p.id)}>
+                    {active ? "Active project" : "Make active"}
+                  </Button>
+                </div>
+              </Card>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}

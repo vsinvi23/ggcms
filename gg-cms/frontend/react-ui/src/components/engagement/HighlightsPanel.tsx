@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 import {
   Highlighter,
   Trash2,
@@ -131,16 +132,16 @@ function HighlightCard({
       await updateHighlight({ id: highlight.id, note: noteText.trim() });
       toast.success(noteText.trim() ? 'Note saved' : 'Note cleared');
       setEditingNote(false);
-    } catch {
-      toast.error('Failed to save note');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to save note'));
     }
   };
 
   const handleDelete = async () => {
     try {
       await deleteHighlight(highlight.id);
-    } catch {
-      toast.error('Failed to remove highlight');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to remove highlight'));
     }
   };
 

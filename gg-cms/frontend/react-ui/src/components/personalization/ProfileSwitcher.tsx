@@ -23,6 +23,7 @@ import { useProfiles, useSetActiveProfile, useCreateProfile } from '@/api/hooks/
 import { ROLE_PRESETS } from '@/lib/rolePresets';
 import type { ExperienceLevel, RoleType } from '@/api/types';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 
 export function ProfileSwitcher() {
   const { data: profiles = [], isLoading } = useProfiles();
@@ -40,8 +41,8 @@ export function ProfileSwitcher() {
     try {
       await setActive.mutateAsync(id);
       toast.success('Profile switched');
-    } catch {
-      toast.error('Failed to switch profile');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to switch profile'));
     }
   };
 
@@ -60,8 +61,8 @@ export function ProfileSwitcher() {
       setCreateOpen(false);
       setNewName('');
       setSelectedPreset(null);
-    } catch {
-      toast.error('Failed to create profile');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to create profile'));
     }
   };
 

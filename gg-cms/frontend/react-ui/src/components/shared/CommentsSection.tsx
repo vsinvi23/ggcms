@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { MessageSquare, Reply } from 'lucide-react';
 import { toast } from 'sonner';
+import { toUserMessage } from '@/lib/errors';
 import { useReviewComments, useCreateComment } from '@/api/hooks/useReviewComments';
 import { ReviewCommentDto, ReviewCommentContentType } from '@/api/types';
 
@@ -133,8 +134,8 @@ export function CommentsSection({ contentType, contentId }: CommentsSectionProps
       await createComment({ content: newComment.trim(), contentType, contentId: String(contentId) });
       setNewComment('');
       toast.success('Comment posted');
-    } catch {
-      toast.error('Failed to post comment');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to post comment'));
     }
   };
 
@@ -142,8 +143,8 @@ export function CommentsSection({ contentType, contentId }: CommentsSectionProps
     try {
       await createComment({ content, contentType, contentId: String(contentId), parentId });
       toast.success('Reply posted');
-    } catch {
-      toast.error('Failed to post reply');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to post reply'));
     }
   };
 

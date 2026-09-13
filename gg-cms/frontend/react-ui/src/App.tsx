@@ -28,6 +28,8 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const UserSettings = lazy(() => import('./pages/UserSettings'));
 const PublicHome = lazy(() => import('./pages/PublicHome'));
 const Auth = lazy(() => import('./pages/Auth'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const TechnologyPage = lazy(() => import('./pages/TechnologyPage'));
 const CourseCategoryPage = lazy(() => import('./pages/CourseCategoryPage'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
@@ -41,6 +43,7 @@ const NotesHighlightsPage = lazy(() => import('./pages/NotesHighlightsPage'));
 const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const BulkImport = lazy(() => import('./pages/BulkImport'));
+const FactoryPage = lazy(() => import('./pages/FactoryPage'));
 
 class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   state = { hasError: false };
@@ -82,6 +85,8 @@ const App = () => (
                 <Route path="/" element={<PublicHome />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<OAuthCallback />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/technology/:slug" element={<TechnologyPage />} />
                 <Route path="/explore/:category" element={<CourseCategoryPage />} />
@@ -111,6 +116,8 @@ const App = () => (
                 <Route path="/my-learning" element={<ProtectedRoute><MyLearning /></ProtectedRoute>} />
                 <Route path="/notes-highlights" element={<ProtectedRoute><NotesHighlightsPage /></ProtectedRoute>} />
                 <Route path="/analytics" element={<ProtectedRoute requireAdmin><Analytics /></ProtectedRoute>} />
+                <Route path="/factory" element={<ProtectedRoute requireAdmin><FactoryPage /></ProtectedRoute>} />
+                <Route path="/factory/*" element={<ProtectedRoute requireAdmin><FactoryPage /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                 <Route path="/account-settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />

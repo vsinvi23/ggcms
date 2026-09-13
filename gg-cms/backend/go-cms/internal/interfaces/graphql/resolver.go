@@ -173,7 +173,11 @@ func NewHandler(cmsSvc cmssvc.Service, catSvc categorysvc.Service) (*Handler, er
 					if err != nil {
 						return nil, err
 					}
-					return result, nil
+					article, ok := result.(*entity.Article)
+					if !ok || article.Status != entity.CMSStatusPublished {
+						return nil, nil
+					}
+					return article, nil
 				},
 			},
 			"courses": &graphql.Field{
@@ -209,7 +213,11 @@ func NewHandler(cmsSvc cmssvc.Service, catSvc categorysvc.Service) (*Handler, er
 					if err != nil {
 						return nil, err
 					}
-					return result, nil
+					course, ok := result.(*entity.Course)
+					if !ok || course.Status != entity.CMSStatusPublished {
+						return nil, nil
+					}
+					return course, nil
 				},
 			},
 			"categories": &graphql.Field{
