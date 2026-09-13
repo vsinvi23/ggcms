@@ -241,11 +241,44 @@ The default project brand voice also reflects this requirement and is configured
 
 ---
 
-## 8. Settings and configuration requirements
+## 8. Hybrid LLM strategy and guardrails
+
+The system should use a hybrid model, not a pure LLM-only pipeline.
+
+### 8.1 Design principle
+
+The correct pattern is:
+
+1. use deterministic rules to constrain scope, compute score, and enforce approval gates,
+2. use LLMs only for semantically rich gap-filling such as topic expansion, reasoning, and headline variation,
+3. let explicit project data and upstream signals win over LLM guesses,
+4. require a human approval step before any generation job can use a topic.
+
+This prevents the model from drifting into generic “AI will figure it out” behavior that ignores the real user intent or the project’s editorial boundaries.
+
+### 8.2 Required hybrid behavior
+
+- Deterministic scoring is the source of truth for final opportunity quality.
+- The LLM may explain or expand a candidate, but it cannot override strong project data.
+- Raw signals from the project or the discovery pipeline must take precedence over LLM-generated estimations.
+- Suggested references and topic expansions are useful but should be treated as unverified unless explicitly corroborated by trusted sources.
+- The opportunity is not considered ready for generation until it is approved by the user or by the configured approval policy.
+
+### 8.3 Why this matters
+
+A pure LLM approach tends to prioritize plausibility over actual fit. A hybrid approach keeps the system useful by combining:
+
+- deterministic quality signals for fairness and reproducibility,
+- LLM assistance for richer content expansion and reasoning,
+- explicit human review before creation.
+
+This is the right balance for a content factory that must be both scalable and trustworthy.
+
+## 9. Settings and configuration requirements
 
 The following settings support the behavior described above:
 
-### 8.1 Project-level defaults
+### 9.1 Project-level defaults
 
 - brand_voice: teacher-led storytelling voice
 - project audience
@@ -254,10 +287,30 @@ The following settings support the behavior described above:
 - difficulty defaults
 - approval-first generation mode
 
-### 8.2 UI-level settings
+### 9.2 UI-level settings
 
 - the generation form should show only the essentials by default
 - advanced settings hidden behind an explicit toggle
+
+### 9.3 Quick-start intent extraction requirement
+
+Quick project creation is not a generic keyword parser. It must interpret the user’s actual intent and convert it into a project configuration that is specific to the requested domain, audience, and content style.
+
+Examples:
+
+- "create articles for oauth" must produce a project focused on OAuth, authentication, and identity topics rather than a generic article factory
+- "build AI security tutorials for founders" must prefer AI/security-focused educational content and founder-oriented messaging
+- short or vague requests must still preserve useful defaults, but they must never overwrite the user’s stated domain with generic defaults
+
+The quick-start inference must prioritize:
+
+1. the strongest topic or subject phrase in the request,
+2. the intended audience implied by the domain,
+3. the content format that matches the user’s intent,
+4. the brand voice and structure that support teacher-led storytelling,
+5. explicit user direction over generic fallback values.
+
+This requirement exists so the project configuration reflects the real ask instead of keyword frequency or a generic "10 article" default shape.
 - generation action disabled until an approved opportunity is selected
 
 ### 8.3 Prompt-level settings

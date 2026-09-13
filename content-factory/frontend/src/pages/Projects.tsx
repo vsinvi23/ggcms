@@ -31,7 +31,60 @@ const QUICK_START_STOP_WORDS = new Set([
   "idea",
   "website",
   "platform",
+  "articles",
+  "article",
+  "blog",
+  "posts",
+  "post",
+  "topics",
+  "topic",
 ])
+
+const TOPIC_PRESETS: Array<{
+  keywords: string[]
+  niche: string[]
+  audience: string[]
+  content_types: string[]
+  brand_voice: string
+  primary_topic: string
+}> = [
+  {
+    keywords: ["oauth", "openid", "oidc", "jwt", "authentication", "auth"],
+    niche: ["oauth", "authentication", "identity security"],
+    audience: ["backend developers", "security engineers", "product teams"],
+    content_types: ["tutorial", "how-to", "comparison"],
+    primary_topic: "OAuth & identity",
+    brand_voice:
+      "best teacher voice: start with a real authentication problem, explain the flow clearly, compare trade-offs, and show the practical secure pattern with pros, cons, and clear takeaways",
+  },
+  {
+    keywords: ["ai", "llm", "machine learning", "generative ai"],
+    niche: ["ai systems", "llm workflows", "practical automation"],
+    audience: ["product builders", "developers", "startup teams"],
+    content_types: ["tutorial", "concept-guide", "comparison"],
+    primary_topic: "AI workflows",
+    brand_voice:
+      "best teacher voice: start with the real-world AI problem, break down the architecture step by step, compare the options, and explain the practical trade-offs in a way beginners and experts can both use",
+  },
+  {
+    keywords: ["security", "cyber", "compliance", "zero trust"],
+    niche: ["security", "risk reduction", "secure architecture"],
+    audience: ["security teams", "engineers", "founders"],
+    content_types: ["tutorial", "concept-guide", "reference"],
+    primary_topic: "Security engineering",
+    brand_voice:
+      "best teacher voice: start with the attack pattern or incident, explain the underlying security principle, compare viable approaches, and close with a practical risk-aware recommendation",
+  },
+  {
+    keywords: ["marketing", "seo", "growth", "brand"],
+    niche: ["growth marketing", "content strategy", "audience acquisition"],
+    audience: ["founders", "marketing teams", "operators"],
+    content_types: ["article", "how-to", "strategy-guide"],
+    primary_topic: "Growth marketing",
+    brand_voice:
+      "best teacher voice: start with a real growth problem, explain the pattern behind the decision, compare the trade-offs, and give a practical execution plan for the reader",
+  },
+]
 
 function emptyForm(): ProjectCreatePayload {
   return { name: "", niche: [], audience: [], language: "en", country: "", levels: [], content_types: ["article", "tutorial"] }
@@ -45,53 +98,65 @@ function toTitleCase(value: string): string {
     .join(" ")
 }
 
-function inferProjectSettings(goal: string) {
-  const raw = goal.trim()
+function extractTopicPhrase(raw: string): string {
   const lower = raw.toLowerCase()
+  const preset = TOPIC_PRESETS.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))
+  if (preset) return preset.primary_topic
 
   const cleaned = lower.replace(/[^a-z0-9\s-]/g, " ")
   const words = cleaned
     .split(/\s+/)
+    .map((word) => word.trim())
     .filter((word) => word.length > 2 && !QUICK_START_STOP_WORDS.has(word))
 
-  const niche = Array.from(new Set(words.slice(0, 4).map((word) => word.trim())))
-  const finalNiche = niche.length > 0 ? niche.map((word) => word.replace(/-/g, " ")) : ["general"]
+  const phrase = Array.from(new Set(words)).slice(0, 4).join(" ")
+  return phrase ? phrase : "General content"
+}
+
+function inferProjectSettings(goal: string) {
+  const raw = goal.trim()
+  const lower = raw.toLowerCase()
+
+  const preset = TOPIC_PRESETS.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))
+
+  const niche = preset ? preset.niche : (() => {
+    const cleaned = lower.replace(/[^a-z0-9\s-]/g, " ")
+    const words = cleaned
+      .split(/\s+/)
+      .map((word) => word.trim())
+      .filter((word) => word.length > 2 && !QUICK_START_STOP_WORDS.has(word))
+
+    const topicWords = Array.from(new Set(words)).slice(0, 4)
+    return topicWords.length > 0 ? topicWords.map((word) => word.replace(/-/g, " ")) : ["general"]
+  })()
 
   const audienceMap: Array<{ keywords: string[]; audience: string[] }> = [
-    { keywords: ["developer", "engineer", "software", "cloud", "devops", "api"], audience: ["developers", "engineering teams"] },
-    { keywords: ["founder", "startup", "saas", "business", "marketing"], audience: ["founders", "business teams"] },
-    { keywords: ["student", "learn", "education", "course"], audience: ["students", "career changers"] },
+    { keywords: ["developer", "engineer", "software", "cloud", "devops", "api", "oauth", "jwt", "auth"], audience: ["developers", "engineering teams", "platform engineers"] },
+    { keywords: ["founder", "startup", "saas", "business", "marketing", "growth"], audience: ["founders", "product teams", "business operators"] },
+    { keywords: ["student", "learn", "education", "course", "academy"], audience: ["students", "career changers"] },
     { keywords: ["finance", "fintech", "bank", "invest"], audience: ["finance professionals", "decision makers"] },
+    { keywords: ["security", "compliance", "risk", "zero trust"], audience: ["security teams", "engineering leaders"] },
   ]
 
-  const audience =
-    audienceMap.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))?.audience ?? ["general audience"]
+  const audience = preset?.audience ?? audienceMap.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))?.audience ?? ["general audience"]
 
-  const projectName =
-    raw
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 3)
-      .map((segment) => segment.replace(/[^a-zA-Z0-9]/g, ""))
-      .filter(Boolean)
-      .map((segment) => toTitleCase(segment))
-      .join(" ") || "New Content Project"
+  const projectName = `${toTitleCase(extractTopicPhrase(raw))} Studio`
 
   const contentTypeHints = [
-    { keywords: ["comparison", "compare", "vs"], types: ["comparison", "how-to"] },
-    { keywords: ["tutorial", "guide", "step", "walkthrough"], types: ["tutorial", "how-to"] },
-    { keywords: ["newsletter", "news", "updates"], types: ["article", "newsletter"] },
-    { keywords: ["course", "learning", "academy"], types: ["course", "tutorial"] },
+    { keywords: ["comparison", "compare", "vs", "tradeoff", "trade-off"], types: ["comparison", "how-to", "tutorial"] },
+    { keywords: ["tutorial", "guide", "step", "walkthrough", "implementation"], types: ["tutorial", "how-to", "concept-guide"] },
+    { keywords: ["newsletter", "news", "updates", "release"], types: ["article", "newsletter"] },
+    { keywords: ["course", "learning", "academy", "training"], types: ["course", "tutorial", "concept-guide"] },
   ]
 
   const content_types =
-    contentTypeHints.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))?.types ?? ["article", "tutorial"]
+    preset?.content_types ?? contentTypeHints.find(({ keywords }) => keywords.some((keyword) => lower.includes(keyword)))?.types ?? ["article", "tutorial"]
 
   const frequency = /weekly|week/.test(lower) ? "1x per week" : /daily|day/.test(lower) ? "5x per week" : "3x per week"
 
   return {
-    name: `${projectName} Studio`,
-    niche: finalNiche,
+    name: projectName,
+    niche,
     audience,
     language: "en",
     country: "",
@@ -99,14 +164,14 @@ function inferProjectSettings(goal: string) {
     content_types,
     strategy: {
       content_goals: [
-        "Create fact-checked, useful content tailored to the target audience",
-        "Focus on practical takeaways and clear examples",
-        "Build trust through strong structure and verified sources",
+        `Explain the core ${extractTopicPhrase(raw).toLowerCase()} problem clearly and practically for the target audience`,
+        "Teach with real scenarios, decision-making, and trade-offs before presenting the solution",
+        "Focus on useful, fact-checked takeaways with examples that readers can apply quickly",
       ],
       prohibited_topics: ["low-quality speculation", "unsupported claims", "off-topic fluff"],
       preferred_sources: ["official docs", "trusted publications", "industry reports", "github repos"],
       publishing_frequency: frequency,
-      brand_voice:
+      brand_voice: preset?.brand_voice ??
         "best teacher voice: start with a real scenario and problem, explain the approach and trade-offs, then walk through the solution with practical examples, pros and cons, and a clear takeaway for readers at all levels",
     },
   }
