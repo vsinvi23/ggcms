@@ -17,6 +17,7 @@ from backend.api.main import app
 from backend.configs.settings import settings
 from backend.models.domain import SchedulerRun
 from backend.storage import file_store
+from tests.conftest import make_opportunity
 
 
 def _auth_headers() -> dict:
@@ -77,3 +78,27 @@ async def test_run_allowed_when_no_run_in_flight(
     resp = client.post("/api/autonomous/run", json={"project_id": temp_project}, headers=_auth_headers())
 
     assert resp.status_code == 202
+
+
+@pytest.mark.asyncio
+async def test_generation_rejects_unapproved_opportunity(temp_project, project_factory, client):
+    project = project_factory(id=uuid.UUID(temp_project))
+    await file_store.save_project(project)
+
+    opportunity = make_opportunity(project.id, status="DISCOVERED")
+    await file_store.append_opportunities(project.id, [opportunity])
+
+    resp = client.post(
+        "/api/generate",
+        json={
+            "project_id": str(project.id),
+            "opportunity_id": str(opportunity.id),
+            "content_type": "article",
+            "knowledge_pack_ids": [],
+            "enable_web_research": False,
+        },
+        headers=_auth_headers(),
+    )
+
+    assert resp.status_code == 400
+    assert "approved" in resp.json()["detail"].lower()

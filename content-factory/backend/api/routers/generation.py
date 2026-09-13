@@ -356,6 +356,11 @@ async def start_generation(req: GenerateRequest, bg_tasks: BackgroundTasks):
     opportunity = file_store.get_opportunity(req.project_id, req.opportunity_id)
     if opportunity is None:
         raise HTTPException(status_code=404, detail="Opportunity not found")
+    if opportunity.status != "APPROVED":
+        raise HTTPException(
+            status_code=400,
+            detail="Content generation requires an approved opportunity. Discover and approve the topic before generating content.",
+        )
 
     job = GenerationJob(
         project_id=req.project_id,
