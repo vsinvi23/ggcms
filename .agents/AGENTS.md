@@ -27,12 +27,12 @@ When building, testing, or deploying changes in this repository:
 
 5. **Content Factory Data Retention & Model Environment Specs**:
    - **Persistent Storage**: Cloud Storage bucket `gs://ggcms-free-tier-vivek-content-factory-data` is synced via `file_store.py` (`_sync_file_to_gcs` / `restore_data_from_gcs`) to ensure 100% data retention across container deployments & restarts.
-   - **Gemini LLM Models**: Use active production models (`gemini-2.5-flash` for Planner/Researcher/Reviewer, `gemini-2.5-pro` for Writer). Models can also be dynamically overridden via System Settings UI (`data/settings.yaml`).
+   - **Gemini LLM Models**: Use active production models (`gemini-1.5-flash` for Planner/Researcher/Reviewer, `gemini-1.5-pro` for Writer). Models can also be dynamically overridden via System Settings UI (`data/settings.yaml`).
    - **Cloud Run Environment Variables**:
      - `GCS_BUCKET=ggcms-free-tier-vivek-content-factory-data`
-     - `GEMINI_MODEL_PLANNER=gemini-2.5-flash`
-     - `GEMINI_MODEL_RESEARCHER=gemini-2.5-flash`
-     - `GEMINI_MODEL_WRITER=gemini-2.5-pro`
-     - `GEMINI_MODEL_REVIEWER=gemini-2.5-flash`
+     - `GEMINI_MODEL_PLANNER=gemini-1.5-flash`
+     - `GEMINI_MODEL_RESEARCHER=gemini-1.5-flash`
+     - `GEMINI_MODEL_WRITER=gemini-1.5-pro`
+     - `GEMINI_MODEL_REVIEWER=gemini-1.5-flash`
      - `DATA_DIR=/app/data`
    - **Secret Manager Secrets**: `GEMINI_API_KEY=factory-gemini-api-key:latest`, `FACTORY_SYNC_SECRET=factory-sync-secret:latest`, `JWT_SECRET=gg-cms-jwt-secret:latest`.

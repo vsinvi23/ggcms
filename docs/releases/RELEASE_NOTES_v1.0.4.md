@@ -34,8 +34,8 @@
 - **Automatic Cloud Sync**: Updated `file_store.py` so every atomic write (`save_project`, `save_project_strategy`, `save_source`, `save_opportunity`, `save_job`, `save_content_item`) uploads updated YAML files to `gs://<bucket_name>/data/...`.
 - **Startup Data Restoration**: Added `restore_data_from_gcs()` to `api/main.py` `@app.on_event("startup")` so whenever a new Cloud Run container revision boots up or scales up, all project files are restored from GCS bucket storage.
 
-### 4. Gemini 2.5 Model Upgrade & Error Handling
-- **Upgraded Models**: Replaced deprecated `gemini-2.0-flash` with active models: `gemini-2.5-flash` (Planner, Researcher, Reviewer) and `gemini-2.5-pro` (Writer).
+### 4. Gemini Production Model Migration & Error Handling
+- **Official Production Models**: Migrated models to official Google Gemini production models: `gemini-1.5-flash` (Planner, Researcher, Reviewer) and `gemini-1.5-pro` (Writer).
 - **GCP Secret Binding**: Mounted Secret Manager secret `factory-gemini-api-key:latest` containing valid Gemini API key credentials.
 - **Resilient Error Handling**: Wrapped `discover_opportunities` in `opportunities.py` to return friendly HTTP 400 messages directing users to System Settings if an API key is missing or invalid.
 
@@ -46,10 +46,10 @@
 | Variable / Secret | Value / Source | Scope & Usage |
 | :--- | :--- | :--- |
 | `GCS_BUCKET` | `ggcms-free-tier-vivek-content-factory-data` | Environment variable for persistent data sync & restoration across deployments. |
-| `GEMINI_MODEL_PLANNER` | `gemini-2.5-flash` | Environment variable (overridable via System Settings UI). |
-| `GEMINI_MODEL_RESEARCHER` | `gemini-2.5-flash` | Environment variable (overridable via System Settings UI). |
-| `GEMINI_MODEL_WRITER` | `gemini-2.5-pro` | Environment variable (overridable via System Settings UI). |
-| `GEMINI_MODEL_REVIEWER` | `gemini-2.5-flash` | Environment variable (overridable via System Settings UI). |
+| `GEMINI_MODEL_PLANNER` | `gemini-1.5-flash` | Environment variable (overridable via System Settings UI). |
+| `GEMINI_MODEL_RESEARCHER` | `gemini-1.5-flash` | Environment variable (overridable via System Settings UI). |
+| `GEMINI_MODEL_WRITER` | `gemini-1.5-pro` | Environment variable (overridable via System Settings UI). |
+| `GEMINI_MODEL_REVIEWER` | `gemini-1.5-flash` | Environment variable (overridable via System Settings UI). |
 | `DATA_DIR` | `/app/data` | Container data directory mapped to GCS storage engine. |
 | `GEMINI_API_KEY` | `factory-gemini-api-key:latest` | GCP Secret Manager binding for Gemini API access. |
 | `FACTORY_SYNC_SECRET` | `factory-sync-secret:latest` | GCP Secret Manager binding for machine-to-machine sync. |
