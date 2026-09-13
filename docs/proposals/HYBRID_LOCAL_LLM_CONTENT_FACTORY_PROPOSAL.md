@@ -1,7 +1,7 @@
 # Proposal: Hybrid Architecture for Autonomous Content Factory
 ## Low-Cost Local LLM Draft Generation with Gemini Quality Review
 
-**Document Version:** 1.1.0  
+**Document Version:** 1.2.0  
 **Date:** September 13, 2026  
 **Status:** PROPOSED  
 **Target Subsystem:** `content-factory`  
@@ -112,7 +112,7 @@ docker run -d \
   -p 11434:11434 \
   ollama/ollama:latest
 
-# Pull 7B or 14B model
+# Pull 7B model
 docker exec -it content-factory-local-llm ollama pull qwen2.5-coder:7b
 ```
 
@@ -126,41 +126,70 @@ docker exec -it content-factory-local-llm ollama pull qwen2.5-coder:7b
 * **Total Cost:** **~$1.00 – $5.00 / month** (paying only for the 1–2 hours per week the GPU VM is active).
 * **Best Used For:** Enterprise scaling, generating hundreds of deep technical courses/lessons per batch with GPT-4o level drafting quality.
 
-#### On-Demand vLLM Launch Script (GCP GPU Instance):
-```bash
-# Launch vLLM container on NVIDIA L4 GPU instance
-docker run --gpus all -d \
-  --name vllm-server \
-  -p 8000:8000 \
-  --ipc=host \
-  vllm/vllm-openai:latest \
-  --model Qwen/Qwen2.5-Coder-32B-Instruct \
-  --max-model-len 8192 \
-  --gpu-memory-utilization 0.90
-```
+---
+
+## 6. Integration API Keys, Free Tiers & Security Specs
+
+Content Factory uses specialized API keys for web research, image generation, and LLM providers. All keys are managed via the System Settings UI.
+
+### 6.1 Security & Key Masking Specification
+To prevent key leaks:
+* **Server-Side Masking ([system_settings_service.py](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/content-factory/backend/services/system_settings_service.py#L107-L114)):** Plaintext API key values (`gemini_api_key`, `tavily_api_key`, `pexels_api_key`) are **never returned to the frontend**. The GET API returns `value=""` and `is_set=true/false`.
+* **UI Status Indicator:** The frontend displays a **"Configured"** status badge rather than exposing partial or full key strings.
+* **Blank Input Safeguard:** Leaving secret key inputs blank on update submits an empty string, which the backend treats as *"keep existing value"*, preventing accidental erasure.
 
 ---
 
-## 6. Deployment Strategy Comparison
+### 6.2 Tavily API Key (`tavily_api_key`) Specs
+* **Free Tier Allowance:** **1,000 free web search queries / month** (no credit card required at [tavily.com](https://tavily.com)).
+* **Purpose:** AI-native web search and RAG extraction for technical research.
+* **Value Created:**
+  1. **Anti-Hallucination:** Fetches real-time, modern library documentation (e.g. Go 1.22+, Next.js 15, Python 3.12).
+  2. **Token Efficiency:** Pre-parses HTML into clean markdown snippets, saving up to **90% of prompt token costs** compared to raw web scraping.
+  3. **Topic Discovery Verification:** Verifies market search trends before course generation ([opportunities.py](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/content-factory/backend/api/routers/opportunities.py)).
+
+---
+
+### 6.3 Pexels API Key (`pexels_api_key`) & Free Alternatives
+
+#### **Is Pexels Free?**
+**YES!** Pexels provides a **100% Free API** with **20,000 free requests per month** (200 requests/hour limit, no credit card required at `pexels.com/api`).
+
+#### **Difference Between Tavily and Pexels:**
+* **Tavily:** Search engine for **text research, documentation, and facts** (used by `researcher` agent).
+* **Pexels:** Stock photo API for **visual course banners, header graphics, and lesson illustrations** (used by `image_service.py`).
+
+#### **Free Alternatives for Images & Visual Media:**
+
+| Provider | Type | Free Tier Limits | Key Advantages |
+| :--- | :--- | :--- | :--- |
+| **Pexels** *(Built-in)* | Stock Photos | **20,000 requests / month** | 100% free, high resolution, soft-fails gracefully if missing. |
+| **Unsplash API** | Stock Photos | **5,000 requests / hour** (prod) | Superior editorial quality photos for software & technology headers. |
+| **Pixabay API** | Photos & Vectors | **5,000 requests / hour** | Includes free vector illustrations and technical diagrams. |
+| **Pollinations.ai** | AI Image Gen | **100% Unlimited Free** | Generates custom AI tech illustrations via direct URL string (no API key needed). |
+| **Stable Diffusion (Docker)**| Local AI Gen | **Unlimited ($0)** | Fully self-hosted container image generation for custom technical diagrams. |
+
+---
+
+## 7. Deployment Strategy Comparison
 
 | Metric | Recommendation 1 (100% Free Local) | Recommendation 2 (GCP On-Demand GPU) | 100% Cloud API (Status Quo) |
 | :--- | :--- | :--- | :--- |
 | **Model Quality** | High (`Qwen 7B/14B`) | **Highest (`Qwen 32B`)** | High (Cloud API) |
 | **Drafting Cost** | **$0.00 / mo** | **~$1.00 – $5.00 / mo** | ~$75.00 – $150.00 / mo |
 | **Reviewer Cost** | **$0.00** (Free API Tier) | ~$1.00 – $3.00 / mo | ~$15.00 / mo |
-| **Total Bill** | **$0.00 / month** | **~$1.00 – $5.00 / month** | **~$90.00 – $165.00 / month** |
+| **Total Monthly Bill** | **$0.00 / month** | **~$1.00 – $5.00 / month** | **~$90.00 – $165.00 / month** |
 | **Execution Speed** | CPU Speed (~5-15 tok/sec) | **GPU Speed (~100 tok/sec)** | API Rate-Limited |
-| **Infrastructure** | Local Docker + Cloud Run | GCP `g2-standard-4` GPU VM | Pure Cloud Run |
+| **Web Research (Tavily)**| **$0.00** (1,000 free searches/mo) | **$0.00** (1,000 free searches/mo) | **$0.00** |
+| **Images (Pexels)** | **$0.00** (20,000 free req/mo) | **$0.00** (20,000 free req/mo) | **$0.00** |
 
 ---
 
-## 7. Content Factory Integration Code Changes
+## 8. Content Factory Integration Code Changes
 
-Content Factory's architecture already encapsulates LLM model instantiation within `backend/services/model_provider.py` and configuration settings in `backend/configs/settings.py`.
+Content Factory's architecture encapsulates LLM model instantiation in `backend/services/model_provider.py` and settings in `backend/configs/settings.py`.
 
-### 7.1 Configuration Updates ([backend/configs/settings.py](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/content-factory/backend/configs/settings.py))
-
-Add configuration fields for local OpenAI-compatible endpoint URLs and providers:
+### 8.1 Configuration Updates ([backend/configs/settings.py](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/content-factory/backend/configs/settings.py))
 
 ```python
 class Settings(BaseSettings):
@@ -173,9 +202,7 @@ class Settings(BaseSettings):
     local_model_writer: str = Field(default="qwen2.5-coder:14b", validation_alias="LOCAL_MODEL_WRITER")
 ```
 
-### 7.2 Provider Switcher Update ([backend/services/model_provider.py](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/content-factory/backend/services/model_provider.py))
-
-Extend `_build_chat_model` to handle local OpenAI-compatible containers when `model_name` starts with `local/` or `ollama/`:
+### 8.2 Provider Switcher Update ([backend/services/model_provider.py](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/content-factory/backend/services/model_provider.py))
 
 ```python
 from langchain_openai import ChatOpenAI
@@ -200,15 +227,9 @@ def _build_chat_model(model_name: str, temperature: float):
     ...
 ```
 
-### 7.3 System Settings UI Compatibility ([backend/services/system_settings_service.py](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/content-factory/backend/services/system_settings_service.py))
-
-Users can dynamically override model selections via the Content Factory Admin UI:
-* Set **Writer Model**: `ollama/qwen2.5-coder:14b` (or `local/Qwen2.5-Coder-32B-Instruct`)
-* Set **Reviewer Model**: `gemini-3.6-flash`
-
 ---
 
-## 8. Phased Implementation Roadmap
+## 9. Phased Implementation Roadmap
 
 1. **Phase 1 (Local Container Verification):**
    * Run Docker container with `ollama/ollama` and `qwen2.5-coder:7b` locally.
