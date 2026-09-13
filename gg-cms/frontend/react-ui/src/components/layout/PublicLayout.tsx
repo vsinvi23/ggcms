@@ -2,12 +2,19 @@ import React, { useState } from 'react';
 import { PublicFooter } from './PublicFooter';
 import { GGLogo } from '@/components/shared/GGLogo';
 import { FloatingPersonalizationButton } from '@/components/personalization/FloatingPersonalizationButton';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
-  BookOpen, GraduationCap, FileText, Briefcase, Menu, X,
+  BookOpen, GraduationCap, FileText, Briefcase, Menu, X, ChevronDown, LayoutDashboard, User as UserIcon, Settings, LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFeatureFlags } from '@/contexts/FeatureFlagContext';
 import { AuthModal } from '@/components/auth/AuthModal';
@@ -27,6 +34,7 @@ const allNavItems = [
 
 export function PublicLayout({ children, hideSearch: _hideSearch = false }: PublicLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
   const flags = useFeatureFlags();
   const [mobileOpen, setMobileOpen]       = useState(false);
@@ -79,24 +87,42 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
           {/* Auth — right side */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
             {isAuthenticated ? (
-              <>
-                <Link to="/dashboard" className="hidden sm:block">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border/50"
-                  >
-                    Dashboard
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="gap-2 h-10 px-2 sm:px-3 text-sidebar-foreground hover:bg-sidebar-accent">
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold shrink-0 select-none">
+                      {user?.name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <span className="text-sm font-medium hidden sm:inline-block max-w-[120px] truncate">
+                      {user?.name || 'User'}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-sidebar-foreground/70" />
                   </Button>
-                </Link>
-                <div
-                  onClick={logout}
-                  title={`${user?.name} · Sign out`}
-                  className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold cursor-pointer select-none"
-                >
-                  {user?.name?.charAt(0).toUpperCase()}
-                </div>
-              </>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-popover border z-50">
+                  <div className="px-3 py-2 border-b border-border">
+                    <p className="text-sm font-medium text-foreground truncate">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                  <DropdownMenuItem className="cursor-pointer mt-1" onSelect={() => navigate('/dashboard')}>
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer" onSelect={() => navigate('/profile')}>
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer" onSelect={() => navigate('/account-settings')}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Account Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive cursor-pointer" onSelect={logout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <>
                 <Button
