@@ -312,18 +312,34 @@ async def run_pipeline_job(
         job = file_store.get_job(project_id, job_id)
         if job is not None:
             job.status = "FAILED"
-            job.error_type = e.error_type
-            job.error_message = str(e)
+            job.error_type = "BUDGET_EXCEEDED"
+            job.error_message = (
+                f"Generation Budget Cap Exceeded: Job estimated cost (${e.current:.2f}) "
+                f"exceeded configured per-item safety limit (${e.limit:.2f}). "
+                "You can adjust 'Max Cost Per Article' in System Settings."
+            )
             job.cost_estimate = tracker.job_cost
             job.completed_at = utcnow()
             await file_store.save_job(project_id, job)
     except Exception as e:
-        logger.error(f"--- PIPELINE FAILED (job={job_id}): {e} ---")
+        err_str = str(e)
+        logger.error(f"--- PIPELINE FAILED (job={job_id}): {err_str} ---")
         job = file_store.get_job(project_id, job_id)
         if job is not None:
             job.status = "FAILED"
             job.error_type = type(e).__name__
-            job.error_message = str(e)
+            if any(k in err_str for k in ["429", "ResourceExhausted", "Quota exceeded", "rate-limit"]):
+                job.error_message = (
+                    "Gemini API Quota Exceeded (429): Google's rate limit for this model was reached. "
+                    "Please wait 1-2 minutes and retry, or configure a paid Gemini key in System Settings."
+                )
+            elif any(k in err_str for k in ["404", "NOT_FOUND", "not found"]):
+                job.error_message = (
+                    "Gemini Model Not Found (404): The configured model identifier is unavailable or deprecated. "
+                    "Please check System Settings to select an active model (e.g. gemini-3.6-flash)."
+                )
+            else:
+                job.error_message = err_str
             job.cost_estimate = tracker.job_cost
             job.completed_at = utcnow()
             await file_store.save_job(project_id, job)
