@@ -1,6 +1,10 @@
 package importer
 
-import "testing"
+import (
+	"archive/zip"
+	"bytes"
+	"testing"
+)
 
 func TestParseMarkdownCourseStructure(t *testing.T) {
 	content := `---
@@ -182,3 +186,149 @@ func TestParseCSVSetsFlatBodyFormat(t *testing.T) {
 		t.Fatalf("expected no sections from CSV, got %d", len(items[0].Sections))
 	}
 }
+
+func TestParseHTMLArticle(t *testing.T) {
+	content := `<!DOCTYPE html>
+<html>
+<head>
+	<title>HTML Article Title</title>
+	<meta name="description" content="HTML article summary">
+	<meta name="category" content="frontend">
+	<meta name="article-type" content="guide">
+	<meta name="tags" content="html, web, css">
+</head>
+<body>
+	<h1>Main Header</h1>
+	<p>This is the HTML body content.</p>
+</body>
+</html>`
+	items := Parse("page.html", []byte(content))
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	item := items[0]
+	if !item.Valid {
+		t.Fatalf("expected valid item, got error: %s", item.Error)
+	}
+	if item.Title != "HTML Article Title" {
+		t.Fatalf("unexpected title: %q", item.Title)
+	}
+	if item.Description != "HTML article summary" {
+		t.Fatalf("unexpected description: %q", item.Description)
+	}
+	if item.CategorySlug != "frontend" {
+		t.Fatalf("unexpected category slug: %q", item.CategorySlug)
+	}
+	if item.ArticleType != "guide" {
+		t.Fatalf("unexpected article type: %q", item.ArticleType)
+	}
+	if len(item.Tags) != 3 || item.Tags[0] != "html" {
+		t.Fatalf("unexpected tags: %+v", item.Tags)
+	}
+	if item.BodyFormat != "html" {
+		t.Fatalf("expected bodyFormat html, got %s", item.BodyFormat)
+	}
+}
+
+func TestParseUnsupportedFileType(t *testing.T) {
+	items := Parse("image.png", []byte("fake image data"))
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	item := items[0]
+	if item.Valid {
+		t.Fatalf("expected invalid item for unsupported file extension")
+	}
+	if item.Error == "" {
+		t.Fatalf("expected error message for unsupported file")
+	}
+}
+
+func TestParseMarkdownCourseStructureNilSectionProtection(t *testing.T) {
+	// Markdown course with a lesson heading before any section heading
+	content := `---
+title: "Orphan Lesson Course"
+type: COURSE
+---
+### Lesson: Orphan Lesson
+Some lesson body without prior section.
+`
+	items := Parse("orphan.md", []byte(content))
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	item := items[0]
+	if !item.Valid {
+		t.Fatalf("expected valid item, got error: %s", item.Error)
+	}
+	if len(item.Sections) != 1 {
+		t.Fatalf("expected 1 implicit section, got %d", len(item.Sections))
+	}
+}
+
+func TestParseZIPWithMultipleFormats(t *testing.T) {
+	buf := new(bytes.Buffer)
+	zw := zip.NewWriter(buf)
+
+	// Add Markdown file
+	f1, err := zw.Create("article1.md")
+	if err != nil {
+		t.Fatalf("failed to create zip entry: %v", err)
+	}
+	f1.Write([]byte("# ZIP Markdown Title\nBody content from zip"))
+
+	// Add JSON file inside subfolder
+	f2, err := zw.Create("docs/article2.json")
+	if err != nil {
+		t.Fatalf("failed to create zip entry: %v", err)
+	}
+	f2.Write([]byte(`{"title":"ZIP JSON Title","body":"JSON body inside zip"}`))
+
+	// Add HTML file
+	f3, err := zw.Create("page.html")
+	if err != nil {
+		t.Fatalf("failed to create zip entry: %v", err)
+	}
+	f3.Write([]byte(`<html><head><title>ZIP HTML Title</title></head><body>HTML body</body></html>`))
+
+	// Add unsupported file (e.g. image.png)
+	f4, err := zw.Create("image.png")
+	if err != nil {
+		t.Fatalf("failed to create zip entry: %v", err)
+	}
+	f4.Write([]byte("fake binary data"))
+
+	// Add Mac OS metadata file (should be skipped)
+	f5, err := zw.Create("__MACOSX/._article1.md")
+	if err != nil {
+		t.Fatalf("failed to create zip entry: %v", err)
+	}
+	f5.Write([]byte("mac metadata"))
+
+	if err := zw.Close(); err != nil {
+		t.Fatalf("failed to close zip writer: %v", err)
+	}
+
+	items := Parse("bundle.zip", buf.Bytes())
+	if len(items) != 4 { // article1.md, article2.json, page.html, image.png (unsupported)
+		t.Fatalf("expected 4 items (3 valid + 1 unsupported), got %d", len(items))
+	}
+
+	validCount := 0
+	invalidCount := 0
+	for _, item := range items {
+		if item.Valid {
+			validCount++
+		} else {
+			invalidCount++
+		}
+	}
+
+	if validCount != 3 {
+		t.Fatalf("expected 3 valid items from zip, got %d", validCount)
+	}
+	if invalidCount != 1 {
+		t.Fatalf("expected 1 invalid item (unsupported file), got %d", invalidCount)
+	}
+}
+
