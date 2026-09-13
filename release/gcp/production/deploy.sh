@@ -18,7 +18,11 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 cd "$REPO_ROOT"
 
 export PATH="$HOME/google-cloud-sdk/bin:$PATH"
-export CLOUDSDK_PYTHON="$HOME/portable-python3/python/bin/python3"
+if [ -f "$HOME/portable-python3/python/bin/python3.11" ]; then
+    export CLOUDSDK_PYTHON="$HOME/portable-python3/python/bin/python3.11"
+elif [ -f "$HOME/portable-python3/python/bin/python3" ]; then
+    export CLOUDSDK_PYTHON="$HOME/portable-python3/python/bin/python3"
+fi
 
 echo "============================================================"
 echo "🚀 Deploying GG-CMS (PRODUCTION) to GCP"
@@ -44,6 +48,9 @@ fi
 if ! gcloud secrets describe gg-cms-admin-recovery-secret --project=$PROJECT_ID >/dev/null 2>&1; then
     openssl rand -hex 32 | gcloud secrets create gg-cms-admin-recovery-secret --data-file=- --project=$PROJECT_ID >/dev/null 2>&1
 fi
+if ! gcloud secrets describe factory-sync-secret --project=$PROJECT_ID >/dev/null 2>&1; then
+    openssl rand -hex 32 | gcloud secrets create factory-sync-secret --data-file=- --project=$PROJECT_ID >/dev/null 2>&1
+fi
 
 PG_PASS=$(gcloud secrets versions access latest --secret=gg-cms-pg-password --project=$PROJECT_ID)
 MONGO_PASS=$(gcloud secrets versions access latest --secret=gg-cms-mongo-password --project=$PROJECT_ID)
@@ -56,7 +63,7 @@ if ! gcloud iam service-accounts describe $SA_EMAIL --project=$PROJECT_ID >/dev/
 fi
 
 # Grant Secret Accessor role to SA
-for SECRET in gg-cms-jwt-secret gg-cms-admin-password gg-cms-pg-password gg-cms-mongo-password gg-cms-admin-recovery-secret; do
+for SECRET in gg-cms-jwt-secret gg-cms-admin-password gg-cms-pg-password gg-cms-mongo-password gg-cms-admin-recovery-secret factory-sync-secret; do
     gcloud secrets add-iam-policy-binding $SECRET --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor" --project=$PROJECT_ID >/dev/null 2>&1 || true
 done
 
@@ -78,13 +85,16 @@ if ! gcloud compute instances describe $VM_NAME --zone=$ZONE --project=$PROJECT_
 fi
 
 echo "▶ Uploading DB config to VM..."
-gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="sudo chown -R \$USER:\$USER /opt/gg-cms/certs" || true
-gcloud compute scp --recurse release/certs $VM_NAME:/opt/gg-cms/ --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap
-gcloud compute scp release/gcp/production/docker-compose.vm-dbs.yml $VM_NAME:/opt/gg-cms/ --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap
+if ! gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="test -f /opt/gg-cms/certs/postgres/server.key" >/dev/null 2>&1; then
+    echo "▶ Initializing DB VM certificates..."
+    gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="sudo chown -R \$USER:\$USER /opt/gg-cms/certs" || true
+    gcloud compute scp --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --recurse release/certs $VM_NAME:/opt/gg-cms/
+fi
+gcloud compute scp --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap release/gcp/production/docker-compose.vm-dbs.yml $VM_NAME:/opt/gg-cms/
 
 echo "▶ Starting Production Databases on VM..."
 ENV_B64=$(echo -e "POSTGRES_PASSWORD=$PG_PASS\nMONGO_PASSWORD=$MONGO_PASS" | base64 | tr -d '\n')
-gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="cd /opt/gg-cms && echo '$ENV_B64' | base64 -d > .env && sudo chown -R 999:999 /opt/gg-cms/certs/mongodb && docker compose -f docker-compose.vm-dbs.yml down >/dev/null 2>&1 && docker compose -f docker-compose.vm-dbs.yml up -d >/dev/null 2>&1"
+gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="cd /opt/gg-cms && echo '$ENV_B64' | base64 -d > .env && sudo chown -R 999:999 /opt/gg-cms/certs/mongodb && sudo chown -R 70:70 /opt/gg-cms/certs/postgres && sudo chmod 600 /opt/gg-cms/certs/postgres/server.key && docker compose -f docker-compose.vm-dbs.yml down >/dev/null 2>&1 && docker compose -f docker-compose.vm-dbs.yml up -d >/dev/null 2>&1"
 
 VM_IP=$(gcloud compute instances describe $VM_NAME --zone=$ZONE --project=$PROJECT_ID --format='value(networkInterfaces[0].networkIP)')
 echo "▶ VM Internal IP: $VM_IP"
