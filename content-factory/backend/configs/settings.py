@@ -50,7 +50,7 @@ class Settings(BaseSettings):
 
     gcs_bucket: str = Field(default="local-bucket", validation_alias="GCS_BUCKET")
     max_monthly_ai_budget: float = Field(default=500.00, validation_alias="MAX_MONTHLY_AI_BUDGET")
-    max_cost_per_content_unit: float = Field(default=0.50, validation_alias="MAX_COST_PER_CONTENT_UNIT")
+    max_cost_per_content_unit: float = Field(default=5.00, validation_alias="MAX_COST_PER_CONTENT_UNIT")
     max_revisions: int = Field(default=3, validation_alias="MAX_REVISIONS")
     source_max_pages: int = Field(default=50, validation_alias="SOURCE_MAX_PAGES")
     source_max_depth: int = Field(default=2, validation_alias="SOURCE_MAX_DEPTH")

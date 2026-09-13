@@ -87,6 +87,7 @@ async def expand_statement_to_headlines(statement: str, project) -> list[Headlin
 
     try:
         result = await invoke_structured(structured_llm, prompt, agent_name=AGENT_NAME)
+        logger.info(f"[{AGENT_NAME}] Expanded statement '{statement}' into {len(result.candidates)} headline candidates: {[item.headline for item in result.candidates]}")
     except Exception as e:
         logger.error(f"[{AGENT_NAME}] headline expansion failed for statement '{statement}': {e}")
         raise AgentExecutionError(AgentError(

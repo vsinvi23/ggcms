@@ -306,9 +306,8 @@ async def discover_opportunities(payload: OpportunityDiscoverIn):
                     status_code=400,
                     detail="No topics to discover from -- set a niche on the project or pass explicit topics.",
                 )
-            agent = OpportunityAgent()
-            results = await agent.run(project.niche, meta={})
-            rows = await _persist_opportunity_results(project.id, results)
+            logger.info(f"[opportunities] Expanding project niche {project.niche} into concrete article topic candidates for project {project.id}")
+            rows = await _discover_from_statements(project, project.niche)
         return [OpportunityOut.from_orm_with_signals(row) for row in rows]
     except HTTPException:
         raise
