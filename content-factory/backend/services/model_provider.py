@@ -77,13 +77,22 @@ def _build_chat_model(model_name: str, temperature: float):
     if api_key in ("mock", "your_api_key_here"):
         api_key = "AIzaSy_MOCK_KEY_DO_NOT_USE" # Prevents init crash in mock mode, will fail on actual call if not caught
 
-    return ChatGoogleGenerativeAI(
+    primary = ChatGoogleGenerativeAI(
         model=model_name,
         google_api_key=api_key,
         temperature=temperature,
-        max_retries=5,
+        max_retries=3,
         base_url=settings.gemini_base_url or None,
     )
+    fallback_name = "gemini-flash-latest" if model_name != "gemini-flash-latest" else "gemini-3.5-flash"
+    fallback = ChatGoogleGenerativeAI(
+        model=fallback_name,
+        google_api_key=api_key,
+        temperature=temperature,
+        max_retries=3,
+        base_url=settings.gemini_base_url or None,
+    )
+    return primary.with_fallbacks([fallback])
 
 
 def get_model_name(role: str) -> str:

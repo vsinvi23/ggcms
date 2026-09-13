@@ -106,7 +106,8 @@ function inferProjectSettings(goal: string) {
       prohibited_topics: ["low-quality speculation", "unsupported claims", "off-topic fluff"],
       preferred_sources: ["official docs", "trusted publications", "industry reports", "github repos"],
       publishing_frequency: frequency,
-      brand_voice: "clear, practical, expert but approachable",
+      brand_voice:
+        "best teacher voice: start with a real scenario and problem, explain the approach and trade-offs, then walk through the solution with practical examples, pros and cons, and a clear takeaway for readers at all levels",
     },
   }
 }
