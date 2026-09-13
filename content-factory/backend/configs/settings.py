@@ -29,10 +29,10 @@ class Settings(BaseSettings):
     anthropic_api_key: str = Field(default="", validation_alias="ANTHROPIC_API_KEY")
     anthropic_base_url: str = Field(default="", validation_alias="ANTHROPIC_BASE_URL")
 
-    gemini_model_planner: str = Field(default="gemini-1.5-flash", validation_alias="GEMINI_MODEL_PLANNER")
-    gemini_model_researcher: str = Field(default="gemini-1.5-flash", validation_alias="GEMINI_MODEL_RESEARCHER")
-    gemini_model_writer: str = Field(default="gemini-1.5-pro", validation_alias="GEMINI_MODEL_WRITER")
-    gemini_model_reviewer: str = Field(default="gemini-1.5-flash", validation_alias="GEMINI_MODEL_REVIEWER")
+    gemini_model_planner: str = Field(default="gemini-3.6-flash", validation_alias="GEMINI_MODEL_PLANNER")
+    gemini_model_researcher: str = Field(default="gemini-3.6-flash", validation_alias="GEMINI_MODEL_RESEARCHER")
+    gemini_model_writer: str = Field(default="gemini-3.6-flash", validation_alias="GEMINI_MODEL_WRITER")
+    gemini_model_reviewer: str = Field(default="gemini-3.6-flash", validation_alias="GEMINI_MODEL_REVIEWER")
 
     claude_model_planner: str = Field(default="claude-sonnet-5", validation_alias="CLAUDE_MODEL_PLANNER")
     claude_model_researcher: str = Field(default="claude-sonnet-5", validation_alias="CLAUDE_MODEL_RESEARCHER")
