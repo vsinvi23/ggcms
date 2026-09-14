@@ -22,6 +22,37 @@ Create a seamless, developer-friendly learning/content platform where:
 
 ---
 
+## �️ Brand Preservation & Visual Identity Constraints
+
+The redesign must preserve the current GeekGully brand identity and visual system exactly as implemented in the repository:
+
+- Keep the existing GeekGully logo component and asset path instead of introducing a new logo or changing the current logo proportions.
+- Reuse the existing frontend design tokens and CSS variables for primary, secondary, text, background, border, and status colors.
+- Do not introduce a new palette, a new icon family, or a new visual theme. The image is a layout/UX reference, not a permission to change the brand colors or logo.
+- Use the current `GGLogo` component and the existing `primary`, `background`, `border`, and `sidebar` color tokens already wired through the UI shell.
+
+This constraint applies across Home, Explore, Article, Course, Topics, Learning Paths, and the user dashboard layout discussed in the screenshot reference.
+## 🔒 Security, Scraping, and Abuse Safeguards
+
+The redesign work must stay compatible with the current product security posture and avoid increasing the exposure of content, metadata, user paths, or authentication surfaces:
+
+- Continue to reuse the currently shipped `GGLogo` and existing color theme tokens; do not add alternate brand file paths or global CSS selectors that affect other page families.
+- Ensure public page layouts reveal only the minimum required content metadata and avoid exposing protected author, internal taxonomy, or unpublished data in response payloads.
+- Keep all public search, listed content, and topic pages behind the existing server-side authorization and published-content filtering patterns.
+- Add rate limiting, content throttling, and server-side validation for any new topic/content endpoints or UI service methods with content-type or search query parameters.
+- Do not make content cards or article/course sample pages scrape-friendly by exposing internal IDs, hidden route metadata, or raw internal URLs; use the existing public route contract and safe DTO envelope.
+- Treat the redesign as a same-brand UI shell only; do not extend public pages to reveal internal site structure, user-group ownership, or data that should be hidden from unauthenticated and crawler traffic.
+
+### Implemented Safety Evidence
+
+The current branch now carries a verified first enforcement slice:
+
+- The UI topic service uses the `response?.data?.data ?? []` fallback in [gg-cms/frontend/react-ui/src/api/services/topicService.ts](gg-cms/frontend/react-ui/src/api/services/topicService.ts) so the topic-content widget never assumes a data array shape.
+- The Explore page header no longer prints fabricated article/course count placeholders like `500` or `50` in [gg-cms/frontend/react-ui/src/pages/CourseCategoryPage.tsx](gg-cms/frontend/react-ui/src/pages/CourseCategoryPage.tsx); it now reflects the actual feed-backed list count when the route delivers one.
+- The backend public topic handler in [gg-cms/backend/go-cms/internal/interfaces/http/handler/topic_handler.go](gg-cms/backend/go-cms/internal/interfaces/http/handler/topic_handler.go) now normalizes the query type string to uppercase and rejects non-`ARTICLE` / `COURSE` contentType values.
+- The same handler now parses the `size` query value safely with a hard upper clamp of `50`, defaulting to `20` when the query is absent or malformed.
+- The public route is now constrained to a safe content-type enum and safe range of requested items, reducing the chance of public route amplification or unbounded scraping behavior.
+
 ## 🌐 GCP Deployment Architecture Baseline
 
 The application is configured to deploy directly to GCP using existing automated infrastructure:
