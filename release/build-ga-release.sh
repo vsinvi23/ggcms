@@ -166,6 +166,52 @@ echo "▶ Preparing GA release directory..."
 mkdir -p "$LATEST_DIR/db/migrations"
 cp -r gg-cms/backend/go-cms/migrations/postgres/* "$LATEST_DIR/db/migrations/"
 
+DEPLOYMENT_CONTRACT="$LATEST_DIR/deployment-contract.json"
+
+# --- Write GA latest/deployment-contract.json and dist/version.json ---
+python3 -c "
+import json, glob, hashlib, os
+
+files = sorted(glob.glob('gg-cms/backend/go-cms/migrations/postgres/*.sql'))
+hasher = hashlib.sha256()
+for f in files:
+    base = os.path.basename(f)
+    with open(f, 'rb') as sql_f:
+        content = sql_f.read().replace(b'\r\n', b'\n')
+        hasher.update(base.encode('utf-8') + b'\n' + content + b'\n')
+
+schema_hash = 'sha256:' + hasher.hexdigest()
+ts_val = '$TIMESTAMP'
+date_prefix = ts_val[:10] if len(ts_val) >= 10 else ts_val
+
+contract = {
+    'deployment_id': f'{date_prefix}-$TARGET_ENV-001',
+    'environment': '$TARGET_ENV',
+    'ui_version': '$UI_VER',
+    'backend_version': '$BACKEND_VER',
+    'db_migration_version': '$DB_VER',
+    'db_schema_hash': schema_hash,
+    'backup_manifest_ref': '',
+    'api_contract_version': 'v1',
+    'rollback_target': '',
+    'deployment_status': 'prepared',
+    'created_at': '$TIMESTAMP',
+    'updated_at': '$TIMESTAMP',
+    'git_commit': '$COMMIT_SHA'
+}
+
+with open('$DEPLOYMENT_CONTRACT', 'w') as cf:
+    json.dump(contract, cf, indent=2)
+
+os.makedirs('gg-cms/backend/go-cms/dist', exist_ok=True)
+with open('gg-cms/backend/go-cms/dist/version.json', 'w') as dv:
+    json.dump(contract, dv, indent=2)
+
+print(f'✅ Generated deployment contract ($DEPLOYMENT_CONTRACT)')
+print(f'   • Environment:          $TARGET_ENV')
+print(f'   • DB Schema Hash:       {schema_hash}')
+"
+
 # --- Write GA latest/version-manifest.json ---
 cat <<EOF > "$VERSION_MANIFEST"
 {

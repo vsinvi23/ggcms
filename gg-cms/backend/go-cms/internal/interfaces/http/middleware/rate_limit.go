@@ -77,6 +77,9 @@ func (rl *ipRateLimiter) evict() {
 // authLimiter allows 10 auth requests per IP per minute.
 var authLimiter = newIPRateLimiter(10, time.Minute)
 
+// publicLimiter allows 60 public API requests per IP per minute to prevent scraping/exhaustion.
+var publicLimiter = newIPRateLimiter(60, time.Minute)
+
 // AuthRateLimit is a Gin middleware that enforces per-IP rate limiting on auth endpoints.
 // Set BYPASS_RATE_LIMIT=1 to disable for integration test runs.
 func AuthRateLimit() gin.HandlerFunc {
@@ -92,6 +95,28 @@ func AuthRateLimit() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
 				"success": false,
 				"message": "too many requests, please try again later",
+			})
+			return
+		}
+		c.Next()
+	}
+}
+
+// PublicRateLimit is a Gin middleware enforcing per-IP rate limiting on public content & topics endpoints.
+func PublicRateLimit() gin.HandlerFunc {
+	bypass := os.Getenv("BYPASS_RATE_LIMIT") == "1"
+	return func(c *gin.Context) {
+		if bypass || c.GetHeader(authRateLimitBypassHeader) == "1" {
+			c.Next()
+			return
+		}
+		ip := c.ClientIP()
+		if !publicLimiter.allow(ip) {
+			c.Header("Retry-After", "60")
+			c.Header("X-RateLimit-Limit", "60")
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+				"success": false,
+				"message": "public rate limit exceeded, please try again later",
 			})
 			return
 		}

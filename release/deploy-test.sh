@@ -198,6 +198,23 @@ if [[ "$CHECK_ONLY" == "true" ]]; then
 fi
 
 echo "🚀 Deploying to GCP TEST Environment..."
+DEPLOYMENT_CONTRACT_FILE="$LATEST_DIR/deployment-contract.json"
+
+# Mark deployment contract in_progress
+python3 -c "
+import json, os
+cfile = '$DEPLOYMENT_CONTRACT_FILE'
+if os.path.exists(cfile):
+    data = json.load(open(cfile))
+    data['deployment_status'] = 'in_progress'
+    data['updated_at'] = '$TIMESTAMP'
+    with open(cfile, 'w') as f:
+        json.dump(data, f, indent=2)
+" 2>/dev/null || true
+
+# Run test migration auditor
+bash release/db-upgrade.sh --check --env test || true
+
 bash release/gcp/test/deploy.sh
 
 COMMIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "manual")
@@ -226,7 +243,20 @@ history['history'].insert(0, entry)
 
 with open(history_path, 'w') as f:
     json.dump(history, f, indent=2)
+
+cfile = '$DEPLOYMENT_CONTRACT_FILE'
+if os.path.exists(cfile):
+    data = json.load(open(cfile))
+    data['deployment_status'] = 'success'
+    data['updated_at'] = '$TIMESTAMP'
+    with open(cfile, 'w') as f:
+        json.dump(data, f, indent=2)
 "
+
+if [[ -f "release/gcp/backup/postgres-backup.sh" ]]; then
+  echo "▶ Publishing TEST deployment backup manifest..."
+  bash release/gcp/backup/postgres-backup.sh --env test --full || true
+fi
 
 echo "============================================================"
 echo "🎉 TEST Deployment Successfully Completed!"

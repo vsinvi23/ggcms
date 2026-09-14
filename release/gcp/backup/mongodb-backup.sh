@@ -24,30 +24,50 @@
 
 set -euo pipefail
 
-# ── Configuration ─────────────────────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ── Configuration & CLI Option Parsing ───────────────────────────────────────
+ENV_TARGET="${ENV:-prod}"
+DEPLOYMENT_ID=""
+MODE="--snapshot"
+FULL_KEEP_WEEKS=4
+KEEP_LAST_COUNT=3
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --env) ENV_TARGET="$2"; shift 2 ;;
+    --deployment-id) DEPLOYMENT_ID="$2"; shift 2 ;;
+    --snapshot|--full-collections|--list) MODE="$1"; shift ;;
+    *) echo "Unknown option: $1"; exit 1 ;;
+  esac
+done
+
 GDRIVE_REMOTE="gdrive"
-BACKUP_ROOT="backup/geekgully/data"
+BACKUP_ROOT="backup/geekgully/data/${ENV_TARGET}"
 GDRIVE_MONGO="${GDRIVE_REMOTE}:${BACKUP_ROOT}/mongodb"
 
-MONGO_CONTAINER="gg-cms-mongodb"
+MONGO_CONTAINER="gg-cms-mongodb-${ENV_TARGET}"
 MONGO_USER="gg_cms_user"
 MONGO_DB="gg_cms"
 
 DUMP_DIR="/opt/gg-cms/mongo-dumps"
-KEEP_LAST_COUNT=3
-
-MODE="${1:---snapshot}"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 ts()  { date '+%Y%m%d_%H%M%S'; }
-log() { echo "$(date '+%F %T') [mongodb-backup] $*"; }
+log() { echo "$(date '+%F %T') [mongodb-backup] [$ENV_TARGET] $*"; }
 ok()  { log "[OK]  $*"; }
 fail(){ log "[ERR] $*" >&2; exit 1; }
 
 command -v rclone &>/dev/null || fail "rclone not installed"
 docker info &>/dev/null 2>&1  || fail "Docker not running"
-docker ps --filter "name=$MONGO_CONTAINER" --format '{{.Names}}' | grep -q "$MONGO_CONTAINER" \
-  || fail "MongoDB container '$MONGO_CONTAINER' not running"
+
+if ! docker ps --format '{{.Names}}' | grep -q "$MONGO_CONTAINER"; then
+  if docker ps --format '{{.Names}}' | grep -q "gg-cms-mongodb"; then
+    MONGO_CONTAINER="gg-cms-mongodb"
+  else
+    fail "MongoDB container ($MONGO_CONTAINER or gg-cms-mongodb) not running"
+  fi
+fi
 
 mkdir -p "$DUMP_DIR"
 
@@ -81,7 +101,8 @@ daily_snapshot() {
     > "$LOCAL_PATH"
 
   local SIZE; SIZE=$(du -sh "$LOCAL_PATH" | cut -f1)
-  ok "Snapshot created: $FNAME ($SIZE)"
+  local HASH; HASH="sha256:$(sha256sum "$LOCAL_PATH" 2>/dev/null | awk '{print $1}' || echo "unknown")"
+  ok "Snapshot created: $FNAME ($SIZE) ($HASH)"
 
   # Upload only if not already in GDrive (--update --checksum = true delta)
   log "Uploading to Google Drive (delta: skips if already uploaded)..."
@@ -91,6 +112,24 @@ daily_snapshot() {
     --stats=0 \
     --log-level=ERROR
   ok "Uploaded: ${GDRIVE_MONGO}/snapshots/$FNAME"
+
+  # Generate unified backup manifest
+  if [[ -f "$SCRIPT_DIR/backup-manifest.sh" ]]; then
+    log "Generating backup manifest envelope..."
+    local MANIFEST_FILE="$DUMP_DIR/backup-manifest.json"
+    bash "$SCRIPT_DIR/backup-manifest.sh" \
+      --env "$ENV_TARGET" \
+      --deployment-id "$DEPLOYMENT_ID" \
+      --mongo-file "$FNAME" \
+      --mongo-size "$SIZE" \
+      --mongo-hash "$HASH" \
+      --output "$MANIFEST_FILE" || true
+
+    if [[ -f "$MANIFEST_FILE" ]]; then
+      rclone copy "$MANIFEST_FILE" "${GDRIVE_MONGO}/" --stats=0 --log-level=ERROR || true
+      ok "Uploaded backup manifest to ${GDRIVE_MONGO}/backup-manifest.json"
+    fi
+  fi
 
   rm -f "$LOCAL_PATH"
 

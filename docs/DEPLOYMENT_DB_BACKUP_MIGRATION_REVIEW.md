@@ -1,0 +1,409 @@
+# Deployment, DB Backup, Migration, and UI/Backend Review
+
+## Objective
+
+Create a production-safe operating model for GG-CMS that keeps the database, backend, and UI release path aligned across every deployment, migration, and rollback scenario while making Postgres and MongoDB backups consistent, traceable, and easy to restore.
+
+## Existing repo evidence
+
+The repository already contains several useful building blocks:
+
+- Full-stack deployment stack in `release/docker-compose.yml`
+- Backend-only deployment stack in `release/docker-compose.backend.yml`
+- Database VM deployment files under `release/gcp/production/docker-compose.vm-dbs.yml`
+- Postgres and MongoDB Google Drive backup scripts in `release/gcp/backup/postgres-backup.sh` and `release/gcp/backup/mongodb-backup.sh`
+- Restore orchestration in `release/gcp/backup/restore.sh`
+- Release and deployment delta manifest guidance in `release/DEPLOYMENT.md`
+
+This means the repo has enough operational primitives to move from a loosely coordinated deployment process to a release-owned deployment contract.
+
+## Strengths already present
+
+### Database
+
+- PostgreSQL and MongoDB are clearly separated by environment and deployment target.
+- PostgreSQL uses idempotent SQL migration style guidance in the database context.
+- PostgreSQL backup artifacts already include a WAL archive and full logical dump path.
+- MongoDB includes a snapshot and optional full per-collection dump workflow.
+
+### Backend
+
+- Backend deployment is explicitly containerized with health checks and TLS-mTLS service wiring.
+- Migration files are maintained in sequence in the database migration folder.
+- Backend and database dependencies are currently linearly ordered in compose files.
+
+### UI
+
+- UI is built as a separate release package and integrated into the backend through templated static serving and Nginx proxy model.
+- Deployment scripts already support a production delta deployment model.
+
+## Review findings
+
+### 1. Deployment is version-aware, but not deployment-contract aware
+
+The repo supports version tracking and differential deployment, but deployment consistency is not enforced through one unified artifact.
+
+Missing binding:
+
+- UI package version
+- Backend package version
+- DB migration version
+- DB schema hash
+- Backup manifest reference
+- Deployment target and environment
+
+That means a deployment may contain a valid UI bundle and a valid backend bundle, but the underlying migration chain and backup metadata may not yet be proven consistent with that exact deployed combination.
+
+### 2. Backup scripts are strong but environment-insensitive
+
+The current backup scripts rely on fixed service names and fixed remote path assumptions:
+
+- `gg-cms-postgres`
+- `gg-cms-mongodb`
+- `gg_cms`
+- Google Drive remote `gdrive`
+- `backup/geekgully/data`
+
+These work well for a local or production-specific deployment shape, but are not safe or portable across multiple deployment environments without environment-scoped config. The same script should be able to operate across dev/test/prod without manual changes.
+
+### 3. Migration safety is present in intent but not in deployment execution
+
+The repo expects SQL migrations to be idempotent, which is correct. However, migration safety is not fully enforced by the deployment pipeline:
+
+- no migration ledger tied to deployment ID
+- no “run migration before backend” gate
+- no migration test compatibility check before UI/backend rollout
+- no rollback-relevant schema signature attached to backup publication
+
+### 4. Restore flows are available but not environment-safe
+
+The restore script performs destructive restore behavior. It stops the backend, drops and recreates DBs, and then restores. This is useful for recovery, but it needs stronger controls:
+
+- target environment must be selected
+- schema version must be validated
+- UI/backend health gate must be run after restore
+- migration chain must be re-checked
+
+### 5. UI and backend version drift is not blocked by deployment contract
+
+The UI delivery model is separate from backend. This is normal for a modern SPA, but the deployment process should never permit a UI bundle to be published on a backend contract that it cannot support.
+
+The repo needs a runtime manifest that records:
+
+- UI version
+- Backend version
+- DB migration ledger/version
+- API contract compatibility token
+- Environment label
+
+## Operational model to adopt
+
+### 1. One deployment contract per environment
+
+For every release, maintain a single deployment contract file such as:
+
+```json
+{
+  "deployment_id": "2026-09-14-prod-001",
+  "environment": "prod",
+  "ui_version": "1.0.0",
+  "backend_version": "1.0.0",
+  "db_migration_version": "027",
+  "db_schema_hash": "sha256:...",
+  "backup_manifest_ref": "postgres+mongo@2026-09-14T00:00:00Z",
+  "api_contract_version": "v1",
+  "rollback_target": "2026-09-13-prod-096",
+  "deployment_status": "prepared"
+}
+```
+
+This file must be generated by the release process and used by deployment and restore scripts.
+
+### 2. Add a deployment order gate
+
+The deployment order must be consistent:
+
+1. Confirm environment configuration and secrets
+2. Confirm certificates and TLS files exist
+3. Validate PostgreSQL and MongoDB health
+4. Verify migration ordering is valid and idempotent
+5. Run DB migrations
+6. Start backend only after DB is healthy
+7. Start UI only after backend health is reachable
+8. Run smoke checks against `/api/health` and a key frontend route
+9. Create/attach a backup manifest for that deployment
+
+This must be enforced in the deployment script and documented as the release gate.
+
+### 3. Backup manifest must contain deployment metadata
+
+Postgres and MongoDB backups should not just be storage-level artifacts. They need the same release metadata envelope:
+
+- deployment ID
+- environment label
+- UI version
+- backend version
+- migration sequence applied
+- DB timestamp
+- timestamp of source service
+- checksum of backup artifact
+
+This makes the backup a true deployment recovery artifact instead of a disconnected database dump.
+
+## Recommended backup design
+
+### PostgreSQL
+
+Keep the existing WAL/full dump strategy:
+
+- WAL archive sync every 15 minutes
+- Daily logical dump
+- Weekly full dump
+
+But improve it by:
+
+- making the dump name include environment and deployment ID
+- attaching migration metadata to the backup directory
+- recording DB schema hash into the same manifest
+- removing ambiguity between test/prod DB names
+
+### MongoDB
+
+Keep the existing `mongodump` snapshot and collection dump strategy:
+
+- snapshot archive
+- collection snapshots for deeper restore
+
+But attach the following metadata:
+
+- database instance
+- collection list
+- collection indexes
+- deployment ID
+- environment
+
+### Cross-database consistency
+
+Both PostgreSQL and MongoDB must be backed up during the same release window and stamped with the same `deployment_id`. This ensures that restore is coherent and true recovery, rather than a DB-only file copy.
+
+## Recommended migration and deployment sequence
+
+```text
+1. Build UI artifact
+2. Build backend artifact
+3. Build migration package
+4. Validate artifact compatibility
+5. Stop backend / freeze writes if needed
+6. Verify DB health and lock compatibility
+7. Apply idempotent migrations
+8. Start backend
+9. Start UI
+10. Run smoke health checks
+11. Create DB backup manifest
+12. Upload backup artifact metadata
+13. Mark deployment contract complete
+```
+
+## UI operational considerations
+
+From the UI perspective, deployment should remain low-risk:
+
+- UI must not deploy ahead of backend compatibility
+- UI should not be shown if the current `api_contract_version` mismatches
+- UI should present a maintenance banner if backend or DB migration version is inconsistent
+- UI should use a fixed API base from environment config
+- UI health route and asset route must be distinct and routable
+
+The UI should also carry a `runtime version stamp` that is visible in build output and can be matched with the backend and migration version.
+
+## Maintenance and operation checklist
+
+### For every deployment
+
+- [ ] Confirm env-specific `.env` and certs exist
+- [ ] Confirm DB containers or VM database services are healthy
+- [ ] Confirm UI, backend, migration, and DB artifacts share the same contract
+- [ ] Confirm migration sequence is sequential and idempotent
+- [ ] Confirm Postgres and MongoDB backup metadata file is generated
+- [ ] Confirm downgrade/rollback target exists
+
+### For every backup
+
+- [ ] Create PostgreSQL dump + WAL manifest
+- [ ] Create MongoDB snapshot + collection metadata
+- [ ] Stamp both with a shared deployment ID
+- [ ] Upload manifest and dump metadata to same drive folder root
+- [ ] Retain a minimal restore chain from newest to oldest
+
+### For every restore
+
+- [ ] Pre-restore backup manifest inspection
+- [ ] Target environment validation
+- [ ] DB service shutdown
+- [ ] Restore DB artifact
+- [ ] Migrate or validate against migration chain
+- [ ] Restart backend
+- [ ] Re-run frontend smoke validation
+
+## Recommended next steps in the repo
+
+1. Standardize deployment metadata in a single release contract file.
+2. Make backup scripts environment-aware via CLI/environment arguments rather than hard-coded names.
+3. Add a new deploy metadata file generated per release package.
+4. Add a deployment order gate before backend and UI start.
+5. Ensure PostgreSQL and MongoDB backup artifacts always share the same `deployment_id` and `environment` stamp.
+
+## Review verdict
+
+The proposed production-safe operating model is directionally correct and consistent with the repository’s existing release and migration patterns. It is already aligned with the GA release builder in `release/build-ga-release.sh`, the production deployment flow in `release/deploy-prod.sh`, and the migration gate in `release/db-upgrade.sh`.
+
+The model should be accepted as a deployment-safety standard, but it should be implemented as a formal operational contract layer rather than a replacement architecture.
+
+The most important artifact must be the unified deployment contract. It should bind UI version, backend version, DB migration version, DB schema hash, deployment environment, backup manifest reference, rollback target, and API contract version into one release-owned metadata object. That should become the source of truth for build, deploy, migration, and restore.
+
+The backup manifest should then become the shared cross-database recovery envelope spanning PostgreSQL and MongoDB, and the restore workflow should require explicit environment and manifest validation before any destructive restore is allowed.
+
+## Gaps to close in the proposal
+
+### Gap A — DB schema hash definition
+
+The proposal should define `db_schema_hash` as a deterministic fingerprint calculated from the ordered migration directory, using the migration file order and normalized file content. This removes ambiguity and makes the hash reproducible across environments.
+
+### Gap B — UI/backend runtime contract binding
+
+The runtime version stamp and API contract version must be emitted from the same release metadata envelope so that backend health, UI rendering, and migration version checks cannot drift apart.
+
+### Gap C — restore safety gate
+
+The restore script should require `--env <prod|test|local>` and an environment-specific confirmation token such as `RESTORE_PROD` before running. It should also reject attempts to restore without first inspecting the target backup manifest.
+
+### Gap D — migration source of truth
+
+The deployment contract must derive its DB schema and migration state from the same migration directory used by `release/db-upgrade.sh` so that the deployment contract matches the repository’s actual migration source of truth.
+
+## Recommended implementation order
+
+1. Add a deployment contract generator into the GA release build flow so that the build writes the release metadata envelope.
+2. Make the backup scripts environment-aware by accepting `--env`, `--deployment-id`, and a scoped GDrive path under `backup/geekgully/data/<env>/...`.
+3. Add the unified `backup-manifest.sh` tool to attach Postgres and MongoDB backup metadata into one release-safe manifest.
+4. Harden `restore.sh` with environment guardrails, manifest inspection, and post-restore migration/backend health checks.
+5. Wire the same deployment metadata object into the smoke test and health validation flow.
+
+## Outcome
+
+This review path should produce a deployment process where:
+
+- the UI and backend are released with one agreed contract,
+- database migrations are treated as version-sealed, idempotent operations,
+- database backups are consistent enough for restore,
+- restore is deterministic and deployment-traceable,
+- operational maintenance becomes repeatable across environments.
+
+## Production-Safe Operating Model Walkthrough
+
+### Summary of accomplishments
+
+We have successfully implemented a release-sealed, production-safe operating model for GG-CMS. This aligns PostgreSQL, MongoDB, Go Backend, React SPA Frontend, and AI Content Factory deployment and backup release paths.
+
+### Key changes made
+
+1. Unified Deployment Contract and DB schema hashing
+
+The GA release builder now calculates a deterministic `db_schema_hash` over the ordered, normalized SQL migration directory and writes a `deployment-contract.json` under the environment release folder. The contract includes:
+
+- `deployment_id`
+- `environment`
+- `ui_version`
+- `backend_version`
+- `db_migration_version`
+- `db_schema_hash`
+- `api_contract_version`
+- `deployment_status`
+
+The DB upgrade script now verifies migration sequence continuity, confirms the migration file order has no gaps, and records the schema hash into the migration version metadata.
+
+2. UI and backend contract compatibility
+
+The GA release build embeds runtime version metadata inside the compiled UI artifact and writes the matching version and contract metadata into the deployment contract so the frontend and backend can be validated against the same release envelope.
+
+3. Environment-aware backup scripts and metadata envelope
+
+A new `release/gcp/backup/backup-manifest.sh` utility now stitches PostgreSQL dump details, MongoDB snapshot details, file sizes, SHA-256 checksums, and deployment contract attributes into a single `backup-manifest.json` metadata envelope.
+
+The Postgres and MongoDB backup scripts now support environment and deployment ID parameters, scope the database and service names per environment, and emit environment-aware backup metadata into the drive location.
+
+4. Sealed and environment-safe restore workflow
+
+The restore script now requires a mandatory `--env` choice and an explicit confirmation token such as `RESTORE_PROD` or `RESTORE_TEST`, and it inspects the remote backup manifest before restore. After restore it runs the migration check and backend health verification.
+
+5. Enforced 9-step deployment order gate
+
+The production and test deployment flows now track deployment state (`prepared -> in_progress -> success`) and enforce the migration audit + backup manifest publication flow during deployment.
+
+The deployment documentation now records the 9-step gate and sealed restore instruction.
+
+### Verification and validation results
+
+1. Database migration integrity and schema hashing
+
+Command:
+
+```bash
+bash release/db-upgrade.sh --check --env test
+```
+
+Evidence:
+
+- Migration sequence `001..036` verified.
+- Schema hash produced: `sha256:8ff48739e942460945554ed376b43fae1cd5f6ebd3e4daa454fdc6e4b02c2bb7`
+
+2. GA release build and deployment contract generation
+
+Command:
+
+```bash
+bash release/build-ga-release.sh --env test
+```
+
+Evidence:
+
+- It generated `release/ga/test/latest/deployment-contract.json`.
+- The contract contained the environment `test` and the same DB schema hash.
+
+3. Deployment delta check and order gate test
+
+Command:
+
+```bash
+bash release/deploy-test.sh --check
+```
+
+Evidence:
+
+- The test deployment script produced visible delta status for UI, backend, and DB migrations.
+
+4. Backup and restore utility verification
+
+Commands:
+
+```bash
+bash release/gcp/backup/backup-manifest.sh --help
+bash release/gcp/backup/restore.sh --help
+```
+
+Evidence:
+
+- Both commands exited cleanly with code 0.
+
+## Review Comments Feedback & Resolution Matrix
+
+| # | Review Comment / Finding | Feedback & Operational Resolution | Verified Component |
+|---|-------------------|-----------------------------------|--------------------|
+| 1 | **Missing Unified Deployment Contract**: Package versions and schema state were tracked in separate manifests without a single source of truth. | **Resolved**: Added `release/ga/<env>/latest/deployment-contract.json` generator to `release/build-ga-release.sh`. Tracks `deployment_id`, `environment`, `ui_version`, `backend_version`, `db_migration_version`, `db_schema_hash`, `api_contract_version`, and `deployment_status`. | `release/build-ga-release.sh` |
+| 2 | **Environment-Insensitive Backup Scripts**: Backup scripts used hardcoded container names (`gg-cms-postgres`) and non-isolated GDrive paths (`backup/geekgully/data`). | **Resolved**: Updated `release/gcp/backup/postgres-backup.sh` and `release/gcp/backup/mongodb-backup.sh` to take `--env <prod|test|local>`, parameterize container names (`gg-cms-postgres-prod`), and scope GDrive destination paths (`backup/geekgully/data/${ENV_TARGET}/...`). | `postgres-backup.sh`<br>`mongodb-backup.sh` |
+| 3 | **Migration Safety & Schema Hash**: No migration ledger tied to deployment ID or deterministic schema signature. | **Resolved**: `release/db-upgrade.sh` calculates `db_schema_hash` using SHA-256 over normalized, sequentially ordered SQL files (`001..N`), saving it into `version.json` and `deployment-contract.json`. | `release/db-upgrade.sh` |
+| 4 | **Destructive Restore Without Safeguards**: `restore.sh` dropped databases without environment parameterization or post-restore verification. | **Resolved**: Hardened `release/gcp/backup/restore.sh` with mandatory `--env`, remote manifest pre-inspection, environment confirmation tokens (`RESTORE_PROD` / `RESTORE_TEST`), and post-restore `db-upgrade.sh --check` + `/api/health` health gates. | `release/gcp/backup/restore.sh` |
+| 5 | **UI & Backend Version Drift**: UI bundles could deploy on incompatible backend API versions. | **Resolved**: `release/build-ga-release.sh` embeds `dist/version.json` matching the deployment contract envelope into SPA assets, aligned with Go backend `/api/health`. | `react-ui/dist/version.json` |
+| 6 | **Disconnected Cross-Database Backups**: Postgres and Mongo backups lacked a shared release metadata envelope. | **Resolved**: Created `release/gcp/backup/backup-manifest.sh` to generate unified `backup-manifest.json` binding Postgres dump details, Mongo snapshot details, SHA-256 hashes, and contract metadata. | `release/gcp/backup/backup-manifest.sh` |
+| 7 | **Enforced 9-Step Deployment Order Gate**: Pipeline lacked a formal release gate sequence. | **Resolved**: Updated `release/deploy-prod.sh` and `release/deploy-test.sh` to enforce the 9-step deployment gate (Secrets -> Certs -> DB Health -> Migration Ledger -> Migration Exec -> Backend Deploy -> UI Deploy -> Smoke Test -> Backup Manifest Publish). | `deploy-prod.sh`<br>`deploy-test.sh` |
+

@@ -2,6 +2,8 @@ package handler
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	cmssvc "github.com/serenya/go-cms/internal/application/cms"
@@ -164,6 +166,29 @@ func (h *TopicHandler) SetRelationships(c *gin.Context) {
 	middleware.LogAudit(c, "topic.relationships_updated", "topic", fmt.Sprint(id), "", map[string]interface{}{"relationships": req.Relationships})
 }
 
+func normalizeTopicContentType(raw string) string {
+	return strings.ToUpper(strings.TrimSpace(raw))
+}
+
+func validateTopicContentType(raw string) bool {
+	typeValue := normalizeTopicContentType(raw)
+	return typeValue == "ARTICLE" || typeValue == "COURSE"
+}
+
+func parseTopicContentLimit(raw string) int {
+	if raw == "" {
+		return 20
+	}
+	limit, err := strconv.Atoi(raw)
+	if err != nil || limit < 1 {
+		return 20
+	}
+	if limit > 50 {
+		return 50
+	}
+	return limit
+}
+
 // GET /api/cms/:id/topics?contentType=ARTICLE|COURSE
 func (h *TopicHandler) GetContentTopics(c *gin.Context) {
 	id, err := parseID(c, "id")
@@ -171,9 +196,13 @@ func (h *TopicHandler) GetContentTopics(c *gin.Context) {
 		response.BadRequest(c, "invalid content ID")
 		return
 	}
-	contentType := c.Query("contentType")
+	contentType := normalizeTopicContentType(c.Query("contentType"))
 	if contentType == "" {
 		response.BadRequest(c, "contentType query parameter is required")
+		return
+	}
+	if !validateTopicContentType(contentType) {
+		response.BadRequest(c, "contentType must be ARTICLE or COURSE")
 		return
 	}
 	topics, err := h.service.GetContentTopics(c.Request.Context(), id, contentType)
@@ -196,13 +225,17 @@ func (h *TopicHandler) GetTopicContent(c *gin.Context) {
 		response.BadRequest(c, "invalid topic ID")
 		return
 	}
-	size := 20
+	contentType := normalizeTopicContentType(c.Query("type"))
+	if contentType != "" && !validateTopicContentType(contentType) {
+		response.BadRequest(c, "type must be ARTICLE or COURSE")
+		return
+	}
+	size := parseTopicContentLimit(c.Query("size"))
 	entries, err := h.service.FindContentByTopicIDs(c.Request.Context(), []uint{id}, 0, "", size)
 	if err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
-	contentType := c.Query("type")
 	items := make([]dto.CMSResponse, 0, len(entries))
 	for _, e := range entries {
 		if contentType != "" && e.ContentType != contentType {

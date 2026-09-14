@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PublicFooter } from './PublicFooter';
 import { GGLogo } from '@/components/shared/GGLogo';
 import { FloatingPersonalizationButton } from '@/components/personalization/FloatingPersonalizationButton';
@@ -19,6 +19,7 @@ import {
   House,
   Compass,
   Hash,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,6 +32,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useFeatureFlags } from '@/contexts/FeatureFlagContext';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { GlobalSearchModal } from '@/components/shared/GlobalSearchModal';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -54,6 +56,7 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
   const [mobileOpen, setMobileOpen]       = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authTab, setAuthTab]             = useState<'login' | 'signup'>('login');
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   const navItems = allNavItems.filter(item => item.flag === null || flags[item.flag]);
 
@@ -63,10 +66,21 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
     setMobileOpen(false);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchModalOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden">
 
-      {/* ── Dark header — Logo | nav tabs | auth ─────────────────────────────── */}
+      {/* ── Dark header — Logo | nav tabs | search trigger | auth ─────────── */}
       <header className="shrink-0 bg-sidebar border-b border-sidebar-border z-30">
         <div className="flex items-center h-14 px-4 lg:px-6">
 
@@ -100,8 +114,20 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
             })}
           </nav>
 
-          {/* Auth — right side */}
+          {/* Search trigger & Auth — right side */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSearchModalOpen(true)}
+              className="hidden md:flex items-center gap-2 h-9 px-3 bg-sidebar-accent/40 border-sidebar-border/60 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent text-xs rounded-xl transition-all"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Search...</span>
+              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-sidebar-border bg-sidebar px-1.5 font-mono text-[10px] font-medium text-sidebar-foreground/50">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </Button>
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -216,6 +242,7 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
       </main>
 
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} defaultTab={authTab} />
+      <GlobalSearchModal open={searchModalOpen} onOpenChange={setSearchModalOpen} />
     </div>
   );
 }

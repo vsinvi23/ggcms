@@ -232,3 +232,86 @@ func TestImportConfirm_Success(t *testing.T) {
 		t.Errorf("expected 0 failed items, got %d", resp.Data.Failed)
 	}
 }
+
+type stubCategoryService struct{}
+
+func (s *stubCategoryService) GetAll(_ context.Context, _, _ int) ([]*entity.Category, int64, error) {
+	return []*entity.Category{
+		{ID: 5, Name: "Backend & APIs", Slug: "backend-apis"},
+		{ID: 10, Name: "PKI & Cryptography", Slug: "pki-cryptography"},
+	}, 2, nil
+}
+func (s *stubCategoryService) GetByID(_ context.Context, _ uint) (*entity.Category, error) { return nil, nil }
+func (s *stubCategoryService) GetTree(_ context.Context, _ bool) ([]*entity.Category, error) { return nil, nil }
+func (s *stubCategoryService) Create(_ context.Context, _ string, _ *uint) (*entity.Category, error) { return nil, nil }
+func (s *stubCategoryService) Update(_ context.Context, _ uint, _ string, _ *uint, _ int) (*entity.Category, error) { return nil, nil }
+func (s *stubCategoryService) Delete(_ context.Context, _ uint) error { return nil }
+func (s *stubCategoryService) GetReviewerGroups(_ context.Context, _ uint) ([]entity.Group, error) { return nil, nil }
+func (s *stubCategoryService) AddReviewerGroup(_ context.Context, _, _ uint) error { return nil }
+func (s *stubCategoryService) RemoveReviewerGroup(_ context.Context, _, _ uint) error { return nil }
+func (s *stubCategoryService) GetReviewers(_ context.Context, _ uint) ([]*entity.User, error) { return nil, nil }
+func (s *stubCategoryService) GetGroupCategories(_ context.Context, _ uint) ([]*entity.Category, error) { return nil, nil }
+func (s *stubCategoryService) CountPublishedArticles(_ context.Context, _ uint) (int64, error) { return 0, nil }
+
+func TestImportPreview_CategoryResolutionAndValidation(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+
+	cmsSvc := &stubCMSService{}
+	catSvc := &stubCategoryService{}
+	h := handler.NewImportHandler(cmsSvc, &stubTaskService{}, &stubSectionService{}, &stubLessonService{}, catSvc)
+	r.POST("/api/import/preview", h.Preview)
+
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+
+	// File 1: Valid matching category
+	f1, _ := writer.CreateFormFile("files", "valid_cat.md")
+	f1.Write([]byte("---\ntitle: \"Valid Category\"\ncategory: \"backend-apis\"\n---\nBody text"))
+
+	// File 2: Unrecognized category
+	f2, _ := writer.CreateFormFile("files", "invalid_cat.md")
+	f2.Write([]byte("---\ntitle: \"Invalid Category\"\ncategory: \"backend\"\n---\nBody text"))
+
+	writer.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/import/preview", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp struct {
+		Code int                      `json:"code"`
+		Data dto.ImportPreviewResponse `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to parse JSON response: %v", err)
+	}
+
+	if resp.Data.Total != 2 {
+		t.Fatalf("expected 2 items, got %d", resp.Data.Total)
+	}
+
+	// First item: matched category ID 5
+	item1 := resp.Data.Items[0]
+	if !item1.Valid {
+		t.Errorf("expected item 1 to be valid, got error: %s", item1.Error)
+	}
+	if item1.CategoryID == nil || *item1.CategoryID != 5 {
+		t.Errorf("expected categoryId 5 for item 1, got %v", item1.CategoryID)
+	}
+
+	// Second item: unrecognized category "backend" -> invalid
+	item2 := resp.Data.Items[1]
+	if item2.Valid {
+		t.Errorf("expected item 2 to be invalid due to unrecognized category")
+	}
+	if item2.Error == "" || !bytes.Contains([]byte(item2.Error), []byte("category \"backend\" is not recognized")) {
+		t.Errorf("unexpected error message for item 2: %q", item2.Error)
+	}
+}
+

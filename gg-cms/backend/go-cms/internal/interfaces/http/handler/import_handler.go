@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	categorysvc "github.com/serenya/go-cms/internal/application/category"
 	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	"github.com/serenya/go-cms/internal/application/importer"
 	lessonsvc "github.com/serenya/go-cms/internal/application/lesson"
@@ -19,18 +21,24 @@ import (
 )
 
 type ImportHandler struct {
-	cmsService     cmssvc.Service
-	taskService    tasksvc.Service
-	sectionService sectionsvc.Service
-	lessonService  lessonsvc.Service
+	cmsService      cmssvc.Service
+	taskService     tasksvc.Service
+	sectionService  sectionsvc.Service
+	lessonService   lessonsvc.Service
+	categoryService categorysvc.Service
 }
 
-func NewImportHandler(cmsService cmssvc.Service, taskService tasksvc.Service, sectionService sectionsvc.Service, lessonService lessonsvc.Service) *ImportHandler {
+func NewImportHandler(cmsService cmssvc.Service, taskService tasksvc.Service, sectionService sectionsvc.Service, lessonService lessonsvc.Service, categoryServices ...categorysvc.Service) *ImportHandler {
+	var catSvc categorysvc.Service
+	if len(categoryServices) > 0 {
+		catSvc = categoryServices[0]
+	}
 	return &ImportHandler{
-		cmsService:     cmsService,
-		taskService:    taskService,
-		sectionService: sectionService,
-		lessonService:  lessonService,
+		cmsService:      cmsService,
+		taskService:     taskService,
+		sectionService:  sectionService,
+		lessonService:   lessonService,
+		categoryService: catSvc,
 	}
 }
 
@@ -47,6 +55,13 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 	if len(files) == 0 {
 		response.BadRequest(c, "no files uploaded")
 		return
+	}
+
+	var dbCategories []*entity.Category
+	if h.categoryService != nil {
+		if cats, _, err := h.categoryService.GetAll(c.Request.Context(), 0, 1000); err == nil {
+			dbCategories = cats
+		}
 	}
 
 	var items []dto.ImportPreviewItem
@@ -75,6 +90,30 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 
 		parsed := importer.Parse(fh.Filename, content)
 		for _, p := range parsed {
+			var categoryID *uint
+			itemValid := p.Valid
+			itemErr := p.Error
+
+			if p.CategorySlug != "" && len(dbCategories) > 0 {
+				slugLower := strings.ToLower(strings.TrimSpace(p.CategorySlug))
+				var matched *entity.Category
+				for _, cat := range dbCategories {
+					if cat.IsVirtual {
+						continue
+					}
+					if strings.ToLower(cat.Slug) == slugLower || strings.ToLower(cat.Name) == slugLower {
+						matched = cat
+						break
+					}
+				}
+				if matched != nil {
+					categoryID = &matched.ID
+				} else if itemValid {
+					itemValid = false
+					itemErr = fmt.Sprintf("Wrong format: category %q is not recognized — please pick a valid category", p.CategorySlug)
+				}
+			}
+
 			items = append(items, dto.ImportPreviewItem{
 				FileName:     p.FileName,
 				Index:        len(items),
@@ -84,12 +123,13 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 				Body:         p.Body,
 				BodyFormat:   p.BodyFormat,
 				CategorySlug: p.CategorySlug,
+				CategoryID:   categoryID,
 				ArticleType:  p.ArticleType,
 				CourseType:   p.CourseType,
 				Tags:         p.Tags,
 				Sections:     mapParsedSections(p.Sections),
-				Valid:        p.Valid,
-				Error:        p.Error,
+				Valid:        itemValid,
+				Error:        itemErr,
 			})
 		}
 	}
