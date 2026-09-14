@@ -68,3 +68,11 @@ export function useContentTopics(contentId: number | null, contentType: string) 
     enabled: !!contentId && !!contentType,
   });
 }
+
+export function useTopicContent(topicId: number | null, contentType?: 'ARTICLE' | 'COURSE') {
+  return useQuery({
+    queryKey: [...TOPICS_QUERY_KEY, topicId, 'content', contentType],
+    queryFn: () => (topicId ? topicService.getTopicContent(topicId, contentType) : []),
+    enabled: !!topicId,
+  });
+}
