@@ -107,9 +107,29 @@ export function CategoryTreeSelect({
     [options, value]
   );
 
+  const existingMatch = useMemo(() => {
+    if (!newCatName.trim()) return null;
+    const clean = newCatName.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+    if (!clean) return null;
+    return options.find((opt) => {
+      const optClean = opt.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+      const optSlugClean = opt.slug.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+      return optClean === clean || optSlugClean === clean;
+    });
+  }, [newCatName, options]);
+
   const handleCreateCategory = async () => {
     if (!newCatName.trim()) {
       toast.error('Category name is required');
+      return;
+    }
+    if (existingMatch) {
+      toast.info(`Using existing category "${existingMatch.name}"`);
+      onSelect(existingMatch.id);
+      setCreateDialogOpen(false);
+      setNewCatName('');
+      setNewCatParentId(null);
+      setOpen(false);
       return;
     }
     try {
@@ -255,6 +275,28 @@ export function CategoryTreeSelect({
                 placeholder="e.g. Applied Cryptography, Vector Search, WebAssembly"
                 className="h-8 text-xs"
               />
+              {existingMatch && (
+                <div className="p-2 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex items-center justify-between gap-2 mt-1">
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">Category <strong>"{existingMatch.name}"</strong> already exists</span>
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 text-[10px] px-2 border-amber-500/40 hover:bg-amber-500/20 shrink-0"
+                    onClick={() => {
+                      onSelect(existingMatch.id);
+                      setCreateDialogOpen(false);
+                      setNewCatName('');
+                      setNewCatParentId(null);
+                      setOpen(false);
+                    }}
+                  >
+                    Select Existing
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">
