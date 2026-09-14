@@ -128,12 +128,12 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		r.Static("/assets", "dist/assets")
 	}
 
-	// GraphQL endpoint (public — for content browsing)
+	// GraphQL endpoint (public — for content browsing, rate-limited against scraping)
 	gql, err := gqlhandler.NewHandler(svcs.CMS, svcs.Category)
 	if err != nil {
 		return nil, err
 	}
-	r.POST("/graphql", gql.Handle)
+	r.POST("/graphql", middleware.PublicRateLimit(), gql.Handle)
 
 	// Initialise all HTTP handlers
 	authH := handler.NewAuthHandler(svcs.Auth)
@@ -190,11 +190,11 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		api.GET("/auth/github", oauthH.GitHubRedirect)
 		api.GET("/auth/github/callback", oauthH.GitHubCallback)
 
-		// ----- Feature flags (public — no auth) -----
-		api.GET("/features", settingsH.GetFeatures)
+		// ----- Feature flags (public — rate-limited) -----
+		api.GET("/features", middleware.PublicRateLimit(), settingsH.GetFeatures)
 
-		// ----- Content types (public read) -----
-		api.GET("/content-types", ctH.GetAll)
+		// ----- Content types (public read, rate-limited) -----
+		api.GET("/content-types", middleware.PublicRateLimit(), ctH.GetAll)
 
 		// ----- Tags (public read) -----
 		api.GET("/tags", middleware.PublicRateLimit(), tagH.GetAll)

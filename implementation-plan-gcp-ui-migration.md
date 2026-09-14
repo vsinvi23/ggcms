@@ -82,19 +82,26 @@ The application is configured to deploy directly to GCP using existing automated
 
 ---
 
-## 🗄️ Database Migration Defect Resolution
+## 🗄️ Database Migration & Security Enforcement
 
-### Migration Collision Fix (Version `024`)
-The migration folder currently contains a breaking version collision:
+### Migration Collision Fix (Version `024` $\rightarrow$ `035`) — ✅ Implemented & Enforced
+The migration sequence has been re-indexed into a clean, 35-file linear sequence:
 - [`024_feature_flags.sql`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/postgres/024_feature_flags.sql)
-- [`024_user_profiles.sql`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/postgres/024_user_profiles.sql)
+- [`025_user_profiles.sql`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/postgres/025_user_profiles.sql)
+- ...
+- [`035_domains_and_content_categories.sql`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/postgres/035_domains_and_content_categories.sql)
 
-**Action Item:** Renumber `024_user_profiles.sql` to `025_user_profiles.sql` and shift subsequent files (`025_user_profile_multiprofile.sql` $\rightarrow$ `025a` / `026`) to guarantee a linear, deterministic execution sequence.
+**Runtime Enforcement:** [`migrations.go`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/migrations.go) includes embedded runtime index validation that halts server startup if duplicate migration prefixes are detected. Tested by [`migrations_test.go`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/migrations_test.go).
+
+### Route-Wide Security & Anti-Scraping Gate — ✅ Implemented & Enforced
+Public endpoints are protected against scraping, automated harvesting, and DOS attacks via per-IP rate limiting:
+- **Middleware:** `PublicRateLimit()` in [`rate_limit.go`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/internal/interfaces/http/middleware/rate_limit.go) (60 requests/min per IP with `Retry-After` and `X-RateLimit-Limit` headers).
+- **Route Coverage:** Attached in [`router.go`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/internal/interfaces/http/router.go) to `/public/*`, `/topics/*`, `/categories/*`, `/domains/*`, `/learning-paths/*`.
 
 ### Canonical Taxonomy Schema Definition
-- **Domain:** Top-level knowledge area (Software Engineering, Cloud, Cybersecurity, Data, AI & ML) defined in [`034_domains_and_content_categories.sql`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/postgres/034_domains_and_content_categories.sql).
+- **Domain:** Top-level knowledge area (Software Engineering, Cloud, Cybersecurity, Data, AI & ML) defined in [`035_domains_and_content_categories.sql`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/postgres/035_domains_and_content_categories.sql).
 - **Category:** Sub-taxonomy belonging to a Domain (e.g. Identity & Access under Cybersecurity).
-- **Topic:** Knowledge Graph entity node defined in [`029_topics.sql`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/postgres/029_topics.sql) and [`031_p0_knowledge_graph.sql`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/postgres/031_p0_knowledge_graph.sql).
+- **Topic:** Knowledge Graph entity node defined in [`030_topics.sql`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/postgres/030_topics.sql) and [`032_p0_knowledge_graph.sql`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/postgres/032_p0_knowledge_graph.sql).
 - **Tag:** Metadata label for secondary filtering defined in [`006_tags.sql`](file:///Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms/backend/go-cms/migrations/postgres/006_tags.sql).
 
 ---
