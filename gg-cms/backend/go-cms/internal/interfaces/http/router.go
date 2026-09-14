@@ -160,7 +160,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	lpH := handler.NewLearningPathHandler(svcs.LearningPath)
 	auditH := handler.NewAuditHandler(svcs.Audit)
 	personH := handler.NewPersonalizationHandler(svcs.Personalization)
-	importH := handler.NewImportHandler(svcs.CMS, svcs.Task, svcs.Section, svcs.Lesson)
+	importH := handler.NewImportHandler(svcs.CMS, svcs.Task, svcs.Section, svcs.Lesson, svcs.Category)
 	factoryImportH := handler.NewFactoryImportHandler(svcs.CMS, svcs.Section, svcs.Lesson, svcs.User, svcs.Category, svcs.Topic, nil, cfg.Admin.Email)
 
 	authMW := middleware.Auth(jwtManager)

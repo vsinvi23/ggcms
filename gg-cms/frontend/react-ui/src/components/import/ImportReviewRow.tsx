@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RichContentEditor } from '@/components/articles/RichContentEditor';
 import { ImportCourseSectionTree } from '@/components/import/ImportCourseSectionTree';
+import { CategoryTreeSelect } from '@/components/import/CategoryTreeSelect';
 import { ImportPreviewItem } from '@/api/services/importService';
 import { ContentBlock } from '@/types/content';
 import { parseBodyToBlocks } from '@/lib/htmlParser';
@@ -157,13 +158,21 @@ export function ImportReviewRow({ item, onChange }: ImportReviewRowProps) {
       {/* Edit Form Tab */}
       {activeTab === 'edit' && (
         <div className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Title</label>
               <Input
                 value={item.title}
                 onChange={(e) => onChange({ title: e.target.value })}
                 placeholder="Title"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Category / Subcategory</label>
+              <CategoryTreeSelect
+                value={item.categoryId}
+                categorySlug={item.categorySlug}
+                onSelect={(catId) => onChange({ categoryId: catId })}
               />
             </div>
             <div className="space-y-1">
