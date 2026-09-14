@@ -86,6 +86,11 @@ func Run(db *gorm.DB) error {
 		}
 	}
 
+	// Trigger DB self-healing taxonomy integrity auditor
+	if err := db.Exec("SELECT fn_audit_taxonomy_integrity()").Error; err != nil {
+		applogger.Warn("migrations: taxonomy integrity auditor returned notice", zap.Error(err))
+	}
+
 	applogger.Info("migrations: done", zap.Int("count", len(names)))
 	return nil
 }
