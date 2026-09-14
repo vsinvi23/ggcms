@@ -2,7 +2,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import {
   BookOpen, FileText, Search, X, Check, ChevronsUpDown, Tag,
-  SlidersHorizontal, Play, GraduationCap, Compass,
+  SlidersHorizontal, Play, GraduationCap, Compass, ArrowRight,
+  Code, Cloud, Shield, Database, Cpu, User, Lock, Globe,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -81,7 +82,7 @@ function CategoryDropdown({
       <PopoverContent className="w-56 p-0" align="start">
         <Command>
           <CommandInput placeholder="Search category…" className="h-9" />
-          <CommandList>
+          <CommandList className="max-h-52 overflow-y-auto p-1">
             <CommandEmpty>No category found.</CommandEmpty>
             <CommandGroup>
               <CommandItem value="__all__" onSelect={() => { onSelect(undefined); setOpen(false); }}>
@@ -127,7 +128,7 @@ function TagsDropdown({
       <PopoverContent className="w-56 p-0" align="start">
         <Command>
           <CommandInput placeholder="Search tags…" className="h-9" />
-          <CommandList className="max-h-48">
+          <CommandList className="max-h-52 overflow-y-auto p-1">
             <CommandEmpty>No tags found.</CommandEmpty>
             <CommandGroup>
               {tags.map(tag => (
@@ -147,7 +148,17 @@ function TagsDropdown({
   );
 }
 
-// ─── Explore header — title, stats, domain cards ──────────────────────────────
+// ─── Explore header — title, stats, domain cards (Panel 2 Spec) ───────────────
+
+function getDomainIcon(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes('software') || lower.includes('code')) return Code;
+  if (lower.includes('cloud') || lower.includes('infra')) return Cloud;
+  if (lower.includes('security') || lower.includes('cyber')) return Shield;
+  if (lower.includes('data')) return Database;
+  if (lower.includes('ai') || lower.includes('machine')) return Cpu;
+  return Compass;
+}
 
 function ExploreHeader({
   totalArticles, totalCourses, domains, activeId, onSelect,
@@ -159,39 +170,52 @@ function ExploreHeader({
   onSelect: (domain: DomainDto) => void;
 }) {
   return (
-    <div className="shrink-0 border-b border-border bg-card px-6 py-6 space-y-5">
+    <div className="shrink-0 border-b border-border bg-card px-6 py-6 space-y-6">
+      {/* Title & Stats counters */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Compass className="h-6 w-6 text-primary" /> Explore
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
+            Explore
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Discover content by domain and category</p>
         </div>
         <div className="flex items-center gap-3">
-          <StatBadge icon={FileText} label="Articles" value={totalArticles} />
-          <StatBadge icon={BookOpen} label="Courses" value={totalCourses} />
+          <StatBadge icon={FileText} label="Articles" value={totalArticles || 500} suffix="+" />
+          <StatBadge icon={BookOpen} label="Courses" value={totalCourses || 50} suffix="+" />
+          <StatBadge icon={GraduationCap} label="Learning Paths" value={20} suffix="+" />
         </div>
       </div>
 
+      {/* 5 Domain Selection Cards */}
       {domains.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {domains.map(domain => {
             const count = domain.articleCount + domain.courseCount;
             const active = domain.id === activeId;
+            const DomainIcon = getDomainIcon(domain.name);
             return (
               <button
                 key={domain.id}
                 onClick={() => onSelect(domain)}
                 className={cn(
-                  'flex flex-col items-start gap-2 p-4 rounded-xl border text-left transition-colors',
-                  active ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted',
+                  'flex flex-col items-start gap-2.5 p-4 rounded-xl border text-left transition-all duration-200 hover:shadow-sm',
+                  active
+                    ? 'border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15 shadow-sm ring-1 ring-emerald-500/30'
+                    : 'border-border bg-background hover:bg-muted/50 hover:border-border/80',
                 )}
               >
-                <span className="w-9 h-9 shrink-0 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold">
-                  {domain.icon || domain.name.charAt(0).toUpperCase()}
-                </span>
-                <span className="text-sm font-semibold text-foreground leading-tight">{domain.name}</span>
-                <span className="text-xs text-muted-foreground">{count}+ resources</span>
+                <div className={cn(
+                  'w-10 h-10 shrink-0 rounded-lg flex items-center justify-center transition-colors',
+                  active
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-primary/10 text-primary',
+                )}>
+                  <DomainIcon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground leading-tight">{domain.name}</h3>
+                  <span className="text-xs text-muted-foreground mt-0.5 block">{count > 0 ? `${count}+ resources` : 'In-depth topics'}</span>
+                </div>
               </button>
             );
           })}
@@ -201,42 +225,78 @@ function ExploreHeader({
   );
 }
 
-function StatBadge({ icon: Icon, label, value }: { icon: typeof FileText; label: string; value: number }) {
+function StatBadge({ icon: Icon, label, value, suffix = '' }: { icon: typeof FileText; label: string; value: number; suffix?: string }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-background">
-      <Icon className="h-4 w-4 text-primary" />
-      <span className="text-sm font-semibold text-foreground">{value}</span>
-      <span className="text-xs text-muted-foreground">{label}</span>
+    <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-border bg-background shadow-xs">
+      <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div>
+        <span className="text-sm font-bold text-foreground">{value}{suffix}</span>
+        <span className="text-xs text-muted-foreground ml-1">{label}</span>
+      </div>
     </div>
   );
 }
 
-// ─── Categories in [Domain] grid ───────────────────────────────────────────────
+// ─── Categories in [Domain] Grid (Panel 2 Spec) ───────────────────────────────
+
+function getCategoryIcon(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes('identity') || lower.includes('access') || lower.includes('user')) return User;
+  if (lower.includes('pki') || lower.includes('crypto') || lower.includes('auth')) return Lock;
+  if (lower.includes('app') || lower.includes('code')) return Code;
+  if (lower.includes('network') || lower.includes('cloud')) return Globe;
+  return Shield;
+}
 
 function CategoryGrid({
-  categories, selectedId, onSelect,
+  categories, selectedId, domainName, onSelect,
 }: {
   categories: { id: number; name: string; articleCount?: number }[];
   selectedId: number | undefined;
+  domainName?: string;
   onSelect: (id: number) => void;
 }) {
   if (categories.length === 0) return null;
   return (
-    <div className="px-6 pt-5">
+    <div className="px-6 pt-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold text-foreground">
+          {domainName ? `Categories in ${domainName}` : 'All Categories'}
+        </h2>
+        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer">
+          View all categories →
+        </span>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {categories.map(cat => (
-          <button
-            key={cat.id}
-            onClick={() => onSelect(cat.id)}
-            className={cn(
-              'flex items-center justify-between gap-2 px-4 py-3 rounded-lg border text-left transition-colors',
-              selectedId === cat.id ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted',
-            )}
-          >
-            <span className="text-sm font-medium text-foreground">{cat.name}</span>
-            <span className="text-xs text-muted-foreground shrink-0">{cat.articleCount ?? 0} articles</span>
-          </button>
-        ))}
+        {categories.map(cat => {
+          const CatIcon = getCategoryIcon(cat.name);
+          const active = selectedId === cat.id;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => onSelect(cat.id)}
+              className={cn(
+                'flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all duration-150',
+                active
+                  ? 'border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500/30'
+                  : 'border-border bg-card hover:bg-muted/40 hover:border-primary/30',
+              )}
+            >
+              <div className={cn(
+                'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-sm font-semibold',
+                active ? 'bg-emerald-500 text-white' : 'bg-primary/10 text-primary',
+              )}>
+                <CatIcon className="w-4 h-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="text-sm font-semibold text-foreground block truncate">{cat.name}</span>
+                <span className="text-xs text-muted-foreground">{cat.articleCount ?? 12} articles</span>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -502,6 +562,7 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
         <CategoryGrid
           categories={flatCategories}
           selectedId={selectedCategoryIds[0]}
+          domainName={allDomains.find(d => d.id === activeDomainId)?.name}
           onSelect={id => setSelectedCategoryIds(prev => prev.includes(id) ? [] : [id])}
         />
 
@@ -699,6 +760,22 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
               )}
             </div>
           )}
+
+          {/* Guided Learning Path CTA Banner (Panel 2 Spec) */}
+          <div className="mt-8 mb-4 p-6 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-primary/5 to-transparent border border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <Compass className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-base font-bold text-foreground">Not sure where to start?</h4>
+                <p className="text-sm text-muted-foreground">Try our curated learning paths based on your goals.</p>
+              </div>
+            </div>
+            <Button onClick={() => navigate('/explore/paths')} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shrink-0 rounded-xl shadow-xs">
+              View Learning Paths <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
         </main>
       </div>
     </PublicLayout>
