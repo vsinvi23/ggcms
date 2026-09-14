@@ -1,7 +1,7 @@
 {
   "name": "db-migrations",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "PostgreSQL Schema Migrations",
-  "last_migration": "027_password_reset_tokens.sql",
-  "updated_at": "2026-09-14T09:14:44Z"
+  "last_migration": "036_taxonomy_integrity_auditor.sql",
+  "updated_at": "2026-09-14T09:31:32Z"
 }
