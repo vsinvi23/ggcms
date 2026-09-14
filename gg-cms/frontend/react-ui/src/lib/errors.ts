@@ -3,6 +3,11 @@
  * Never expose raw server error text, stack traces, or internal paths to users.
  */
 export const toUserMessage = (err: unknown, fallback = 'Something went wrong. Please try again.'): string => {
+  const data = (err as { response?: { data?: { message?: string; error?: string } } })?.response?.data;
+  if (typeof data === 'string' && data.trim()) return data;
+  if (data?.message) return data.message;
+  if (data?.error) return data.error;
+
   const status = (err as { response?: { status?: number } })?.response?.status;
   if (status === 400) return 'Invalid request. Please check your input.';
   if (status === 401) return 'Invalid credentials or session expired.';

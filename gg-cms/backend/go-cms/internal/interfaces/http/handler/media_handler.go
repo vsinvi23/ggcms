@@ -51,6 +51,9 @@ func (h *MediaHandler) Upload(c *gin.Context) {
 
 	files := form.File["files"]
 	if len(files) == 0 {
+		files = form.File["file"]
+	}
+	if len(files) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "no files provided"})
 		return
 	}

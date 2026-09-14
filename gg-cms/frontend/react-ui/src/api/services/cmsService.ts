@@ -430,11 +430,9 @@ export const mediaService = {
    */
   upload: async (file: File): Promise<MediaUploadResponse> => {
     const formData = new FormData();
-    formData.append('files', file); // Strapi expects the field name "files"
+    formData.append('files', file);
 
-    const response = await apiClient.post('/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await apiClient.post('/upload', formData);
 
     // Strapi returns an array; take the first uploaded file
     const uploaded = Array.isArray(response.data) ? response.data[0] : response.data;

@@ -45,13 +45,19 @@ func NewImportHandler(cmsService cmssvc.Service, taskService tasksvc.Service, se
 // POST /api/import/preview
 // Accepts multipart/form-data with field "files" (multiple). Returns parsed preview items.
 func (h *ImportHandler) Preview(c *gin.Context) {
+	// Parse up to 100MB for large ZIP archive uploads
+	_ = c.Request.ParseMultipartForm(100 << 20)
+
 	form, err := c.MultipartForm()
 	if err != nil {
-		response.BadRequest(c, "expected multipart/form-data with a 'files' field")
+		response.BadRequest(c, fmt.Sprintf("invalid upload payload: %v (ensure multipart form with 'files' or 'file' field)", err))
 		return
 	}
 
 	files := form.File["files"]
+	if len(files) == 0 {
+		files = form.File["file"]
+	}
 	if len(files) == 0 {
 		response.BadRequest(c, "no files uploaded")
 		return
@@ -108,9 +114,6 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 				}
 				if matched != nil {
 					categoryID = &matched.ID
-				} else if itemValid {
-					itemValid = false
-					itemErr = fmt.Sprintf("Wrong format: category %q is not recognized — please pick a valid category", p.CategorySlug)
 				}
 			}
 

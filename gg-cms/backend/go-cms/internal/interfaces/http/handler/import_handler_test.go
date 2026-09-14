@@ -305,13 +305,13 @@ func TestImportPreview_CategoryResolutionAndValidation(t *testing.T) {
 		t.Errorf("expected categoryId 5 for item 1, got %v", item1.CategoryID)
 	}
 
-	// Second item: unrecognized category "backend" -> invalid
+	// Second item: unrecognized category "backend" -> valid for preview, categoryID nil
 	item2 := resp.Data.Items[1]
-	if item2.Valid {
-		t.Errorf("expected item 2 to be invalid due to unrecognized category")
+	if !item2.Valid {
+		t.Errorf("expected item 2 to be valid for preview even with unrecognized category slug, got error: %s", item2.Error)
 	}
-	if item2.Error == "" || !bytes.Contains([]byte(item2.Error), []byte("category \"backend\" is not recognized")) {
-		t.Errorf("unexpected error message for item 2: %q", item2.Error)
+	if item2.CategoryID != nil {
+		t.Errorf("expected categoryId nil for unrecognized category, got %v", item2.CategoryID)
 	}
 }
 

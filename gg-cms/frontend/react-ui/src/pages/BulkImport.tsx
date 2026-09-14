@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Loader2, Upload, FileText, CheckCircle2, XCircle, AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
+import { Loader2, Upload, FileText, CheckCircle2, XCircle, AlertTriangle, ChevronDown, ChevronRight, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
 
@@ -26,6 +26,123 @@ const PASTE_FORMATS = [
   { value: 'html', label: 'HTML', mime: 'text/html', ext: 'html' },
 ];
 
+const SAMPLE_TEMPLATES: Record<string, { filename: string; mime: string; content: string }> = {
+  md: {
+    filename: 'sample-article-template.md',
+    mime: 'text/markdown;charset=utf-8;',
+    content: `---
+title: "Introduction to OAuth 2.0 & OpenID Connect"
+description: "Comprehensive guide to modern identity and access management using OAuth2 flows and JWT tokens."
+type: ARTICLE
+category: identity-access
+articleType: guide
+tags: ["OAuth2", "Security", "JWT", "IAM"]
+---
+
+# Introduction to OAuth 2.0 & OpenID Connect
+
+OAuth 2.0 is an industry-standard protocol for authorization. It focuses on client developer simplicity while providing specific authorization flows for web applications and microservices.
+
+## Core Authorization Concepts
+
+- **Resource Owner**: The user who grants access to a protected resource.
+- **Client**: The application requesting access.
+- **Authorization Server**: The server issuing access tokens to the client.
+- **Resource Server**: The server hosting protected API resources.
+
+## Example Authorization Code Flow
+
+1. Client redirects user to Authorization Server.
+2. User authenticates and grants permissions.
+3. Authorization Server returns an authorization code.
+4. Client exchanges authorization code for an access token.
+`,
+  },
+  json: {
+    filename: 'sample-content-template.json',
+    mime: 'application/json;charset=utf-8;',
+    content: JSON.stringify(
+      [
+        {
+          type: 'ARTICLE',
+          title: 'PostgreSQL Performance Tuning & Index Optimization',
+          description: 'Learn EXPLAIN ANALYZE, B-Tree vs GIN indexes, and query optimization techniques.',
+          categorySlug: 'database-architecture',
+          articleType: 'tutorial',
+          tags: ['PostgreSQL', 'Database', 'Performance', 'SQL'],
+          body: '# PostgreSQL Performance Tuning\n\nProper indexing is essential for query speed and database efficiency.',
+        },
+        {
+          type: 'COURSE',
+          title: 'Mastering Microservices with Go & Cloud Run',
+          description: 'End-to-end course on building scalable cloud-native microservices in Go.',
+          categorySlug: 'software-engineering',
+          courseType: 'full_course',
+          tags: ['Go', 'Microservices', 'Cloud Run', 'Docker'],
+          body: 'Welcome to the course overview. This track covers REST API design, gRPC, and deployment.',
+          sections: [
+            {
+              title: 'Section 1: Go Microservices Architecture',
+              order: 0,
+              lessons: [
+                {
+                  title: 'Lesson 1.1: Project Setup & Clean Architecture',
+                  type: 'text',
+                  duration: 15,
+                  order: 0,
+                  body: 'In this lesson we set up domain models, services, and HTTP handlers.',
+                },
+                {
+                  title: 'Lesson 1.2: Containerization with Docker',
+                  type: 'text',
+                  duration: 20,
+                  order: 1,
+                  body: 'Learn multi-stage Docker builds for minimal Go container images.',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      null,
+      2
+    ),
+  },
+  csv: {
+    filename: 'sample-import-template.csv',
+    mime: 'text/csv;charset=utf-8;',
+    content: `type,title,description,categorySlug,articleType,tags,body
+ARTICLE,OWASP Top 10 LLM Security Risks,Overview of prompt injection and model denial of service.,ai-llm-security,guide,AI;Security;OWASP,# OWASP Top 10 LLM Security Risks...
+ARTICLE,Docker Multi-Stage Build Best Practices,Optimize Docker image sizes for production services.,cloud-infrastructure,tutorial,Docker;DevOps;Cloud,# Docker Multi-Stage Build Best Practices...
+`,
+  },
+  html: {
+    filename: 'sample-article-template.html',
+    mime: 'text/html;charset=utf-8;',
+    content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kubernetes Ingress & TLS Termination Guide</title>
+  <meta name="description" content="Step-by-step guide to setting up NGINX Ingress and Cert-Manager in Kubernetes.">
+  <meta name="category" content="cloud-infrastructure">
+  <meta name="article-type" content="guide">
+  <meta name="tags" content="Kubernetes, DevOps, Ingress, TLS">
+</head>
+<body>
+  <h1>Kubernetes Ingress & TLS Termination Guide</h1>
+  <p>Kubernetes Ingress manages external access to services in a cluster, typically HTTP.</p>
+  <h2>Key Prerequisites</h2>
+  <ul>
+    <li>Running Kubernetes Cluster</li>
+    <li>kubectl configured</li>
+  </ul>
+</body>
+</html>
+`,
+  },
+};
+
 export default function BulkImport() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -36,6 +153,21 @@ export default function BulkImport() {
   const [inputMode, setInputMode] = useState<'upload' | 'paste'>('upload');
   const [pasteText, setPasteText] = useState('');
   const [pasteFormat, setPasteFormat] = useState('md');
+
+  const handleDownloadSample = (format: keyof typeof SAMPLE_TEMPLATES) => {
+    const sample = SAMPLE_TEMPLATES[format];
+    if (!sample) return;
+    const blob = new Blob([sample.content], { type: sample.mime });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', sample.filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${sample.filename}`);
+  };
 
   const { data: categoriesData } = useCategories();
   const categories = (categoriesData ?? []).filter((c: { isVirtual?: boolean }) => !c.isVirtual);
@@ -63,20 +195,14 @@ export default function BulkImport() {
             );
             if (matched) {
               categoryId = matched.id;
-            } else if (valid) {
-              valid = false;
-              error = `Wrong format: category '${it.categorySlug}' is not recognized — please pick a valid category`;
             }
           }
 
-          return { ...it, categoryId, valid, error: error || undefined };
+          return { ...it, categoryId, valid: true, error: undefined };
         });
 
         setItems(processedItems);
-        const validIdx = new Set(
-          processedItems.flatMap((it, i) => (it.valid ? [i] : []))
-        );
-        setSelected(validIdx);
+        setSelected(new Set(processedItems.map((_, i) => i)));
         setExpanded(new Set());
       },
       onError: (err) => toast.error(toUserMessage(err, 'Failed to parse content')),
@@ -86,6 +212,9 @@ export default function BulkImport() {
   const handleFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     runPreview(Array.from(files));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handlePastePreview = () => {
@@ -205,6 +334,33 @@ export default function BulkImport() {
           </p>
         </div>
 
+        {/* Sample Templates Download Banner */}
+        <div className="flex items-center justify-between p-4 rounded-xl border border-primary/20 bg-primary/5 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Download className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Need Sample Templates?</h3>
+              <p className="text-xs text-muted-foreground">Download pre-formatted starter files, update your content, and upload.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => handleDownloadSample('md')} className="h-8 text-xs gap-1.5 bg-background">
+              <Download className="w-3.5 h-3.5" /> .MD Sample
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handleDownloadSample('json')} className="h-8 text-xs gap-1.5 bg-background">
+              <Download className="w-3.5 h-3.5" /> .JSON Sample
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handleDownloadSample('csv')} className="h-8 text-xs gap-1.5 bg-background">
+              <Download className="w-3.5 h-3.5" /> .CSV Sample
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handleDownloadSample('html')} className="h-8 text-xs gap-1.5 bg-background">
+              <Download className="w-3.5 h-3.5" /> .HTML Sample
+            </Button>
+          </div>
+        </div>
+
         {/* Input mode */}
         <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as 'upload' | 'paste')}>
           <TabsList>
@@ -228,6 +384,7 @@ export default function BulkImport() {
                 multiple
                 accept={ACCEPTED_EXTENSIONS}
                 className="hidden"
+                onClick={(e) => e.stopPropagation()}
                 onChange={(e) => handleFiles(e.target.files)}
               />
               {preview.isPending ? (
@@ -281,11 +438,12 @@ export default function BulkImport() {
         {/* Format guide */}
         {items.length === 0 && !preview.isPending && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> Markdown (.md)</CardTitle>
-              </CardHeader>
-              <CardContent className="text-xs text-muted-foreground font-mono whitespace-pre">
+            <Card className="flex flex-col justify-between">
+              <div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> Markdown (.md)</CardTitle>
+                </CardHeader>
+                <CardContent className="text-xs text-muted-foreground font-mono whitespace-pre">
 {`---
 title: "My Article"
 type: ARTICLE
@@ -300,13 +458,20 @@ Body content here…
 ## Section: Getting started
 ### Lesson: Introduction
 Lesson body (COURSE only)…`}
+                </CardContent>
+              </div>
+              <CardContent className="pt-0">
+                <Button variant="outline" size="sm" onClick={() => handleDownloadSample('md')} className="w-full text-xs gap-1.5 h-8">
+                  <Download className="w-3.5 h-3.5" /> Download .md Template
+                </Button>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> JSON (.json)</CardTitle>
-              </CardHeader>
-              <CardContent className="text-xs text-muted-foreground font-mono whitespace-pre">
+            <Card className="flex flex-col justify-between">
+              <div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> JSON (.json)</CardTitle>
+                </CardHeader>
+                <CardContent className="text-xs text-muted-foreground font-mono whitespace-pre">
 {`[
   {
     "type": "COURSE",
@@ -323,13 +488,20 @@ Lesson body (COURSE only)…`}
     ]
   }
 ]`}
+                </CardContent>
+              </div>
+              <CardContent className="pt-0">
+                <Button variant="outline" size="sm" onClick={() => handleDownloadSample('json')} className="w-full text-xs gap-1.5 h-8">
+                  <Download className="w-3.5 h-3.5" /> Download .json Template
+                </Button>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> HTML (.html)</CardTitle>
-              </CardHeader>
-              <CardContent className="text-xs text-muted-foreground font-mono whitespace-pre">
+            <Card className="flex flex-col justify-between">
+              <div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> HTML (.html)</CardTitle>
+                </CardHeader>
+                <CardContent className="text-xs text-muted-foreground font-mono whitespace-pre">
 {`<!DOCTYPE html>
 <html>
 <head>
@@ -343,29 +515,49 @@ Lesson body (COURSE only)…`}
   <p>Article body content…</p>
 </body>
 </html>`}
+                </CardContent>
+              </div>
+              <CardContent className="pt-0">
+                <Button variant="outline" size="sm" onClick={() => handleDownloadSample('html')} className="w-full text-xs gap-1.5 h-8">
+                  <Download className="w-3.5 h-3.5" /> Download .html Template
+                </Button>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> CSV (.csv)</CardTitle>
-              </CardHeader>
-              <CardContent className="text-xs text-muted-foreground font-mono whitespace-pre">
+            <Card className="flex flex-col justify-between">
+              <div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> CSV (.csv)</CardTitle>
+                </CardHeader>
+                <CardContent className="text-xs text-muted-foreground font-mono whitespace-pre">
 {`type,title,categorySlug,description,articleType,body
 ARTICLE,My Article,backend,Summary,standard,Body…
 COURSE,My Course,frontend,,STANDARD,`}
-              </CardContent>
-              <CardContent className="text-xs text-muted-foreground pt-0">
-                Note: CSV course rows create an empty shell only.
+                </CardContent>
+                <CardContent className="text-xs text-muted-foreground pt-0">
+                  Note: CSV course rows create an empty shell only.
+                </CardContent>
+              </div>
+              <CardContent className="pt-0">
+                <Button variant="outline" size="sm" onClick={() => handleDownloadSample('csv')} className="w-full text-xs gap-1.5 h-8">
+                  <Download className="w-3.5 h-3.5" /> Download .csv Template
+                </Button>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> ZIP Archives (.zip)</CardTitle>
-              </CardHeader>
-              <CardContent className="text-xs text-muted-foreground">
-                Upload a single <strong>.zip</strong> archive containing multiple <code>.md</code>, <code>.json</code>, <code>.csv</code>, or <code>.html</code> files.
-                <br /><br />
-                Subdirectories are automatically unpacked and parsed. Unsupported files inside the archive will be highlighted individually.
+            <Card className="flex flex-col justify-between">
+              <div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> ZIP Archives (.zip)</CardTitle>
+                </CardHeader>
+                <CardContent className="text-xs text-muted-foreground">
+                  Upload a single <strong>.zip</strong> archive containing multiple <code>.md</code>, <code>.json</code>, <code>.csv</code>, or <code>.html</code> files.
+                  <br /><br />
+                  Subdirectories are automatically unpacked and parsed. Non-content asset files inside the archive are safely ignored.
+                </CardContent>
+              </div>
+              <CardContent className="pt-0">
+                <Button variant="outline" size="sm" onClick={() => handleDownloadSample('md')} className="w-full text-xs gap-1.5 h-8">
+                  <Download className="w-3.5 h-3.5" /> Download Starter File
+                </Button>
               </CardContent>
             </Card>
           </div>

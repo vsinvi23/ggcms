@@ -14,6 +14,74 @@ import { useDomains } from '@/api/hooks/useDomains';
 import { cn } from '@/lib/utils';
 import { TopicDto } from '@/api/types';
 
+const TOPIC_COLOR_THEMES = [
+  {
+    bg: 'bg-blue-500/10 dark:bg-blue-500/15',
+    text: 'text-blue-600 dark:text-blue-400',
+    hoverBg: 'group-hover:bg-blue-600 group-hover:text-white',
+    hoverText: 'group-hover:text-blue-600 dark:group-hover:text-blue-400',
+    hoverBorder: 'hover:border-blue-500/40',
+  },
+  {
+    bg: 'bg-purple-500/10 dark:bg-purple-500/15',
+    text: 'text-purple-600 dark:text-purple-400',
+    hoverBg: 'group-hover:bg-purple-600 group-hover:text-white',
+    hoverText: 'group-hover:text-purple-600 dark:group-hover:text-purple-400',
+    hoverBorder: 'hover:border-purple-500/40',
+  },
+  {
+    bg: 'bg-cyan-500/10 dark:bg-cyan-500/15',
+    text: 'text-cyan-600 dark:text-cyan-400',
+    hoverBg: 'group-hover:bg-cyan-600 group-hover:text-white',
+    hoverText: 'group-hover:text-cyan-600 dark:group-hover:text-cyan-400',
+    hoverBorder: 'hover:border-cyan-500/40',
+  },
+  {
+    bg: 'bg-amber-500/10 dark:bg-amber-500/15',
+    text: 'text-amber-600 dark:text-amber-400',
+    hoverBg: 'group-hover:bg-amber-600 group-hover:text-white',
+    hoverText: 'group-hover:text-amber-600 dark:group-hover:text-amber-400',
+    hoverBorder: 'hover:border-amber-500/40',
+  },
+  {
+    bg: 'bg-rose-500/10 dark:bg-rose-500/15',
+    text: 'text-rose-600 dark:text-rose-400',
+    hoverBg: 'group-hover:bg-rose-600 group-hover:text-white',
+    hoverText: 'group-hover:text-rose-600 dark:group-hover:text-rose-400',
+    hoverBorder: 'hover:border-rose-500/40',
+  },
+  {
+    bg: 'bg-emerald-500/10 dark:bg-emerald-500/15',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    hoverBg: 'group-hover:bg-emerald-600 group-hover:text-white',
+    hoverText: 'group-hover:text-emerald-600 dark:group-hover:text-emerald-400',
+    hoverBorder: 'hover:border-emerald-500/40',
+  },
+  {
+    bg: 'bg-indigo-500/10 dark:bg-indigo-500/15',
+    text: 'text-indigo-600 dark:text-indigo-400',
+    hoverBg: 'group-hover:bg-indigo-600 group-hover:text-white',
+    hoverText: 'group-hover:text-indigo-600 dark:group-hover:text-indigo-400',
+    hoverBorder: 'hover:border-indigo-500/40',
+  },
+  {
+    bg: 'bg-violet-500/10 dark:bg-violet-500/15',
+    text: 'text-violet-600 dark:text-violet-400',
+    hoverBg: 'group-hover:bg-violet-600 group-hover:text-white',
+    hoverText: 'group-hover:text-violet-600 dark:group-hover:text-violet-400',
+    hoverBorder: 'hover:border-violet-500/40',
+  },
+];
+
+function getTopicTheme(topicName: string, topicId: number) {
+  let hash = topicId || 0;
+  for (let i = 0; i < topicName.length; i++) {
+    hash = topicName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % TOPIC_COLOR_THEMES.length;
+  return TOPIC_COLOR_THEMES[index];
+}
+
 function getTopicIcon(name: string) {
   const lower = name.toLowerCase();
   if (lower.includes('oauth') || lower.includes('auth')) return KeyRound;
@@ -84,7 +152,7 @@ const TopicsPage = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
           <div>
             <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
-              <Hash className="w-7 h-7 text-emerald-600 dark:text-emerald-400" /> Topics
+              <Hash className="w-7 h-7 text-primary" /> Topics
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
               Explore technical concepts and their relationships across software, cloud, and security
@@ -155,19 +223,28 @@ const TopicsPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {filteredTopics.map(topic => {
               const TopicIcon = getTopicIcon(topic.name);
+              const theme = getTopicTheme(topic.name, topic.id);
               const stats = topicStats.get(topic.id) || { articles: Math.floor(Math.random() * 20) + 12, courses: Math.floor(Math.random() * 6) + 4 };
               return (
                 <div
                   key={topic.id}
-                  onClick={() => navigate(`/explore/articles?topic=${encodeURIComponent(topic.slug)}`)}
-                  className="group flex flex-col justify-between p-5 rounded-2xl border border-border bg-card hover:bg-muted/30 hover:border-emerald-500/40 hover:shadow-md transition-all duration-200 cursor-pointer space-y-4"
+                  onClick={() => navigate(`/topics/${encodeURIComponent(topic.slug)}`)}
+                  className={cn(
+                    'group flex flex-col justify-between p-5 rounded-2xl border border-border bg-card hover:bg-muted/30 hover:shadow-md transition-all duration-200 cursor-pointer space-y-4',
+                    theme.hoverBorder,
+                  )}
                 >
                   <div className="space-y-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                    <div className={cn(
+                      'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+                      theme.bg,
+                      theme.text,
+                      theme.hoverBg,
+                    )}>
                       <TopicIcon className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                      <h3 className={cn('text-base font-bold text-foreground transition-colors', theme.hoverText)}>
                         {topic.name}
                       </h3>
                       {topic.description && (
@@ -180,7 +257,7 @@ const TopicsPage = () => {
 
                   <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs text-muted-foreground">
                     <span>{stats.articles} articles · {stats.courses} courses</span>
-                    <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors" />
+                    <ArrowRight className={cn('w-3.5 h-3.5 text-muted-foreground/40 transition-colors', theme.hoverText)} />
                   </div>
                 </div>
               );

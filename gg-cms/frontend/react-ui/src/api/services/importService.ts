@@ -66,9 +66,7 @@ export interface ImportConfirmResponse {
 export async function previewImport(files: File[]): Promise<ImportPreviewResponse> {
   const form = new FormData();
   files.forEach((f) => form.append('files', f));
-  const { data } = await apiClient.post<ImportPreviewResponse>('/import/preview', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await apiClient.post<ImportPreviewResponse>('/import/preview', form);
   return data;
 }
 

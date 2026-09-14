@@ -8,6 +8,7 @@ const COLS = [
     links: [
       { label: 'Courses',            to: '/explore/courses'  },
       { label: 'Articles',           to: '/explore/articles' },
+      { label: 'Learning Paths',     to: '/explore/paths'    },
       { label: 'Course Bytes',       to: '/explore/bytes'    },
     ],
   },
@@ -15,6 +16,7 @@ const COLS = [
     heading: 'Discover',
     links: [
       { label: 'Search Content',     to: '/search'           },
+      { label: 'Topics Graph',       to: '/topics'           },
       { label: 'Browse Courses',     to: '/explore/courses'  },
       { label: 'Browse Articles',    to: '/explore/articles' },
     ],
