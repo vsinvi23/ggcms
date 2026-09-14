@@ -180,8 +180,8 @@ function ExploreHeader({
           <p className="text-muted-foreground text-sm mt-1">Discover content by domain and category</p>
         </div>
         <div className="flex items-center gap-3">
-          <StatBadge icon={FileText} label="Articles" value={totalArticles || 500} suffix="+" />
-          <StatBadge icon={BookOpen} label="Courses" value={totalCourses || 50} suffix="+" />
+          <StatBadge icon={FileText} label="Articles" value={totalArticles} suffix="+" />
+          <StatBadge icon={BookOpen} label="Courses" value={totalCourses} suffix="+" />
           <StatBadge icon={GraduationCap} label="Learning Paths" value={20} suffix="+" />
         </div>
       </div>
