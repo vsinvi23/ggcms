@@ -20,6 +20,7 @@ var sqlFiles embed.FS
 
 // Run applies every *.sql file from the embedded postgres/ directory in
 // sorted (lexicographic) order using the supplied GORM write connection.
+// It enforces strict version prefix unique constraint to prevent migration collisions.
 func Run(db *gorm.DB) error {
 	entries, err := fs.ReadDir(sqlFiles, "postgres")
 	if err != nil {
@@ -27,9 +28,20 @@ func Run(db *gorm.DB) error {
 	}
 
 	var names []string
+	versionMap := make(map[string]string) // prefix -> filename
+
 	for _, e := range entries {
 		if !e.IsDir() && strings.HasSuffix(e.Name(), ".sql") {
-			names = append(names, e.Name())
+			name := e.Name()
+			parts := strings.SplitN(name, "_", 2)
+			if len(parts) >= 1 && len(parts[0]) > 0 {
+				prefix := parts[0]
+				if existing, found := versionMap[prefix]; found {
+					return fmt.Errorf("migrations: FATAL collision detected for version index %q: files %q and %q share the same index", prefix, existing, name)
+				}
+				versionMap[prefix] = name
+			}
+			names = append(names, name)
 		}
 	}
 	sort.Strings(names)
