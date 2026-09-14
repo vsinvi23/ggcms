@@ -174,7 +174,7 @@ cf_delta = needs_update(target_cf, dep_cf)
 if ui_delta:
     backend_delta = True
 
-print(f'{ui_delta}|{backend_delta}|{db_delta}|{cf_delta}|{target_ui}|{dep_ui}|{target_backend}|{dep_backend}|{target_db}|{dep_db}|{target_cf}|{dep_cf}')
+print(f'{str(ui_delta).lower()}|{str(backend_delta).lower()}|{str(db_delta).lower()}|{str(cf_delta).lower()}|{target_ui}|{dep_ui}|{target_backend}|{dep_backend}|{target_db}|{dep_db}|{target_cf}|{dep_cf}')
 ")
 
 IFS='|' read -r UI_DELTA BACKEND_DELTA DB_DELTA CF_DELTA T_UI D_UI T_BE D_BE T_DB D_DB T_CF D_CF <<< "$DELTAS"

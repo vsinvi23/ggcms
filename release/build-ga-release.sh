@@ -243,6 +243,40 @@ cat <<EOF > "$VERSION_MANIFEST"
 }
 EOF
 
+# --- Create Versioned Release Archive & RELEASE-NOTES.md ---
+ARCHIVE_DIR="$GA_DIR/v$SYS_VER"
+echo "▶ Archiving release artifacts & generating release notes in $ARCHIVE_DIR..."
+mkdir -p "$ARCHIVE_DIR"
+cp "$VERSION_MANIFEST" "$ARCHIVE_DIR/version-manifest.json"
+cp "$DEPLOYMENT_CONTRACT" "$ARCHIVE_DIR/deployment-contract.json"
+
+GIT_LOG=$(git log -n 10 --oneline 2>/dev/null || echo "No commit history available")
+
+cat <<EOF > "$ARCHIVE_DIR/RELEASE-NOTES.md"
+# GG-CMS Release Archive — v$SYS_VER ($TARGET_ENV)
+
+- **Target Environment**: $TARGET_ENV
+- **Release Version**: v$SYS_VER
+- **Build Timestamp**: $TIMESTAMP
+- **Git Commit**: $COMMIT_SHA
+
+## Component Version Matrix
+- **React UI**: v$UI_VER
+- **Go Backend**: v$BACKEND_VER
+- **DB Migrations**: v$DB_VER
+- **AI Content Factory**: v$CF_VER
+
+## Deployment Contract & Security Signature
+- **API Contract Version**: v1
+- **Deployment Contract**: [deployment-contract.json](./deployment-contract.json)
+- **Version Manifest**: [version-manifest.json](./version-manifest.json)
+
+## Recent Change Log (Git Commits)
+\`\`\`
+$GIT_LOG
+\`\`\`
+EOF
+
 # --- Update release/ga/manifest.json ---
 python3 -c "
 import json
@@ -256,6 +290,7 @@ with open(manifest_path, 'r+') as f:
         'built_at': '$TIMESTAMP',
         'branch': 'release',
         'commit': '$COMMIT_SHA',
+        'archive_path': 'release/ga/$TARGET_ENV/v$SYS_VER',
         'components': {
             'ui': '$UI_VER',
             'backend': '$BACKEND_VER',
@@ -271,5 +306,7 @@ with open(manifest_path, 'r+') as f:
 
 echo "============================================================"
 echo "✅ GA Release Build Complete!"
-echo "   Artifacts saved to: $LATEST_DIR"
+echo "   Latest Artifacts: $LATEST_DIR"
+echo "   Archived Release: $ARCHIVE_DIR"
+echo "   Release Notes:   $ARCHIVE_DIR/RELEASE-NOTES.md"
 echo "============================================================"
