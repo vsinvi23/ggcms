@@ -79,12 +79,14 @@ echo "   • Last Migration:  $LATEST_FILE"
 echo "   • Total Files:     $FILE_COUNT SQL scripts"
 echo "------------------------------------------------------------"
 
-# Validate 001..N sequential index integrity
+# Validate 001..N sequential index integrity and compute DB schema hash
 python3 -c "
-import os, sys, glob
+import os, sys, glob, hashlib, json
 
 files = sorted(glob.glob('$POSTGRES_DIR/*.sql'))
 indices = []
+hasher = hashlib.sha256()
+
 for f in files:
     base = os.path.basename(f)
     prefix = base.split('_')[0]
@@ -93,6 +95,9 @@ for f in files:
         indices.append((idx, base))
     except ValueError:
         pass
+    with open(f, 'rb') as sql_f:
+        content = sql_f.read().replace(b'\r\n', b'\n')
+        hasher.update(base.encode('utf-8') + b'\n' + content + b'\n')
 
 indices.sort(key=lambda x: x[0])
 for i in range(1, len(indices) + 1):
@@ -100,7 +105,21 @@ for i in range(1, len(indices) + 1):
         print(f'❌ FATAL: Migration index gap at version {i:03d} (Found: {indices[i-1][1]})')
         sys.exit(1)
 
+schema_hash = 'sha256:' + hasher.hexdigest()
 print('✅ Database migration sequential integrity (001..{:03d}) verified cleanly.'.format(len(indices)))
+print(f'   • DB Schema Hash:   {schema_hash}')
+
+vfile = '$VERSION_FILE'
+if os.path.exists(vfile):
+    with open(vfile, 'r+') as vf:
+        data = json.load(vf)
+        data['db_schema_hash'] = schema_hash
+        if indices:
+            data['last_migration'] = indices[-1][1]
+        data['updated_at'] = '$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
+        vf.seek(0)
+        json.dump(data, vf, indent=2)
+        vf.truncate()
 "
 
 if [[ "$DRY_RUN" == "true" ]]; then
@@ -112,16 +131,6 @@ fi
 echo "▶ Triggering Go database migration engine and self-healing auditor..."
 (cd gg-cms/backend/go-cms && go test ./migrations/...)
 
-# Update version manifest last_migration field
-python3 -c "
-import json
-vfile = '$VERSION_FILE'
-data = json.load(open(vfile))
-data['last_migration'] = '$LATEST_FILE'
-data['updated_at'] = '$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
-with open(vfile, 'w') as f:
-    json.dump(data, f, indent=2)
-"
 
 echo "============================================================"
 echo "🎉 Database Upgrade Completed Successfully!"

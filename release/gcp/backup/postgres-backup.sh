@@ -24,37 +24,52 @@
 
 set -euo pipefail
 
-# ── Configuration ─────────────────────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ── Configuration & CLI Option Parsing ───────────────────────────────────────
+ENV_TARGET="${ENV:-prod}"
+DEPLOYMENT_ID=""
+MODE="--full"
+DAILY_KEEP_DAYS=7
+KEEP_LAST_COUNT=3
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --env) ENV_TARGET="$2"; shift 2 ;;
+    --deployment-id) DEPLOYMENT_ID="$2"; shift 2 ;;
+    --wal-sync|--daily|--full|--list) MODE="$1"; shift ;;
+    *) echo "Unknown option: $1"; exit 1 ;;
+  esac
+done
+
 GDRIVE_REMOTE="gdrive"
-BACKUP_ROOT="backup/geekgully/data"
+BACKUP_ROOT="backup/geekgully/data/${ENV_TARGET}"
 GDRIVE_PG="${GDRIVE_REMOTE}:${BACKUP_ROOT}/postgres"
 
-# Docker service names (match docker-compose.native.yml)
-PG_CONTAINER="gg-cms-postgres"
+# Container & Database naming
+PG_CONTAINER="gg-cms-postgres-${ENV_TARGET}"
 PG_USER="gg_cms_user"
 PG_DB="gg_cms"
 
-# Local WAL archive dir (bind-mounted from the postgres container)
 WAL_ARCHIVE_HOST="/opt/gg-cms/wal-archive"
-
-# Temp dump dir on VM
 DUMP_DIR="/opt/gg-cms/pg-dumps"
-
-# Retention (Keep last 3 weekly backups)
-KEEP_LAST_COUNT=3
-
-MODE="${1:---full}"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 ts()     { date '+%Y%m%d_%H%M%S'; }
-log()    { echo "$(date '+%F %T') [postgres-backup] $*"; }
+log()    { echo "$(date '+%F %T') [postgres-backup] [$ENV_TARGET] $*"; }
 ok()     { log "[OK]  $*"; }
 fail()   { log "[ERR] $*" >&2; exit 1; }
 
 command -v rclone &>/dev/null || fail "rclone not installed. Run setup-gdrive.sh --vm-install"
 docker info &>/dev/null 2>&1  || fail "Docker not running"
-docker ps --filter "name=$PG_CONTAINER" --format '{{.Names}}' | grep -q "$PG_CONTAINER" \
-  || fail "PostgreSQL container '$PG_CONTAINER' not running"
+
+if ! docker ps --format '{{.Names}}' | grep -q "$PG_CONTAINER"; then
+  if docker ps --format '{{.Names}}' | grep -q "gg-cms-postgres"; then
+    PG_CONTAINER="gg-cms-postgres"
+  else
+    fail "PostgreSQL container ($PG_CONTAINER or gg-cms-postgres) not running"
+  fi
+fi
 
 mkdir -p "$WAL_ARCHIVE_HOST" "$DUMP_DIR"
 
@@ -128,13 +143,32 @@ full_dump() {
     > "$LOCAL_PATH"
 
   local SIZE; SIZE=$(du -sh "$LOCAL_PATH" | cut -f1)
-  ok "Full dump created: $FNAME ($SIZE)"
+  local HASH; HASH="sha256:$(sha256sum "$LOCAL_PATH" 2>/dev/null | awk '{print $1}' || echo "unknown")"
+  ok "Full dump created: $FNAME ($SIZE) ($HASH)"
 
   log "Uploading to Google Drive..."
   rclone copy "$LOCAL_PATH" "${GDRIVE_PG}/full/" \
     --stats=0 \
     --log-level=ERROR
   ok "Uploaded: ${GDRIVE_PG}/full/$FNAME"
+
+  # Generate unified backup manifest
+  if [[ -f "$SCRIPT_DIR/backup-manifest.sh" ]]; then
+    log "Generating backup manifest envelope..."
+    local MANIFEST_FILE="$DUMP_DIR/backup-manifest.json"
+    bash "$SCRIPT_DIR/backup-manifest.sh" \
+      --env "$ENV_TARGET" \
+      --deployment-id "$DEPLOYMENT_ID" \
+      --pg-file "$FNAME" \
+      --pg-size "$SIZE" \
+      --pg-hash "$HASH" \
+      --output "$MANIFEST_FILE" || true
+
+    if [[ -f "$MANIFEST_FILE" ]]; then
+      rclone copy "$MANIFEST_FILE" "${GDRIVE_PG}/" --stats=0 --log-level=ERROR || true
+      ok "Uploaded backup manifest to ${GDRIVE_PG}/backup-manifest.json"
+    fi
+  fi
 
   rm -f "$LOCAL_PATH"
 
