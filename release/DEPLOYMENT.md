@@ -63,6 +63,49 @@ bash release/deploy-prod.sh --bump patch
 
 ---
 
+### 3. Unified Deployment Contract & 9-Step Release Gate
+
+To prevent version drift between UI, Backend, DB Migrations, and Backup Manifests, every GA release build writes a canonical `deployment-contract.json` into `release/ga/<env>/latest/deployment-contract.json`:
+
+```json
+{
+  "deployment_id": "2026-09-14-prod-001",
+  "environment": "prod",
+  "ui_version": "1.0.0",
+  "backend_version": "1.0.0",
+  "db_migration_version": "027",
+  "db_schema_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "backup_manifest_ref": "postgres+mongo@2026-09-14T15:00:00Z",
+  "api_contract_version": "v1",
+  "rollback_target": "",
+  "deployment_status": "prepared",
+  "created_at": "2026-09-14T15:00:00Z",
+  "updated_at": "2026-09-14T15:00:00Z"
+}
+```
+
+#### Deterministic Schema Hashing & Sequential Ledger
+- `db_schema_hash` is generated via SHA-256 over normalized SQL files in `gg-cms/backend/go-cms/migrations/postgres/`.
+- `release/db-upgrade.sh` verifies `001..N` numerical continuity with zero index gaps.
+
+#### Enforced 9-Step Deployment Order Gate
+1. **Config & Secrets Validation**: Verify `.env`, GCP credentials, and Service Account key file size (`-s "$SA_KEY"`).
+2. **TLS / Certificate Check**: Confirm required server TLS certificates exist.
+3. **Database Health Audit**: Confirm PostgreSQL and MongoDB health checks pass.
+4. **Migration Ledger Verification**: Check sequential integrity and compute `db_schema_hash`.
+5. **Database Migration Execution**: Execute idempotent schema migrations (`release/db-upgrade.sh`).
+6. **Backend Deployment**: Deploy Go Backend service and poll `/api/health` until healthy.
+7. **UI Deployment & Contract Verification**: Deploy UI assets and verify frontend accessibility & version alignment.
+8. **E2E Smoke Verification**: Execute automated health & API routing smoke test against target deployment.
+9. **Backup Manifest Publication**: Generate `backup-manifest.json` metadata envelope and update deployment contract status to `success`.
+
+#### Environment-Safe Restore & Backup Protocols
+- **Backup Execution**: `bash release/gcp/backup/postgres-backup.sh --env <prod|test|local> --full`
+- **Restore Safety Guard**: `bash release/gcp/backup/restore.sh --env <prod|test|local> --postgres <dump>`
+- Restores pre-inspect remote `backup-manifest.json` and require environment-specific confirmation tokens (`RESTORE_PROD` or `RESTORE_TEST`) before wiping databases.
+
+---
+
 ## Release folder structure
 
 

@@ -4,6 +4,7 @@ import { useImportPreview, useImportConfirm } from '@/api/hooks/useImport';
 import { useCategories } from '@/api/hooks/useCategories';
 import { ImportPreviewItem } from '@/api/services/importService';
 import { ImportReviewRow } from '@/components/import/ImportReviewRow';
+import { CategoryTreeSelect } from '@/components/import/CategoryTreeSelect';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,9 +48,33 @@ export default function BulkImport() {
     setConfirmed(false);
     preview.mutate(files, {
       onSuccess: (res) => {
-        setItems(res.items);
+        const processedItems = res.items.map((it) => {
+          let categoryId = it.categoryId;
+          let valid = it.valid;
+          let error = it.error;
+
+          if (!categoryId && it.categorySlug) {
+            const slugLower = it.categorySlug.toLowerCase().trim();
+            const matched = categories.find(
+              (c: { id: number; slug: string; name: string }) =>
+                c.slug.toLowerCase() === slugLower ||
+                c.name.toLowerCase() === slugLower ||
+                c.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === slugLower.replace(/[^a-z0-9]/g, '')
+            );
+            if (matched) {
+              categoryId = matched.id;
+            } else if (valid) {
+              valid = false;
+              error = `Wrong format: category '${it.categorySlug}' is not recognized — please pick a valid category`;
+            }
+          }
+
+          return { ...it, categoryId, valid, error: error || undefined };
+        });
+
+        setItems(processedItems);
         const validIdx = new Set(
-          res.items.flatMap((it, i) => (it.valid ? [i] : []))
+          processedItems.flatMap((it, i) => (it.valid ? [i] : []))
         );
         setSelected(validIdx);
         setExpanded(new Set());
@@ -98,7 +123,24 @@ export default function BulkImport() {
   };
 
   const updateItem = (idx: number, patch: Partial<ImportPreviewItem>) => {
-    setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+    setItems((prev) =>
+      prev.map((it, i) => {
+        if (i !== idx) return it;
+        const updated = { ...it, ...patch };
+        if (patch.categoryId !== undefined) {
+          const hasTitle = Boolean(updated.title && updated.title.trim() !== '');
+          const errorIsCatOnly = updated.error && updated.error.includes('category');
+          if (errorIsCatOnly && hasTitle) {
+            updated.error = undefined;
+            updated.valid = true;
+          }
+        }
+        return updated;
+      })
+    );
+    if (patch.categoryId) {
+      setSelected((prev) => new Set(prev).add(idx));
+    }
   };
 
   const toggleExpanded = (idx: number) => {
@@ -420,23 +462,11 @@ COURSE,My Course,frontend,,STANDARD,`}
                           <Badge variant="outline" className="text-xs">{item.type}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Select
-                            value={item.categoryId ? String(item.categoryId) : ''}
-                            onValueChange={(val) => updateItem(idx, { categoryId: val ? Number(val) : undefined })}
-                            disabled={!item.valid}
-                          >
-                            <SelectTrigger className="h-7 text-xs">
-                              <SelectValue placeholder={item.categorySlug || 'Pick category'} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="">None</SelectItem>
-                              {categories.map((cat: { id: number; name: string }) => (
-                                <SelectItem key={cat.id} value={String(cat.id)}>
-                                  {cat.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <CategoryTreeSelect
+                            value={item.categoryId}
+                            categorySlug={item.categorySlug}
+                            onSelect={(catId) => updateItem(idx, { categoryId: catId })}
+                          />
                         </TableCell>
                         <TableCell>
                           <span className="text-xs text-muted-foreground truncate max-w-[100px] block" title={item.fileName}>

@@ -128,12 +128,12 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		r.Static("/assets", "dist/assets")
 	}
 
-	// GraphQL endpoint (public — for content browsing)
+	// GraphQL endpoint (public — for content browsing, rate-limited against scraping)
 	gql, err := gqlhandler.NewHandler(svcs.CMS, svcs.Category)
 	if err != nil {
 		return nil, err
 	}
-	r.POST("/graphql", gql.Handle)
+	r.POST("/graphql", middleware.PublicRateLimit(), gql.Handle)
 
 	// Initialise all HTTP handlers
 	authH := handler.NewAuthHandler(svcs.Auth)
@@ -160,7 +160,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	lpH := handler.NewLearningPathHandler(svcs.LearningPath)
 	auditH := handler.NewAuditHandler(svcs.Audit)
 	personH := handler.NewPersonalizationHandler(svcs.Personalization)
-	importH := handler.NewImportHandler(svcs.CMS, svcs.Task, svcs.Section, svcs.Lesson)
+	importH := handler.NewImportHandler(svcs.CMS, svcs.Task, svcs.Section, svcs.Lesson, svcs.Category)
 	factoryImportH := handler.NewFactoryImportHandler(svcs.CMS, svcs.Section, svcs.Lesson, svcs.User, svcs.Category, svcs.Topic, nil, cfg.Admin.Email)
 
 	authMW := middleware.Auth(jwtManager)
@@ -190,39 +190,39 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		api.GET("/auth/github", oauthH.GitHubRedirect)
 		api.GET("/auth/github/callback", oauthH.GitHubCallback)
 
-		// ----- Feature flags (public — no auth) -----
-		api.GET("/features", settingsH.GetFeatures)
+		// ----- Feature flags (public — rate-limited) -----
+		api.GET("/features", middleware.PublicRateLimit(), settingsH.GetFeatures)
 
-		// ----- Content types (public read) -----
-		api.GET("/content-types", ctH.GetAll)
+		// ----- Content types (public read, rate-limited) -----
+		api.GET("/content-types", middleware.PublicRateLimit(), ctH.GetAll)
 
 		// ----- Tags (public read) -----
-		api.GET("/tags", tagH.GetAll)
+		api.GET("/tags", middleware.PublicRateLimit(), tagH.GetAll)
 
-		// ----- Topics (public read) -----
-		api.GET("/topics", topicH.GetAll)
-		api.GET("/topics/:id", topicH.GetByID)
-		api.GET("/topics/:id/relationships", topicH.GetRelationships)
-		api.GET("/topics/:id/content", topicH.GetTopicContent)
-		api.GET("/cms/:id/topics", topicH.GetContentTopics)
+		// ----- Topics (public read, rate-limited) -----
+		api.GET("/topics", middleware.PublicRateLimit(), topicH.GetAll)
+		api.GET("/topics/:id", middleware.PublicRateLimit(), topicH.GetByID)
+		api.GET("/topics/:id/relationships", middleware.PublicRateLimit(), topicH.GetRelationships)
+		api.GET("/topics/:id/content", middleware.PublicRateLimit(), topicH.GetTopicContent)
+		api.GET("/cms/:id/topics", middleware.PublicRateLimit(), topicH.GetContentTopics)
 
 		// ----- Sections (public read — course curriculum preview) -----
-		api.GET("/sections", secH.GetAll)
+		api.GET("/sections", middleware.PublicRateLimit(), secH.GetAll)
 
 		// ----- Categories (public read) -----
-		api.GET("/categories", catH.GetAll)
-		api.GET("/categories/:id", catH.GetByID)
+		api.GET("/categories", middleware.PublicRateLimit(), catH.GetAll)
+		api.GET("/categories/:id", middleware.PublicRateLimit(), catH.GetByID)
 
 		// ----- Domains (public read) -----
-		api.GET("/domains", domainH.GetAll)
+		api.GET("/domains", middleware.PublicRateLimit(), domainH.GetAll)
 
 		// ----- Learning paths (public read) -----
-		api.GET("/learning-paths", lpH.GetAll)
-		api.GET("/learning-paths/:id", lpH.GetByID)
+		api.GET("/learning-paths", middleware.PublicRateLimit(), lpH.GetAll)
+		api.GET("/learning-paths/:id", middleware.PublicRateLimit(), lpH.GetByID)
 
 		// ----- Review comments (public read, protected write) -----
-		api.GET("/review-comments", commH.GetByContent)
-		api.GET("/review-comments/:id/replies", commH.ListReplies)
+		api.GET("/review-comments", middleware.PublicRateLimit(), commH.GetByContent)
+		api.GET("/review-comments/:id/replies", middleware.PublicRateLimit(), commH.ListReplies)
 
 		// ----- Factory sync ingest (secret-header auth, NOT JWT) -----
 		// Called machine-to-machine by the Python "content factory" app, which has
@@ -234,8 +234,8 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		// or a JWT — protected by X-Admin-Recovery-Secret instead of authMW.
 		api.POST("/admin/recover-password", adminRecoveryMW, authH.RecoverPassword)
 
-		// ----- Public content (no auth) -----
-		pub := api.Group("/public")
+		// ----- Public content (no auth, rate-limited against scraping) -----
+		pub := api.Group("/public", middleware.PublicRateLimit())
 		{
 			pub.GET("/articles", pubH.GetPublicArticles)
 			pub.GET("/articles/category/:slug", pubH.GetPublicArticlesByCategory)
