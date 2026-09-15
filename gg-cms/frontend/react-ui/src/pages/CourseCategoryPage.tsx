@@ -4,6 +4,7 @@ import {
   BookOpen, FileText, Search, X, Check, ChevronsUpDown, Tag,
   SlidersHorizontal, Play, GraduationCap, Compass, ArrowRight, Clock,
   Code, Cloud, Shield, Database, Cpu, User, Lock, Globe,
+
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -221,6 +222,7 @@ function getDomainIcon(name: string) {
   return Compass;
 }
 
+
 function ExploreHeader({
   type,
   totalArticles,
@@ -274,6 +276,7 @@ function ExploreHeader({
       </div>
 
       {/* 5 Domain Selection Cards */}
+
       {domains.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {domains.map(domain => {
@@ -304,6 +307,7 @@ function ExploreHeader({
                   <h3 className="text-sm font-bold text-foreground leading-tight">{domain.name}</h3>
                   <span className="text-xs text-muted-foreground mt-0.5 block">{count > 0 ? `${count}+ resources` : 'In-depth topics'}</span>
                 </div>
+
               </button>
             );
           })}
@@ -391,6 +395,7 @@ function CategoryGrid({
             </div>
           );
         })}
+
       </div>
     </div>
   );
@@ -658,6 +663,7 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
           categories={flatCategories}
           selectedId={selectedCategoryIds[0]}
           domainName={allDomains.find(d => d.id === activeDomainId)?.name}
+
           onSelect={id => setSelectedCategoryIds(prev => prev.includes(id) ? [] : [id])}
         />
 

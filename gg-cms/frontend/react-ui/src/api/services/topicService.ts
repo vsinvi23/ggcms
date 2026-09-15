@@ -60,6 +60,7 @@ export const topicService = {
       params: contentType ? { type: contentType } : undefined,
     });
     return response?.data?.data ?? [];
+
   },
 
   async resolveTopic(rawName: string): Promise<TopicResolutionDto> {

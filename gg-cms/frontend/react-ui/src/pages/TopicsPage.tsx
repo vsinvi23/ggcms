@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Search, Hash, KeyRound, Container, Code2, Cloud, ShieldCheck, Box, Database, Cpu, Compass, ArrowRight,
@@ -262,6 +263,15 @@ const TopicsPage = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+    </PublicLayout>
+  );
+};
+
+export default TopicsPage;
+
           </div>
         )}
       </div>

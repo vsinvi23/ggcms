@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   BookOpen, Clock, ChevronRight, GraduationCap, CheckCircle2, Circle, PlayCircle, Star, Bookmark, Check, Shield, ArrowLeft,
 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +17,8 @@ import { buildCourseUrl } from '@/lib/slug';
 import { cn } from '@/lib/utils';
 
 import { CURATED_LEARNING_PATHS } from '@/data/learningPathData';
+
+type CourseStatus = 'completed' | 'current' | 'upcoming';
 
 type CourseStatus = 'completed' | 'current' | 'upcoming';
 
@@ -107,13 +110,13 @@ const LearningPathPage = () => {
     if (enrollment.status === 'active' && enrollment.progress > 0) return 'current';
     return 'upcoming';
   };
-
   const handleStartPath = () => {
     if (courses.length > 0) {
       const firstCourse = courses[0];
       navigate(`${buildCourseUrl(firstCourse)}?learn=true`);
     }
   };
+
 
   return (
     <PublicLayout>
@@ -235,6 +238,61 @@ const LearningPathPage = () => {
           </div>
         </div>
 
+        {data.description && (
+          <p className="text-muted-foreground max-w-2xl">{data.description}</p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-6">
+          {courses.length > 0 && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <BookOpen className="h-5 w-5" />
+              <span>{courses.length} Course{courses.length !== 1 ? 's' : ''}</span>
+            </div>
+          )}
+          <Badge variant="outline">{data.kind === 'INTERVIEW_PREP' ? 'Interview Prep' : 'Learning Plan'}</Badge>
+        </div>
+
+        {courses.length > 0 ? (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Path Curriculum</h2>
+            {courses.map((course, index) => {
+              const status = getCourseStatus(course.id);
+              return (
+              <Link key={course.id} to={buildCourseUrl(course)}>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer group">
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        {status === 'completed' && <CheckCircle2 className="h-5 w-5 text-primary" />}
+                        {status === 'current' && <PlayCircle className="h-5 w-5 text-primary" />}
+                        {status === 'upcoming' && <Circle className="h-5 w-5 text-muted-foreground" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-medium text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
+                        <h3 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">
+                          {course.title}
+                        </h3>
+                        {course.description && (
+                          <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{course.description}</p>
+                        )}
+                        {course.publishedAt && (
+                          <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{new Date(course.publishedAt).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+              );
+            })}
+
+          </div>
+        </div>
+
         {/* Curriculum List */}
         {courses.length > 0 ? (
           <div className="space-y-4">
@@ -281,6 +339,10 @@ const LearningPathPage = () => {
             <p className="text-sm text-muted-foreground">Courses are being added to this path. Check back soon!</p>
           </div>
         )}
+        <div className="pt-4">
+          <Button size="lg">{hasProgress ? 'Continue Path' : 'Start Learning Path'}</Button>
+        </div>
+
       </div>
     </PublicLayout>
   );

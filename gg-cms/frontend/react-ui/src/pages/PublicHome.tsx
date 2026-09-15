@@ -191,6 +191,15 @@ const PublicHome = () => {
           </section>
         )}
 
+        {/* ── Explore by Domain ────────────────────────────────────────────── */}
+        {domains && domains.length > 0 && (
+          <Section title="Explore by Domain" tinted>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {domains.map(domain => <DomainCard key={domain.id} domain={domain} />)}
+            </div>
+          </Section>
+        )}
+
         {/* ── Popular Topics ───────────────────────────────────────────────── */}
         {popularTopics.length > 0 && (
           <Section title="Popular Topics" viewAllHref="/topics">
@@ -198,6 +207,10 @@ const PublicHome = () => {
               {popularTopics.map(topic => (
                 <TopicChip key={topic.id} name={topic.name} slug={topic.slug} />
               ))}
+            </div>
+          </Section>
+        )}
+
             </div>
           </Section>
         )}

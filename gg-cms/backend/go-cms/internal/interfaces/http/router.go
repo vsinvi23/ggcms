@@ -208,6 +208,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		api.GET("/topics/:id/content", middleware.PublicRateLimit(), topicH.GetTopicContent)
 		api.GET("/cms/:id/topics", middleware.PublicRateLimit(), topicH.GetContentTopics)
 
+
 		// ----- Sections (public read — course curriculum preview) -----
 		api.GET("/sections", middleware.PublicRateLimit(), secH.GetAll)
 
@@ -217,6 +218,9 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 
 		// ----- Domains (public read) -----
 		api.GET("/domains", middleware.PublicRateLimit(), domainH.GetAll)
+
+		// ----- Domains (public read) -----
+		api.GET("/domains", domainH.GetAll)
 
 		// ----- Learning paths (public read) -----
 		api.GET("/learning-paths", middleware.PublicRateLimit(), lpH.GetAll)
