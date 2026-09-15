@@ -8,8 +8,8 @@
   "backup_manifest_ref": "",
   "api_contract_version": "v1",
   "rollback_target": "",
-  "deployment_status": "in_progress",
+  "deployment_status": "prepared",
   "created_at": "2026-09-15T05:36:04Z",
-  "updated_at": "2026-09-15T05:39:02Z",
+  "updated_at": "2026-09-15T05:36:04Z",
   "git_commit": "1f5dab2"
 }
