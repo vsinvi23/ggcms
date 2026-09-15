@@ -30,6 +30,9 @@ const getCsrfTokenFromCookie = (): string | null => {
 // Request interceptor — attach JWT token (legacy fallback) and CSRF header
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    if (config.data instanceof FormData && config.headers) {
+      delete config.headers['Content-Type'];
+    }
     const token = getAuthToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
