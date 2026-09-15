@@ -211,10 +211,6 @@ const PublicHome = () => {
           </Section>
         )}
 
-            </div>
-          </Section>
-        )}
-
         {/* ── New & Updated ────────────────────────────────────────────────── */}
         {(latestItems.length > 0 || loadingLatest) && (
           <Section title="New & Updated" subtitle="Latest" tinted>

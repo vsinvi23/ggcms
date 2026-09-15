@@ -271,12 +271,3 @@ const TopicsPage = () => {
 };
 
 export default TopicsPage;
-
-          </div>
-        )}
-      </div>
-    </PublicLayout>
-  );
-};
-
-export default TopicsPage;

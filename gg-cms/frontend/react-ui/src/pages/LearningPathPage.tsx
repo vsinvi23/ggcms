@@ -252,47 +252,6 @@ const LearningPathPage = () => {
           <Badge variant="outline">{data.kind === 'INTERVIEW_PREP' ? 'Interview Prep' : 'Learning Plan'}</Badge>
         </div>
 
-        {courses.length > 0 ? (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold">Path Curriculum</h2>
-            {courses.map((course, index) => {
-              const status = getCourseStatus(course.id);
-              return (
-              <Link key={course.id} to={buildCourseUrl(course)}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer group">
-                  <CardContent className="p-5">
-                    <div className="flex items-start gap-4">
-                      <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-                        {status === 'completed' && <CheckCircle2 className="h-5 w-5 text-primary" />}
-                        {status === 'current' && <PlayCircle className="h-5 w-5 text-primary" />}
-                        {status === 'upcoming' && <Circle className="h-5 w-5 text-muted-foreground" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs font-medium text-muted-foreground">{String(index + 1).padStart(2, '0')}</span>
-                        <h3 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">
-                          {course.title}
-                        </h3>
-                        {course.description && (
-                          <p className="text-muted-foreground text-sm mt-1 line-clamp-2">{course.description}</p>
-                        )}
-                        {course.publishedAt && (
-                          <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            <span>{new Date(course.publishedAt).toLocaleDateString()}</span>
-                          </div>
-                        )}
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-              );
-            })}
-
-          </div>
-        </div>
-
         {/* Curriculum List */}
         {courses.length > 0 ? (
           <div className="space-y-4">
