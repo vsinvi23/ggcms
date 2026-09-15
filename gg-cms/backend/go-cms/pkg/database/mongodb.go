@@ -23,23 +23,18 @@ func NewMongoDB(cfg *config.MongoConfig, tlsCfg *config.TLSConfig) (*MongoDB, er
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	tc := &tls.Config{
-		MinVersion:         tls.VersionTLS12,
-		InsecureSkipVerify: true,
-	}
+	clientOpts := options.Client().ApplyURI(cfg.URI)
 
 	if tlsCfg != nil && tlsCfg.Enabled {
-		var err error
-		tc, err = buildMongoTLSConfig(tlsCfg)
+		tc, err := buildMongoTLSConfig(tlsCfg)
 		if err != nil {
 			return nil, fmt.Errorf("mongodb TLS config: %w", err)
 		}
 		if containsStr(cfg.URI, "tlsInsecure=true") || containsStr(cfg.URI, "sslInsecure=true") {
 			tc.InsecureSkipVerify = true
 		}
+		clientOpts = clientOpts.SetTLSConfig(tc)
 	}
-
-	clientOpts := options.Client().ApplyURI(cfg.URI).SetTLSConfig(tc)
 
 	client, err := mongo.Connect(ctx, clientOpts)
 	if err != nil {
