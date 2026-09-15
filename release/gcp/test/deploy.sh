@@ -52,7 +52,10 @@ if ! gcloud iam service-accounts describe $SA_EMAIL --project=$PROJECT_ID >/dev/
     gcloud iam service-accounts create $SA_NAME --display-name="GG-CMS Test Cloud Run SA" --project=$PROJECT_ID
 fi
 
-for SECRET in gg-cms-jwt-secret-test gg-cms-admin-password-test gg-cms-pg-password-test gg-cms-mongo-password-test; do
+for SECRET in gg-cms-jwt-secret-test gg-cms-admin-password-test gg-cms-pg-password-test gg-cms-mongo-password-test factory-sync-secret-test; do
+    if ! gcloud secrets describe $SECRET --project=$PROJECT_ID >/dev/null 2>&1; then
+        openssl rand -hex 32 | gcloud secrets create $SECRET --data-file=- --project=$PROJECT_ID >/dev/null 2>&1
+    fi
     gcloud secrets add-iam-policy-binding $SECRET --member="serviceAccount:${SA_EMAIL}" --role="roles/secretmanager.secretAccessor" --project=$PROJECT_ID >/dev/null 2>&1 || true
 done
 
@@ -66,15 +69,17 @@ if ! gcloud compute instances describe $VM_NAME --zone=$ZONE --project=$PROJECT_
     gcloud compute instances create $VM_NAME --zone=$ZONE --machine-type=e2-micro --boot-disk-size=20GB --image-family=debian-12 --image-project=debian-cloud --tags=gg-cms-db-test --no-address --project=$PROJECT_ID
     echo "Waiting for Test VM initialization..."
     sleep 30
-    gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker \$USER && sudo mkdir -p /opt/gg-cms-test/certs && sudo chown -R \$USER:\$USER /opt/gg-cms-test"
 fi
+
+echo "▶ Ensuring Docker is installed on Test DB VM..."
+gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="command -v docker >/dev/null 2>&1 || (curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker \$USER) && sudo mkdir -p /opt/gg-cms-test/certs && sudo chown -R \$USER:\$USER /opt/gg-cms-test"
 
 echo "▶ Uploading Test DB config..."
 gcloud compute scp release/gcp/test/docker-compose.vm-dbs.yml $VM_NAME:/opt/gg-cms-test/ --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap
 
 echo "▶ Starting Test Databases on VM..."
 ENV_B64=$(echo -e "POSTGRES_PASSWORD=$PG_PASS\nMONGO_PASSWORD=$MONGO_PASS" | base64 | tr -d '\n')
-gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="cd /opt/gg-cms-test && echo '$ENV_B64' | base64 -d > .env && docker compose -f docker-compose.vm-dbs.yml down >/dev/null 2>&1 && docker compose -f docker-compose.vm-dbs.yml up -d >/dev/null 2>&1"
+gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="cd /opt/gg-cms-test && echo '$ENV_B64' | base64 -d > .env && sudo docker compose -f docker-compose.vm-dbs.yml up -d"
 
 VM_IP=$(gcloud compute instances describe $VM_NAME --zone=$ZONE --project=$PROJECT_ID --format='value(networkInterfaces[0].networkIP)')
 echo "▶ Test VM Internal IP: $VM_IP"

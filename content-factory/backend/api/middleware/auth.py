@@ -52,6 +52,20 @@ def _is_exempt(path: str) -> bool:
     return any(path.startswith(p) for p in _EXEMPT_PREFIXES)
 
 
+def _is_local_test_bypass(request: Request) -> bool:
+    host = request.url.hostname.lower()
+    is_local_host = host in {"localhost", "127.0.0.1", "0.0.0.0"}
+    if not is_local_host:
+        return False
+
+    params = request.query_params
+    if params.get("local_test") == "1":
+        return True
+
+    path = request.url.path
+    return path.endswith("/local-test") or path.endswith("/factory/local-test")
+
+
 def _is_api_path(path: str) -> bool:
     return path.startswith("/api/") or path.startswith("/factory/api/")
 
@@ -76,6 +90,13 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
 
         # Exempt liveness + docs
         if _is_exempt(path):
+            return await call_next(request)
+
+        # Local-only bypass for test deployments. This is intentionally gated to
+        # localhost/127.0.0.1 so the production GeekGully-integrated deployment
+        # still requires the real gg-cms JWT flow.
+        if _is_local_test_bypass(request):
+            logger.info("Local test bypass enabled for %s", request.url)
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization", "")

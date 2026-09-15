@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from pydantic import BaseModel, Field
 from backend.services.model_provider import get_llm, get_model_name

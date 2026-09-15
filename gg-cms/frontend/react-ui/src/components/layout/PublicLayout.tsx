@@ -1,16 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PublicFooter } from './PublicFooter';
 import { GGLogo } from '@/components/shared/GGLogo';
 import { FloatingPersonalizationButton } from '@/components/personalization/FloatingPersonalizationButton';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
-  House, Compass, BookOpen, GraduationCap, Hash, X,
+  BookOpen,
+  GraduationCap,
+  FileText,
+  Briefcase,
+  Menu,
+  X,
+  ChevronDown,
+  LayoutDashboard,
+  User as UserIcon,
+  Settings,
+  LogOut,
+  House,
+  Compass,
+  Hash,
+  Search,
+
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFeatureFlags } from '@/contexts/FeatureFlagContext';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { GlobalSearchModal } from '@/components/shared/GlobalSearchModal';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -28,11 +51,13 @@ const allNavItems = [
 
 export function PublicLayout({ children, hideSearch: _hideSearch = false }: PublicLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
   const flags = useFeatureFlags();
   const [mobileOpen, setMobileOpen]       = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authTab, setAuthTab]             = useState<'login' | 'signup'>('login');
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   const navItems = allNavItems.filter(item => item.flag === null || flags[item.flag]);
 
@@ -42,10 +67,21 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
     setMobileOpen(false);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchModalOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden">
 
-      {/* ── Dark header — Logo | nav tabs | auth ─────────────────────────────── */}
+      {/* ── Dark header — Logo | nav tabs | search trigger | auth ─────────── */}
       <header className="shrink-0 bg-sidebar border-b border-sidebar-border z-30">
         <div className="flex items-center h-14 px-4 lg:px-6">
 
@@ -79,27 +115,57 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
             })}
           </nav>
 
-          {/* Auth — right side */}
+          {/* Search trigger & Auth — right side */}
           <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSearchModalOpen(true)}
+              className="hidden md:flex items-center gap-2 h-9 px-3 bg-sidebar-accent/40 border-sidebar-border/60 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent text-xs rounded-xl transition-all"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Search...</span>
+              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-sidebar-border bg-sidebar px-1.5 font-mono text-[10px] font-medium text-sidebar-foreground/50">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </Button>
             {isAuthenticated ? (
-              <>
-                <Link to="/dashboard" className="hidden sm:block">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent border border-sidebar-border/50"
-                  >
-                    Dashboard
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="gap-2 h-10 px-2 sm:px-3 text-sidebar-foreground hover:bg-sidebar-accent">
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold shrink-0 select-none">
+                      {user?.name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <span className="text-sm font-medium hidden sm:inline-block max-w-[120px] truncate">
+                      {user?.name || 'User'}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-sidebar-foreground/70" />
                   </Button>
-                </Link>
-                <div
-                  onClick={logout}
-                  title={`${user?.name} · Sign out`}
-                  className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold cursor-pointer select-none"
-                >
-                  {user?.name?.charAt(0).toUpperCase()}
-                </div>
-              </>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-popover border z-50">
+                  <div className="px-3 py-2 border-b border-border">
+                    <p className="text-sm font-medium text-foreground truncate">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                  <DropdownMenuItem className="cursor-pointer mt-1" onSelect={() => navigate('/dashboard')}>
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer" onSelect={() => navigate('/profile')}>
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer" onSelect={() => navigate('/account-settings')}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Account Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-destructive cursor-pointer" onSelect={logout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <>
                 <Button
@@ -177,6 +243,7 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
       </main>
 
       <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} defaultTab={authTab} />
+      <GlobalSearchModal open={searchModalOpen} onOpenChange={setSearchModalOpen} />
     </div>
   );
 }

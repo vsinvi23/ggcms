@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Tests for Mode B (user-provided-source) content generation:
 backend/retrieval/vector_store.py::get_chunks_for_source and the

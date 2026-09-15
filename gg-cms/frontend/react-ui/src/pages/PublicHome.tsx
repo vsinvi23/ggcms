@@ -157,6 +157,15 @@ const PublicHome = () => {
           </div>
         </section>
 
+        {/* ── Explore by Domain (Panel 1 Spec) ────────────────────────────── */}
+        {domains && domains.length > 0 && (
+          <Section title="Explore by Domain" subtitle="Discover content across core tech tracks" tinted>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {domains.map(domain => <DomainCard key={domain.id} domain={domain} />)}
+            </div>
+          </Section>
+        )}
+
         {/* ── Continue Learning (authenticated only) ──────────────────────── */}
         {isAuthenticated && (
           <div className="pt-10">
@@ -198,6 +207,10 @@ const PublicHome = () => {
               {popularTopics.map(topic => (
                 <TopicChip key={topic.id} name={topic.name} slug={topic.slug} />
               ))}
+            </div>
+          </Section>
+        )}
+
             </div>
           </Section>
         )}

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Shared pytest fixtures for the AI Learning Content Factory test suite.
 

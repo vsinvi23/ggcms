@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Small SQLite-backed embedding cache + cosine-similarity ranking helper for
 `backend/retrieval/vector_store.py`'s semantic `similarity_search`.

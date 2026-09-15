@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Pydantic models mirroring the GG-CMS `SyncPayload` wire contract.
 
 Field names below are a field-for-field mirror of the JSON shape documented in

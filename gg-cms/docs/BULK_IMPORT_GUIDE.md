@@ -1,6 +1,6 @@
 # GG-CMS Bulk Import Guide
 
-This guide details how to bulk import Articles and Courses into GG-CMS using **Markdown (`.md`)**, **JSON (`.json`)**, and **CSV (`.csv`)** formats.
+This guide details how to bulk import Articles and Courses into GG-CMS using **Markdown (`.md`)**, **JSON (`.json`)**, **HTML (`.html`)**, **CSV (`.csv`)**, and **ZIP Archives (`.zip`)**.
 
 ---
 
@@ -12,8 +12,8 @@ GG-CMS provides a built-in Bulk Import tool that allows editors and content mana
 1. Log in to the GG-CMS Admin / Content Dashboard.
 2. Click **Bulk Import** in the sidebar navigation (or go directly to the `/import` route).
 3. Choose your preferred input method:
-   - **Upload files**: Drag and drop one or more `.md`, `.json`, or `.csv` files.
-   - **Paste content**: Paste raw Markdown, JSON, or CSV directly into the interactive text editor.
+   - **Upload files**: Drag and drop one or more `.md`, `.json`, `.csv`, `.html`, or `.zip` files.
+   - **Paste content**: Paste raw Markdown, JSON, CSV, or HTML directly into the interactive text editor.
 4. Review the parsed content in the **Preview Table**.
 5. Select the items you wish to import and click **Import Selected**.
 

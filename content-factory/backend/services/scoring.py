@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Opportunity scoring for content topics.
 
 Computes a weighted opportunity score from explicit sub-scores, per

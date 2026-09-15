@@ -61,6 +61,7 @@ type CreateCMSRequest struct {
 	ArticleType         *string              `json:"articleType,omitempty"`
 	CourseType          *string              `json:"courseType,omitempty"`
 	CategoryID          *uint                `json:"categoryId,omitempty"`
+	TopicIDs            []uint               `json:"topicIds,omitempty"`
 	ThumbnailURL        *string              `json:"thumbnailUrl,omitempty"`
 	ThumbnailStorageKey *string              `json:"thumbnailStorageKey,omitempty"`
 	Attachments         []AttachmentResponse `json:"attachments,omitempty"`
@@ -73,6 +74,7 @@ type UpdateCMSRequest struct {
 	ArticleType         *string              `json:"articleType,omitempty"`
 	CourseType          *string              `json:"courseType,omitempty"`
 	CategoryID          *uint                `json:"categoryId,omitempty"`
+	TopicIDs            []uint               `json:"topicIds,omitempty"`
 	ThumbnailURL        *string              `json:"thumbnailUrl,omitempty"`
 	ThumbnailStorageKey *string              `json:"thumbnailStorageKey,omitempty"`
 	Attachments         []AttachmentResponse `json:"attachments,omitempty"`

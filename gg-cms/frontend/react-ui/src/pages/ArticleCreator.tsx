@@ -59,6 +59,8 @@ import { useContentTypes } from '@/api/hooks/useContentTypes';
 import { parseBodyToBlocks, parseBodyToHtml, stripHtmlTags } from '@/lib/htmlParser';
 import { useAllowedCategories } from '@/hooks/useAllowedCategories';
 import { useAuth } from '@/contexts/AuthContext';
+import { TopicMultiSelect } from '@/components/ui/TopicMultiSelect';
+import { useContentTopics } from '@/api/hooks/useTopics';
 import { useCmsWorkflowActions } from '@/hooks/useCmsWorkflowActions';
 import { slugify } from '@/lib/slug';
 import { toUserMessage } from '@/lib/errors';
@@ -95,6 +97,8 @@ export default function ArticleCreator() {
   const [articleType, setArticleType] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
+  const [selectedTopicIds, setSelectedTopicIds] = useState<number[]>([]);
+  const { data: initialTopics = [] } = useContentTopics(existingCmsId > 0 ? existingCmsId : null, 'ARTICLE');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -150,6 +154,12 @@ export default function ArticleCreator() {
   }, [existingCms, isDataLoaded]);
 
   useEffect(() => {
+    if (initialTopics.length > 0 && selectedTopicIds.length === 0) {
+      setSelectedTopicIds(initialTopics.map((t) => t.id));
+    }
+  }, [initialTopics, selectedTopicIds.length]);
+
+  useEffect(() => {
     if (!isViewMode && existingBody && isDataLoaded && contentBlocks.length === 0) {
       try {
         const parsedBlocks = parseBodyToBlocks(existingBody);
@@ -181,11 +191,11 @@ export default function ArticleCreator() {
         cmsId = existingCmsId;
         await updateCms.mutateAsync({
           id: cmsId,
-          data: { type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined },
+          data: { type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined, topicIds: selectedTopicIds },
         });
       } else {
         const created = await createCms.mutateAsync({
-          type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined,
+          type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined, topicIds: selectedTopicIds,
         });
         cmsId = created.id;
         cmsSlug = created.slug;
@@ -486,6 +496,14 @@ export default function ArticleCreator() {
                         disabled={isViewMode && !reviewerEditMode && !publisherEditMode}
                       />
                     )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Topics</Label>
+                    <TopicMultiSelect
+                      selectedTopicIds={selectedTopicIds}
+                      onChange={setSelectedTopicIds}
+                      disabled={isViewMode && !reviewerEditMode && !publisherEditMode}
+                    />
                   </div>
                 </CardContent>
               </Card>

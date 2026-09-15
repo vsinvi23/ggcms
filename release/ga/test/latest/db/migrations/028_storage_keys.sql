@@ -1,0 +1,3 @@
+ALTER TABLE attachments ADD COLUMN IF NOT EXISTS storage_key VARCHAR(1024);
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS thumbnail_storage_key VARCHAR(1024);
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS thumbnail_storage_key VARCHAR(1024);

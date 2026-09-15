@@ -111,6 +111,9 @@ func (r *stubCategoryRepo) FindVirtualRoot(_ context.Context) (*entity.Category,
 func (r *stubCategoryRepo) FindByReviewerGroupID(_ context.Context, _ uint) ([]*entity.Category, error) {
 	return nil, nil
 }
+func (r *stubCategoryRepo) FindByNameOrSlug(_ context.Context, _ string) (*entity.Category, error) {
+	return nil, nil
+}
 func (r *stubCategoryRepo) AddReviewerGroup(_ context.Context, _, _ uint) error    { return nil }
 func (r *stubCategoryRepo) RemoveReviewerGroup(_ context.Context, _, _ uint) error { return nil }
 func (r *stubCategoryRepo) GetContentCategories(_ context.Context, _ uint, _ string) ([]*entity.ContentCategory, error) {

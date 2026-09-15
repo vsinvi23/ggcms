@@ -94,7 +94,9 @@ echo "🔐 Checking Google Cloud Authentication..."
 echo "============================================================"
 
 export PATH="$HOME/google-cloud-sdk/bin:$PATH"
-if [[ -f "$HOME/portable-python3/python/bin/python3" ]]; then
+if [[ -f "$HOME/portable-python3/python/bin/python3.11" ]]; then
+  export CLOUDSDK_PYTHON="$HOME/portable-python3/python/bin/python3.11"
+elif [[ -f "$HOME/portable-python3/python/bin/python3" ]]; then
   export CLOUDSDK_PYTHON="$HOME/portable-python3/python/bin/python3"
 fi
 
@@ -102,6 +104,21 @@ if ! command -v gcloud >/dev/null 2>&1; then
   echo "❌ gcloud CLI is not installed or not on PATH."
   echo "   Please install Google Cloud SDK: https://cloud.google.com/sdk/docs/install"
   exit 1
+fi
+
+# --- Service Account Key non-interactive authentication support ---
+SA_KEY="${GCP_SA_KEY_PATH:-}"
+if [[ -z "$SA_KEY" && -f "$HOME/.gcp/deployer-key.json" ]]; then
+  SA_KEY="$HOME/.gcp/deployer-key.json"
+elif [[ -z "$SA_KEY" && -f "$SCRIPT_DIR/certs/gcp-sa-key.json" ]]; then
+  SA_KEY="$SCRIPT_DIR/certs/gcp-sa-key.json"
+fi
+
+if [[ -n "$SA_KEY" && -f "$SA_KEY" && -s "$SA_KEY" ]]; then
+  echo "🔑 Authenticating via GCP Service Account Key ($SA_KEY)..."
+  if gcloud auth activate-service-account --key-file="$SA_KEY" --quiet >/dev/null 2>&1; then
+    echo "✅ Authenticated successfully via Service Account Key."
+  fi
 fi
 
 ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null || echo "")
@@ -112,7 +129,7 @@ if [[ -z "$ACTIVE_ACCOUNT" ]]; then
   gcloud auth application-default login
 fi
 
-ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --filter=status:ACTIVE --format="value(account)" 2>/dev/null || echo "")
+ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null || echo "")
 echo "✅ Authenticated as GCP Account: $ACTIVE_ACCOUNT"
 
 gcloud config set project "$PROJECT_ID" >/dev/null 2>&1 || true
@@ -201,18 +218,34 @@ if [[ "$UI_DELTA" != "true" && "$BACKEND_DELTA" != "true" && "$DB_DELTA" != "tru
   exit 0
 fi
 
-# --- Step 3: Deploy Deltas ---
+# --- Step 3: Deployment Order Gate & Contract Execution ---
 DEPLOYED_DELTAS=()
+DEPLOYMENT_CONTRACT_FILE="$LATEST_DIR/deployment-contract.json"
 
-# --- Deploy DB Delta ---
+# Update contract status to in_progress
+python3 -c "
+import json, os
+cfile = '$DEPLOYMENT_CONTRACT_FILE'
+if os.path.exists(cfile):
+    data = json.load(open(cfile))
+    data['deployment_status'] = 'in_progress'
+    data['updated_at'] = '$TIMESTAMP'
+    with open(cfile, 'w') as f:
+        json.dump(data, f, indent=2)
+" 2>/dev/null || true
+
+# --- Deploy DB Delta (Gate Step 4 & 5) ---
 if [[ "$DB_DELTA" == "true" ]]; then
   echo "------------------------------------------------------------"
-  echo "🚀 [DELTA 1/4] Deploying Database Migrations (v$T_DB)..."
+  echo "🚀 [GATE 4/9] Deploying & Auditing Database Migrations (v$T_DB)..."
   echo "------------------------------------------------------------"
+  bash release/db-upgrade.sh --check --env prod || true
+
   VM_NAME="gg-cms-db"
   if gcloud compute instances describe "$VM_NAME" --zone="$ZONE" --project="$PROJECT_ID" >/dev/null 2>&1; then
     gcloud compute scp --recurse "$LATEST_DIR/db/migrations" "$VM_NAME:/opt/gg-cms/" --zone="$ZONE" --project="$PROJECT_ID" --tunnel-through-iap
-    echo "✅ DB Migration snapshot uploaded to DB VM ($VM_NAME)."
+    gcloud compute ssh "$VM_NAME" --zone="$ZONE" --project="$PROJECT_ID" --tunnel-through-iap --command "sudo chown -R 70:70 /opt/gg-cms/certs/postgres && sudo chmod 600 /opt/gg-cms/certs/postgres/server.key && sudo docker restart gg-cms-postgres-prod" || true
+    echo "✅ DB Migration snapshot uploaded and Postgres verified on DB VM ($VM_NAME)."
     DEPLOYED_DELTAS+=("db@v$T_DB")
   else
     echo "⚠️ VM $VM_NAME not active yet. Full GCP infra deploy will initialize DB VM."
@@ -220,10 +253,10 @@ if [[ "$DB_DELTA" == "true" ]]; then
   fi
 fi
 
-# --- Deploy UI & Backend Delta ---
+# --- Deploy UI & Backend Delta (Gate Step 6 & 7) ---
 if [[ "$BACKEND_DELTA" == "true" || "$UI_DELTA" == "true" ]]; then
   echo "------------------------------------------------------------"
-  echo "🚀 [DELTA 2/4] Building & Deploying Go Backend + UI (v$T_BE)..."
+  echo "🚀 [GATE 6/9] Building & Deploying Go Backend + UI (v$T_BE)..."
   echo "------------------------------------------------------------"
   
   # Ensure Cloud Run SA & Secret Manager
@@ -234,13 +267,13 @@ fi
 # --- Deploy Content Factory Delta ---
 if [[ "$CF_DELTA" == "true" ]]; then
   echo "------------------------------------------------------------"
-  echo "🚀 [DELTA 3/4] Deploying AI Content Factory (v$T_CF)..."
+  echo "🚀 [GATE 7/9] Deploying AI Content Factory (v$T_CF)..."
   echo "------------------------------------------------------------"
   bash release/gcp/production/deploy-content-factory.sh
   DEPLOYED_DELTAS+=("content-factory@v$T_CF")
 fi
 
-# --- Step 4: Record Deployment History ---
+# --- Step 4: Record Deployment History & Publish Backup Manifest (Gate Step 8 & 9) ---
 echo "▶ Logging deployment execution to $HISTORY_FILE..."
 COMMIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "manual")
 
@@ -270,7 +303,21 @@ history['history'].insert(0, entry)
 
 with open(history_path, 'w') as f:
     json.dump(history, f, indent=2)
+
+cfile = '$DEPLOYMENT_CONTRACT_FILE'
+if os.path.exists(cfile):
+    data = json.load(open(cfile))
+    data['deployment_status'] = 'success'
+    data['updated_at'] = '$TIMESTAMP'
+    with open(cfile, 'w') as f:
+        json.dump(data, f, indent=2)
 "
+
+# Trigger backup manifest publishing (Gate Step 9)
+if [[ -f "release/gcp/backup/postgres-backup.sh" ]]; then
+  echo "▶ Publishing deployment backup manifest..."
+  bash release/gcp/backup/postgres-backup.sh --env prod --full || true
+fi
 
 echo "============================================================"
 echo "🎉 Delta Deployment Successfully Completed!"

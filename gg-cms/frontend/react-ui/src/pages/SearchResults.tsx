@@ -145,7 +145,7 @@ function CategoryDropdown({
       <PopoverContent className="w-56 p-0" align="start">
         <Command>
           <CommandInput placeholder="Search category…" className="h-9" />
-          <CommandList>
+          <CommandList className="max-h-52 overflow-y-auto p-1">
             <CommandEmpty>No category found.</CommandEmpty>
             <CommandGroup>
               <CommandItem value="__all__" onSelect={() => { onSelect(null); setOpen(false); }}>

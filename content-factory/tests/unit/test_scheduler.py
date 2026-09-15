@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Tests for backend.orchestration.scheduler (Autonomous Content Factory plan,
 Wave 3). Per plan §12, these test contracts, not implementation:

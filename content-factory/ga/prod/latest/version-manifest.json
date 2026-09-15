@@ -1,16 +1,17 @@
 {
-  "system_version": "1.0.0",
-  "environment": "prod",
-  "build_timestamp": "2026-09-07T21:00:00Z",
-  "git_commit": "initial-cf-prod-build",
+  "system_version": "1.0.2",
+  "build_timestamp": "2026-09-12T06:41:41Z",
+  "git_commit": "2696a53",
   "components": {
     "frontend": {
-      "version": "1.0.0",
-      "package": "content-factory/frontend"
+      "version": "1.0.6",
+      "package": "content-factory/frontend",
+      "description": "AI Content Factory React Frontend SPA"
     },
     "backend": {
-      "version": "1.0.0",
-      "package": "content-factory/backend"
+      "version": "1.0.5",
+      "package": "content-factory/backend",
+      "description": "AI Content Factory FastAPI Backend Service"
     }
   }
 }

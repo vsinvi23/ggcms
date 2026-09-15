@@ -1,3 +1,4 @@
+from __future__ import annotations
 """AI generation cost tracking against configured budget caps.
 
 Accumulates a running cost estimate for a generation job and enforces the

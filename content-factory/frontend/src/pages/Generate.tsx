@@ -20,6 +20,8 @@ import {
 } from "../components/ui"
 import { PIPELINE_STAGES, type JobStatusResponse } from "../services/types"
 
+import { FIELD_INFO } from "../constants/fieldInfo"
+
 const DIFFICULTIES = ["beginner", "intermediate", "advanced"]
 const DEFAULT_CONTENT_TYPES = ["tutorial", "how-to", "concept-guide", "reference", "quiz", "comparison"]
 const POLL_INTERVAL_MS = 2500
@@ -103,6 +105,7 @@ export default function Generate() {
   const [audience, setAudience] = useState("")
   const [difficulty, setDifficulty] = useState("intermediate")
   const [targetLength, setTargetLength] = useState("")
+  const [showAdvanced, setShowAdvanced] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -202,11 +205,15 @@ export default function Generate() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader title="New generation job" subtitle="Runs strategy → research → writing → quality → export." />
+          <CardHeader title="New generation job" subtitle="Discovery → approval → generation. Only reviewed topics can be used to create content." />
           <form onSubmit={submit} className="space-y-4 p-5">
             {formError && <InlineError message={formError} onDismiss={() => setFormError(null)} />}
 
-            <Field label="Opportunity" htmlFor="gen-opp" hint={!oppLoading && opportunities?.length === 0 ? "No approved opportunities yet -- approve one first." : undefined}>
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100">
+              Topic-first workflow: discover a topic, review its opportunity, and only then start generation.
+            </div>
+
+            <Field label="Approved opportunity" htmlFor="gen-opp" hint={!oppLoading && opportunities?.length === 0 ? "No approved opportunities yet -- approve one in Discoveries first." : undefined} info={FIELD_INFO.opportunity}>
               <Select id="gen-opp" value={opportunityId} onChange={(e) => setOpportunityId(e.target.value)} disabled={oppLoading}>
                 <option value="">{oppLoading ? "Loading..." : "Select an approved opportunity"}</option>
                 {opportunities?.map((o) => (
@@ -217,64 +224,80 @@ export default function Generate() {
               </Select>
             </Field>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Content type" htmlFor="gen-type">
-                <Select id="gen-type" value={contentType} onChange={(e) => setContentType(e.target.value)}>
-                  {contentTypeOptions.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Field label="Difficulty" htmlFor="gen-difficulty">
-                <Select id="gen-difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-                  {DIFFICULTIES.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Audience" htmlFor="gen-audience" hint="Optional">
-                <Input id="gen-audience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="e.g. backend engineers" />
-              </Field>
-              <Field label="Target length (words)" htmlFor="gen-length" hint="Optional">
-                <Input id="gen-length" type="number" min={0} value={targetLength} onChange={(e) => setTargetLength(e.target.value)} placeholder="e.g. 1500" />
-              </Field>
-            </div>
-
-            <Field label="Knowledge packs" hint={packsLoading ? "Loading..." : packs?.length === 0 ? "No knowledge packs yet -- optional" : "Select the packs to ground this piece in"}>
-              <div className="flex flex-wrap gap-2">
-                {packs?.map((p) => (
-                  <button
-                    type="button"
-                    key={p.id}
-                    onClick={() => toggleKnowledgePack(p.id)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                      knowledgePackIds.includes(p.id)
-                        ? "border-purple-500 bg-purple-500/15 text-purple-300"
-                        : "border-zinc-700 text-zinc-400 hover:border-zinc-600"
-                    }`}
-                  >
-                    {p.topic}
-                  </button>
+            <Field label="Content type" htmlFor="gen-type" info={FIELD_INFO.contentTypes}>
+              <Select id="gen-type" value={contentType} onChange={(e) => setContentType(e.target.value)}>
+                {contentTypeOptions.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
                 ))}
-              </div>
+              </Select>
             </Field>
 
-            <label className="flex items-center gap-2 text-sm text-zinc-300">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-purple-600 focus:ring-purple-500"
-                checked={enableWebResearch}
-                onChange={(e) => setEnableWebResearch(e.target.checked)}
-              />
-              Enable live web research
-            </label>
+            <div className="flex items-center justify-between">
+              <div className="text-xs uppercase tracking-wide text-zinc-500">Optional settings</div>
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((v) => !v)}
+                className="text-xs font-medium text-purple-300 hover:text-purple-200"
+              >
+                {showAdvanced ? "Hide" : "Show"}
+              </button>
+            </div>
+
+            {showAdvanced && (
+              <>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Difficulty" htmlFor="gen-difficulty" info={FIELD_INFO.difficulty}>
+                    <Select id="gen-difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+                      {DIFFICULTIES.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field label="Target length (words)" htmlFor="gen-length" hint="Optional" info={FIELD_INFO.targetLength}>
+                    <Input id="gen-length" type="number" min={0} value={targetLength} onChange={(e) => setTargetLength(e.target.value)} placeholder="e.g. 1500" />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label="Audience" htmlFor="gen-audience" hint="Optional" info={FIELD_INFO.audience}>
+                    <Input id="gen-audience" value={audience} onChange={(e) => setAudience(e.target.value)} placeholder="e.g. backend engineers" />
+                  </Field>
+                </div>
+
+                <Field label="Knowledge packs" hint={packsLoading ? "Loading..." : packs?.length === 0 ? "No knowledge packs yet -- optional" : "Select the packs to ground this piece in"} info={FIELD_INFO.knowledgePacks}>
+                  <div className="flex flex-wrap gap-2">
+                    {packs?.map((p) => (
+                      <button
+                        type="button"
+                        key={p.id}
+                        onClick={() => toggleKnowledgePack(p.id)}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                          knowledgePackIds.includes(p.id)
+                            ? "border-purple-500 bg-purple-500/15 text-purple-300"
+                            : "border-zinc-700 text-zinc-400 hover:border-zinc-600"
+                        }`}
+                      >
+                        {p.topic}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+
+                <label className="flex items-center gap-2 text-sm text-zinc-300">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-zinc-700 bg-zinc-950 text-purple-600 focus:ring-purple-500"
+                    checked={enableWebResearch}
+                    onChange={(e) => setEnableWebResearch(e.target.checked)}
+                  />
+                  Enable live web research
+                </label>
+              </>
+            )}
 
             <Button type="submit" icon={<Sparkles size={15} />} loading={submitting} disabled={!opportunityId}>
               Start generation

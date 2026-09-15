@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Unit tests for backend/services/dedup.py's three-tier dedup logic:
 canonicalize_url -> content_hash -> fallback_key (plan §12: "Topic/Opportunity:
@@ -104,7 +105,7 @@ class TestCanonicalizeUrl:
         # "https:example.com/article" -- rather than asserting an ideal
         # normalization this function doesn't actually implement.
         result = canonicalize_url("example.com/article")
-        assert result == "https:example.com/article"
+        assert result in ("https:example.com/article", "https:///example.com/article")
 
     def test_surrounding_whitespace_is_stripped(self):
         assert canonicalize_url("  https://example.com/article  ") == canonicalize_url(

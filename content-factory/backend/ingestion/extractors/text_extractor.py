@@ -1,3 +1,4 @@
+from __future__ import annotations
 def extract_text_from_text(raw_bytes: bytes) -> str:
     """
     Plain-text/markdown extraction: decode as UTF-8 and return as-is.

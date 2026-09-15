@@ -1,3 +1,4 @@
+from __future__ import annotations
 from backend.services.model_provider import get_embeddings_client
 
 

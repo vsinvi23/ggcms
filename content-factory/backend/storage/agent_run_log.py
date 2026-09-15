@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Append-only observability log for agent runs (implementation plan §6.4/§15).
 
@@ -28,12 +29,12 @@ import asyncio
 import json
 import uuid
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from backend.configs.settings import settings as _config
 from backend.models.agent_run import AgentRunLogEntry
 
-ProjectId = uuid.UUID | str
+ProjectId = Union[uuid.UUID, str]
 
 _AGENT_RUNS_FILE = "agent_runs.jsonl"
 

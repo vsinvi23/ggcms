@@ -92,6 +92,7 @@ type CategoryRepository interface {
 	// virtual roots (e.g. "geek") are stripped and their children surfaced as roots.
 	FindTree(ctx context.Context, includeVirtual bool) ([]*entity.Category, error)
 	ExistsByNameAndParent(ctx context.Context, name string, parentID *uint, excludeID *uint) (bool, error)
+	FindByNameOrSlug(ctx context.Context, nameOrSlug string) (*entity.Category, error)
 	// FindVirtualRoot returns the single virtual root category (the "geek" node).
 	FindVirtualRoot(ctx context.Context) (*entity.Category, error)
 	// FindByReviewerGroupID returns all non-virtual categories linked to the given group.

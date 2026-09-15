@@ -113,10 +113,29 @@ export function Select({
   )
 }
 
-export function Field({ label, hint, children, htmlFor }: { label?: string; hint?: string; children: ReactNode; htmlFor?: string }) {
+import { InfoButton, type FieldInfoData } from "./FieldInfoModal"
+
+export function Field({
+  label,
+  hint,
+  children,
+  htmlFor,
+  info,
+}: {
+  label?: string
+  hint?: string
+  children: ReactNode
+  htmlFor?: string
+  info?: FieldInfoData
+}) {
   return (
     <div>
-      {label && <Label htmlFor={htmlFor}>{label}</Label>}
+      {label && (
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          <Label htmlFor={htmlFor} className="mb-0">{label}</Label>
+          {info && <InfoButton info={info} />}
+        </div>
+      )}
       {children}
       {hint && <p className="mt-1 text-xs text-zinc-600">{hint}</p>}
     </div>

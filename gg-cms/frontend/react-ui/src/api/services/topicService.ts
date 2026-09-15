@@ -59,7 +59,8 @@ export const topicService = {
     const response = await apiClient.get<ApiResponse<CmsResponseDto[]>>(`/topics/${topicId}/content`, {
       params: contentType ? { type: contentType } : undefined,
     });
-    return response.data.data || [];
+    return response?.data?.data ?? [];
+
   },
 
   async resolveTopic(rawName: string): Promise<TopicResolutionDto> {

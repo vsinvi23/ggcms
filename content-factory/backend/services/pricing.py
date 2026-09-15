@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Static per-model token pricing used for AI generation cost estimation.
 
 Prices are USD cost per 1,000 tokens, split by input/output, since most

@@ -63,7 +63,7 @@ func (r *categoryRepository) FindAll(ctx context.Context, page, size int) ([]*en
 }
 
 func (r *categoryRepository) ExistsByNameAndParent(ctx context.Context, name string, parentID *uint, excludeID *uint) (bool, error) {
-	db := r.read.WithContext(ctx).Model(&entity.Category{}).Where("LOWER(name) = LOWER(?)", name)
+	db := r.read.WithContext(ctx).Model(&entity.Category{}).Where("LOWER(TRIM(name)) = LOWER(TRIM(?))", name)
 	if parentID == nil {
 		db = db.Where("parent_id IS NULL")
 	} else {
@@ -75,6 +75,18 @@ func (r *categoryRepository) ExistsByNameAndParent(ctx context.Context, name str
 	var count int64
 	err := db.Count(&count).Error
 	return count > 0, err
+}
+
+func (r *categoryRepository) FindByNameOrSlug(ctx context.Context, nameOrSlug string) (*entity.Category, error) {
+	var cat entity.Category
+	clean := nameOrSlug
+	err := r.read.WithContext(ctx).
+		Where("LOWER(TRIM(name)) = LOWER(TRIM(?)) OR LOWER(slug) = LOWER(TRIM(?)) OR LOWER(REPLACE(TRIM(name), ' ', '-')) = LOWER(TRIM(?))", clean, clean, clean).
+		First(&cat).Error
+	if err != nil {
+		return nil, fmt.Errorf("category not found: %w", err)
+	}
+	return &cat, nil
 }
 
 func (r *categoryRepository) FindReviewerGroups(ctx context.Context, categoryID uint) ([]entity.Group, error) {

@@ -61,9 +61,12 @@ func (s *service) GetTree(ctx context.Context, includeVirtual bool) ([]*entity.C
 }
 
 func (s *service) Create(ctx context.Context, name string, parentID *uint) (*entity.Category, error) {
+	// 1. System-wide normalized name & slug check to prevent duplicate categories across parents/spelling
+	if existing, findErr := s.categoryRepo.FindByNameOrSlug(ctx, name); findErr == nil && existing != nil {
+		return nil, fmt.Errorf("category %q (or similar slug %q) already exists in the system taxonomy (ID: %d). Please use the existing category or associate content via Topics/Tags", existing.Name, existing.Slug, existing.ID)
+	}
+
 	// Auto-parent to the virtual root ("geek") when no explicit parent is given.
-	// This ensures every user-created category is a child of the virtual root,
-	// so assigning a reviewer group to "geek" covers all categories.
 	if parentID == nil {
 		root, rootErr := s.categoryRepo.FindVirtualRoot(ctx)
 		if rootErr == nil && root != nil {

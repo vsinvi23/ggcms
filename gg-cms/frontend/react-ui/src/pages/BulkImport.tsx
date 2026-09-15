@@ -4,6 +4,7 @@ import { useImportPreview, useImportConfirm } from '@/api/hooks/useImport';
 import { useCategories } from '@/api/hooks/useCategories';
 import { ImportPreviewItem } from '@/api/services/importService';
 import { ImportReviewRow } from '@/components/import/ImportReviewRow';
+import { CategoryTreeSelect } from '@/components/import/CategoryTreeSelect';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,12 +17,13 @@ import { Loader2, Upload, FileText, CheckCircle2, XCircle, AlertTriangle, Chevro
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
 
-const ACCEPTED_EXTENSIONS = '.md,.markdown,.json,.csv';
+const ACCEPTED_EXTENSIONS = '.md,.markdown,.json,.csv,.html,.htm,.zip';
 
 const PASTE_FORMATS = [
   { value: 'md', label: 'Markdown', mime: 'text/markdown', ext: 'md' },
   { value: 'json', label: 'JSON', mime: 'application/json', ext: 'json' },
   { value: 'csv', label: 'CSV', mime: 'text/csv', ext: 'csv' },
+  { value: 'html', label: 'HTML', mime: 'text/html', ext: 'html' },
 ];
 
 export default function BulkImport() {
@@ -46,9 +48,33 @@ export default function BulkImport() {
     setConfirmed(false);
     preview.mutate(files, {
       onSuccess: (res) => {
-        setItems(res.items);
+        const processedItems = res.items.map((it) => {
+          let categoryId = it.categoryId;
+          let valid = it.valid;
+          let error = it.error;
+
+          if (!categoryId && it.categorySlug) {
+            const slugLower = it.categorySlug.toLowerCase().trim();
+            const matched = categories.find(
+              (c: { id: number; slug: string; name: string }) =>
+                c.slug.toLowerCase() === slugLower ||
+                c.name.toLowerCase() === slugLower ||
+                c.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === slugLower.replace(/[^a-z0-9]/g, '')
+            );
+            if (matched) {
+              categoryId = matched.id;
+            } else if (valid) {
+              valid = false;
+              error = `Wrong format: category '${it.categorySlug}' is not recognized — please pick a valid category`;
+            }
+          }
+
+          return { ...it, categoryId, valid, error: error || undefined };
+        });
+
+        setItems(processedItems);
         const validIdx = new Set(
-          res.items.flatMap((it, i) => (it.valid ? [i] : []))
+          processedItems.flatMap((it, i) => (it.valid ? [i] : []))
         );
         setSelected(validIdx);
         setExpanded(new Set());
@@ -97,7 +123,24 @@ export default function BulkImport() {
   };
 
   const updateItem = (idx: number, patch: Partial<ImportPreviewItem>) => {
-    setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+    setItems((prev) =>
+      prev.map((it, i) => {
+        if (i !== idx) return it;
+        const updated = { ...it, ...patch };
+        if (patch.categoryId !== undefined) {
+          const hasTitle = Boolean(updated.title && updated.title.trim() !== '');
+          const errorIsCatOnly = updated.error && updated.error.includes('category');
+          if (errorIsCatOnly && hasTitle) {
+            updated.error = undefined;
+            updated.valid = true;
+          }
+        }
+        return updated;
+      })
+    );
+    if (patch.categoryId) {
+      setSelected((prev) => new Set(prev).add(idx));
+    }
   };
 
   const toggleExpanded = (idx: number) => {
@@ -141,6 +184,14 @@ export default function BulkImport() {
     });
   };
 
+  const toggleExpandAll = () => {
+    if (expanded.size === items.length) {
+      setExpanded(new Set());
+    } else {
+      setExpanded(new Set(items.map((_, i) => i)));
+    }
+  };
+
   const validCount = items.filter((it) => it.valid).length;
   const selectedCount = selected.size;
 
@@ -150,7 +201,7 @@ export default function BulkImport() {
         <div>
           <h1 className="text-2xl font-bold">Bulk Import</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Upload .md, .json, or .csv files to import articles and courses as drafts.
+            Upload .md, .json, .csv, .html, or .zip archive files to import articles and courses as drafts.
           </p>
         </div>
 
@@ -187,8 +238,8 @@ export default function BulkImport() {
               ) : (
                 <>
                   <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                  <p className="text-sm font-medium">Drop files here or click to browse</p>
-                  <p className="text-xs text-muted-foreground mt-1">Supports .md &nbsp;·&nbsp; .json &nbsp;·&nbsp; .csv</p>
+                  <p className="text-sm font-medium">Drop files or ZIP archives here or click to browse</p>
+                  <p className="text-xs text-muted-foreground mt-1">Supports .md &nbsp;·&nbsp; .json &nbsp;·&nbsp; .csv &nbsp;·&nbsp; .html &nbsp;·&nbsp; .zip</p>
                 </>
               )}
             </div>
@@ -212,7 +263,7 @@ export default function BulkImport() {
               <Textarea
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
-                placeholder="Paste Markdown, JSON, or CSV content here…"
+                placeholder="Paste Markdown, JSON, CSV, or HTML content here…"
                 rows={12}
                 className="font-mono text-xs"
               />
@@ -229,7 +280,7 @@ export default function BulkImport() {
 
         {/* Format guide */}
         {items.length === 0 && !preview.isPending && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> Markdown (.md)</CardTitle>
@@ -276,6 +327,26 @@ Lesson body (COURSE only)…`}
             </Card>
             <Card>
               <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> HTML (.html)</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground font-mono whitespace-pre">
+{`<!DOCTYPE html>
+<html>
+<head>
+  <title>My Article</title>
+  <meta name="description" content="Summary">
+  <meta name="category" content="frontend">
+  <meta name="tags" content="html, web">
+</head>
+<body>
+  <h1>Title</h1>
+  <p>Article body content…</p>
+</body>
+</html>`}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> CSV (.csv)</CardTitle>
               </CardHeader>
               <CardContent className="text-xs text-muted-foreground font-mono whitespace-pre">
@@ -284,7 +355,17 @@ ARTICLE,My Article,backend,Summary,standard,Body…
 COURSE,My Course,frontend,,STANDARD,`}
               </CardContent>
               <CardContent className="text-xs text-muted-foreground pt-0">
-                Note: CSV course rows create an empty shell only — sections/lessons are not supported in CSV. Use Markdown or JSON to import full course structure.
+                Note: CSV course rows create an empty shell only.
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-4 w-4" /> ZIP Archives (.zip)</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-muted-foreground">
+                Upload a single <strong>.zip</strong> archive containing multiple <code>.md</code>, <code>.json</code>, <code>.csv</code>, or <code>.html</code> files.
+                <br /><br />
+                Subdirectories are automatically unpacked and parsed. Unsupported files inside the archive will be highlighted individually.
               </CardContent>
             </Card>
           </div>
@@ -302,17 +383,26 @@ COURSE,My Course,frontend,,STANDARD,`}
                   {validCount} valid · {items.length - validCount} invalid · {selectedCount} selected
                 </p>
               </div>
-              <Button
-                size="sm"
-                onClick={handleConfirm}
-                disabled={selectedCount === 0 || confirm.isPending || confirmed}
-              >
-                {confirm.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Importing…</>
-                ) : (
-                  `Import ${selectedCount} as Draft`
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={toggleExpandAll}
+                >
+                  {expanded.size === items.length ? 'Collapse All Previews' : 'Expand All Previews'}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleConfirm}
+                  disabled={selectedCount === 0 || confirm.isPending || confirmed}
+                >
+                  {confirm.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Importing…</>
+                  ) : (
+                    `Import ${selectedCount} as Draft`
+                  )}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -348,43 +438,35 @@ COURSE,My Course,frontend,,STANDARD,`}
                             size="icon"
                             variant="ghost"
                             className="h-6 w-6"
-                            disabled={!item.valid}
                             onClick={() => toggleExpanded(idx)}
-                            title="Review & edit"
+                            title="View Content Preview & Edit"
                           >
                             {expanded.has(idx) ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                           </Button>
                         </TableCell>
                         <TableCell>
-                          <div className="font-medium text-sm">{item.title || <span className="text-muted-foreground italic">untitled</span>}</div>
+                          <div className="font-medium text-sm flex items-center gap-2">
+                            <span>{item.title || <span className="text-muted-foreground italic">untitled</span>}</span>
+                            {!item.valid && (
+                              <Badge variant="destructive" className="text-[10px] uppercase font-semibold">Wrong Format</Badge>
+                            )}
+                          </div>
                           {item.description && (
                             <div className="text-xs text-muted-foreground truncate max-w-xs">{item.description}</div>
                           )}
                           {item.error && (
-                            <div className="text-xs text-destructive mt-0.5">{item.error}</div>
+                            <div className="text-xs text-destructive mt-0.5 font-mono">{item.error}</div>
                           )}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">{item.type}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Select
-                            value={item.categoryId ? String(item.categoryId) : ''}
-                            onValueChange={(val) => updateItem(idx, { categoryId: val ? Number(val) : undefined })}
-                            disabled={!item.valid}
-                          >
-                            <SelectTrigger className="h-7 text-xs">
-                              <SelectValue placeholder={item.categorySlug || 'Pick category'} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="">None</SelectItem>
-                              {categories.map((cat: { id: number; name: string }) => (
-                                <SelectItem key={cat.id} value={String(cat.id)}>
-                                  {cat.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <CategoryTreeSelect
+                            value={item.categoryId}
+                            categorySlug={item.categorySlug}
+                            onSelect={(catId) => updateItem(idx, { categoryId: catId })}
+                          />
                         </TableCell>
                         <TableCell>
                           <span className="text-xs text-muted-foreground truncate max-w-[100px] block" title={item.fileName}>
@@ -395,11 +477,11 @@ COURSE,My Course,frontend,,STANDARD,`}
                           {item.valid ? (
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                           ) : (
-                            <XCircle className="h-4 w-4 text-destructive" />
+                            <Badge variant="destructive" className="text-[10px] whitespace-nowrap">Wrong Format</Badge>
                           )}
                         </TableCell>
                       </TableRow>
-                      {expanded.has(idx) && item.valid && (
+                      {expanded.has(idx) && (
                         <TableRow>
                           <TableCell colSpan={7} className="p-0">
                             <ImportReviewRow item={item} onChange={(patch) => updateItem(idx, patch)} />

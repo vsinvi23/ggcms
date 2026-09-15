@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Quality-gate scoring for generated content.
 
 Computes a weighted overall quality score from the eight per-dimension

@@ -38,7 +38,14 @@ import type {
   SystemSettingsUpdateResponse,
 } from "./types"
 
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "")
+const envApiUrl = import.meta.env.VITE_API_BASE_URL
+export const API_BASE_URL = (
+  envApiUrl !== undefined && envApiUrl !== ""
+    ? envApiUrl
+    : typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1"
+      ? "/factory"
+      : "http://localhost:8000"
+).replace(/\/+$/, "")
 
 export class ApiError extends Error {
   status: number
@@ -81,7 +88,11 @@ interface RequestOptions {
 }
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
-  const url = new URL(`${API_BASE_URL}${path}`)
+  const fullPath = `${API_BASE_URL}${path}`
+  const base = fullPath.startsWith("http://") || fullPath.startsWith("https://")
+    ? undefined
+    : (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000")
+  const url = new URL(fullPath, base)
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value === undefined || value === null || value === "") continue

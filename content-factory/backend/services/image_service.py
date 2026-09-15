@@ -1,3 +1,4 @@
+from __future__ import annotations
 """Section/lesson illustrative image lookup.
 
 Provider is Pexels; all provider-specific request/response handling lives in

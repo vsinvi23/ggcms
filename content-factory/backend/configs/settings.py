@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, model_validator
 
@@ -27,10 +29,10 @@ class Settings(BaseSettings):
     anthropic_api_key: str = Field(default="", validation_alias="ANTHROPIC_API_KEY")
     anthropic_base_url: str = Field(default="", validation_alias="ANTHROPIC_BASE_URL")
 
-    gemini_model_planner: str = Field(default="gemini-1.5-flash", validation_alias="GEMINI_MODEL_PLANNER")
-    gemini_model_researcher: str = Field(default="gemini-1.5-flash", validation_alias="GEMINI_MODEL_RESEARCHER")
-    gemini_model_writer: str = Field(default="gemini-1.5-pro", validation_alias="GEMINI_MODEL_WRITER")
-    gemini_model_reviewer: str = Field(default="gemini-1.5-flash", validation_alias="GEMINI_MODEL_REVIEWER")
+    gemini_model_planner: str = Field(default="gemini-3.6-flash", validation_alias="GEMINI_MODEL_PLANNER")
+    gemini_model_researcher: str = Field(default="gemini-3.6-flash", validation_alias="GEMINI_MODEL_RESEARCHER")
+    gemini_model_writer: str = Field(default="gemini-3.6-flash", validation_alias="GEMINI_MODEL_WRITER")
+    gemini_model_reviewer: str = Field(default="gemini-3.6-flash", validation_alias="GEMINI_MODEL_REVIEWER")
 
     claude_model_planner: str = Field(default="claude-sonnet-5", validation_alias="CLAUDE_MODEL_PLANNER")
     claude_model_researcher: str = Field(default="claude-sonnet-5", validation_alias="CLAUDE_MODEL_RESEARCHER")
@@ -48,7 +50,7 @@ class Settings(BaseSettings):
 
     gcs_bucket: str = Field(default="local-bucket", validation_alias="GCS_BUCKET")
     max_monthly_ai_budget: float = Field(default=500.00, validation_alias="MAX_MONTHLY_AI_BUDGET")
-    max_cost_per_content_unit: float = Field(default=0.50, validation_alias="MAX_COST_PER_CONTENT_UNIT")
+    max_cost_per_content_unit: float = Field(default=5.00, validation_alias="MAX_COST_PER_CONTENT_UNIT")
     max_revisions: int = Field(default=3, validation_alias="MAX_REVISIONS")
     source_max_pages: int = Field(default=50, validation_alias="SOURCE_MAX_PAGES")
     source_max_depth: int = Field(default=2, validation_alias="SOURCE_MAX_DEPTH")

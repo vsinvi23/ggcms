@@ -1,3 +1,4 @@
+from __future__ import annotations
 import httpx
 
 from backend.ingestion.extractors.docx_extractor import extract_text_from_docx

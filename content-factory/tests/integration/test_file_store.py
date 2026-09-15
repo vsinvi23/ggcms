@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Integration tests for backend/storage/file_store.py's atomic-write /
 read-modify-write round-trip behavior (plan §12 test scaffolding scope).

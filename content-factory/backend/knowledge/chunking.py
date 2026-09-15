@@ -1,3 +1,4 @@
+from __future__ import annotations
 import re
 
 # Matches ATX-style markdown headings ("# Heading", "## Heading", ...) at line start.

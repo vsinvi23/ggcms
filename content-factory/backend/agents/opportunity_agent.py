@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from pydantic import BaseModel, Field
 from backend.models.base import utcnow
@@ -86,6 +87,7 @@ async def expand_statement_to_headlines(statement: str, project) -> list[Headlin
 
     try:
         result = await invoke_structured(structured_llm, prompt, agent_name=AGENT_NAME)
+        logger.info(f"[{AGENT_NAME}] Expanded statement '{statement}' into {len(result.candidates)} headline candidates: {[item.headline for item in result.candidates]}")
     except Exception as e:
         logger.error(f"[{AGENT_NAME}] headline expansion failed for statement '{statement}': {e}")
         raise AgentExecutionError(AgentError(
@@ -122,11 +124,20 @@ class OpportunityAgent:
         job_id=None,
     ) -> list[Opportunity]:
         """
-        For each topic candidate, fills in any missing sub-scores (demand, trend,
-        content_gap, competition, audience_relevance, business_value -- each 0-100,
-        `signals[topic]` may be partially or entirely missing them) via the LLM,
-        producing reasoning per candidate, then computes the final weighted score
-        and assembles an Opportunity.
+        Hybrid scoring workflow:
+
+        - deterministic scoring is the final source of truth for the opportunity score,
+        - explicit project signals and upstream structured data win when present,
+        - the LLM is used only to fill missing gaps in sub-scores and to explain the
+          reasoning behind the candidate topic,
+        - references and broadened headline ideas remain suggestions until they are
+          validated by the project’s trusted sources or a human approval step.
+
+        For each topic candidate, this method fills in any missing sub-scores
+        (demand, trend, content_gap, competition, audience_relevance,
+        business_value -- each 0-100) via the LLM, producing reasoning per
+        candidate, then computes the final weighted score and assembles an
+        Opportunity.
 
         `signals` maps candidate topic -> a dict that may already contain some of
         the six sub-score keys; those are trusted as-is and never overridden by

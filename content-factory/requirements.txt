@@ -15,7 +15,8 @@ httpx
 python-multipart
 litellm
 pyyaml
-# Google Drive integration
+# Google Storage & Drive integration
+google-cloud-storage>=2.14.0
 google-api-python-client>=2.100.0
 google-auth>=2.23.0
 google-auth-httplib2>=0.2.0
@@ -24,5 +25,5 @@ PyJWT>=2.8.0
 
 # Test suite
 pytest>=8.4
-pytest-asyncio>=1.4.0
+pytest-asyncio>=0.23.0
 
