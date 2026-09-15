@@ -40,10 +40,15 @@ import {
   GraduationCap,
   Briefcase,
   LogIn,
+  Terminal,
+  Download,
+  Activity,
 } from 'lucide-react';
 import { API_BASE_URL, APP_NAME, ADMIN_GROUP_NAME } from '@/config/api';
 import { useSettings } from '@/api/hooks/useSettings';
 import type { StorageSettings } from '@/api/services/settingsService';
+import { logService } from '@/api/services/logService';
+import { useDebugLogs } from '@/api/hooks/useLogs';
 
 // General Settings State
 interface GeneralSettings {
@@ -202,12 +207,25 @@ export default function SettingsPage() {
     social_login: false,
   });
 
+  const [loggingForm, setLoggingForm] = React.useState({
+    auditEnabled: true,
+    debugEnabled: true,
+    logLevel: 'INFO',
+  });
+  const [logLevelFilter, setLogLevelFilter] = React.useState('all');
+  const { data: liveDebugLogs = [], isLoading: isLoadingLogs } = useDebugLogs(logLevelFilter);
+
   React.useEffect(() => {
     if (!storageSettings) return;
     setFeatureForm({
       learning_paths: storageSettings['feature.learning_paths'] === 'true',
       interview_prep: storageSettings['feature.interview_prep'] === 'true',
       social_login: storageSettings['feature.social_login'] === 'true',
+    });
+    setLoggingForm({
+      auditEnabled: storageSettings['logging.audit_enabled'] !== 'false',
+      debugEnabled: storageSettings['logging.debug_enabled'] !== 'false',
+      logLevel: storageSettings['logging.level'] || 'INFO',
     });
   }, [storageSettings]);
 
@@ -216,6 +234,14 @@ export default function SettingsPage() {
       'feature.learning_paths': featureForm.learning_paths ? 'true' : 'false',
       'feature.interview_prep': featureForm.interview_prep ? 'true' : 'false',
       'feature.social_login': featureForm.social_login ? 'true' : 'false',
+    });
+  };
+
+  const handleSaveLogging = async () => {
+    await updateSettings({
+      'logging.audit_enabled': loggingForm.auditEnabled ? 'true' : 'false',
+      'logging.debug_enabled': loggingForm.debugEnabled ? 'true' : 'false',
+      'logging.level': loggingForm.logLevel,
     });
   };
 
@@ -295,7 +321,7 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 h-auto gap-1">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 h-auto gap-1">
             <TabsTrigger value="general" className="gap-1.5 text-xs py-2">
               <Globe className="w-4 h-4" />
               <span className="hidden sm:inline">General</span>
@@ -327,6 +353,10 @@ export default function SettingsPage() {
             <TabsTrigger value="features" className="gap-1.5 text-xs py-2">
               <ToggleLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Features</span>
+            </TabsTrigger>
+            <TabsTrigger value="logging" className="gap-1.5 text-xs py-2">
+              <Terminal className="w-4 h-4" />
+              <span className="hidden sm:inline">Logs & Audit</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1529,6 +1559,250 @@ export default function SettingsPage() {
                 Save Feature Settings
               </Button>
             </div>
+          </TabsContent>
+
+          {/* Logs & Audit Settings Tab */}
+          <TabsContent value="logging" className="mt-6 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Terminal className="w-5 h-5 text-primary" />
+                  System Logging & Diagnostics Settings
+                </CardTitle>
+                <CardDescription>
+                  Enable or disable audit logging and system/UI debug logging for diagnostic issue analysis.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Activity className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Enable Audit Logging</p>
+                      <p className="text-sm text-muted-foreground">
+                        Record all administrative and content mutation actions into the audit log history.
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={loggingForm.auditEnabled}
+                    onCheckedChange={(v) => setLoggingForm({ ...loggingForm, auditEnabled: v })}
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Terminal className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Enable Debug & UI Client Logging</p>
+                      <p className="text-sm text-muted-foreground">
+                        Capture server request events, background jobs, and frontend UI error/debug logs.
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={loggingForm.debugEnabled}
+                    onCheckedChange={(v) => setLoggingForm({ ...loggingForm, debugEnabled: v })}
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Server className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">Minimum Debug Log Level</p>
+                      <p className="text-sm text-muted-foreground">
+                        Select minimum severity level for stored debug messages.
+                      </p>
+                    </div>
+                  </div>
+                  <Select
+                    value={loggingForm.logLevel}
+                    onValueChange={(v) => setLoggingForm({ ...loggingForm, logLevel: v })}
+                  >
+                    <SelectTrigger className="w-36">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DEBUG">DEBUG (Verbose)</SelectItem>
+                      <SelectItem value="INFO">INFO (Standard)</SelectItem>
+                      <SelectItem value="WARN">WARN (Warnings)</SelectItem>
+                      <SelectItem value="ERROR">ERROR (Errors only)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <Button onClick={handleSaveLogging} disabled={isSaving}>
+                    {isSaving ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                    Save Logging Settings
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Log File Downloads */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Download className="w-5 h-5 text-primary" />
+                  Download Server & UI Logs
+                </CardTitle>
+                <CardDescription>
+                  Export server audit logs and debug/client logs as standalone files for offline issue analysis.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+                    <div className="flex items-center gap-2 font-medium text-sm">
+                      <Activity className="w-4 h-4 text-primary" />
+                      Audit Log Export
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Full administrative activity audit trail with timestamps, user emails, and modified targets.
+                    </p>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs gap-1.5"
+                        onClick={() => logService.downloadAuditLogs('csv')}
+                      >
+                        <Download className="w-3.5 h-3.5" /> Audit Logs (.CSV)
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs gap-1.5"
+                        onClick={() => logService.downloadAuditLogs('json')}
+                      >
+                        <Download className="w-3.5 h-3.5" /> Audit Logs (.JSON)
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+                    <div className="flex items-center gap-2 font-medium text-sm">
+                      <Terminal className="w-4 h-4 text-primary" />
+                      Debug & UI Client Logs Export
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Combined server system events and browser UI client logs (errors, API failures, preview uploads).
+                    </p>
+                    <div className="flex items-center gap-2 pt-1 flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs gap-1.5"
+                        onClick={() => logService.downloadDebugLogs('txt')}
+                      >
+                        <Download className="w-3.5 h-3.5" /> Debug Logs (.TXT)
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs gap-1.5"
+                        onClick={() => logService.downloadDebugLogs('json')}
+                      >
+                        <Download className="w-3.5 h-3.5" /> Debug Logs (.JSON)
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs gap-1.5"
+                        onClick={() => logService.downloadDebugLogs('csv')}
+                      >
+                        <Download className="w-3.5 h-3.5" /> Debug Logs (.CSV)
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Live System & UI Log Analyzer */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Terminal className="w-5 h-5 text-primary" />
+                    Live System & UI Log Console
+                  </CardTitle>
+                  <CardDescription>
+                    Real-time view of server system events and browser UI client logs. Auto-refreshes every 10 seconds.
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={logLevelFilter} onValueChange={setLogLevelFilter}>
+                    <SelectTrigger className="w-32 h-8 text-xs">
+                      <SelectValue placeholder="All Levels" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Levels</SelectItem>
+                      <SelectItem value="ERROR">ERROR</SelectItem>
+                      <SelectItem value="WARN">WARN</SelectItem>
+                      <SelectItem value="INFO">INFO</SelectItem>
+                      <SelectItem value="DEBUG">DEBUG</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="border-t max-h-96 overflow-y-auto font-mono text-xs">
+                  {isLoadingLogs ? (
+                    <div className="p-8 text-center text-muted-foreground flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin" /> Loading logs…
+                    </div>
+                  ) : liveDebugLogs.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                      No logs recorded matching filter. Trigger system operations or client actions to record events.
+                    </div>
+                  ) : (
+                    <div className="divide-y">
+                      {liveDebugLogs.map((log, i) => (
+                        <div key={i} className="p-3 hover:bg-muted/40 transition-colors space-y-1">
+                          <div className="flex items-center justify-between flex-wrap gap-2 text-[11px]">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={
+                                  log.level === 'ERROR'
+                                    ? 'destructive'
+                                    : log.level === 'WARN'
+                                    ? 'secondary'
+                                    : 'outline'
+                                }
+                                className="text-[10px] px-1.5 py-0 font-semibold"
+                              >
+                                {log.level}
+                              </Badge>
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/5">
+                                {log.source}
+                              </Badge>
+                              <span className="text-muted-foreground">{log.timestamp}</span>
+                            </div>
+                            {log.userEmail && (
+                              <span className="text-muted-foreground text-[10px]">User: {log.userEmail}</span>
+                            )}
+                          </div>
+                          <div className="text-foreground font-sans text-xs break-words">{log.message}</div>
+                          {log.metadata && Object.keys(log.metadata).length > 0 && (
+                            <div className="text-[10px] text-muted-foreground bg-muted/50 p-1.5 rounded truncate">
+                              {JSON.stringify(log.metadata)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

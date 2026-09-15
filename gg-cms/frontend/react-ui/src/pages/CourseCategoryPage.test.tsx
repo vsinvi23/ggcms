@@ -91,8 +91,8 @@ describe('CourseCategoryPage (Panel 2 Explore Layout)', () => {
 
   it('renders Explore header and subtitle', () => {
     renderExplorePage();
-    expect(screen.getByText('Explore')).toBeInTheDocument();
-    expect(screen.getByText('Discover content by domain and category')).toBeInTheDocument();
+    expect(screen.getByText(/Explore Articles/i)).toBeInTheDocument();
+    expect(screen.getByText(/Discover articles, step-by-step tutorials/i)).toBeInTheDocument();
   });
 
   it('renders StatBadges for Articles, Courses, and Learning Paths', () => {

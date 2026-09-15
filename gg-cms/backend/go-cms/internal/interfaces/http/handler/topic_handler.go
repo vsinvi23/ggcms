@@ -231,6 +231,7 @@ func (h *TopicHandler) GetTopicContent(c *gin.Context) {
 		return
 	}
 	size := parseTopicContentLimit(c.Query("size"))
+
 	entries, err := h.service.FindContentByTopicIDs(c.Request.Context(), []uint{id}, 0, "", size)
 	if err != nil {
 		response.InternalError(c, err.Error())

@@ -134,7 +134,7 @@ func TestParseJSONCourseNestedSections(t *testing.T) {
 	}
 }
 
-func TestValidateRejectsEmptySectionTitle(t *testing.T) {
+func TestValidateFillsEmptySectionTitle(t *testing.T) {
 	content := `[
 		{
 			"type": "COURSE",
@@ -146,15 +146,15 @@ func TestValidateRejectsEmptySectionTitle(t *testing.T) {
 	]`
 	items := Parse("course.json", []byte(content))
 	item := items[0]
-	if item.Valid {
-		t.Fatalf("expected invalid item due to empty section title")
+	if !item.Valid {
+		t.Fatalf("expected valid item with fallback section title, got error: %s", item.Error)
 	}
-	if item.Error == "" {
-		t.Fatalf("expected a validation error message")
+	if item.Sections[0].Title != "Section 1" {
+		t.Fatalf("expected fallback section title 'Section 1', got %q", item.Sections[0].Title)
 	}
 }
 
-func TestValidateRejectsEmptyLessonTitle(t *testing.T) {
+func TestValidateFillsEmptyLessonTitle(t *testing.T) {
 	content := `[
 		{
 			"type": "COURSE",
@@ -168,8 +168,11 @@ func TestValidateRejectsEmptyLessonTitle(t *testing.T) {
 	]`
 	items := Parse("course.json", []byte(content))
 	item := items[0]
-	if item.Valid {
-		t.Fatalf("expected invalid item due to empty lesson title")
+	if !item.Valid {
+		t.Fatalf("expected valid item with fallback lesson title, got error: %s", item.Error)
+	}
+	if item.Sections[0].Lessons[0].Title != "Lesson 1" {
+		t.Fatalf("expected fallback lesson title 'Lesson 1', got %q", item.Sections[0].Lessons[0].Title)
 	}
 }
 
@@ -310,25 +313,14 @@ func TestParseZIPWithMultipleFormats(t *testing.T) {
 	}
 
 	items := Parse("bundle.zip", buf.Bytes())
-	if len(items) != 4 { // article1.md, article2.json, page.html, image.png (unsupported)
-		t.Fatalf("expected 4 items (3 valid + 1 unsupported), got %d", len(items))
+	if len(items) != 3 { // article1.md, docs/article2.json, page.html (image.png skipped)
+		t.Fatalf("expected 3 valid content items extracted from zip, got %d", len(items))
 	}
 
-	validCount := 0
-	invalidCount := 0
 	for _, item := range items {
-		if item.Valid {
-			validCount++
-		} else {
-			invalidCount++
+		if !item.Valid {
+			t.Fatalf("expected item %s to be valid, got error: %s", item.FileName, item.Error)
 		}
-	}
-
-	if validCount != 3 {
-		t.Fatalf("expected 3 valid items from zip, got %d", validCount)
-	}
-	if invalidCount != 1 {
-		t.Fatalf("expected 1 invalid item (unsupported file), got %d", invalidCount)
 	}
 }
 

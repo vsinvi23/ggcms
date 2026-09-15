@@ -46,6 +46,10 @@ var allowedSettingKeys = map[string]struct{}{
 	"feature.learning_paths": {},
 	"feature.interview_prep": {},
 	"feature.social_login":   {},
+	// Logging settings
+	"logging.audit_enabled": {},
+	"logging.debug_enabled": {},
+	"logging.level":         {},
 }
 
 // GET /api/features — public (no auth required)

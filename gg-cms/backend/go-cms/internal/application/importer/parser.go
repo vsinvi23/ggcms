@@ -380,26 +380,22 @@ func parseCSV(filename string, content []byte) []ParsedItem {
 
 func validate(item *ParsedItem) {
 	if item.Title == "" {
-		item.Valid = false
-		item.Error = "Wrong format: title is required"
-		return
+		base := filepath.Base(item.FileName)
+		item.Title = strings.TrimSuffix(base, filepath.Ext(base))
+		if item.Title == "" {
+			item.Title = "Untitled Content"
+		}
 	}
 	if item.Type != "ARTICLE" && item.Type != "COURSE" && item.Type != "VIDEO" {
-		item.Valid = false
-		item.Error = fmt.Sprintf("Wrong format: unknown type %q — expected ARTICLE, COURSE, or VIDEO", item.Type)
-		return
+		item.Type = "ARTICLE"
 	}
 	for si, sec := range item.Sections {
 		if sec.Title == "" {
-			item.Valid = false
-			item.Error = fmt.Sprintf("Wrong format: section %d title is required", si+1)
-			return
+			item.Sections[si].Title = fmt.Sprintf("Section %d", si+1)
 		}
 		for li, lesson := range sec.Lessons {
 			if lesson.Title == "" {
-				item.Valid = false
-				item.Error = fmt.Sprintf("Wrong format: section %d, lesson %d title is required", si+1, li+1)
-				return
+				item.Sections[si].Lessons[li].Title = fmt.Sprintf("Lesson %d", li+1)
 			}
 		}
 	}
@@ -423,7 +419,13 @@ func parseZIP(filename string, content []byte) []ParsedItem {
 			continue
 		}
 		base := filepath.Base(f.Name)
-		if strings.HasPrefix(f.Name, "__MACOSX/") || strings.HasPrefix(base, "._") || base == ".DS_Store" {
+		if strings.HasPrefix(f.Name, "__MACOSX/") || strings.HasPrefix(base, "._") || base == ".DS_Store" || strings.HasPrefix(base, ".") {
+			continue
+		}
+
+		ext := strings.ToLower(filepath.Ext(f.Name))
+		if ext != ".md" && ext != ".markdown" && ext != ".json" && ext != ".csv" && ext != ".html" && ext != ".htm" {
+			// Skip asset files (images, binary assets) inside zip
 			continue
 		}
 
@@ -455,7 +457,7 @@ func parseZIP(filename string, content []byte) []ParsedItem {
 		return []ParsedItem{{
 			FileName: filename,
 			Valid:    false,
-			Error:    "Wrong format: empty zip archive or no readable files found inside",
+			Error:    "Wrong format: no importable content files (.md, .json, .csv, .html) found inside zip archive",
 		}}
 	}
 

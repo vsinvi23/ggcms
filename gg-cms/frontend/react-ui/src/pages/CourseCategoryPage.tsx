@@ -2,8 +2,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import {
   BookOpen, FileText, Search, X, Check, ChevronsUpDown, Tag,
-  SlidersHorizontal, Play, GraduationCap, Compass, ArrowRight,
+  SlidersHorizontal, Play, GraduationCap, Compass, ArrowRight, Clock,
   Code, Cloud, Shield, Database, Cpu, User, Lock, Globe,
+
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ import { CmsResponseDto, TagDto, EnrollmentDto, DomainDto } from '@/api/types';
 import { cn } from '@/lib/utils';
 import { buildArticleUrl, buildCourseUrl } from '@/lib/slug';
 import { PublicArticleCard } from '@/components/public/PublicArticleCard';
+import { CURATED_LEARNING_PATHS } from '@/data/learningPathData';
 
 // ─── Category slug → courseType ───────────────────────────────────────────────
 
@@ -148,6 +150,66 @@ function TagsDropdown({
   );
 }
 
+// ─── Domain & Category Color Themes ──────────────────────────────────────────
+
+function getDomainTheme(name: string) {
+  const lower = name.toLowerCase();
+  if (lower.includes('software') || lower.includes('code')) {
+    return {
+      activeBorder: 'border-indigo-500 bg-indigo-500/10 dark:bg-indigo-500/15 ring-1 ring-indigo-500/30',
+      activeIconBg: 'bg-indigo-600 text-white',
+      bg: 'bg-indigo-500/10 dark:bg-indigo-500/15',
+      text: 'text-indigo-600 dark:text-indigo-400',
+    };
+  }
+  if (lower.includes('cloud') || lower.includes('infra')) {
+    return {
+      activeBorder: 'border-sky-500 bg-sky-500/10 dark:bg-sky-500/15 ring-1 ring-sky-500/30',
+      activeIconBg: 'bg-sky-600 text-white',
+      bg: 'bg-sky-500/10 dark:bg-sky-500/15',
+      text: 'text-sky-600 dark:text-sky-400',
+    };
+  }
+  if (lower.includes('security') || lower.includes('cyber') || lower.includes('crypto') || lower.includes('pki')) {
+    return {
+      activeBorder: 'border-rose-500 bg-rose-500/10 dark:bg-rose-500/15 ring-1 ring-rose-500/30',
+      activeIconBg: 'bg-rose-600 text-white',
+      bg: 'bg-rose-500/10 dark:bg-rose-500/15',
+      text: 'text-rose-600 dark:text-rose-400',
+    };
+  }
+  if (lower.includes('data') || lower.includes('sql') || lower.includes('database')) {
+    return {
+      activeBorder: 'border-amber-500 bg-amber-500/10 dark:bg-amber-500/15 ring-1 ring-amber-500/30',
+      activeIconBg: 'bg-amber-600 text-white',
+      bg: 'bg-amber-500/10 dark:bg-amber-500/15',
+      text: 'text-amber-600 dark:text-amber-400',
+    };
+  }
+  if (lower.includes('ai') || lower.includes('machine') || lower.includes('llm')) {
+    return {
+      activeBorder: 'border-purple-500 bg-purple-500/10 dark:bg-purple-500/15 ring-1 ring-purple-500/30',
+      activeIconBg: 'bg-purple-600 text-white',
+      bg: 'bg-purple-500/10 dark:bg-purple-500/15',
+      text: 'text-purple-600 dark:text-purple-400',
+    };
+  }
+  if (lower.includes('identity') || lower.includes('auth') || lower.includes('user')) {
+    return {
+      activeBorder: 'border-blue-500 bg-blue-500/10 dark:bg-blue-500/15 ring-1 ring-blue-500/30',
+      activeIconBg: 'bg-blue-600 text-white',
+      bg: 'bg-blue-500/10 dark:bg-blue-500/15',
+      text: 'text-blue-600 dark:text-blue-400',
+    };
+  }
+  return {
+    activeBorder: 'border-primary bg-primary/10 ring-1 ring-primary/30',
+    activeIconBg: 'bg-primary text-primary-foreground',
+    bg: 'bg-primary/10',
+    text: 'text-primary',
+  };
+}
+
 // ─── Explore header — title, stats, domain cards (Panel 2 Spec) ───────────────
 
 function getDomainIcon(name: string) {
@@ -160,55 +222,84 @@ function getDomainIcon(name: string) {
   return Compass;
 }
 
+
 function ExploreHeader({
-  totalArticles, totalCourses, domains, activeId, onSelect,
+  type,
+  totalArticles,
+  totalCourses,
+  domains,
+  activeId,
+  onSelect,
 }: {
+  type: 'ARTICLE' | 'COURSE';
   totalArticles: number;
   totalCourses: number;
   domains: DomainDto[];
   activeId: number | undefined;
   onSelect: (domain: DomainDto) => void;
 }) {
+  const isCourse = type === 'COURSE';
+  const domainArticlesTotal = domains.reduce((acc, d) => acc + (d.articleCount || 0), 0);
+  const domainCoursesTotal  = domains.reduce((acc, d) => acc + (d.courseCount || 0), 0);
+  const articlesCount = domainArticlesTotal > 0 ? domainArticlesTotal : totalArticles;
+  const coursesCount  = domainCoursesTotal > 0 ? domainCoursesTotal : totalCourses;
+
   return (
     <div className="shrink-0 border-b border-border bg-card px-6 py-6 space-y-6">
       {/* Title & Stats counters */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
-            Explore
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
+            {isCourse ? (
+              <>
+                <BookOpen className="w-8 h-8 text-primary" />
+                <span>Courses & Learning Catalog</span>
+              </>
+            ) : (
+              <>
+                <Compass className="w-8 h-8 text-primary" />
+                <span>Explore Articles & Technical Guides</span>
+              </>
+            )}
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Discover content by domain and category</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            {isCourse
+              ? 'Browse our curated technical courses, byte-sized modules, interview capsules, and guided learning tracks'
+              : 'Discover articles, step-by-step tutorials, engineering guides, and technical insights by domain'}
+          </p>
         </div>
         <div className="flex items-center gap-3">
-          <StatBadge icon={FileText} label="Articles" value={totalArticles} suffix="+" />
-          <StatBadge icon={BookOpen} label="Courses" value={totalCourses} suffix="+" />
+          <StatBadge icon={FileText} label="Articles" value={articlesCount} suffix="+" />
+          <StatBadge icon={BookOpen} label="Courses" value={coursesCount} suffix="+" />
           <StatBadge icon={GraduationCap} label="Learning Paths" value={20} suffix="+" />
         </div>
       </div>
 
       {/* 5 Domain Selection Cards */}
+
       {domains.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {domains.map(domain => {
             const count = domain.articleCount + domain.courseCount;
             const active = domain.id === activeId;
             const DomainIcon = getDomainIcon(domain.name);
+            const theme = getDomainTheme(domain.name);
             return (
               <button
                 key={domain.id}
                 onClick={() => onSelect(domain)}
                 className={cn(
-                  'flex flex-col items-start gap-2.5 p-4 rounded-xl border text-left transition-all duration-200 hover:shadow-sm',
+                  'flex flex-col items-start gap-2.5 p-4 rounded-xl border text-left transition-all duration-200 hover:shadow-sm cursor-pointer',
                   active
-                    ? 'border-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15 shadow-sm ring-1 ring-emerald-500/30'
+                    ? theme.activeBorder
                     : 'border-border bg-background hover:bg-muted/50 hover:border-border/80',
                 )}
               >
                 <div className={cn(
                   'w-10 h-10 shrink-0 rounded-lg flex items-center justify-center transition-colors',
                   active
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-primary/10 text-primary',
+                    ? theme.activeIconBg
+                    : `${theme.bg} ${theme.text}`,
                 )}>
                   <DomainIcon className="w-5 h-5" />
                 </div>
@@ -216,6 +307,7 @@ function ExploreHeader({
                   <h3 className="text-sm font-bold text-foreground leading-tight">{domain.name}</h3>
                   <span className="text-xs text-muted-foreground mt-0.5 block">{count > 0 ? `${count}+ resources` : 'In-depth topics'}</span>
                 </div>
+
               </button>
             );
           })}
@@ -228,7 +320,7 @@ function ExploreHeader({
 function StatBadge({ icon: Icon, label, value, suffix = '' }: { icon: typeof FileText; label: string; value: number; suffix?: string }) {
   return (
     <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-border bg-background shadow-xs">
-      <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+      <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
         <Icon className="h-4 w-4" />
       </div>
       <div>
@@ -251,13 +343,14 @@ function getCategoryIcon(name: string) {
 }
 
 function CategoryGrid({
-  categories, selectedId, domainName, onSelect,
+  categories, selectedId: _selectedId, domainName, onSelect: _onSelect,
 }: {
-  categories: { id: number; name: string; articleCount?: number }[];
+  categories: { id: number; name: string; slug?: string; articleCount?: number }[];
   selectedId: number | undefined;
   domainName?: string;
   onSelect: (id: number) => void;
 }) {
+  const navigate = useNavigate();
   if (categories.length === 0) return null;
   return (
     <div className="px-6 pt-5 space-y-3">
@@ -265,38 +358,44 @@ function CategoryGrid({
         <h2 className="text-base font-bold text-foreground">
           {domainName ? `Categories in ${domainName}` : 'All Categories'}
         </h2>
-        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer">
-          View all categories →
-        </span>
+        <button
+          onClick={() => navigate('/explore/articles')}
+          className="text-xs font-semibold text-primary hover:underline cursor-pointer flex items-center gap-1"
+        >
+          View all categories <ArrowRight className="w-3 h-3" />
+        </button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {categories.map(cat => {
           const CatIcon = getCategoryIcon(cat.name);
-          const active = selectedId === cat.id;
+          const catTheme = getDomainTheme(cat.name);
+          const catSlug = cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
           return (
-            <button
+            <div
               key={cat.id}
-              onClick={() => onSelect(cat.id)}
-              className={cn(
-                'flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-all duration-150',
-                active
-                  ? 'border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500/30'
-                  : 'border-border bg-card hover:bg-muted/40 hover:border-primary/30',
-              )}
+              onClick={() => navigate(`/technology/${catSlug}`)}
+              title={`Open ${cat.name} Landing Page`}
+              className="group flex items-center justify-between gap-3 p-3 rounded-xl border border-border bg-card hover:bg-muted/40 hover:border-primary/40 hover:shadow-sm cursor-pointer transition-all duration-150"
             >
-              <div className={cn(
-                'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-sm font-semibold',
-                active ? 'bg-emerald-500 text-white' : 'bg-primary/10 text-primary',
-              )}>
-                <CatIcon className="w-4 h-4" />
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className={cn(
+                  'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 text-sm font-semibold transition-colors',
+                  catTheme.bg,
+                  catTheme.text,
+                  'group-hover:bg-primary group-hover:text-primary-foreground',
+                )}>
+                  <CatIcon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-sm font-semibold text-foreground block truncate group-hover:text-primary transition-colors">{cat.name}</span>
+                  <span className="text-xs text-muted-foreground">{cat.articleCount ?? 12} resources</span>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <span className="text-sm font-semibold text-foreground block truncate">{cat.name}</span>
-                <span className="text-xs text-muted-foreground">{cat.articleCount ?? 12} articles</span>
-              </div>
-            </button>
+              <ArrowRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
+            </div>
           );
         })}
+
       </div>
     </div>
   );
@@ -552,6 +651,7 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
       <div className="flex flex-col h-full overflow-hidden">
 
         <ExploreHeader
+          type={type}
           totalArticles={totalArticles}
           totalCourses={totalCourses}
           domains={allDomains}
@@ -563,6 +663,7 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
           categories={flatCategories}
           selectedId={selectedCategoryIds[0]}
           domainName={allDomains.find(d => d.id === activeDomainId)?.name}
+
           onSelect={id => setSelectedCategoryIds(prev => prev.includes(id) ? [] : [id])}
         />
 
@@ -762,9 +863,9 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
           )}
 
           {/* Guided Learning Path CTA Banner (Panel 2 Spec) */}
-          <div className="mt-8 mb-4 p-6 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-primary/5 to-transparent border border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="mt-8 mb-4 p-6 rounded-2xl bg-gradient-to-r from-primary/10 via-accent/30 to-transparent border border-primary/20 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
                 <Compass className="w-6 h-6" />
               </div>
               <div>
@@ -772,11 +873,95 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
                 <p className="text-sm text-muted-foreground">Try our curated learning paths based on your goals.</p>
               </div>
             </div>
-            <Button onClick={() => navigate('/explore/paths')} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shrink-0 rounded-xl shadow-xs">
+            <Button onClick={() => navigate('/explore/paths')} className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shrink-0 rounded-xl shadow-xs">
               View Learning Paths <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
         </main>
+      </div>
+    </PublicLayout>
+  );
+}
+
+// ─── Learning Paths Catalog View ──────────────────────────────────────────────
+
+function LearningPathsCatalog() {
+  const navigate = useNavigate();
+  return (
+    <PublicLayout>
+      <div className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
+          <div>
+            <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-3">
+              <GraduationCap className="w-8 h-8 text-primary" />
+              Learning Paths & Career Tracks
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Structured step-by-step curricula crafted by industry experts to master software, cloud, and security
+            </p>
+          </div>
+          <Badge variant="secondary" className="w-fit text-xs font-semibold px-3.5 py-1.5 rounded-full bg-primary/10 text-primary border-primary/20">
+            6 Core Tracks Available
+          </Badge>
+        </div>
+
+        {/* Path Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {CURATED_LEARNING_PATHS.map(path => (
+            <div
+              key={path.id}
+              onClick={() => navigate(`/learn/${path.slug}`)}
+              className="group flex flex-col justify-between p-6 rounded-2xl border border-border bg-card hover:border-primary/40 hover:shadow-lg transition-all duration-200 cursor-pointer space-y-5"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="text-xs font-semibold text-primary border-primary/30 bg-primary/10">
+                    {path.kind === 'INTERVIEW_PREP' ? 'Interview Track' : path.kind === 'SECURITY_TRACK' ? 'Security Track' : 'Career Path'}
+                  </Badge>
+                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-primary" /> {path.estimatedHours}h estimated
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                    {path.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground line-clamp-3 mt-1.5 leading-relaxed">
+                    {path.description}
+                  </p>
+                </div>
+
+                {/* Modules checklist preview */}
+                <div className="space-y-2 pt-2 border-t border-border/50">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
+                    Curriculum Includes ({path.modules.length} Modules)
+                  </span>
+                  <ul className="space-y-1.5 text-xs text-foreground/80">
+                    {path.modules.slice(0, 3).map((m, idx) => (
+                      <li key={m.id} className="flex items-center gap-2 truncate">
+                        <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <span className="truncate">{m.title}</span>
+                      </li>
+                    ))}
+                    {path.modules.length > 3 && (
+                      <li className="text-[11px] text-muted-foreground pl-6">
+                        +{path.modules.length - 3} more modules...
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+
+              <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-2 shadow-xs group-hover:scale-[1.01] transition-all">
+                Explore Learning Path <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
       </div>
     </PublicLayout>
   );
@@ -789,6 +974,7 @@ const CourseCategoryPage = () => {
 
   if (category === 'articles') return <ApiContentList type="ARTICLE" />;
   if (category === 'courses')  return <ApiContentList type="COURSE" />;
+  if (category === 'paths')    return <LearningPathsCatalog />;
 
   const courseType = category ? SLUG_TO_COURSE_TYPE[category] : undefined;
 
