@@ -75,11 +75,12 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	r.Use(middleware.CORS())
 	r.Use(gin.Recovery())
 	// Canonical Domain Redirect Middleware (Redirect .run.app requests to https://geekgully.com)
+	// Skip redirecting /api/ requests so API calls and file upload payloads are never altered or stripped.
 	r.Use(func(c *gin.Context) {
 		host := c.Request.Host
-		if strings.Contains(host, ".run.app") {
+		if strings.Contains(host, ".run.app") && !strings.HasPrefix(c.Request.URL.Path, "/api/") {
 			target := "https://geekgully.com" + c.Request.URL.String()
-			c.Redirect(http.StatusMovedPermanently, target)
+			c.Redirect(http.StatusPermanentRedirect, target)
 			c.Abort()
 			return
 		}
@@ -159,6 +160,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	domainH := handler.NewDomainHandler(svcs.Domain)
 	lpH := handler.NewLearningPathHandler(svcs.LearningPath)
 	auditH := handler.NewAuditHandler(svcs.Audit)
+	logH := handler.NewLogHandler(svcs.Settings)
 	personH := handler.NewPersonalizationHandler(svcs.Personalization)
 	importH := handler.NewImportHandler(svcs.CMS, svcs.Task, svcs.Section, svcs.Lesson, svcs.Category)
 	factoryImportH := handler.NewFactoryImportHandler(svcs.CMS, svcs.Section, svcs.Lesson, svcs.User, svcs.Category, svcs.Topic, nil, cfg.Admin.Email)
@@ -374,6 +376,12 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 
 			// Audit log (admin only) — GET /api/audit?action=&targetType=&page=0&size=20
 			p.GET("audit", middleware.AdminOnly(), auditH.List)
+			p.GET("audit/download", middleware.AdminOnly(), auditH.Download)
+
+			// Log management & debug logs
+			p.POST("logs/client", logH.RecordClientLog)
+			p.GET("logs/debug", middleware.AdminOnly(), logH.GetDebugLogs)
+			p.GET("logs/download", middleware.AdminOnly(), logH.DownloadLogs)
 
 			// Personalization — profile + recommendations
 			p.GET("personalization/profile", personH.GetProfile)

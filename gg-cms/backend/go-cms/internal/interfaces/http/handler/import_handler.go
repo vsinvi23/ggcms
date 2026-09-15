@@ -78,7 +78,7 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 				FileName: fh.Filename,
 				Index:    len(items),
 				Valid:    false,
-				Error:    "could not open file",
+				Error:    "Wrong format: unreadable file object",
 			})
 			continue
 		}
@@ -89,7 +89,7 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 				FileName: fh.Filename,
 				Index:    len(items),
 				Valid:    false,
-				Error:    "could not read file content",
+				Error:    "Wrong format: could not read file payload",
 			})
 			continue
 		}

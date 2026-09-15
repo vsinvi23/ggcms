@@ -1,6 +1,13 @@
 package handler
 
 import (
+	"bytes"
+	"encoding/csv"
+	"encoding/json"
+	"fmt"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	auditsvc "github.com/serenya/go-cms/internal/application/audit"
 	"github.com/serenya/go-cms/internal/domain/entity"
@@ -63,3 +70,55 @@ func mapAuditLog(l *entity.AuditLog) auditLogResponse {
 		CreatedAt:  l.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 }
+
+// GET /api/audit/download?format=csv|json
+func (h *AuditHandler) Download(c *gin.Context) {
+	format := strings.ToLower(c.DefaultQuery("format", "csv"))
+	filter := middleware.GetAuditFilter(c)
+
+	// Fetch up to 5000 audit records for export
+	logs, _, err := h.service.List(c.Request.Context(), filter, 0, 5000)
+	if err != nil {
+		response.InternalError(c, err.Error())
+		return
+	}
+
+	dateStr := time.Now().Format("2006-01-02_150405")
+
+	if format == "json" {
+		items := make([]auditLogResponse, len(logs))
+		for i, l := range logs {
+			items[i] = mapAuditLog(l)
+		}
+		data, _ := json.MarshalIndent(items, "", "  ")
+		c.Header("Content-Disposition", "attachment; filename=audit-logs-"+dateStr+".json")
+		c.Data(200, "application/json", data)
+		return
+	}
+
+	// CSV Format
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+	_ = w.Write([]string{"ID", "CreatedAt", "Action", "ActorID", "ActorEmail", "TargetType", "TargetID", "TargetName", "IPAddress", "Metadata"})
+
+	for _, l := range logs {
+		metaBytes, _ := json.Marshal(l.Meta)
+		_ = w.Write([]string{
+			l.ID.Hex(),
+			l.CreatedAt.Format("2006-01-02 15:04:05"),
+			l.Action,
+			fmt.Sprint(l.ActorID),
+			l.ActorEmail,
+			l.TargetType,
+			l.TargetID,
+			l.TargetName,
+			l.IPAddress,
+			string(metaBytes),
+		})
+	}
+	w.Flush()
+
+	c.Header("Content-Disposition", "attachment; filename=audit-logs-"+dateStr+".csv")
+	c.Data(200, "text/csv", buf.Bytes())
+}
+

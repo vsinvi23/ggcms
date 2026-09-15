@@ -121,10 +121,14 @@ if [[ -n "$SA_KEY" && -f "$SA_KEY" && -s "$SA_KEY" ]]; then
   fi
 fi
 
-ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null || echo "")
+if ! gcloud auth print-access-token >/dev/null 2>&1; then
+  ACTIVE_ACCOUNT=""
+else
+  ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null || echo "")
+fi
 
 if [[ -z "$ACTIVE_ACCOUNT" ]]; then
-  echo "⚠️ No active GCP login detected. Launching gcloud authentication..."
+  echo "⚠️ GCP access token invalid or expired. Launching gcloud authentication..."
   gcloud auth login
   gcloud auth application-default login
 fi

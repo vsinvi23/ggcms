@@ -198,11 +198,11 @@ export default function BulkImport() {
             }
           }
 
-          return { ...it, categoryId, valid: true, error: undefined };
+          return { ...it, categoryId, valid, error };
         });
 
         setItems(processedItems);
-        setSelected(new Set(processedItems.map((_, i) => i)));
+        setSelected(new Set(processedItems.flatMap((it, i) => (it.valid ? [i] : []))));
         setExpanded(new Set());
       },
       onError: (err) => toast.error(toUserMessage(err, 'Failed to parse content')),
