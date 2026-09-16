@@ -91,7 +91,41 @@ export function EducativeArticleReader({
     });
 
     setTocEntries(entries);
+    if (entries.length > 0) {
+      setActiveHeadingId(entries[0].id);
+    }
   }, [renderedHtml]);
+
+  // Dynamically update active heading as user scrolls through the document
+  useEffect(() => {
+    if (!contentRef.current || tocEntries.length === 0) return;
+
+    const headingElements = tocEntries
+      .map((entry) => document.getElementById(entry.id))
+      .filter((el): el is HTMLElement => el !== null);
+
+    if (headingElements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visibleEntries = entries.filter((e) => e.isIntersecting);
+        if (visibleEntries.length > 0) {
+          setActiveHeadingId(visibleEntries[0].target.id);
+        }
+      },
+      {
+        rootMargin: '-60px 0px -55% 0px',
+        threshold: 0.1,
+      }
+    );
+
+    headingElements.forEach((el) => observer.observe(el));
+
+    return () => {
+      headingElements.forEach((el) => observer.unobserve(el));
+      observer.disconnect();
+    };
+  }, [tocEntries]);
 
   const handleTocClick = (id: string) => {
     const el = document.getElementById(id);

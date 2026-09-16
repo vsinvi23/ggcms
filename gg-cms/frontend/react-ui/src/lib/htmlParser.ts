@@ -156,9 +156,15 @@ export function markdownToContentBlocks(markdown: string): ContentBlock[] {
       continue;
     }
 
-    // Table: a row of |-separated cells followed by a |---|---| separator row
-    const isTableRow = (l: string) => /^\|.*\|$/.test(l.trim());
-    const isTableSeparator = (l: string) => /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?$/.test(l.trim());
+    // Table: a row containing '|' delimiters followed by a |---|---| separator row
+    const isTableRow = (l: string) => {
+      const s = l.trim();
+      return s.includes('|') && !s.startsWith('#') && !s.startsWith('```');
+    };
+    const isTableSeparator = (l: string) => {
+      const s = l.trim();
+      return /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?$/.test(s);
+    };
     if (isTableRow(trimmed) && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
       flushParagraph();
       flushList();
