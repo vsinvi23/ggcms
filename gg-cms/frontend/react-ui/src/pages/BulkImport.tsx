@@ -145,6 +145,106 @@ ARTICLE,Docker Multi-Stage Build Best Practices,Optimize Docker image sizes for 
   },
 };
 
+async function parseFileClientSide(file: File, categories: { id: number; slug: string; name: string }[]): Promise<ImportPreviewItem[]> {
+  const text = await file.text();
+  const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+  const defaultCatId = categories.length > 0 ? categories[0].id : undefined;
+
+  if (ext === '.json') {
+    try {
+      const parsed = JSON.parse(text);
+      const list = Array.isArray(parsed) ? parsed : [parsed];
+      return list.map((it, idx) => ({
+        fileName: file.name,
+        index: idx,
+        type: (it.type || 'ARTICLE').toUpperCase(),
+        title: it.title || file.name.replace(/\.[^/.]+$/, ''),
+        description: it.description || '',
+        body: typeof it.body === 'string' ? it.body : JSON.stringify(it.body || ''),
+        bodyFormat: 'json',
+        categorySlug: it.categorySlug || 'backend',
+        categoryId: defaultCatId,
+        articleType: it.articleType || 'guide',
+        courseType: it.courseType || 'full_course',
+        tags: Array.isArray(it.tags) ? it.tags : [],
+        sections: Array.isArray(it.sections) ? it.sections : [],
+        valid: true,
+      }));
+    } catch {
+      // Fallback to text parsing
+    }
+  }
+
+  // Markdown / Plain Text Parser
+  let title = '';
+  let description = '';
+  let type = 'ARTICLE';
+  let categorySlug = 'backend';
+  let articleType = 'guide';
+  let tags: string[] = [];
+  let body = text;
+
+  const trimmed = text.trim();
+  if (trimmed.startsWith('---')) {
+    const rest = trimmed.slice(3);
+    const endIdx = rest.indexOf('---');
+    if (endIdx !== -1) {
+      const frontmatter = rest.slice(0, endIdx);
+      body = rest.slice(endIdx + 3).trim();
+
+      frontmatter.split('\n').forEach((line) => {
+        const parts = line.split(':');
+        if (parts.length >= 2) {
+          const key = parts[0].trim().toLowerCase();
+          let val = parts.slice(1).join(':').trim();
+          val = val.replace(/^["']|["']$/g, '');
+
+          if (key === 'title') title = val;
+          else if (key === 'description') description = val;
+          else if (key === 'type') type = val.toUpperCase();
+          else if (key === 'category' || key === 'categoryslug') categorySlug = val;
+          else if (key === 'articletype') articleType = val;
+          else if (key === 'tags') {
+            tags = val
+              .replace(/^\[|\]$/g, '')
+              .split(',')
+              .map((t) => t.trim().replace(/^["']|["']$/g, ''))
+              .filter(Boolean);
+          }
+        }
+      });
+    }
+  }
+
+  if (!title) {
+    const h1Match = body.match(/^#\s+(.+)$/m);
+    if (h1Match) {
+      title = h1Match[1].trim();
+    } else {
+      title = file.name.replace(/\.[^/.]+$/, '');
+    }
+  }
+
+  return [
+    {
+      fileName: file.name,
+      index: 0,
+      type,
+      title,
+      description,
+      body,
+      bodyFormat: ext === '.html' || ext === '.htm' ? 'html' : 'markdown',
+      categorySlug,
+      categoryId: defaultCatId,
+      articleType,
+      courseType: 'full_course',
+      tags,
+      sections: [],
+      valid: true,
+    },
+  ];
+}
+
 export default function BulkImport() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -219,7 +319,24 @@ export default function BulkImport() {
         setSelected(new Set(processedItems.flatMap((it, i) => (it.valid ? [i] : []))));
         setExpanded(new Set());
       },
-      onError: (err) => toast.error(toUserMessage(err, 'Failed to parse content')),
+      onError: async () => {
+        try {
+          const clientParsedLists = await Promise.all(
+            files.map((f) => parseFileClientSide(f, categories))
+          );
+          const flatItems = clientParsedLists.flat();
+          if (flatItems.length > 0) {
+            setItems(flatItems);
+            setSelected(new Set(flatItems.map((_, i) => i)));
+            setExpanded(new Set());
+            toast.success(`Parsed ${flatItems.length} item${flatItems.length !== 1 ? 's' : ''}`);
+            return;
+          }
+        } catch {
+          // fall through
+        }
+        toast.error('Failed to parse content');
+      },
     });
   };
 
