@@ -3,6 +3,8 @@ package importer
 import (
 	"archive/zip"
 	"bytes"
+	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -321,6 +323,56 @@ func TestParseZIPWithMultipleFormats(t *testing.T) {
 		if !item.Valid {
 			t.Fatalf("expected item %s to be valid, got error: %s", item.FileName, item.Error)
 		}
+	}
+}
+
+func TestParseZIP_SecurityZipSlip(t *testing.T) {
+	buf := new(bytes.Buffer)
+	zw := zip.NewWriter(buf)
+
+	// Attempt path traversal inside zip
+	f, err := zw.Create("../../../etc/passwd.md")
+	if err != nil {
+		t.Fatalf("failed to create zip entry: %v", err)
+	}
+	f.Write([]byte("# Malicious File\ncontent"))
+
+	if err := zw.Close(); err != nil {
+		t.Fatalf("failed to close zip writer: %v", err)
+	}
+
+	items := Parse("malicious.zip", buf.Bytes())
+	if len(items) == 0 || items[0].Valid {
+		t.Fatalf("expected Zip Slip detection to mark item as invalid, got %+v", items)
+	}
+	if !strings.Contains(items[0].Error, "Zip Slip") && !strings.Contains(items[0].Error, "traversal") {
+		t.Fatalf("expected Zip Slip error message, got: %s", items[0].Error)
+	}
+}
+
+func TestParseZIP_SecurityMaxEntries(t *testing.T) {
+	buf := new(bytes.Buffer)
+	zw := zip.NewWriter(buf)
+
+	// Create 501 entries to exceed limit of 500
+	for i := 0; i < 501; i++ {
+		f, err := zw.Create(fmt.Sprintf("file_%d.md", i))
+		if err != nil {
+			t.Fatalf("failed to create entry %d: %v", i, err)
+		}
+		f.Write([]byte("# Test\nBody"))
+	}
+
+	if err := zw.Close(); err != nil {
+		t.Fatalf("failed to close zip writer: %v", err)
+	}
+
+	items := Parse("bomb.zip", buf.Bytes())
+	if len(items) == 0 || items[0].Valid {
+		t.Fatalf("expected archive with > 500 entries to be rejected, got: %+v", items)
+	}
+	if !strings.Contains(items[0].Error, "maximum allowed") {
+		t.Fatalf("expected max entries error, got: %s", items[0].Error)
 	}
 }
 

@@ -10,14 +10,17 @@ import { ImportPreviewItem } from '@/api/services/importService';
 import { ContentBlock } from '@/types/content';
 import { parseBodyToBlocks } from '@/lib/htmlParser';
 import { EducativeArticleReader } from '@/components/articles/EducativeArticleReader';
-import { Eye, Edit3, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { Eye, Edit3, AlertTriangle, CheckCircle2, XCircle, Trash2, Bookmark } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ImportReviewRowProps {
   item: ImportPreviewItem;
   onChange: (patch: Partial<ImportPreviewItem>) => void;
+  onDelete?: () => void;
+  onSaveForLater?: () => void;
 }
 
-export function ImportReviewRow({ item, onChange }: ImportReviewRowProps) {
+export function ImportReviewRow({ item, onChange, onDelete, onSaveForLater }: ImportReviewRowProps) {
   const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview');
   const [blocks, setBlocks] = useState<ContentBlock[]>(() =>
     parseBodyToBlocks(item.body || '', item.bodyFormat as 'json' | 'html' | 'markdown')
@@ -58,6 +61,28 @@ export function ImportReviewRow({ item, onChange }: ImportReviewRowProps) {
             <Badge variant="secondary" className="text-xs font-mono uppercase">
               {item.bodyFormat}
             </Badge>
+          )}
+          {onSaveForLater && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
+              onClick={onSaveForLater}
+              title="Save to confirm later"
+            >
+              <Bookmark className="h-3.5 w-3.5 text-primary" /> Save for Later
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs gap-1 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={onDelete}
+              title="Discard this document from preview"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Discard
+            </Button>
           )}
         </div>
       </div>

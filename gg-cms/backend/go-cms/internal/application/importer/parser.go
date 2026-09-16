@@ -403,6 +403,13 @@ func validate(item *ParsedItem) {
 	item.Error = ""
 }
 
+const (
+	maxZipEntries            = 500
+	maxZipSingleFileSize     = 10 * 1024 * 1024 // 10MB per individual file
+	maxZipTotalUncompressed  = 50 * 1024 * 1024 // 50MB max total uncompressed archive size
+	maxZipDecompressionRatio = 100              // Max 100:1 ratio to prevent decompression bombs
+)
+
 func parseZIP(filename string, content []byte) []ParsedItem {
 	r, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
 	if err != nil {
@@ -413,20 +420,65 @@ func parseZIP(filename string, content []byte) []ParsedItem {
 		}}
 	}
 
+	// Security Check 1: Max entries limit
+	if len(r.File) > maxZipEntries {
+		return []ParsedItem{{
+			FileName: filename,
+			Valid:    false,
+			Error:    fmt.Sprintf("Security error: ZIP archive contains %d files (maximum allowed is %d)", len(r.File), maxZipEntries),
+		}}
+	}
+
 	var items []ParsedItem
+	var totalUncompressedSize uint64
+
 	for _, f := range r.File {
-		if f.FileInfo().IsDir() {
+		// Security Check 2: Skip directories and non-regular files (symlinks, FIFO, devices)
+		if f.FileInfo().IsDir() || !f.Mode().IsRegular() {
 			continue
 		}
+
 		base := filepath.Base(f.Name)
 		if strings.HasPrefix(f.Name, "__MACOSX/") || strings.HasPrefix(base, "._") || base == ".DS_Store" || strings.HasPrefix(base, ".") {
 			continue
 		}
 
+		// Security Check 3: Zip Slip / Path Traversal Prevention
+		cleanPath := filepath.Clean(f.Name)
+		if strings.HasPrefix(cleanPath, "..") || strings.Contains(f.Name, "../") || strings.Contains(f.Name, "..\\") || strings.HasPrefix(cleanPath, "/") || filepath.IsAbs(f.Name) {
+			return []ParsedItem{{
+				FileName: f.Name,
+				Valid:    false,
+				Error:    fmt.Sprintf("Security error: Zip Slip / Path traversal attempt detected in entry %q", f.Name),
+			}}
+		}
+
 		ext := strings.ToLower(filepath.Ext(f.Name))
-		if ext != ".md" && ext != ".markdown" && ext != ".json" && ext != ".csv" && ext != ".html" && ext != ".htm" {
-			// Skip asset files (images, binary assets) inside zip
+		// Security Check 4: Disallow recursive nested zip archives
+		if ext == ".zip" {
 			continue
+		}
+
+		if ext != ".md" && ext != ".markdown" && ext != ".json" && ext != ".csv" && ext != ".html" && ext != ".htm" {
+			// Skip unsupported asset files (images, binary assets) inside zip
+			continue
+		}
+
+		// Security Check 5: Declared header uncompressed size limits
+		if f.UncompressedSize64 > maxZipSingleFileSize {
+			return []ParsedItem{{
+				FileName: f.Name,
+				Valid:    false,
+				Error:    fmt.Sprintf("Security error: File %q exceeds maximum allowed single file size of 10MB (%d bytes)", f.Name, f.UncompressedSize64),
+			}}
+		}
+
+		if totalUncompressedSize+f.UncompressedSize64 > maxZipTotalUncompressed {
+			return []ParsedItem{{
+				FileName: filename,
+				Valid:    false,
+				Error:    fmt.Sprintf("Security error: Total uncompressed archive size exceeds limit of 50MB"),
+			}}
 		}
 
 		rc, err := f.Open()
@@ -438,8 +490,12 @@ func parseZIP(filename string, content []byte) []ParsedItem {
 			})
 			continue
 		}
-		fileBytes, readErr := io.ReadAll(rc)
+
+		// Security Check 6: Enforce size limit during decompression with LimitReader (protects against deceptive headers)
+		limitedReader := io.LimitReader(rc, maxZipSingleFileSize+1)
+		fileBytes, readErr := io.ReadAll(limitedReader)
 		rc.Close()
+
 		if readErr != nil {
 			items = append(items, ParsedItem{
 				FileName: f.Name,
@@ -447,6 +503,32 @@ func parseZIP(filename string, content []byte) []ParsedItem {
 				Error:    fmt.Sprintf("Wrong format: failed to read file inside zip (%v)", readErr),
 			})
 			continue
+		}
+
+		if uint64(len(fileBytes)) > maxZipSingleFileSize {
+			return []ParsedItem{{
+				FileName: f.Name,
+				Valid:    false,
+				Error:    fmt.Sprintf("Security error: File %q exceeded 10MB limit during extraction (decompression bomb protection)", f.Name),
+			}}
+		}
+
+		totalUncompressedSize += uint64(len(fileBytes))
+		if totalUncompressedSize > maxZipTotalUncompressed {
+			return []ParsedItem{{
+				FileName: filename,
+				Valid:    false,
+				Error:    "Security error: Total uncompressed archive size exceeded 50MB during extraction (decompression bomb protection)",
+			}}
+		}
+
+		// Security Check 7: Decompression ratio check
+		if f.CompressedSize64 > 0 && (uint64(len(fileBytes))/f.CompressedSize64) > maxZipDecompressionRatio {
+			return []ParsedItem{{
+				FileName: f.Name,
+				Valid:    false,
+				Error:    fmt.Sprintf("Security error: Suspicious compression ratio detected for %q (decompression bomb protection)", f.Name),
+			}}
 		}
 
 		parsed := Parse(f.Name, fileBytes)

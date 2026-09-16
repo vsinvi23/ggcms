@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState, DragEvent } from 'react';
+import { Fragment, useRef, useState, useEffect, DragEvent } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useImportPreview, useImportConfirm } from '@/api/hooks/useImport';
 import { useCategories } from '@/api/hooks/useCategories';
@@ -9,17 +9,35 @@ import { parseBodyToBlocks } from '@/lib/htmlParser';
 import { CategoryTreeSelect } from '@/components/import/CategoryTreeSelect';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Loader2, Upload, FileText, CheckCircle2, XCircle, AlertTriangle, ChevronDown, ChevronRight, Download, Eye } from 'lucide-react';
+import {
+  Loader2,
+  Upload,
+  FileText,
+  CheckCircle2,
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  Eye,
+  Trash2,
+  Bookmark,
+  ArchiveRestore,
+  RotateCcw,
+  Sparkles,
+  Layers,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
+import JSZip from 'jszip';
 
 const ACCEPTED_EXTENSIONS = '.md,.markdown,.json,.csv,.html,.htm,.zip';
+const SAVED_IMPORTS_STORAGE_KEY = 'gg_saved_bulk_imports';
 
 const PASTE_FORMATS = [
   { value: 'md', label: 'Markdown', mime: 'text/markdown', ext: 'md' },
@@ -146,9 +164,35 @@ ARTICLE,Docker Multi-Stage Build Best Practices,Optimize Docker image sizes for 
 };
 
 async function parseFileClientSide(file: File, categories: { id: number; slug: string; name: string }[]): Promise<ImportPreviewItem[]> {
-  const text = await file.text();
   const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
   const defaultCatId = categories.length > 0 ? categories[0].id : undefined;
+
+  // Client-side ZIP unpacking fallback
+  if (ext === '.zip') {
+    try {
+      const data = await file.arrayBuffer();
+      const zipObj = await JSZip.loadAsync(data);
+      const results: ImportPreviewItem[] = [];
+      for (const entryName of Object.keys(zipObj.files)) {
+        const entry = zipObj.files[entryName];
+        if (entry.dir) continue;
+        const baseName = entry.name.split('/').pop() || entry.name;
+        if (entry.name.startsWith('__MACOSX/') || baseName.startsWith('._') || baseName === '.DS_Store' || baseName.startsWith('.')) continue;
+        const entryExt = baseName.slice(baseName.lastIndexOf('.')).toLowerCase();
+        if (['.md', '.markdown', '.json', '.csv', '.html', '.htm'].includes(entryExt)) {
+          const blob = await entry.async('blob');
+          const unzippedFile = new File([blob], baseName);
+          const parsed = await parseFileClientSide(unzippedFile, categories);
+          results.push(...parsed);
+        }
+      }
+      return results;
+    } catch {
+      return [];
+    }
+  }
+
+  const text = await file.text();
 
   if (ext === '.json') {
     try {
@@ -257,6 +301,25 @@ export default function BulkImport() {
   const [pasteFormat, setPasteFormat] = useState('md');
   const [previewModalItem, setPreviewModalItem] = useState<ImportPreviewItem | null>(null);
 
+  // Saved for Later items (persisted in localStorage)
+  const [savedItems, setSavedItems] = useState<ImportPreviewItem[]>(() => {
+    try {
+      const raw = localStorage.getItem(SAVED_IMPORTS_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Keep localStorage synchronized whenever savedItems changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(SAVED_IMPORTS_STORAGE_KEY, JSON.stringify(savedItems));
+    } catch {
+      // ignore storage quota errors
+    }
+  }, [savedItems]);
+
   const handleDownloadSample = (format: keyof typeof SAMPLE_TEMPLATES) => {
     const sample = SAMPLE_TEMPLATES[format];
     if (!sample) return;
@@ -318,6 +381,7 @@ export default function BulkImport() {
         setItems(processedItems);
         setSelected(new Set(processedItems.flatMap((it, i) => (it.valid ? [i] : []))));
         setExpanded(new Set());
+        toast.success(`Loaded ${processedItems.length} document${processedItems.length !== 1 ? 's' : ''} for preview`);
       },
       onError: async () => {
         try {
@@ -329,7 +393,7 @@ export default function BulkImport() {
             setItems(flatItems);
             setSelected(new Set(flatItems.map((_, i) => i)));
             setExpanded(new Set());
-            toast.success(`Parsed ${flatItems.length} item${flatItems.length !== 1 ? 's' : ''}`);
+            toast.success(`Client parsed ${flatItems.length} item${flatItems.length !== 1 ? 's' : ''}`);
             return;
           }
         } catch {
@@ -340,9 +404,112 @@ export default function BulkImport() {
     });
   };
 
-  const handleFiles = (files: FileList | null) => {
+  // Handles dropped or selected files, unpacking any .zip archives on the client
+  const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    runPreview(Array.from(files));
+    const fileArray = Array.from(files);
+    const zipFiles = fileArray.filter((f) => f.name.toLowerCase().endsWith('.zip'));
+    const nonZipFiles = fileArray.filter((f) => !f.name.toLowerCase().endsWith('.zip'));
+
+    let extractedFiles: File[] = [];
+
+    const MAX_ZIP_ENTRIES = 500;
+    const MAX_SINGLE_UNCOMPRESSED_BYTES = 10 * 1024 * 1024; // 10MB
+    const MAX_TOTAL_UNCOMPRESSED_BYTES = 50 * 1024 * 1024;  // 50MB
+
+    for (const zip of zipFiles) {
+      try {
+        const data = await zip.arrayBuffer();
+        const zipObj = await JSZip.loadAsync(data);
+        const entries = Object.keys(zipObj.files);
+
+        // Security Check 1: Max entries limit
+        if (entries.length > MAX_ZIP_ENTRIES) {
+          toast.error(`Security alert: ${zip.name} contains ${entries.length} files (exceeds limit of ${MAX_ZIP_ENTRIES})`);
+          continue;
+        }
+
+        let zipTotalBytes = 0;
+        let zipExtractedCount = 0;
+        let securityAborted = false;
+
+        for (const entryName of entries) {
+          const entry = zipObj.files[entryName];
+          if (entry.dir) continue;
+
+          // Security Check 2: Zip Slip / Path Traversal prevention
+          if (
+            entry.name.includes('../') ||
+            entry.name.includes('..\\') ||
+            entry.name.startsWith('/') ||
+            entry.name.startsWith('\\')
+          ) {
+            toast.error(`Security alert: Path traversal attempt detected in ${entry.name}`);
+            continue;
+          }
+
+          const baseName = entry.name.split('/').pop() || entry.name;
+          if (
+            entry.name.startsWith('__MACOSX/') ||
+            baseName.startsWith('._') ||
+            baseName === '.DS_Store' ||
+            baseName.startsWith('.')
+          ) {
+            continue;
+          }
+
+          const ext = baseName.slice(baseName.lastIndexOf('.')).toLowerCase();
+          // Security Check 3: Disallow recursive nested zip archives
+          if (ext === '.zip') {
+            continue;
+          }
+
+          if (['.md', '.markdown', '.json', '.csv', '.html', '.htm'].includes(ext)) {
+            const content = await entry.async('blob');
+
+            // Security Check 4: Single file decompression limit (10MB)
+            if (content.size > MAX_SINGLE_UNCOMPRESSED_BYTES) {
+              toast.error(`Security alert: File ${baseName} exceeds 10MB limit`);
+              continue;
+            }
+
+            // Security Check 5: Total uncompressed size limit (50MB)
+            zipTotalBytes += content.size;
+            if (zipTotalBytes > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+              toast.error(`Security alert: Total uncompressed archive size in ${zip.name} exceeded 50MB`);
+              securityAborted = true;
+              break;
+            }
+
+            let mime = 'text/plain';
+            if (ext === '.json') mime = 'application/json';
+            else if (ext === '.csv') mime = 'text/csv';
+            else if (ext === '.html' || ext === '.htm') mime = 'text/html';
+            else if (ext === '.md' || ext === '.markdown') mime = 'text/markdown';
+
+            const newFile = new File([content], baseName, { type: mime });
+            extractedFiles.push(newFile);
+            zipExtractedCount++;
+          }
+        }
+
+        if (!securityAborted) {
+          if (zipExtractedCount === 0) {
+            toast.warning(`No readable content documents (.md, .json, .csv, .html) found in ${zip.name}`);
+          } else {
+            toast.success(`Unpacked ${zipExtractedCount} file${zipExtractedCount !== 1 ? 's' : ''} from ${zip.name}`);
+          }
+        }
+      } catch (e) {
+        console.error('ZIP extraction error:', e);
+        toast.error(`Failed to extract zip: ${zip.name}`);
+      }
+    }
+
+    const allFiles = [...nonZipFiles, ...extractedFiles];
+    if (allFiles.length > 0) {
+      runPreview(allFiles);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -371,6 +538,92 @@ export default function BulkImport() {
       else next.add(idx);
       return next;
     });
+  };
+
+  // Discard a single item from the active preview list
+  const discardItem = (idx: number) => {
+    const itemToDiscard = items[idx];
+    setItems((prev) => prev.filter((_, i) => i !== idx));
+    setSelected((prev) => {
+      const next = new Set<number>();
+      prev.forEach((i) => {
+        if (i < idx) next.add(i);
+        else if (i > idx) next.add(i - 1);
+      });
+      return next;
+    });
+    setExpanded((prev) => {
+      const next = new Set<number>();
+      prev.forEach((i) => {
+        if (i < idx) next.add(i);
+        else if (i > idx) next.add(i - 1);
+      });
+      return next;
+    });
+    if (itemToDiscard) {
+      toast.info(`Discarded "${itemToDiscard.title || itemToDiscard.fileName}"`);
+    }
+  };
+
+  // Discard all selected items from active preview list
+  const discardSelected = () => {
+    if (selected.size === 0) return;
+    const count = selected.size;
+    setItems((prev) => prev.filter((_, i) => !selected.has(i)));
+    setSelected(new Set());
+    setExpanded(new Set());
+    toast.info(`Discarded ${count} selected item${count !== 1 ? 's' : ''}`);
+  };
+
+  // Save an item to confirm later (moves from items to savedItems)
+  const saveItemForLater = (idx: number) => {
+    const item = items[idx];
+    if (!item) return;
+    setSavedItems((prev) => [...prev, item]);
+    discardItem(idx);
+    toast.success(`Saved "${item.title || item.fileName}" for later`);
+  };
+
+  // Save all selected items for later
+  const saveSelectedForLater = () => {
+    if (selected.size === 0) return;
+    const toSave = items.filter((_, i) => selected.has(i));
+    setSavedItems((prev) => [...prev, ...toSave]);
+    setItems((prev) => prev.filter((_, i) => !selected.has(i)));
+    setSelected(new Set());
+    setExpanded(new Set());
+    toast.success(`Saved ${toSave.length} item${toSave.length !== 1 ? 's' : ''} to confirm later`);
+  };
+
+  // Restore a saved item back to the active preview list
+  const restoreSavedItem = (idx: number) => {
+    const item = savedItems[idx];
+    if (!item) return;
+    setItems((prev) => [...prev, item]);
+    setSavedItems((prev) => prev.filter((_, i) => i !== idx));
+    setSelected((prev) => new Set(prev).add(items.length));
+    toast.success(`Restored "${item.title || item.fileName}" to preview`);
+  };
+
+  // Restore all saved items to preview list
+  const restoreAllSaved = () => {
+    if (savedItems.length === 0) return;
+    const count = savedItems.length;
+    setItems((prev) => [...prev, ...savedItems]);
+    setSavedItems([]);
+    toast.success(`Restored ${count} saved item${count !== 1 ? 's' : ''} to preview`);
+  };
+
+  // Delete an item from the saved list permanently
+  const deleteSavedItem = (idx: number) => {
+    setSavedItems((prev) => prev.filter((_, i) => i !== idx));
+    toast.info('Removed item from saved list');
+  };
+
+  // Clear all saved items
+  const clearAllSaved = () => {
+    setSavedItems([]);
+    toast.info('Cleared all saved items');
   };
 
   const toggleAll = () => {
@@ -412,16 +665,8 @@ export default function BulkImport() {
     });
   };
 
-  // Imported bodies arrive as raw markdown/HTML text (per bodyFormat), but the
-  // rest of the app (ArticleCreator, CourseCreator, viewers) stores/reads body
-  // as a JSON ContentBlock[] string. Converting here — the same parser used for
-  // the preview tab — ensures imported content renders with proper headings,
-  // paragraphs, lists, etc. instead of raw markdown/HTML text.
   const toStoredBody = (body: string, bodyFormat: string): string => {
     if (!body) return body;
-    // bodyFormat here describes the *source file* the parser read (markdown/html/
-    // json/csv-flat), not the shape of `body` itself — body is always plain
-    // markdown-ish text except for the "html" source, which has real tags.
     const hint = bodyFormat === 'html' ? 'html' : 'markdown';
     const blocks = parseBodyToBlocks(body, hint);
     return JSON.stringify(blocks);
@@ -460,6 +705,10 @@ export default function BulkImport() {
         setConfirmed(true);
         if (res.failed === 0) {
           toast.success(`${res.created} item${res.created !== 1 ? 's' : ''} imported as DRAFT`);
+          // Remove imported items from the preview list
+          setItems((prev) => prev.filter((_, i) => !selected.has(i)));
+          setSelected(new Set());
+          setExpanded(new Set());
         } else {
           toast.warning(`${res.created} imported, ${res.failed} failed`);
         }
@@ -482,11 +731,20 @@ export default function BulkImport() {
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6 max-w-6xl mx-auto">
-        <div>
-          <h1 className="text-2xl font-bold">Bulk Import</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Upload .md, .json, .csv, .html, or .zip archive files to import articles and courses as drafts.
-          </p>
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Bulk Import</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Upload .md, .json, .csv, .html, or .zip archive files to import articles and courses as drafts.
+            </p>
+          </div>
+
+          {savedItems.length > 0 && (
+            <Badge variant="outline" className="text-xs px-3 py-1 gap-1.5 border-primary/30 bg-primary/5 text-primary">
+              <Bookmark className="w-3.5 h-3.5" />
+              <span>{savedItems.length} saved for later</span>
+            </Badge>
+          )}
         </div>
 
         {/* Sample Templates Download Banner */}
@@ -545,13 +803,13 @@ export default function BulkImport() {
               {preview.isPending ? (
                 <div className="flex items-center justify-center gap-2 text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Parsing files…</span>
+                  <span>Unpacking and parsing uploaded files…</span>
                 </div>
               ) : (
                 <>
                   <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                   <p className="text-sm font-medium">Drop files or ZIP archives here or click to browse</p>
-                  <p className="text-xs text-muted-foreground mt-1">Supports .md &nbsp;·&nbsp; .json &nbsp;·&nbsp; .csv &nbsp;·&nbsp; .html &nbsp;·&nbsp; .zip</p>
+                  <p className="text-xs text-muted-foreground mt-1">Supports .md &nbsp;·&nbsp; .json &nbsp;·&nbsp; .csv &nbsp;·&nbsp; .html &nbsp;·&nbsp; .zip archives</p>
                 </>
               )}
             </div>
@@ -718,30 +976,55 @@ COURSE,My Course,frontend,,STANDARD,`}
           </div>
         )}
 
-        {/* Preview table */}
+        {/* Active Preview Table */}
         {items.length > 0 && (
           <Card>
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between flex-wrap gap-3">
               <div>
-                <CardTitle className="text-base">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-primary" />
                   Preview — {items.length} item{items.length !== 1 ? 's' : ''} parsed
                 </CardTitle>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {validCount} valid · {items.length - validCount} invalid · {selectedCount} selected
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                {selectedCount > 0 && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={saveSelectedForLater}
+                      className="text-xs h-8 gap-1 text-muted-foreground hover:text-foreground"
+                      title="Move selected items to saved list"
+                    >
+                      <Bookmark className="w-3.5 h-3.5 text-primary" /> Save Selected ({selectedCount})
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={discardSelected}
+                      className="text-xs h-8 gap-1 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      title="Discard selected items from preview"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Discard Selected ({selectedCount})
+                    </Button>
+                  </>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={toggleExpandAll}
+                  className="text-xs h-8"
                 >
-                  {expanded.size === items.length ? 'Collapse All Previews' : 'Expand All Previews'}
+                  {expanded.size === items.length ? 'Collapse All' : 'Expand All'}
                 </Button>
                 <Button
                   size="sm"
                   onClick={handleConfirm}
-                  disabled={selectedCount === 0 || confirm.isPending || confirmed}
+                  disabled={selectedCount === 0 || confirm.isPending}
+                  className="text-xs h-8"
                 >
                   {confirm.isPending ? (
                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Importing…</>
@@ -767,7 +1050,7 @@ COURSE,My Course,frontend,,STANDARD,`}
                     <TableHead className="w-44">Category</TableHead>
                     <TableHead className="w-24">File</TableHead>
                     <TableHead className="w-20">Status</TableHead>
-                    <TableHead className="w-24 text-right">Preview</TableHead>
+                    <TableHead className="w-36 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -829,25 +1112,157 @@ COURSE,My Course,frontend,,STANDARD,`}
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2.5 text-xs gap-1 hover:bg-primary/10 hover:text-primary hover:border-primary/40 font-medium"
-                            onClick={() => setPreviewModalItem(item)}
-                            title="Open Educative actual view reader preview"
-                          >
-                            <Eye className="h-3.5 w-3.5 text-primary" /> View
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-xs gap-1 hover:bg-primary/10 hover:text-primary hover:border-primary/40 font-medium"
+                              onClick={() => setPreviewModalItem(item)}
+                              title="Open Educative actual view reader preview"
+                            >
+                              <Eye className="h-3.5 w-3.5 text-primary" /> View
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              onClick={() => saveItemForLater(idx)}
+                              title="Save to confirm later"
+                            >
+                              <Bookmark className="h-3.5 w-3.5 text-primary" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => discardItem(idx)}
+                              title="Discard document from preview"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                       {expanded.has(idx) && (
                         <TableRow>
                           <TableCell colSpan={8} className="p-0">
-                            <ImportReviewRow item={item} onChange={(patch) => updateItem(idx, patch)} />
+                            <ImportReviewRow
+                              item={item}
+                              onChange={(patch) => updateItem(idx, patch)}
+                              onDelete={() => discardItem(idx)}
+                              onSaveForLater={() => saveItemForLater(idx)}
+                            />
                           </TableCell>
                         </TableRow>
                       )}
                     </Fragment>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Saved for Later Section */}
+        {savedItems.length > 0 && (
+          <Card className="border-primary/20 bg-card">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between flex-wrap gap-3">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Bookmark className="w-4 h-4 text-primary" />
+                  Saved for Later ({savedItems.length})
+                </CardTitle>
+                <CardDescription className="text-xs mt-0.5">
+                  Documents saved to review and confirm at a later time.
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={restoreAllSaved}
+                  className="text-xs h-8 gap-1.5"
+                >
+                  <ArchiveRestore className="w-3.5 h-3.5 text-primary" /> Restore All to Preview
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={clearAllSaved}
+                  className="text-xs h-8 text-destructive hover:bg-destructive/10"
+                >
+                  Clear Saved
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead className="w-24">Type</TableHead>
+                    <TableHead className="w-28">Category</TableHead>
+                    <TableHead className="w-28">File</TableHead>
+                    <TableHead className="w-36 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {savedItems.map((sItem, sIdx) => (
+                    <TableRow key={sIdx}>
+                      <TableCell className="font-medium text-sm">
+                        <div className="flex items-center gap-2">
+                          <span>{sItem.title || 'Untitled Document'}</span>
+                          {sItem.valid ? (
+                            <Badge variant="outline" className="text-[10px] text-green-600 bg-green-50/50">Valid</Badge>
+                          ) : (
+                            <Badge variant="destructive" className="text-[10px]">Wrong Format</Badge>
+                          )}
+                        </div>
+                        {sItem.description && (
+                          <div className="text-xs text-muted-foreground truncate max-w-sm">{sItem.description}</div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">{sItem.type}</Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {sItem.categorySlug || '—'}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground truncate max-w-[120px]" title={sItem.fileName}>
+                        {sItem.fileName}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs gap-1"
+                            onClick={() => setPreviewModalItem(sItem)}
+                            title="Preview actual document view"
+                          >
+                            <Eye className="h-3.5 w-3.5 text-primary" /> View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="h-7 px-2 text-xs gap-1"
+                            onClick={() => restoreSavedItem(sIdx)}
+                            title="Restore this document to active preview list"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" /> Restore
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                            onClick={() => deleteSavedItem(sIdx)}
+                            title="Delete from saved list"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   ))}
                 </TableBody>
               </Table>
