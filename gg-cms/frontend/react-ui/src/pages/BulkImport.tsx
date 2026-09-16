@@ -4,6 +4,7 @@ import { useImportPreview, useImportConfirm } from '@/api/hooks/useImport';
 import { useCategories } from '@/api/hooks/useCategories';
 import { ImportPreviewItem, ImportSectionItem } from '@/api/services/importService';
 import { ImportReviewRow } from '@/components/import/ImportReviewRow';
+import { ImportArticleModal } from '@/components/import/ImportArticleModal';
 import { parseBodyToBlocks } from '@/lib/htmlParser';
 import { CategoryTreeSelect } from '@/components/import/CategoryTreeSelect';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Loader2, Upload, FileText, CheckCircle2, XCircle, AlertTriangle, ChevronDown, ChevronRight, Download } from 'lucide-react';
+import { Loader2, Upload, FileText, CheckCircle2, XCircle, AlertTriangle, ChevronDown, ChevronRight, Download, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
 
@@ -35,7 +36,7 @@ const SAMPLE_TEMPLATES: Record<string, { filename: string; mime: string; content
 title: "Introduction to OAuth 2.0 & OpenID Connect"
 description: "Comprehensive guide to modern identity and access management using OAuth2 flows and JWT tokens."
 type: ARTICLE
-category: identity-access
+category: backend
 articleType: guide
 tags: ["OAuth2", "Security", "JWT", "IAM"]
 ---
@@ -154,6 +155,7 @@ export default function BulkImport() {
   const [inputMode, setInputMode] = useState<'upload' | 'paste'>('upload');
   const [pasteText, setPasteText] = useState('');
   const [pasteFormat, setPasteFormat] = useState('md');
+  const [previewModalItem, setPreviewModalItem] = useState<ImportPreviewItem | null>(null);
 
   const handleDownloadSample = (format: keyof typeof SAMPLE_TEMPLATES) => {
     const sample = SAMPLE_TEMPLATES[format];
@@ -196,7 +198,18 @@ export default function BulkImport() {
             );
             if (matched) {
               categoryId = matched.id;
+            } else if (categories.length > 0) {
+              // Default to first category if categorySlug not matched
+              categoryId = categories[0].id;
             }
+          } else if (!categoryId && categories.length > 0) {
+            categoryId = categories[0].id;
+          }
+
+          // Any document with a title and body or sections is valid for import
+          if (it.title && (it.body || (it.sections && it.sections.length > 0))) {
+            valid = true;
+            error = undefined;
           }
 
           return { ...it, categoryId, valid, error };
@@ -637,6 +650,7 @@ COURSE,My Course,frontend,,STANDARD,`}
                     <TableHead className="w-44">Category</TableHead>
                     <TableHead className="w-24">File</TableHead>
                     <TableHead className="w-20">Status</TableHead>
+                    <TableHead className="w-24 text-right">Preview</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -656,7 +670,7 @@ COURSE,My Course,frontend,,STANDARD,`}
                             variant="ghost"
                             className="h-6 w-6"
                             onClick={() => toggleExpanded(idx)}
-                            title="View Content Preview & Edit"
+                            title="Expand Content Edit Form"
                           >
                             {expanded.has(idx) ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                           </Button>
@@ -697,10 +711,21 @@ COURSE,My Course,frontend,,STANDARD,`}
                             <Badge variant="destructive" className="text-[10px] whitespace-nowrap">Wrong Format</Badge>
                           )}
                         </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2.5 text-xs gap-1 hover:bg-primary/10 hover:text-primary hover:border-primary/40 font-medium"
+                            onClick={() => setPreviewModalItem(item)}
+                            title="Open Educative actual view reader preview"
+                          >
+                            <Eye className="h-3.5 w-3.5 text-primary" /> View
+                          </Button>
+                        </TableCell>
                       </TableRow>
                       {expanded.has(idx) && (
                         <TableRow>
-                          <TableCell colSpan={7} className="p-0">
+                          <TableCell colSpan={8} className="p-0">
                             <ImportReviewRow item={item} onChange={(patch) => updateItem(idx, patch)} />
                           </TableCell>
                         </TableRow>
@@ -737,6 +762,13 @@ COURSE,My Course,frontend,,STANDARD,`}
             )}
           </Card>
         )}
+
+        {/* Educative Actual View Import Preview Modal */}
+        <ImportArticleModal
+          open={!!previewModalItem}
+          onOpenChange={(open) => !open && setPreviewModalItem(null)}
+          item={previewModalItem}
+        />
       </div>
     </DashboardLayout>
   );

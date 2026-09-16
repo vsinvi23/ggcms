@@ -199,7 +199,7 @@ export default function PublicArticleView() {
                 )}
               </div>
 
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight">
+              <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight tracking-tight">
                 {article.title || 'Untitled Article'}
               </h1>
 
@@ -312,7 +312,7 @@ export default function PublicArticleView() {
                 >
                   <div
                     ref={articleBodyRef}
-                    className="article-content text-foreground leading-relaxed"
+                    className="educative-article-reader article-content text-foreground leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(parseBodyToHtml(bodyHtml)) }}
                   />
                 </HighlightOverlay>

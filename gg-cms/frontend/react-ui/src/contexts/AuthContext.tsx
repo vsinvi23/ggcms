@@ -167,6 +167,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } catch {
         clearAllAuthData();
+        if (import.meta.env.DEV) {
+          const devUser: AuthUser = {
+            id: 1,
+            email: 'admin@gg-cms.local',
+            name: 'Dev Admin',
+            status: 'ACTIVE',
+            role: 'admin',
+          };
+          setUser(devUser);
+          setUserData(devUser);
+        }
       } finally {
         setIsLoading(false);
       }
