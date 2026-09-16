@@ -106,22 +106,28 @@ export interface Attachment {
 // CONTENT BLOCK TYPES
 // ===============================
 
-export type ContentBlockType = 
-  | 'paragraph' 
-  | 'heading1' 
-  | 'heading2' 
-  | 'heading3' 
-  | 'code' 
-  | 'quote' 
-  | 'image' 
-  | 'list' 
+export type ContentBlockType =
+  | 'paragraph'
+  | 'heading1'
+  | 'heading2'
+  | 'heading3'
+  | 'code'
+  | 'quote'
+  | 'image'
+  | 'list'
   | 'ordered-list'
-  | 'divider';
+  | 'divider'
+  | 'table';
 
 export interface CodeBlockData {
   language: string;
   code: string;
   filename?: string;
+}
+
+export interface TableData {
+  headers: string[];
+  rows: string[][];
 }
 
 export interface ContentBlock {
@@ -132,6 +138,7 @@ export interface ContentBlock {
   imageUrl?: string;
   imageAlt?: string;
   listItems?: string[];
+  tableData?: TableData;
 }
 
 // ===============================

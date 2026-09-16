@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,8 @@ import { ImportCourseSectionTree } from '@/components/import/ImportCourseSection
 import { CategoryTreeSelect } from '@/components/import/CategoryTreeSelect';
 import { ImportPreviewItem } from '@/api/services/importService';
 import { ContentBlock } from '@/types/content';
-import { parseBodyToBlocks } from '@/lib/htmlParser';
+import { parseBodyToBlocks, contentBlocksToHtml } from '@/lib/htmlParser';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { Eye, Edit3, AlertTriangle, FileText, Tag, Layers, CheckCircle2, XCircle } from 'lucide-react';
 
 interface ImportReviewRowProps {
@@ -21,6 +22,14 @@ export function ImportReviewRow({ item, onChange }: ImportReviewRowProps) {
   const [blocks, setBlocks] = useState<ContentBlock[]>(() =>
     parseBodyToBlocks(item.body || '', item.bodyFormat as 'json' | 'html' | 'markdown')
   );
+
+  // Render the parsed blocks as HTML for the "Content View Preview" tab, so
+  // markdown headings (#, ##, ...) and other formatting show as final HTML
+  // instead of literal source text.
+  const previewHtml = useMemo(() => {
+    const previewBlocks = parseBodyToBlocks(item.body || '', item.bodyFormat as 'json' | 'html' | 'markdown');
+    return contentBlocksToHtml(previewBlocks);
+  }, [item.body, item.bodyFormat]);
 
   const handleBlocksChange = (next: ContentBlock[]) => {
     setBlocks(next);
@@ -112,9 +121,10 @@ export function ImportReviewRow({ item, onChange }: ImportReviewRowProps) {
               </div>
 
               {item.body ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none p-3.5 rounded bg-muted/20 border border-border/40 font-mono text-xs whitespace-pre-wrap max-h-72 overflow-y-auto">
-                  {item.body}
-                </div>
+                <div
+                  className="prose prose-sm dark:prose-invert max-w-none p-3.5 rounded bg-muted/20 border border-border/40 max-h-72 overflow-y-auto"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewHtml) }}
+                />
               ) : (
                 <div className="p-4 text-center text-xs text-muted-foreground italic bg-muted/10 rounded">
                   No body content provided in this item.

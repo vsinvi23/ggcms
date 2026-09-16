@@ -180,6 +180,11 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 
 	api := r.Group("/api")
 	{
+		// ----- Health check (public — used by Docker HEALTHCHECK) -----
+		api.GET("/health", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{"status": "ok"})
+		})
+
 		// ----- Auth (public) — email/password -----
 		api.POST("/auth/local", middleware.AuthRateLimit(), authH.Login)
 		api.POST("/auth/local/register", middleware.AuthRateLimit(), authH.Register)
@@ -218,9 +223,6 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 
 		// ----- Domains (public read) -----
 		api.GET("/domains", middleware.PublicRateLimit(), domainH.GetAll)
-
-		// ----- Domains (public read) -----
-		api.GET("/domains", domainH.GetAll)
 
 		// ----- Learning paths (public read) -----
 		api.GET("/learning-paths", middleware.PublicRateLimit(), lpH.GetAll)

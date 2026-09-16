@@ -2,8 +2,9 @@ import { Fragment, useRef, useState, DragEvent } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useImportPreview, useImportConfirm } from '@/api/hooks/useImport';
 import { useCategories } from '@/api/hooks/useCategories';
-import { ImportPreviewItem } from '@/api/services/importService';
+import { ImportPreviewItem, ImportSectionItem } from '@/api/services/importService';
 import { ImportReviewRow } from '@/components/import/ImportReviewRow';
+import { parseBodyToBlocks } from '@/lib/htmlParser';
 import { CategoryTreeSelect } from '@/components/import/CategoryTreeSelect';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -281,6 +282,30 @@ export default function BulkImport() {
     });
   };
 
+  // Imported bodies arrive as raw markdown/HTML text (per bodyFormat), but the
+  // rest of the app (ArticleCreator, CourseCreator, viewers) stores/reads body
+  // as a JSON ContentBlock[] string. Converting here — the same parser used for
+  // the preview tab — ensures imported content renders with proper headings,
+  // paragraphs, lists, etc. instead of raw markdown/HTML text.
+  const toStoredBody = (body: string, bodyFormat: string): string => {
+    if (!body) return body;
+    // bodyFormat here describes the *source file* the parser read (markdown/html/
+    // json/csv-flat), not the shape of `body` itself — body is always plain
+    // markdown-ish text except for the "html" source, which has real tags.
+    const hint = bodyFormat === 'html' ? 'html' : 'markdown';
+    const blocks = parseBodyToBlocks(body, hint);
+    return JSON.stringify(blocks);
+  };
+
+  const convertSections = (sections: ImportSectionItem[], bodyFormat: string): ImportSectionItem[] =>
+    sections.map((sec) => ({
+      ...sec,
+      lessons: sec.lessons.map((lesson) => ({
+        ...lesson,
+        body: toStoredBody(lesson.body, bodyFormat),
+      })),
+    }));
+
   const handleConfirm = () => {
     const toImport = items
       .filter((_, i) => selected.has(i))
@@ -288,11 +313,11 @@ export default function BulkImport() {
         type: it.type,
         title: it.title,
         description: it.description,
-        body: it.body,
+        body: toStoredBody(it.body, it.bodyFormat),
         categoryId: it.categoryId,
         articleType: it.articleType,
         courseType: it.courseType,
-        sections: it.type === 'COURSE' ? (it.sections ?? []) : [],
+        sections: it.type === 'COURSE' ? convertSections(it.sections ?? [], it.bodyFormat) : [],
       }));
 
     if (toImport.length === 0) {

@@ -156,6 +156,25 @@ export function markdownToContentBlocks(markdown: string): ContentBlock[] {
       continue;
     }
 
+    // Table: a row of |-separated cells followed by a |---|---| separator row
+    const isTableRow = (l: string) => /^\|.*\|$/.test(l.trim());
+    const isTableSeparator = (l: string) => /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?$/.test(l.trim());
+    if (isTableRow(trimmed) && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+      flushParagraph();
+      flushList();
+      const splitRow = (l: string) =>
+        l.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+      const headers = splitRow(trimmed);
+      i += 2; // skip header + separator rows
+      const rows: string[][] = [];
+      while (i < lines.length && isTableRow(lines[i])) {
+        rows.push(splitRow(lines[i]));
+        i++;
+      }
+      blocks.push({ id: generateId(), type: 'table', content: '', tableData: { headers, rows } });
+      continue;
+    }
+
     // Divider
     if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
       flushParagraph();
@@ -392,6 +411,54 @@ function parseElement(element: Element): ContentBlock | null {
   }
 }
 
+// Returns a safe href for a markdown link/image URL, or '' if the scheme is not allowed.
+function safeHref(rawUrl: string): string {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') return escapeHtml(rawUrl);
+  } catch {
+    // relative paths are kept as-is after escaping
+    if (rawUrl && !rawUrl.includes(':') && !rawUrl.startsWith('//')) return escapeHtml(rawUrl);
+  }
+  return '';
+}
+
+/**
+ * Render inline markdown (bold, italic, inline code, links) within a block's
+ * text content to HTML. The input is treated as plain text — it is escaped
+ * first, so only the markdown syntax recognized below produces real tags.
+ */
+function renderInline(text: string): string {
+  let html = escapeHtml(text);
+
+  // Inline code spans - placeholder-protected so bold/italic/link markers
+  // inside backtick-delimited code are not further interpreted as markdown.
+  const codeSpans: string[] = [];
+  html = html.replace(/`([^`]+)`/g, (_m, code) => {
+    codeSpans.push(`<code>${code}</code>`);
+    return `@@CODESPAN${codeSpans.length - 1}@@`;
+  });
+
+  // Links: [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, linkText, url) => {
+    const href = safeHref(url);
+    return href ? `<a href="${href}" target="_blank" rel="noopener noreferrer">${linkText}</a>` : m;
+  });
+
+  // Bold: **text** or __text__
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+
+  // Italic: *text* or _text_ (after bold, so ** is already consumed)
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+
+  // Restore protected code spans
+  html = html.replace(/@@CODESPAN(\d+)@@/g, (_m, idx) => codeSpans[Number(idx)]);
+
+  return html;
+}
+
 /**
  * Convert content blocks to HTML string
  */
@@ -399,15 +466,15 @@ export function contentBlocksToHtml(blocks: ContentBlock[]): string {
   return blocks.map(block => {
     switch (block.type) {
       case 'heading1':
-        return `<h1>${escapeHtml(block.content)}</h1>`;
+        return `<h1>${renderInline(block.content)}</h1>`;
       case 'heading2':
-        return `<h2>${escapeHtml(block.content)}</h2>`;
+        return `<h2>${renderInline(block.content)}</h2>`;
       case 'heading3':
-        return `<h3>${escapeHtml(block.content)}</h3>`;
+        return `<h3>${renderInline(block.content)}</h3>`;
       case 'paragraph':
-        return `<p>${escapeHtml(block.content).replace(/\n/g, '<br>')}</p>`;
+        return `<p>${renderInline(block.content).replace(/\n/g, '<br>')}</p>`;
       case 'quote':
-        return `<blockquote><p>${escapeHtml(block.content).replace(/\n/g, '<br>')}</p></blockquote>`;
+        return `<blockquote><p>${renderInline(block.content).replace(/\n/g, '<br>')}</p></blockquote>`;
       case 'code': {
         const lang = block.codeData?.language || 'plaintext';
         const filename = (block.codeData?.filename || '').trim();
@@ -415,24 +482,22 @@ export function contentBlocksToHtml(blocks: ContentBlock[]): string {
         return `<div class="code-block"><div class="code-block-header"><span class="code-lang">${escapeHtml(lang)}</span>${filenameHtml}</div><pre><code class="language-${lang}">${escapeHtml(block.codeData?.code || '')}</code></pre></div>`;
       }
       case 'image': {
-        // Only allow http(s) image URLs — blocks javascript: and data: schemes.
-        const rawUrl = block.imageUrl ?? '';
-        let safeUrl = '';
-        try {
-          const parsed = new URL(rawUrl);
-          if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
-            safeUrl = escapeHtml(rawUrl);
-          }
-        } catch {
-          // relative paths are kept as-is after escaping
-          if (rawUrl && !rawUrl.includes(':') && !rawUrl.startsWith('//')) safeUrl = escapeHtml(rawUrl);
-        }
+        const safeUrl = safeHref(block.imageUrl ?? '');
         return `<figure><img src="${safeUrl}" alt="${escapeHtml(block.imageAlt || '')}" />${block.imageAlt ? `<figcaption>${escapeHtml(block.imageAlt)}</figcaption>` : ''}</figure>`;
       }
       case 'list':
-        return `<ul>${block.listItems?.map(item => `<li>${escapeHtml(item)}</li>`).join('') || ''}</ul>`;
+        return `<ul>${block.listItems?.map(item => `<li>${renderInline(item)}</li>`).join('') || ''}</ul>`;
       case 'ordered-list':
-        return `<ol>${block.listItems?.map(item => `<li>${escapeHtml(item)}</li>`).join('') || ''}</ol>`;
+        return `<ol>${block.listItems?.map(item => `<li>${renderInline(item)}</li>`).join('') || ''}</ol>`;
+      case 'table': {
+        const headers = block.tableData?.headers ?? [];
+        const rows = block.tableData?.rows ?? [];
+        const headerHtml = `<tr>${headers.map((h) => `<th>${renderInline(h)}</th>`).join('')}</tr>`;
+        const rowsHtml = rows
+          .map((row) => `<tr>${row.map((cell) => `<td>${renderInline(cell)}</td>`).join('')}</tr>`)
+          .join('');
+        return `<table><thead>${headerHtml}</thead><tbody>${rowsHtml}</tbody></table>`;
+      }
       case 'divider':
         return '<hr />';
       default:
