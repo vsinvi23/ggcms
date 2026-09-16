@@ -66,11 +66,11 @@ export interface ImportConfirmResponse {
 export async function previewImport(files: File[]): Promise<ImportPreviewResponse> {
   const form = new FormData();
   files.forEach((f) => form.append('files', f));
-  const { data } = await apiClient.post<ImportPreviewResponse>('/import/preview', form);
-  return data;
+  const response = await apiClient.post<{ data: ImportPreviewResponse }>('/import/preview', form);
+  return response.data.data;
 }
 
 export async function confirmImport(items: ImportConfirmItem[]): Promise<ImportConfirmResponse> {
-  const { data } = await apiClient.post<ImportConfirmResponse>('/import/confirm', { items });
-  return data;
+  const response = await apiClient.post<{ data: ImportConfirmResponse }>('/import/confirm', { items });
+  return response.data.data;
 }

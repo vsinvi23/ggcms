@@ -114,8 +114,9 @@ const App = () => (
                 <Route path="/courses/:id/edit" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
                 <Route path="/articles" element={<ProtectedRoute><ArticleManagement /></ProtectedRoute>} />
                 <Route path="/articles/create" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
-                <Route path="/articles/:id/edit" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
                 <Route path="/import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
+                <Route path="/admin/import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
+                <Route path="/bulk-import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
                 <Route path="/my-tasks" element={<ProtectedRoute><MyTasks /></ProtectedRoute>} />
                 <Route path="/my-learning" element={<ProtectedRoute><MyLearning /></ProtectedRoute>} />
                 <Route path="/notes-highlights" element={<ProtectedRoute><NotesHighlightsPage /></ProtectedRoute>} />

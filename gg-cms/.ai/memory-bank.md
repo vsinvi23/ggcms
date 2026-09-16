@@ -60,17 +60,19 @@ testcms/
       pagination/ Shared paging helpers
       response/  Standard JSON response helpers
 
-  frontend/react-ui/       React 19 + Vite SPA
+  frontend/react-ui/       React 19 + Vite SPA (Space Grotesk & Space Mono typography)
     src/
       api/
         client.ts          Axios instance + token management (sessionStorage)
         types.ts           All shared TS interfaces
         services/          Axios call wrappers (*Service.ts)
         hooks/             React Query wrappers (use*.ts)
-      pages/               Route-level components (32 pages)
-      components/          Reusable UI components (organized by domain)
+      pages/               Route-level components (BulkImport, ArticleViewPage, etc.)
+      components/          
+        articles/          EducativeArticleReader.tsx (Educative layout + Space fonts)
+        import/            ImportArticleModal.tsx (Actual view preview), ImportReviewRow.tsx
       contexts/            AuthContext (auth state + visitor profile import)
-      lib/                 Utilities (visitorProfile.ts, rolePresets.ts, slug.ts)
+      lib/                 Utilities (visitorProfile.ts, rolePresets.ts, slug.ts, htmlParser.ts)
       store/               Redux slices
       config/api.ts        Storage keys, base URL constants
 

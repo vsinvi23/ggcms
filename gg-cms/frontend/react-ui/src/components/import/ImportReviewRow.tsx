@@ -9,7 +9,8 @@ import { CategoryTreeSelect } from '@/components/import/CategoryTreeSelect';
 import { ImportPreviewItem } from '@/api/services/importService';
 import { ContentBlock } from '@/types/content';
 import { parseBodyToBlocks } from '@/lib/htmlParser';
-import { Eye, Edit3, AlertTriangle, FileText, Tag, Layers, CheckCircle2, XCircle } from 'lucide-react';
+import { EducativeArticleReader } from '@/components/articles/EducativeArticleReader';
+import { Eye, Edit3, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 
 interface ImportReviewRowProps {
   item: ImportPreviewItem;
@@ -74,83 +75,19 @@ export function ImportReviewRow({ item, onChange }: ImportReviewRowProps) {
             </div>
           )}
 
-          <div className="rounded-lg border border-border bg-background p-4 space-y-3">
-            {/* Header metadata */}
-            <div>
-              <h3 className="text-base font-semibold text-foreground">
-                {item.title || <span className="text-muted-foreground italic">Untitled Article</span>}
-              </h3>
-              {item.description && (
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                  {item.description}
-                </p>
-              )}
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                <Badge variant="outline" className="text-[11px]">{item.type || 'ARTICLE'}</Badge>
-                {item.categorySlug && (
-                  <Badge variant="secondary" className="text-[11px] flex items-center gap-1">
-                    <Layers className="h-3 w-3" /> {item.categorySlug}
-                  </Badge>
-                )}
-                {item.articleType && (
-                  <Badge variant="outline" className="text-[11px]">Type: {item.articleType}</Badge>
-                )}
-                {item.tags && item.tags.length > 0 && (
-                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <Tag className="h-3 w-3" />
-                    <span>{item.tags.join(', ')}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Content view body */}
-            <div className="border-t border-border/60 pt-3">
-              <div className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-                <FileText className="h-3.5 w-3.5" />
-                {item.type === 'COURSE' ? 'Course Overview Content' : 'Article Body Content Preview'}
-              </div>
-
-              {item.body ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none p-3.5 rounded bg-muted/20 border border-border/40 font-mono text-xs whitespace-pre-wrap max-h-72 overflow-y-auto">
-                  {item.body}
-                </div>
-              ) : (
-                <div className="p-4 text-center text-xs text-muted-foreground italic bg-muted/10 rounded">
-                  No body content provided in this item.
-                </div>
-              )}
-            </div>
-
-            {/* Course Sections & Lessons Tree preview */}
-            {item.type === 'COURSE' && item.sections && item.sections.length > 0 && (
-              <div className="border-t border-border/60 pt-3 space-y-2">
-                <div className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <Layers className="h-3.5 w-3.5" />
-                  Course Sections & Lessons Structure ({item.sections.length} Section{item.sections.length !== 1 ? 's' : ''})
-                </div>
-                <div className="space-y-2">
-                  {item.sections.map((sec, sIdx) => (
-                    <div key={sIdx} className="p-2.5 rounded border border-border/60 bg-muted/10 space-y-1 text-xs">
-                      <div className="font-semibold text-foreground flex items-center justify-between">
-                        <span>Section {sIdx + 1}: {sec.title}</span>
-                        <span className="text-[10px] text-muted-foreground">{sec.lessons?.length || 0} lessons</span>
-                      </div>
-                      {sec.lessons && sec.lessons.length > 0 && (
-                        <div className="pl-3 space-y-1 border-l-2 border-primary/30 mt-1">
-                          {sec.lessons.map((les, lIdx) => (
-                            <div key={lIdx} className="text-muted-foreground">
-                              <span className="font-medium text-foreground">• {les.title}</span>
-                              {les.type && <span className="text-[10px] ml-1.5 text-muted-foreground/70">({les.type})</span>}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="rounded-lg border border-border bg-background overflow-hidden shadow-sm">
+            <EducativeArticleReader
+              title={item.title}
+              description={item.description}
+              body={item.body}
+              bodyFormat={item.bodyFormat}
+              type={item.type}
+              categorySlug={item.categorySlug}
+              articleType={item.articleType}
+              tags={item.tags}
+              sections={item.sections}
+              showToc={true}
+            />
           </div>
         </div>
       )}

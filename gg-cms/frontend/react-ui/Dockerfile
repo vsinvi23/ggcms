@@ -3,6 +3,11 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+# node:22-alpine ships npm 10.9.8, whose arborist has a peer-dep resolution bug
+# ("Cannot read properties of null (reading 'edgesOut')") triggered by this
+# project's dependency graph — bump npm before installing.
+RUN npm install -g npm@11
+
 COPY package.json package-lock.json ./
 RUN npm ci
 

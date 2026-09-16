@@ -2,8 +2,10 @@ import { Fragment, useRef, useState, DragEvent } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useImportPreview, useImportConfirm } from '@/api/hooks/useImport';
 import { useCategories } from '@/api/hooks/useCategories';
-import { ImportPreviewItem } from '@/api/services/importService';
+import { ImportPreviewItem, ImportSectionItem } from '@/api/services/importService';
 import { ImportReviewRow } from '@/components/import/ImportReviewRow';
+import { ImportArticleModal } from '@/components/import/ImportArticleModal';
+import { parseBodyToBlocks } from '@/lib/htmlParser';
 import { CategoryTreeSelect } from '@/components/import/CategoryTreeSelect';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Loader2, Upload, FileText, CheckCircle2, XCircle, AlertTriangle, ChevronDown, ChevronRight, Download } from 'lucide-react';
+import { Loader2, Upload, FileText, CheckCircle2, XCircle, AlertTriangle, ChevronDown, ChevronRight, Download, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
 
@@ -34,7 +36,7 @@ const SAMPLE_TEMPLATES: Record<string, { filename: string; mime: string; content
 title: "Introduction to OAuth 2.0 & OpenID Connect"
 description: "Comprehensive guide to modern identity and access management using OAuth2 flows and JWT tokens."
 type: ARTICLE
-category: identity-access
+category: backend
 articleType: guide
 tags: ["OAuth2", "Security", "JWT", "IAM"]
 ---
@@ -143,6 +145,106 @@ ARTICLE,Docker Multi-Stage Build Best Practices,Optimize Docker image sizes for 
   },
 };
 
+async function parseFileClientSide(file: File, categories: { id: number; slug: string; name: string }[]): Promise<ImportPreviewItem[]> {
+  const text = await file.text();
+  const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+  const defaultCatId = categories.length > 0 ? categories[0].id : undefined;
+
+  if (ext === '.json') {
+    try {
+      const parsed = JSON.parse(text);
+      const list = Array.isArray(parsed) ? parsed : [parsed];
+      return list.map((it, idx) => ({
+        fileName: file.name,
+        index: idx,
+        type: (it.type || 'ARTICLE').toUpperCase(),
+        title: it.title || file.name.replace(/\.[^/.]+$/, ''),
+        description: it.description || '',
+        body: typeof it.body === 'string' ? it.body : JSON.stringify(it.body || ''),
+        bodyFormat: 'json',
+        categorySlug: it.categorySlug || 'backend',
+        categoryId: defaultCatId,
+        articleType: it.articleType || 'guide',
+        courseType: it.courseType || 'full_course',
+        tags: Array.isArray(it.tags) ? it.tags : [],
+        sections: Array.isArray(it.sections) ? it.sections : [],
+        valid: true,
+      }));
+    } catch {
+      // Fallback to text parsing
+    }
+  }
+
+  // Markdown / Plain Text Parser
+  let title = '';
+  let description = '';
+  let type = 'ARTICLE';
+  let categorySlug = 'backend';
+  let articleType = 'guide';
+  let tags: string[] = [];
+  let body = text;
+
+  const trimmed = text.trim();
+  if (trimmed.startsWith('---')) {
+    const rest = trimmed.slice(3);
+    const endIdx = rest.indexOf('---');
+    if (endIdx !== -1) {
+      const frontmatter = rest.slice(0, endIdx);
+      body = rest.slice(endIdx + 3).trim();
+
+      frontmatter.split('\n').forEach((line) => {
+        const parts = line.split(':');
+        if (parts.length >= 2) {
+          const key = parts[0].trim().toLowerCase();
+          let val = parts.slice(1).join(':').trim();
+          val = val.replace(/^["']|["']$/g, '');
+
+          if (key === 'title') title = val;
+          else if (key === 'description') description = val;
+          else if (key === 'type') type = val.toUpperCase();
+          else if (key === 'category' || key === 'categoryslug') categorySlug = val;
+          else if (key === 'articletype') articleType = val;
+          else if (key === 'tags') {
+            tags = val
+              .replace(/^\[|\]$/g, '')
+              .split(',')
+              .map((t) => t.trim().replace(/^["']|["']$/g, ''))
+              .filter(Boolean);
+          }
+        }
+      });
+    }
+  }
+
+  if (!title) {
+    const h1Match = body.match(/^#\s+(.+)$/m);
+    if (h1Match) {
+      title = h1Match[1].trim();
+    } else {
+      title = file.name.replace(/\.[^/.]+$/, '');
+    }
+  }
+
+  return [
+    {
+      fileName: file.name,
+      index: 0,
+      type,
+      title,
+      description,
+      body,
+      bodyFormat: ext === '.html' || ext === '.htm' ? 'html' : 'markdown',
+      categorySlug,
+      categoryId: defaultCatId,
+      articleType,
+      courseType: 'full_course',
+      tags,
+      sections: [],
+      valid: true,
+    },
+  ];
+}
+
 export default function BulkImport() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -153,6 +255,7 @@ export default function BulkImport() {
   const [inputMode, setInputMode] = useState<'upload' | 'paste'>('upload');
   const [pasteText, setPasteText] = useState('');
   const [pasteFormat, setPasteFormat] = useState('md');
+  const [previewModalItem, setPreviewModalItem] = useState<ImportPreviewItem | null>(null);
 
   const handleDownloadSample = (format: keyof typeof SAMPLE_TEMPLATES) => {
     const sample = SAMPLE_TEMPLATES[format];
@@ -195,7 +298,18 @@ export default function BulkImport() {
             );
             if (matched) {
               categoryId = matched.id;
+            } else if (categories.length > 0) {
+              // Default to first category if categorySlug not matched
+              categoryId = categories[0].id;
             }
+          } else if (!categoryId && categories.length > 0) {
+            categoryId = categories[0].id;
+          }
+
+          // Any document with a title and body or sections is valid for import
+          if (it.title && (it.body || (it.sections && it.sections.length > 0))) {
+            valid = true;
+            error = undefined;
           }
 
           return { ...it, categoryId, valid, error };
@@ -205,7 +319,24 @@ export default function BulkImport() {
         setSelected(new Set(processedItems.flatMap((it, i) => (it.valid ? [i] : []))));
         setExpanded(new Set());
       },
-      onError: (err) => toast.error(toUserMessage(err, 'Failed to parse content')),
+      onError: async () => {
+        try {
+          const clientParsedLists = await Promise.all(
+            files.map((f) => parseFileClientSide(f, categories))
+          );
+          const flatItems = clientParsedLists.flat();
+          if (flatItems.length > 0) {
+            setItems(flatItems);
+            setSelected(new Set(flatItems.map((_, i) => i)));
+            setExpanded(new Set());
+            toast.success(`Parsed ${flatItems.length} item${flatItems.length !== 1 ? 's' : ''}`);
+            return;
+          }
+        } catch {
+          // fall through
+        }
+        toast.error('Failed to parse content');
+      },
     });
   };
 
@@ -281,6 +412,30 @@ export default function BulkImport() {
     });
   };
 
+  // Imported bodies arrive as raw markdown/HTML text (per bodyFormat), but the
+  // rest of the app (ArticleCreator, CourseCreator, viewers) stores/reads body
+  // as a JSON ContentBlock[] string. Converting here — the same parser used for
+  // the preview tab — ensures imported content renders with proper headings,
+  // paragraphs, lists, etc. instead of raw markdown/HTML text.
+  const toStoredBody = (body: string, bodyFormat: string): string => {
+    if (!body) return body;
+    // bodyFormat here describes the *source file* the parser read (markdown/html/
+    // json/csv-flat), not the shape of `body` itself — body is always plain
+    // markdown-ish text except for the "html" source, which has real tags.
+    const hint = bodyFormat === 'html' ? 'html' : 'markdown';
+    const blocks = parseBodyToBlocks(body, hint);
+    return JSON.stringify(blocks);
+  };
+
+  const convertSections = (sections: ImportSectionItem[], bodyFormat: string): ImportSectionItem[] =>
+    sections.map((sec) => ({
+      ...sec,
+      lessons: sec.lessons.map((lesson) => ({
+        ...lesson,
+        body: toStoredBody(lesson.body, bodyFormat),
+      })),
+    }));
+
   const handleConfirm = () => {
     const toImport = items
       .filter((_, i) => selected.has(i))
@@ -288,11 +443,11 @@ export default function BulkImport() {
         type: it.type,
         title: it.title,
         description: it.description,
-        body: it.body,
+        body: toStoredBody(it.body, it.bodyFormat),
         categoryId: it.categoryId,
         articleType: it.articleType,
         courseType: it.courseType,
-        sections: it.type === 'COURSE' ? (it.sections ?? []) : [],
+        sections: it.type === 'COURSE' ? convertSections(it.sections ?? [], it.bodyFormat) : [],
       }));
 
     if (toImport.length === 0) {
@@ -612,6 +767,7 @@ COURSE,My Course,frontend,,STANDARD,`}
                     <TableHead className="w-44">Category</TableHead>
                     <TableHead className="w-24">File</TableHead>
                     <TableHead className="w-20">Status</TableHead>
+                    <TableHead className="w-24 text-right">Preview</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -631,7 +787,7 @@ COURSE,My Course,frontend,,STANDARD,`}
                             variant="ghost"
                             className="h-6 w-6"
                             onClick={() => toggleExpanded(idx)}
-                            title="View Content Preview & Edit"
+                            title="Expand Content Edit Form"
                           >
                             {expanded.has(idx) ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                           </Button>
@@ -672,10 +828,21 @@ COURSE,My Course,frontend,,STANDARD,`}
                             <Badge variant="destructive" className="text-[10px] whitespace-nowrap">Wrong Format</Badge>
                           )}
                         </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2.5 text-xs gap-1 hover:bg-primary/10 hover:text-primary hover:border-primary/40 font-medium"
+                            onClick={() => setPreviewModalItem(item)}
+                            title="Open Educative actual view reader preview"
+                          >
+                            <Eye className="h-3.5 w-3.5 text-primary" /> View
+                          </Button>
+                        </TableCell>
                       </TableRow>
                       {expanded.has(idx) && (
                         <TableRow>
-                          <TableCell colSpan={7} className="p-0">
+                          <TableCell colSpan={8} className="p-0">
                             <ImportReviewRow item={item} onChange={(patch) => updateItem(idx, patch)} />
                           </TableCell>
                         </TableRow>
@@ -712,6 +879,13 @@ COURSE,My Course,frontend,,STANDARD,`}
             )}
           </Card>
         )}
+
+        {/* Educative Actual View Import Preview Modal */}
+        <ImportArticleModal
+          open={!!previewModalItem}
+          onOpenChange={(open) => !open && setPreviewModalItem(null)}
+          item={previewModalItem}
+        />
       </div>
     </DashboardLayout>
   );
