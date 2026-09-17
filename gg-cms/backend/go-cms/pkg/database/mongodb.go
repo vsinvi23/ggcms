@@ -25,7 +25,7 @@ func NewMongoDB(cfg *config.MongoConfig, tlsCfg *config.TLSConfig) (*MongoDB, er
 
 	clientOpts := options.Client().ApplyURI(cfg.URI)
 
-	if tlsCfg != nil && tlsCfg.Enabled {
+	if strings.Contains(cfg.URI, "tls=true") || strings.Contains(cfg.URI, "ssl=true") || (tlsCfg != nil && tlsCfg.Enabled) {
 		tc, err := buildMongoTLSConfig(tlsCfg)
 		if err != nil {
 			return nil, fmt.Errorf("mongodb TLS config: %w", err)

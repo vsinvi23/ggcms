@@ -101,9 +101,9 @@ services:
     container_name: gg-cms-backend
     restart: unless-stopped
     ports:
-      - "${BACKEND_PORT:-8443}:8443"
+      - "${BACKEND_PORT:-8080}:8080"
     environment:
-      SERVER_PORT: "8443"
+      SERVER_PORT: "8080"
       GIN_MODE: release
       LOG_LEVEL: ${LOG_LEVEL:-info}
 
@@ -113,7 +113,7 @@ services:
       MONGO_URI: "mongodb://gg_cms_user:${MONGO_PASSWORD}@mongodb:27017/?authSource=admin&tls=true"
       MONGO_DATABASE: gg_cms
 
-      TLS_ENABLED: "true"
+      TLS_ENABLED: "${TLS_ENABLED:-false}"
       TLS_CERT_FILE: /certs/backend/server.crt
       TLS_KEY_FILE: /certs/backend/server.key
       TLS_CA_FILE: /certs/ca/ca.crt
