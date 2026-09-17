@@ -407,3 +407,134 @@ Evidence:
 | 6 | **Disconnected Cross-Database Backups**: Postgres and Mongo backups lacked a shared release metadata envelope. | **Resolved**: Created `release/gcp/backup/backup-manifest.sh` to generate unified `backup-manifest.json` binding Postgres dump details, Mongo snapshot details, SHA-256 hashes, and contract metadata. | `release/gcp/backup/backup-manifest.sh` |
 | 7 | **Enforced 9-Step Deployment Order Gate**: Pipeline lacked a formal release gate sequence. | **Resolved**: Updated `release/deploy-prod.sh` and `release/deploy-test.sh` to enforce the 9-step deployment gate (Secrets -> Certs -> DB Health -> Migration Ledger -> Migration Exec -> Backend Deploy -> UI Deploy -> Smoke Test -> Backup Manifest Publish). | `deploy-prod.sh`<br>`deploy-test.sh` |
 
+## UI/UX Information Architecture & Redesign Review
+
+### 1. Executive UX Summary & Objectives
+
+The UI redesign bridges the gap between GG-CMS's technical backend capabilities and its frontend user experience across two primary surfaces:
+1. **Learner-Facing Explore Experience**: Streamlining navigation across domain categories, topics, articles, and courses.
+2. **Admin Configuration Experience**: Transforming a flat 6-tab system configuration page into a structured, 3-tiered information architecture.
+
+The core objective is to eliminate visual clutter, establish clear mental models, maintain navigation state, and guarantee 100% responsive and accessible interactions across desktop, tablet, and mobile devices.
+
+---
+
+### 2. Learner-Facing Explore Experience Redesign
+
+#### A. Problem Analysis
+- **Category Overcrowding**: Displaying five domain categories (*Software, Cloud, Security, Data, AI*) as full visual cards on every page generated visual fatigue and layout shifting.
+- **Context Loss**: Navigating from a domain category into a specific topic or course lost the parent context, making navigation feel disconnected.
+- **Mobile Clutter**: Category grids wrapped poorly on smaller viewports, pushing actual learning content below the fold.
+
+#### B. Component & Layout Architecture
+
+```text
+Explore Page Layout Architecture:
++-----------------------------------------------------------------------+
+| Header: "Explore & Discover" + Global Search (#K8s, #Go, #OAuth)       |
++-----------------------------------------------------------------------+
+| Primary Domain Bar (Pill Selector):                                   |
+|  [All Domains]  [Cloud]  [Security]  [Software]  [Data]  [AI]         |
++-----------------------------------------------------------------------+
+| Active Domain Context Header (e.g. "Cloud · 42 Resources"):          |
+|  Breadcrumb: Explore / Cloud                                          |
+|  Tabs: [Overview] [Articles (28)] [Courses (10)] [Paths (4)]          |
++-----------------------------------------------------------------------+
+| Filtered Content Grid (Articles, Courses, Learning Paths)              |
++-----------------------------------------------------------------------+
+```
+
+#### C. Detailed Specification Rules
+1. **Single Persistent Domain Selector**:
+   - Render the five core categories only once at the top of the main Explore/Topics landing view using a high-density, horizontal pill selector.
+   - Use distinct color tokens per domain (`Cloud`: Cyan, `Security`: Rose, `Software`: Indigo, `Data`: Emerald, `AI`: Amber).
+2. **Contextual Detail Headers**:
+   - On deep pages (`/explore/cloud` or `/topics/kubernetes`), replace the full category selection block with a slim contextual breadcrumb and dynamic page header.
+   - Display resource counters (`Cloud · 42 resources`) as supporting metadata rather than hero elements.
+3. **Search & Tag Integration**:
+   - Unify keyword search, topic tags (`#OAuth`), and category filters into a single stateful search header.
+   - Ensure filter query parameters persist in the URL (e.g. `/explore?domain=cloud&q=k8s`).
+4. **Mobile Responsive Pattern**:
+   - On viewports `< 768px`, collapse domain categories into a horizontally scrollable touch-strip with smooth snap points, or a compact native dropdown.
+
+---
+
+### 3. Admin Configuration Experience Redesign
+
+#### A. Problem Analysis & Mental Model Restructuring
+The legacy `ConfigurationPage.tsx` rendered six heterogeneous management tabs in a single flat row:
+`[Categories] [Tags] [Content Types] [Learning Paths] [Interview Paths] [Reviewer Groups]`
+
+This created a weak mental model because it conflated taxonomy definitions, editorial product builders, and workflow governance as identical peers.
+
+#### B. 3-Tier Grouped Information Architecture
+
+```text
+3-Tier Admin Information Architecture:
+
+├── 1. CONTENT MODEL (Taxonomy & Schemas)
+│   ├── Categories       : Hierarchical tree view, content count, detail inspection panel.
+│   ├── Tags             : Searchable tag registry, usage metrics, merge & deprecation workflows.
+│   └── Content Types    : Immutable type identifiers (Article vs Course schemas).
+│
+├── 2. EDITORIAL PRODUCTS (Learning & Career Paths)
+│   ├── Learning Paths   : Step-by-step course sequence builder with drag-and-drop order.
+│   └── Interview Paths  : Role- & level-targeted interview preparation sequence builder.
+│
+└── 3. WORKFLOW & GOVERNANCE (Quality & Review)
+    └── Reviewer Groups  : Reviewer group management with bi-directional category assignment.
+```
+
+#### C. Tab-by-Tab UI Deep Dive
+
+| Area / Tab | Current UI Deficiency | Redesign Specification | Key Interaction & Guardrails |
+|---|---|---|---|
+| **Categories** | Plain list without subcategory hierarchy visualization. | **Hierarchical Tree View** with search, expand/collapse, and slide-over detail panel. | - Show total content items linked.<br>- Drag/nest subcategories.<br>- Prevent deletion if active content is attached. |
+| **Tags** | Floating badges without usage statistics or management controls. | **Searchable Data Matrix** with usage count, creation date, and status badges. | - Merge duplicate tags (`golang` -> `go`).<br>- Deprecate tag with replacement suggestion.<br>- Warning modal on deletion. |
+| **Content Types** | Static list cards with minimal schema info. | **Split Type Registry** separating Article Types from Course Types. | - Immutable system IDs after creation.<br>- Field validation status indicator.<br>- Active/Inactive toggle. |
+| **Learning Paths** | Simple card list without sequence visibility. | **Visual Sequence Builder** displaying course sequence cards with reorder controls. | - Live estimated duration calculator.<br>- Publish/Draft status toggle.<br>- Prerequisite validation warning. |
+| **Interview Paths** | Duplicate of Learning Paths without role context. | **Role-Targeted Builder** emphasizing target role, experience level, and topic focus. | - Target role filter (e.g. *Senior DevOps*).<br>- Outcome summary card.<br>- Course & question picker. |
+| **Reviewer Groups** | Flat group cards with unclear category mapping. | **Dual-View Governance Panel**: Group-to-Category and Category-to-Group matrix. | - Workload distribution meter per group.<br>- Quick assignment modal.<br>- Minimum reviewer threshold setting. |
+
+---
+
+### 4. Layout, State & Responsive Design Standards
+
+#### A. Standardized Page Layout Matrix
+Every configuration sub-view follows a standardized 5-tier layout stack:
+1. **Header & Action Bar**: Page title, concise description, and primary CTA (e.g., `+ Create Category`) positioned top-right.
+2. **Search & Filter Strip**: Integrated text filter with instant search debouncing (200ms) and status filters.
+3. **Metric Summary Cards**: 3-4 KPI badges showing totals, active items, and pending review items.
+4. **Primary Workspace**: The main tree, table, or visual builder.
+5. **Detail / Slide-over Drawer**: Right-hand drawer (`width: 420px` on desktop) for item inspection without breaking list context.
+
+#### B. Responsive Breakpoint Rules
+- **Desktop (`≥ 1024px`)**: Vertical sticky left navigation for the 3 Admin Tiers (`Content Model`, `Editorial`, `Workflow`) with full side drawers.
+- **Tablet (`768px - 1023px`)**: Horizontal segmented control bar with icon indicators; slide-over drawer expands to full width (`100%`).
+- **Mobile (`< 768px`)**: Single-column view with accordion tab selectors. Touch actions (edit/delete) are explicitly visible via icon buttons rather than hover menus.
+
+#### C. Accessibility & Interaction Polish
+- **No Hover-Only Actions**: All list items expose visible action menus (`...` dropdown or icon buttons) to support touchscreens and keyboard focus.
+- **URL Synchronization**: Active tabs and filter states are synced to URL parameters (`/configuration?section=content-model&tab=categories`).
+- **Destructive Action Guards**: Deletion requests require explicit confirmation dialogs displaying the impact summary (e.g., *"Deleting 'Cloud Security' will unassign 14 articles and 2 reviewer groups"*).
+- **Keyboard Navigation**: Full `Tab` / `Arrow` key focus handling across tree structures and sequence builders.
+
+---
+
+### 5. Implementation Roadmap & UX Acceptance Criteria
+
+#### A. Phased Implementation Roadmap
+1. **Phase 1 (Admin Architecture)**: Refactor `ConfigurationPage.tsx` into the 3-Tier IA layout (`Content Model`, `Editorial`, `Workflow`) with URL tab sync.
+2. **Phase 2 (Learner Navigation)**: Consolidate the 5 domain categories in Explore/Topics into a single sticky pill selector and contextual header.
+3. **Phase 3 (Category Tree & Details)**: Upgrade `CategoriesTab.tsx` to support hierarchical nesting, content counters, and right-hand inspection drawer.
+4. **Phase 4 (Reviewer Matrix)**: Upgrade `ReviewerGroupsTab.tsx` with bi-directional category-to-group assignment mapping.
+5. **Phase 5 (Responsive & Touch Polish)**: Audit all table/tree actions for touch device compliance and keyboard focus management.
+
+#### B. UX Acceptance Criteria
+- [ ] An admin user can navigate to taxonomy, editorial paths, or workflow settings within 1 click using the 3-tier navigation.
+- [ ] A learner on Explore can select a domain without losing page position or experiencing layout jumps.
+- [ ] Every admin list/tree displays item counts, active status, search/filter controls, and explicit (non-hover) action triggers.
+- [ ] Reviewer assignments can be inspected from both group-first and category-first perspectives.
+- [ ] URL parameters accurately reflect current tab, search query, and filter selections.
+
+

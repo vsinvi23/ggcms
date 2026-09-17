@@ -91,6 +91,7 @@ const App = () => (
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/technology/:slug" element={<TechnologyPage />} />
+                <Route path="/explore" element={<Navigate to="/explore/articles" replace />} />
                 <Route path="/explore/:category" element={<CourseCategoryPage />} />
                 <Route path="/article/*" element={<PublicArticleView />} />
                 <Route path="/course/*" element={<CourseViewPage />} />

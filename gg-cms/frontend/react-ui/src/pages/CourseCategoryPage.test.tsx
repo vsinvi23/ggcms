@@ -123,4 +123,19 @@ describe('CourseCategoryPage (Panel 2 Explore Layout)', () => {
     expect(screen.getByText('Try our curated learning paths based on your goals.')).toBeInTheDocument();
     expect(screen.getByText('View Learning Paths')).toBeInTheDocument();
   });
+
+  it('renders All Categories Catalog when navigating to /explore/categories', () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/explore/categories']}>
+          <Routes>
+            <Route path="/explore/:category" element={<CourseCategoryPage />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    expect(screen.getByText('All Categories & Technical Domains')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Filter categories by title or description/i)).toBeInTheDocument();
+  });
 });

@@ -1,10 +1,9 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import {
   BookOpen, FileText, Search, X, Check, ChevronsUpDown, Tag,
   SlidersHorizontal, Play, GraduationCap, Compass, ArrowRight, Clock,
-  Code, Cloud, Shield, Database, Cpu, User, Lock, Globe,
-
+  Code, Cloud, Shield, Database, Cpu, User, Lock, Globe, FolderTree,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -238,11 +237,17 @@ function ExploreHeader({
   activeId: number | undefined;
   onSelect: (domain: DomainDto) => void;
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const isCourse = type === 'COURSE';
   const domainArticlesTotal = domains.reduce((acc, d) => acc + (d.articleCount || 0), 0);
   const domainCoursesTotal  = domains.reduce((acc, d) => acc + (d.courseCount || 0), 0);
   const articlesCount = domainArticlesTotal > 0 ? domainArticlesTotal : totalArticles;
   const coursesCount  = domainCoursesTotal > 0 ? domainCoursesTotal : totalCourses;
+
+  const isArticlesActive = location.pathname.includes('/explore/articles');
+  const isCoursesActive  = location.pathname.includes('/explore/courses');
+  const isPathsActive    = location.pathname.includes('/explore/paths');
 
   return (
     <div className="shrink-0 border-b border-border bg-card px-6 py-6 space-y-6">
@@ -269,9 +274,30 @@ function ExploreHeader({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <StatBadge icon={FileText} label="Articles" value={articlesCount} suffix="+" />
-          <StatBadge icon={BookOpen} label="Courses" value={coursesCount} suffix="+" />
-          <StatBadge icon={GraduationCap} label="Learning Paths" value={20} suffix="+" />
+          <StatBadge
+            icon={FileText}
+            label="Articles"
+            value={articlesCount}
+            suffix="+"
+            active={isArticlesActive}
+            onClick={() => navigate('/explore/articles')}
+          />
+          <StatBadge
+            icon={BookOpen}
+            label="Courses"
+            value={coursesCount}
+            suffix="+"
+            active={isCoursesActive}
+            onClick={() => navigate('/explore/courses')}
+          />
+          <StatBadge
+            icon={GraduationCap}
+            label="Learning Paths"
+            value={20}
+            suffix="+"
+            active={isPathsActive}
+            onClick={() => navigate('/explore/paths')}
+          />
         </div>
       </div>
 
@@ -317,17 +343,43 @@ function ExploreHeader({
   );
 }
 
-function StatBadge({ icon: Icon, label, value, suffix = '' }: { icon: typeof FileText; label: string; value: number; suffix?: string }) {
+function StatBadge({
+  icon: Icon,
+  label,
+  value,
+  suffix = '',
+  active = false,
+  onClick,
+}: {
+  icon: typeof FileText;
+  label: string;
+  value: number;
+  suffix?: string;
+  active?: boolean;
+  onClick?: () => void;
+}) {
   return (
-    <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-border bg-background shadow-xs">
-      <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-left transition-all duration-200 cursor-pointer shadow-xs select-none',
+        active
+          ? 'border-primary bg-primary/10 ring-2 ring-primary/20 text-foreground font-semibold'
+          : 'border-border bg-background hover:bg-muted/60 hover:border-border/80 text-muted-foreground hover:text-foreground',
+      )}
+    >
+      <div className={cn(
+        'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors',
+        active ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary',
+      )}>
         <Icon className="h-4 w-4" />
       </div>
       <div>
         <span className="text-sm font-bold text-foreground">{value}{suffix}</span>
-        <span className="text-xs text-muted-foreground ml-1">{label}</span>
+        <span className={cn('text-xs ml-1', active ? 'text-primary font-semibold' : 'text-muted-foreground')}>{label}</span>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -359,7 +411,7 @@ function CategoryGrid({
           {domainName ? `Categories in ${domainName}` : 'All Categories'}
         </h2>
         <button
-          onClick={() => navigate('/explore/articles')}
+          onClick={() => navigate('/explore/categories')}
           className="text-xs font-semibold text-primary hover:underline cursor-pointer flex items-center gap-1"
         >
           View all categories <ArrowRight className="w-3 h-3" />
@@ -643,8 +695,11 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
   const visibleCats = catsExpanded ? flatCategories : flatCategories.slice(0, CATS_VISIBLE);
   const visibleTags = tagsExpanded ? allTags : allTags.slice(0, TAGS_VISIBLE);
 
-  const totalArticles = isArticle ? allItems.length : 0;
-  const totalCourses  = isArticle ? 0 : allItems.length;
+  const articlesFromDomains = allDomains.reduce((sum, d) => sum + (d.articleCount || 0), 0);
+  const coursesFromDomains  = allDomains.reduce((sum, d) => sum + (d.courseCount || 0), 0);
+
+  const totalArticles = isArticle ? Math.max(allItems.length, articlesFromDomains) : articlesFromDomains;
+  const totalCourses  = !isArticle ? Math.max(allItems.length, coursesFromDomains) : coursesFromDomains;
 
   return (
     <PublicLayout hideSearch>
@@ -967,14 +1022,196 @@ function LearningPathsCatalog() {
   );
 }
 
+// ─── All Categories Catalog View ──────────────────────────────────────────────
+
+function AllCategoriesCatalog() {
+  const navigate = useNavigate();
+  const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
+  const { data: domainsData, isLoading: domainsLoading } = useDomains();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const categories = categoriesData ?? [];
+  const domains = domainsData ?? [];
+
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery.trim()) return categories;
+    const q = searchQuery.toLowerCase();
+    return categories.filter(c => c.name.toLowerCase().includes(q) || (c.description && c.description.toLowerCase().includes(q)));
+  }, [categories, searchQuery]);
+
+  const domainMap = useMemo(() => {
+    const map = new Map<number | 'uncategorized', { domainName: string; cats: typeof categories }>();
+    domains.forEach(d => map.set(d.id, { domainName: d.name, cats: [] }));
+    map.set('uncategorized', { domainName: 'Other Topics & Technologies', cats: [] });
+
+    filteredCategories.forEach(cat => {
+      const entry = map.get(cat.domainId ?? 'uncategorized') || map.get('uncategorized')!;
+      entry.cats.push(cat);
+    });
+
+    return map;
+  }, [domains, filteredCategories]);
+
+  const isLoading = categoriesLoading || domainsLoading;
+
+  return (
+    <PublicLayout>
+      <div className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
+          <div>
+            <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-3">
+              <FolderTree className="w-8 h-8 text-primary" />
+              All Categories & Technical Domains
+            </h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Explore comprehensive categories across software engineering, cloud architecture, cybersecurity, and data systems.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <StatBadge
+              icon={FileText}
+              label="Articles"
+              value={100}
+              suffix="+"
+              onClick={() => navigate('/explore/articles')}
+            />
+            <StatBadge
+              icon={BookOpen}
+              label="Courses"
+              value={50}
+              suffix="+"
+              onClick={() => navigate('/explore/courses')}
+            />
+            <StatBadge
+              icon={GraduationCap}
+              label="Learning Paths"
+              value={20}
+              suffix="+"
+              onClick={() => navigate('/explore/paths')}
+            />
+          </div>
+        </div>
+
+        {/* Search Input */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Filter categories by title or description..."
+            className="pl-10 h-10 rounded-xl bg-card border-border shadow-xs text-sm"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Content / Domain Sections */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(9)].map((_, i) => (
+              <div key={i} className="p-5 rounded-2xl border border-border bg-card space-y-3">
+                <Skeleton className="h-6 w-1/2 rounded" />
+                <Skeleton className="h-4 w-3/4 rounded" />
+                <Skeleton className="h-10 w-full rounded-xl" />
+              </div>
+            ))}
+          </div>
+        ) : filteredCategories.length === 0 ? (
+          <div className="text-center py-16">
+            <Search className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+            <h3 className="text-lg font-semibold text-foreground">No categories found</h3>
+            <p className="text-sm text-muted-foreground mt-1">Try adjusting your search query.</p>
+            {searchQuery && (
+              <Button variant="outline" size="sm" onClick={() => setSearchQuery('')} className="mt-4">
+                Clear search
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-10">
+            {Array.from(domainMap.entries()).map(([domainId, { domainName, cats }]) => {
+              if (cats.length === 0) return null;
+              const domainTheme = getDomainTheme(domainName);
+              const DomainIcon = getDomainIcon(domainName);
+
+              return (
+                <div key={String(domainId)} className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center shrink-0', domainTheme.bg, domainTheme.text)}>
+                      <DomainIcon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-foreground">{domainName}</h2>
+                      <span className="text-xs text-muted-foreground">{cats.length} categories available</span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {cats.map(cat => {
+                      const CatIcon = getCategoryIcon(cat.name);
+                      const catSlug = cat.slug || cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                      const resourceCount = (cat.articleCount ?? 0) + (cat.courseCount ?? 0);
+
+                      return (
+                        <div
+                          key={cat.id}
+                          onClick={() => navigate(`/technology/${catSlug}`)}
+                          className="group flex flex-col justify-between p-5 rounded-2xl border border-border bg-card hover:border-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer space-y-4"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold transition-colors', domainTheme.bg, domainTheme.text, 'group-hover:bg-primary group-hover:text-primary-foreground')}>
+                                <CatIcon className="w-4 h-4" />
+                              </div>
+                              <Badge variant="outline" className="text-xs font-medium text-muted-foreground">
+                                {resourceCount > 0 ? `${resourceCount} resources` : 'Deep dives'}
+                              </Badge>
+                            </div>
+
+                            <div>
+                              <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                                {cat.name}
+                              </h3>
+                              <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
+                                {cat.description || `Explore comprehensive articles, courses, and guides on ${cat.name}.`}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs font-semibold text-primary pt-2 border-t border-border/50">
+                            <span>Browse category</span>
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </PublicLayout>
+  );
+}
+
 // ─── Route dispatcher ─────────────────────────────────────────────────────────
 
 const CourseCategoryPage = () => {
   const { category } = useParams<{ category: string }>();
 
-  if (category === 'articles') return <ApiContentList type="ARTICLE" />;
-  if (category === 'courses')  return <ApiContentList type="COURSE" />;
-  if (category === 'paths')    return <LearningPathsCatalog />;
+  if (category === 'articles')   return <ApiContentList type="ARTICLE" />;
+  if (category === 'courses')    return <ApiContentList type="COURSE" />;
+  if (category === 'paths')      return <LearningPathsCatalog />;
+  if (category === 'categories') return <AllCategoriesCatalog />;
 
   const courseType = category ? SLUG_TO_COURSE_TYPE[category] : undefined;
 

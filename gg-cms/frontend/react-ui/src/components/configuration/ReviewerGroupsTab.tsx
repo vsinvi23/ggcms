@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Loader2, Plus, X, ChevronDown, ChevronRight, Users } from 'lucide-react';
+import { Loader2, Plus, X, ChevronDown, ChevronRight, Users, ShieldCheck, FolderTree, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
 import {
@@ -13,10 +13,121 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useCategories, useCategoryReviewerGroups, useAddCategoryReviewerGroup, useRemoveCategoryReviewerGroup } from '@/api/hooks/useCategories';
-import { useUpdateCategory } from '@/api/hooks/useCategories';
+import {
+  useCategories,
+  useCategoryReviewerGroups,
+  useAddCategoryReviewerGroup,
+  useRemoveCategoryReviewerGroup,
+  useUpdateCategory,
+} from '@/api/hooks/useCategories';
 import { useGroupsQuery } from '@/api/hooks/useGroups';
-import { CategoryResponseDto } from '@/api/types';
+import { CategoryResponseDto, GroupResponseDto } from '@/api/types';
+import { cn } from '@/lib/utils';
+
+// ─── Group-Centric Row Component ───────────────────────────────────────────────────
+
+function ReviewerGroupRow({ group, categories }: { group: GroupResponseDto; categories: CategoryResponseDto[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
+
+  const addGroup = useAddCategoryReviewerGroup();
+  const removeGroup = useRemoveCategoryReviewerGroup();
+
+  // Find categories assigned to this group
+  // (We check which categories have this group linked)
+  const handleAssignCategory = () => {
+    if (!selectedCategoryId) return;
+    addGroup.mutate(
+      { categoryId: Number(selectedCategoryId), groupId: group.id },
+      {
+        onSuccess: () => {
+          setSelectedCategoryId('');
+          toast.success(`Category assigned to ${group.name}`);
+        },
+        onError: (err) => toast.error(toUserMessage(err, 'Failed to assign category')),
+      }
+    );
+  };
+
+  const handleRemoveCategory = (catId: number, catName: string) => {
+    removeGroup.mutate(
+      { categoryId: catId, groupId: group.id },
+      {
+        onSuccess: () => toast.success(`Unassigned "${catName}" from ${group.name}`),
+        onError: (err) => toast.error(toUserMessage(err, 'Failed to unassign category')),
+      }
+    );
+  };
+
+  return (
+    <div className="border border-border/80 rounded-2xl bg-card hover:border-emerald-500/30 transition-all overflow-hidden">
+      <button
+        type="button"
+        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/40 transition-colors text-left"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <Users className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+              {group.name}
+              {group.roles && group.roles.length > 0 && (
+                <Badge variant="outline" className="text-[10px] font-semibold border-emerald-500/30 text-emerald-600">
+                  {group.roles.length} roles
+                </Badge>
+              )}
+            </h4>
+            <p className="text-xs text-muted-foreground line-clamp-1">{group.description || 'Reviewer team governance group'}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {!expanded && (
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Click to view assignments &amp; members
+            </span>
+          )}
+          {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-4 pt-2 space-y-3 border-t border-border/50 bg-muted/20">
+          <div className="space-y-2">
+            <span className="text-xs font-bold text-foreground uppercase tracking-wider block">Assign New Category</span>
+            <div className="flex items-center gap-2">
+              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                <SelectTrigger className="flex-1 h-9 text-xs rounded-xl">
+                  <SelectValue placeholder="Select category to assign..." />
+                </SelectTrigger>
+                <SelectContent className="bg-background border shadow-lg z-50 rounded-xl">
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                className="h-9 rounded-xl gap-1.5"
+                onClick={handleAssignCategory}
+                disabled={!selectedCategoryId || addGroup.isPending}
+              >
+                {addGroup.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                Assign
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Category-Centric Row Component ────────────────────────────────────────────────
 
 function CategoryReviewerRow({ category }: { category: CategoryResponseDto }) {
   const [expanded, setExpanded] = useState(false);
@@ -72,25 +183,30 @@ function CategoryReviewerRow({ category }: { category: CategoryResponseDto }) {
   };
 
   return (
-    <div className="border rounded-lg">
+    <div className="border border-border/80 rounded-2xl bg-card hover:border-emerald-500/30 transition-all overflow-hidden">
       <button
         type="button"
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/40 transition-colors text-left"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div className="flex items-center gap-2 text-sm font-medium">
-          {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          {category.name}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <FolderTree className="w-4 h-4" />
+          </div>
+          <span className="text-sm font-semibold text-foreground">{category.name}</span>
         </div>
-        {!expanded && (
-          <span className="text-xs text-muted-foreground">
-            Click to manage reviewer groups
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {!expanded && (
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Click to manage reviewer groups
+            </span>
+          )}
+          {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+        </div>
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t">
+        <div className="px-4 pb-4 pt-2 space-y-4 border-t border-border/50 bg-muted/20">
           {groupsLoading ? (
             <div className="flex justify-center py-4">
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
@@ -98,57 +214,60 @@ function CategoryReviewerRow({ category }: { category: CategoryResponseDto }) {
           ) : (
             <>
               {/* Linked groups */}
-              <div className="flex flex-wrap gap-2 pt-3">
-                {linkedGroups.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No reviewer groups assigned yet.</p>
-                ) : (
-                  linkedGroups.map((g) => (
-                    <Badge key={g.id} variant="secondary" className="gap-1 pr-1">
-                      <Users className="w-3 h-3" />
-                      {g.name}
-                      <button
-                        type="button"
-                        className="ml-1 rounded-full hover:bg-destructive/20 p-0.5"
-                        onClick={() => handleRemove(g.id, g.name)}
-                        disabled={removeGroup.isPending}
-                        aria-label={`Remove ${g.name}`}
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </Badge>
-                  ))
-                )}
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-foreground uppercase tracking-wider block">Assigned Reviewer Groups</span>
+                <div className="flex flex-wrap gap-2">
+                  {linkedGroups.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No reviewer groups assigned yet.</p>
+                  ) : (
+                    linkedGroups.map((g) => (
+                      <Badge key={g.id} variant="secondary" className="gap-1.5 py-1 px-2.5 rounded-lg border border-border">
+                        <Users className="w-3 h-3 text-emerald-500" />
+                        {g.name}
+                        <button
+                          type="button"
+                          className="ml-1 rounded-full hover:bg-destructive/20 p-0.5 transition-colors"
+                          onClick={() => handleRemove(g.id, g.name)}
+                          disabled={removeGroup.isPending}
+                          aria-label={`Remove ${g.name}`}
+                        >
+                          <X className="w-3 h-3 text-destructive" />
+                        </button>
+                      </Badge>
+                    ))
+                  )}
+                </div>
               </div>
 
               {/* Required approvals */}
-              <div className="flex items-center gap-2 pt-1">
-                <span className="text-xs text-muted-foreground whitespace-nowrap">Required approvals:</span>
+              <div className="flex items-center gap-3 pt-2 border-t border-border/40">
+                <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Required Approvals Threshold:</span>
                 <Input
                   type="number"
                   min={1}
                   value={requiredApprovals}
                   onChange={(e) => setRequiredApprovals(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                  className="h-7 w-16 text-xs"
+                  className="h-8 w-20 text-xs rounded-xl"
                 />
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 text-xs"
+                  className="h-8 text-xs rounded-xl"
                   onClick={handleSaveApprovals}
                   disabled={updateCategory.isPending}
                 >
-                  {updateCategory.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+                  {updateCategory.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Save'}
                 </Button>
               </div>
 
               {/* Add group */}
               {availableGroups.length > 0 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pt-2">
                   <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
-                    <SelectTrigger className="flex-1 h-8 text-sm">
+                    <SelectTrigger className="flex-1 h-9 text-xs rounded-xl">
                       <SelectValue placeholder="Select group to add..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-background border shadow-lg z-50 rounded-xl">
                       {availableGroups.map((g) => (
                         <SelectItem key={g.id} value={String(g.id)}>
                           {g.name}
@@ -158,8 +277,7 @@ function CategoryReviewerRow({ category }: { category: CategoryResponseDto }) {
                   </Select>
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="h-8 gap-1"
+                    className="h-9 rounded-xl gap-1.5"
                     onClick={handleAdd}
                     disabled={!selectedGroupId || addGroup.isPending}
                   >
@@ -168,7 +286,7 @@ function CategoryReviewerRow({ category }: { category: CategoryResponseDto }) {
                     ) : (
                       <Plus className="w-3.5 h-3.5" />
                     )}
-                    Add
+                    Add Group
                   </Button>
                 </div>
               )}
@@ -180,45 +298,92 @@ function CategoryReviewerRow({ category }: { category: CategoryResponseDto }) {
   );
 }
 
-export function ReviewerGroupsTab() {
-  const { data: categories = [], isLoading } = useCategories();
+// ─── ReviewerGroupsTab Component ────────────────────────────────────────────────────
 
-  // Flatten tree to get all categories, excluding the virtual "geek" root
-  // (it is auto-managed by bootstrap and should not appear in the UI).
+export function ReviewerGroupsTab() {
+  const [viewPerspective, setViewPerspective] = useState<'category' | 'group'>('group');
+  const { data: categories = [], isLoading: loadingCats } = useCategories();
+  const { data: groupsData, isLoading: loadingGroups } = useGroupsQuery({ page: 0, size: 200 });
+
+  const groups = groupsData?.items ?? [];
+
+  // Flatten categories
   const flatten = (cats: CategoryResponseDto[]): CategoryResponseDto[] =>
     cats.flatMap((c) => [c, ...flatten(c.children ?? [])]);
 
   const flatCategories = flatten(categories).filter((c) => !c.isVirtual);
+  const isLoading = loadingCats || loadingGroups;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="w-5 h-5" />
-          Category Reviewer Groups
-        </CardTitle>
-        <CardDescription>
-          Assign reviewer groups to categories. When content is submitted for review, members of
-          the assigned groups will see it in the review queue and can claim it.
-        </CardDescription>
+    <Card className="rounded-2xl border-border">
+      <CardHeader className="pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <ShieldCheck className="w-5 h-5 text-emerald-500" />
+              Reviewer Governance &amp; Assignments
+            </CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Assign reviewer groups to categories and configure minimum approval thresholds before content goes live.
+            </CardDescription>
+          </div>
+
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 border border-border shrink-0">
+            <Button
+              variant={viewPerspective === 'group' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewPerspective('group')}
+              className={cn(
+                'gap-1.5 text-xs font-semibold h-8 rounded-lg',
+                viewPerspective === 'group' ? 'shadow-xs' : 'text-muted-foreground',
+              )}
+            >
+              <Users className="w-3.5 h-3.5" /> Group-Centric
+            </Button>
+            <Button
+              variant={viewPerspective === 'category' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewPerspective('category')}
+              className={cn(
+                'gap-1.5 text-xs font-semibold h-8 rounded-lg',
+                viewPerspective === 'category' ? 'shadow-xs' : 'text-muted-foreground',
+              )}
+            >
+              <FolderTree className="w-3.5 h-3.5" /> Category-Centric
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
-        ) : flatCategories.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No categories found. Create categories first.
-          </p>
+        ) : viewPerspective === 'group' ? (
+          /* Group-Centric Perspective */
+          groups.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">No reviewer groups found.</p>
+          ) : (
+            <div className="space-y-3">
+              {groups.map((group) => (
+                <ReviewerGroupRow key={group.id} group={group} categories={flatCategories} />
+              ))}
+            </div>
+          )
         ) : (
-          <div className="space-y-2">
-            {flatCategories.map((cat) => (
-              <CategoryReviewerRow key={cat.id} category={cat} />
-            ))}
-          </div>
+          /* Category-Centric Perspective */
+          flatCategories.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">No categories found.</p>
+          ) : (
+            <div className="space-y-3">
+              {flatCategories.map((cat) => (
+                <CategoryReviewerRow key={cat.id} category={cat} />
+              ))}
+            </div>
+          )
         )}
       </CardContent>
     </Card>
   );
 }
+

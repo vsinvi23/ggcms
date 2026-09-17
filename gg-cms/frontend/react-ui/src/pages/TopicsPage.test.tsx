@@ -7,8 +7,18 @@ import TopicsPage from './TopicsPage';
 vi.mock('@/api/hooks/useTopics', () => ({
   useTopics: () => ({
     data: [
-      { id: '1', name: 'Go', slug: 'go', description: 'Go programming language' },
-      { id: '2', name: 'Docker', slug: 'docker', description: 'Containerization tool' },
+      { id: 1, name: 'Go', slug: 'go', description: 'Go programming language' },
+      { id: 2, name: 'Docker', slug: 'docker', description: 'Containerization tool' },
+    ],
+    isLoading: false,
+  }),
+}));
+
+vi.mock('@/api/hooks/useTags', () => ({
+  useTags: () => ({
+    data: [
+      { id: 10, name: 'Golang', slug: 'golang' },
+      { id: 11, name: 'Containers', slug: 'containers' },
     ],
     isLoading: false,
   }),
@@ -16,7 +26,7 @@ vi.mock('@/api/hooks/useTopics', () => ({
 
 vi.mock('@/api/hooks/useCategories', () => ({
   useCategories: () => ({
-    data: [{ id: '1', name: 'Backend Engineering', slug: 'backend' }],
+    data: [{ id: 1, name: 'Backend Engineering', slug: 'backend' }],
   }),
 }));
 
@@ -34,7 +44,7 @@ vi.mock('@/api/hooks/usePublicCms', () => ({
 vi.mock('@/api/hooks/useDomains', () => ({
   useDomains: () => ({
     data: [
-      { id: 'd1', name: 'Software Engineering', slug: 'software-engineering' },
+      { id: 1, name: 'Software Engineering', slug: 'software-engineering' },
     ],
   }),
 }));
@@ -51,17 +61,19 @@ function renderPage() {
 }
 
 describe('TopicsPage (Panel 4 UI Spec)', () => {
-  it('renders topics page header and filter tabs', () => {
+  it('renders topics page compact top header and filter tabs', () => {
     renderPage();
-    expect(screen.getByRole('heading', { name: /Topics/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /^Topics$/i })).toBeInTheDocument();
     expect(screen.getByText('All Topics')).toBeInTheDocument();
-    expect(screen.getByText('Popular')).toBeInTheDocument();
-    expect(screen.getByText('By Domain')).toBeInTheDocument();
+    expect(screen.getAllByText('Popular')[0]).toBeInTheDocument();
+    expect(screen.getByText('By Category')).toBeInTheDocument();
   });
 
-  it('renders topic cards with live API counts', () => {
+  it('renders topic cards with live API counts and tag chips', () => {
     renderPage();
-    expect(screen.getByText('Go')).toBeInTheDocument();
-    expect(screen.getByText('Docker')).toBeInTheDocument();
+    expect(screen.getAllByText('Go')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Docker')[0]).toBeInTheDocument();
+    expect(screen.getByText('#go')).toBeInTheDocument();
+    expect(screen.getByText('#docker')).toBeInTheDocument();
   });
 });

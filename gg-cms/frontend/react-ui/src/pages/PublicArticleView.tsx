@@ -350,10 +350,22 @@ export default function PublicArticleView() {
               </section>
             )}
 
-            {/* Related Content */}
+            {/* Related Content & Recommended Insights */}
             {relatedItems.length > 0 && (
-              <section className="mt-12 pt-8 border-t border-border">
-                <h2 className="text-2xl font-bold text-foreground mb-6">Related Content</h2>
+              <section className="mt-12 pt-8 border-t border-border/80 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h2 className="text-2xl font-extrabold text-foreground flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-primary" /> Recommended Articles &amp; Insights
+                    </h2>
+                    <p className="text-xs text-muted-foreground">Handpicked articles and deep reads related to {article.categoryName || 'this topic'}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" asChild className="text-xs font-semibold text-primary">
+                    <Link to="/explore/articles">
+                      View all articles <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                    </Link>
+                  </Button>
+                </div>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {relatedItems.slice(0, 3).map((item) => (
                     <ContentCard key={item.id} item={item} />
@@ -362,18 +374,47 @@ export default function PublicArticleView() {
               </section>
             )}
 
+            {/* Next Steps Learning Journey Banner */}
+            <div className="mt-10 p-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-cyan-500/5 space-y-4 shadow-2xs">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="space-y-1 max-w-xl">
+                  <Badge variant="outline" className="text-[10px] font-bold border-primary/30 text-primary uppercase tracking-wider">
+                    Accelerate Mastery
+                  </Badge>
+                  <h3 className="text-lg font-bold text-foreground">
+                    Deepen Your Knowledge in {article.categoryName || 'Software & Cloud'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Take your skills further with structured learning paths, guided courses, and role-based interview preparation tracks.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button size="sm" asChild className="rounded-xl gap-1.5 font-semibold text-xs">
+                    <Link to="/explore/courses">
+                      Explore Courses <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </Button>
+                  <Button size="sm" variant="outline" asChild className="rounded-xl gap-1.5 font-semibold text-xs">
+                    <Link to="/topics">
+                      All Topics
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             {/* Footer actions */}
-            <div className="mt-12 pt-8 border-t border-border">
+            <div className="mt-10 pt-8 border-t border-border">
               <div className="flex items-center justify-between flex-wrap gap-4">
-                <Button variant="outline" asChild>
+                <Button variant="outline" asChild className="rounded-xl">
                   <Link to="/">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back to Home
                   </Link>
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="rounded-xl">
                   <Share2 className="w-4 h-4 mr-2" />
-                  Share
+                  Share Article
                 </Button>
               </div>
             </div>
