@@ -1207,26 +1207,28 @@ function AllCategoriesCatalog() {
 
 const CourseCategoryPage = () => {
   const { category } = useParams<{ category: string }>();
+  const location = useLocation();
 
-  if (category === 'articles')   return <ApiContentList type="ARTICLE" />;
-  if (category === 'courses')    return <ApiContentList type="COURSE" />;
-  if (category === 'paths')      return <LearningPathsCatalog />;
-  if (category === 'categories') return <AllCategoriesCatalog />;
+  const isExplore  = category === 'explore' || location.pathname === '/explore';
+  const isArticles = category === 'articles' || location.pathname === '/articles' || location.pathname.includes('/articles');
+  const isCourses  = category === 'courses' || location.pathname === '/courses' || location.pathname.includes('/courses');
+  const isPaths    = category === 'paths' || location.pathname === '/learning-paths' || location.pathname.includes('/paths');
+  const isCategories = category === 'categories' || location.pathname === '/categories';
+
+  if (isExplore)    return <ApiContentList type="ARTICLE" />;
+  if (isArticles)   return <ApiContentList type="ARTICLE" />;
+  if (isCourses)    return <ApiContentList type="COURSE" />;
+  if (isPaths)      return <LearningPathsCatalog />;
+  if (isCategories) return <AllCategoriesCatalog />;
 
   const courseType = category ? SLUG_TO_COURSE_TYPE[category] : undefined;
 
-  if (!courseType) {
-    return (
-      <PublicLayout>
-        <div className="text-center py-16">
-          <h1 className="text-2xl font-bold mb-4">Category not found</h1>
-          <Link to="/"><Button>Go Home</Button></Link>
-        </div>
-      </PublicLayout>
-    );
+  if (courseType) {
+    return <ApiContentList type="COURSE" initialCourseType={courseType} />;
   }
 
-  return <ApiContentList type="COURSE" initialCourseType={courseType} />;
+  // Graceful fallback for topic/category slugs (e.g., /explore/docker or /explore/cybersecurity)
+  return <ApiContentList type="ARTICLE" initialSearch={category} />;
 };
 
 export default CourseCategoryPage;

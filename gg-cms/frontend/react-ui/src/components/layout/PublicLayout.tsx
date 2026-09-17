@@ -42,7 +42,8 @@ interface PublicLayoutProps {
 }
 
 const allNavItems = [
-  { icon: Compass,       label: 'Explore',         href: '/articles',       flag: null },
+  { icon: Compass,       label: 'Explore',         href: '/explore',        flag: null },
+  { icon: FileText,      label: 'Articles',        href: '/articles',       flag: null },
   { icon: BookOpen,      label: 'Courses',         href: '/courses',        flag: null },
   { icon: GraduationCap, label: 'Learning Paths',  href: '/learning-paths', flag: 'learning_paths' as const },
 ];

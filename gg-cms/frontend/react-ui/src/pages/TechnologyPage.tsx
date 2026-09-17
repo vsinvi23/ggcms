@@ -176,13 +176,28 @@ const TechnologyPage = () => {
   const CategoryIcon = getCategoryIcon(category?.name ?? slug ?? '');
 
   if (!catLoading && !category && slug) {
+    // If exact category DB record is absent, render TechnologyPage using slug as title
+    const formattedTitle = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const fallbackCategory = { id: 0, name: formattedTitle, slug };
     return (
       <PublicLayout>
-        <div className="max-w-4xl mx-auto text-center py-20 px-6">
-          <Layers className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">Category not found</h1>
-          <p className="text-muted-foreground mb-6">This category could not be located in our catalog.</p>
-          <Button onClick={() => navigate('/explore/categories')}>Browse Categories</Button>
+        <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <Link to="/articles" className="hover:text-primary transition-colors">Articles</Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-foreground font-medium">{formattedTitle}</span>
+          </nav>
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-primary/10 text-primary">
+              <CategoryIcon className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{formattedTitle}</h1>
+              <p className="text-xs text-muted-foreground">Curated guides and courses tagged with {formattedTitle}</p>
+            </div>
+          </div>
         </div>
       </PublicLayout>
     );

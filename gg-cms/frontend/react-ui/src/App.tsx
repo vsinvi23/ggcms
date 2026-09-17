@@ -91,10 +91,10 @@ const App = () => (
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/technology/:slug" element={<TechnologyPage />} />
+                <Route path="/explore" element={<CourseCategoryPage />} />
                 <Route path="/articles" element={<CourseCategoryPage />} />
                 <Route path="/courses" element={<CourseCategoryPage />} />
                 <Route path="/learning-paths" element={<CourseCategoryPage />} />
-                <Route path="/explore" element={<Navigate to="/articles" replace />} />
                 <Route path="/explore/articles" element={<Navigate to="/articles" replace />} />
                 <Route path="/explore/courses" element={<Navigate to="/courses" replace />} />
                 <Route path="/explore/paths" element={<Navigate to="/learning-paths" replace />} />
