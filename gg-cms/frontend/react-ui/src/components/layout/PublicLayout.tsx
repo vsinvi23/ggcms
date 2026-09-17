@@ -42,9 +42,9 @@ interface PublicLayoutProps {
 }
 
 const allNavItems = [
-  { icon: Compass,       label: 'Explore',         href: '/explore/articles',  flag: null },
-  { icon: BookOpen,      label: 'Courses',         href: '/explore/courses',   flag: null },
-  { icon: GraduationCap, label: 'Learning Paths',  href: '/explore/paths',     flag: 'learning_paths' as const },
+  { icon: Compass,       label: 'Explore',         href: '/articles',       flag: null },
+  { icon: BookOpen,      label: 'Courses',         href: '/courses',        flag: null },
+  { icon: GraduationCap, label: 'Learning Paths',  href: '/learning-paths', flag: 'learning_paths' as const },
 ];
 
 export function PublicLayout({ children, hideSearch: _hideSearch = false }: PublicLayoutProps) {

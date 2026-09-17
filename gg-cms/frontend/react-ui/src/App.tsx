@@ -83,7 +83,7 @@ const App = () => (
             <AppErrorBoundary>
             <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
               <Routes>
-                {/* Public Routes */}
+                {/* Public Clean Routes */}
                 <Route path="/" element={<PublicHome />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<OAuthCallback />} />
@@ -91,7 +91,13 @@ const App = () => (
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/technology/:slug" element={<TechnologyPage />} />
-                <Route path="/explore" element={<Navigate to="/explore/articles" replace />} />
+                <Route path="/articles" element={<CourseCategoryPage />} />
+                <Route path="/courses" element={<CourseCategoryPage />} />
+                <Route path="/learning-paths" element={<CourseCategoryPage />} />
+                <Route path="/explore" element={<Navigate to="/articles" replace />} />
+                <Route path="/explore/articles" element={<Navigate to="/articles" replace />} />
+                <Route path="/explore/courses" element={<Navigate to="/courses" replace />} />
+                <Route path="/explore/paths" element={<Navigate to="/learning-paths" replace />} />
                 <Route path="/explore/:category" element={<CourseCategoryPage />} />
                 <Route path="/article/*" element={<PublicArticleView />} />
                 <Route path="/course/*" element={<CourseViewPage />} />
@@ -99,29 +105,36 @@ const App = () => (
                 <Route path="/topics" element={<TopicsPage />} />
                 <Route path="/topics/:slug" element={<TopicDetailPage />} />
 
-                {/* Protected Admin Routes */}
-                <Route path="/admin" element={<ProtectedRoute><ContentManagement /></ProtectedRoute>} />
+                {/* Protected Workspace / Management Routes */}
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-                <Route path="/user-management" element={<ProtectedRoute requireAdmin><UserManagementDashboard /></ProtectedRoute>} />
-                <Route path="/users" element={<ProtectedRoute requireAdmin><UserManagementPage /></ProtectedRoute>} />
-                <Route path="/roles" element={<ProtectedRoute requireAdmin><GroupsPage /></ProtectedRoute>} />
-                <Route path="/groups" element={<Navigate to="/roles" replace />} />
-                <Route path="/admin/content" element={<ProtectedRoute requireAdmin><AdminContentOverview /></ProtectedRoute>} />
-                <Route path="/categories" element={<Navigate to="/configuration" replace />} />
-                <Route path="/configuration" element={<ProtectedRoute requireAdmin><ConfigurationPage /></ProtectedRoute>} />
-                <Route path="/content" element={<ProtectedRoute><ContentManagement /></ProtectedRoute>} />
-                <Route path="/courses" element={<ProtectedRoute><CourseManagement /></ProtectedRoute>} />
-                <Route path="/courses/create" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
-                <Route path="/courses/:id/edit" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
-                <Route path="/articles" element={<ProtectedRoute><ArticleManagement /></ProtectedRoute>} />
-                <Route path="/articles/create" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
+                <Route path="/workspace/content" element={<ProtectedRoute><ContentManagement /></ProtectedRoute>} />
+                <Route path="/workspace/courses" element={<ProtectedRoute><CourseManagement /></ProtectedRoute>} />
+                <Route path="/workspace/courses/create" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/workspace/courses/:id/edit" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/workspace/articles" element={<ProtectedRoute><ArticleManagement /></ProtectedRoute>} />
+                <Route path="/workspace/articles/create" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
+                <Route path="/workspace/users" element={<ProtectedRoute requireAdmin><UserManagementDashboard /></ProtectedRoute>} />
+                <Route path="/workspace/roles" element={<ProtectedRoute requireAdmin><GroupsPage /></ProtectedRoute>} />
+                <Route path="/workspace/content-overview" element={<ProtectedRoute requireAdmin><AdminContentOverview /></ProtectedRoute>} />
+                <Route path="/workspace/configuration" element={<ProtectedRoute requireAdmin><ConfigurationPage /></ProtectedRoute>} />
+                <Route path="/workspace/analytics" element={<ProtectedRoute requireAdmin><Analytics /></ProtectedRoute>} />
+                
+                {/* Legacy & Shortcut Alias Redirects */}
+                <Route path="/admin" element={<Navigate to="/workspace/content" replace />} />
+                <Route path="/content" element={<Navigate to="/workspace/content" replace />} />
+                <Route path="/user-management" element={<Navigate to="/workspace/users" replace />} />
+                <Route path="/users" element={<Navigate to="/workspace/users" replace />} />
+                <Route path="/roles" element={<Navigate to="/workspace/roles" replace />} />
+                <Route path="/groups" element={<Navigate to="/workspace/roles" replace />} />
+                <Route path="/categories" element={<Navigate to="/workspace/configuration" replace />} />
+                <Route path="/configuration" element={<Navigate to="/workspace/configuration" replace />} />
                 <Route path="/import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
                 <Route path="/admin/import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
                 <Route path="/bulk-import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
                 <Route path="/my-tasks" element={<ProtectedRoute><MyTasks /></ProtectedRoute>} />
                 <Route path="/my-learning" element={<ProtectedRoute><MyLearning /></ProtectedRoute>} />
                 <Route path="/notes-highlights" element={<ProtectedRoute><NotesHighlightsPage /></ProtectedRoute>} />
-                <Route path="/analytics" element={<ProtectedRoute requireAdmin><Analytics /></ProtectedRoute>} />
+                <Route path="/analytics" element={<Navigate to="/workspace/analytics" replace />} />
                 <Route path="/factory" element={<ProtectedRoute requireAdmin><FactoryPage /></ProtectedRoute>} />
                 <Route path="/factory/*" element={<ProtectedRoute requireAdmin><FactoryPage /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />

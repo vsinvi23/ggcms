@@ -245,9 +245,9 @@ function ExploreHeader({
   const articlesCount = domainArticlesTotal > 0 ? domainArticlesTotal : totalArticles;
   const coursesCount  = domainCoursesTotal > 0 ? domainCoursesTotal : totalCourses;
 
-  const isArticlesActive = location.pathname.includes('/explore/articles');
-  const isCoursesActive  = location.pathname.includes('/explore/courses');
-  const isPathsActive    = location.pathname.includes('/explore/paths');
+  const isArticlesActive = location.pathname === '/articles' || location.pathname.includes('/articles');
+  const isCoursesActive  = location.pathname === '/courses' || location.pathname.includes('/courses');
+  const isPathsActive    = location.pathname === '/learning-paths' || location.pathname.includes('/paths');
 
   return (
     <div className="shrink-0 border-b border-border bg-card px-6 py-6 space-y-6">
@@ -280,7 +280,7 @@ function ExploreHeader({
             value={articlesCount}
             suffix="+"
             active={isArticlesActive}
-            onClick={() => navigate('/explore/articles')}
+            onClick={() => navigate('/articles')}
           />
           <StatBadge
             icon={BookOpen}
@@ -288,7 +288,7 @@ function ExploreHeader({
             value={coursesCount}
             suffix="+"
             active={isCoursesActive}
-            onClick={() => navigate('/explore/courses')}
+            onClick={() => navigate('/courses')}
           />
           <StatBadge
             icon={GraduationCap}
@@ -296,7 +296,7 @@ function ExploreHeader({
             value={20}
             suffix="+"
             active={isPathsActive}
-            onClick={() => navigate('/explore/paths')}
+            onClick={() => navigate('/learning-paths')}
           />
         </div>
       </div>

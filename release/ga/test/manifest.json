@@ -1,9 +1,22 @@
 {
   "system_name": "GG-CMS Test/Staging Release Registry",
   "environment": "test",
-  "current_version": "1.0.3",
-  "last_build_at": "2026-09-17T16:00:51Z",
+  "current_version": "1.0.4",
+  "last_build_at": "2026-09-17T16:14:48Z",
   "releases": [
+    {
+      "version": "1.0.4",
+      "built_at": "2026-09-17T16:14:48Z",
+      "branch": "release",
+      "commit": "9d95345",
+      "archive_path": "release/ga/test/v1.0.4",
+      "components": {
+        "ui": "1.1.8",
+        "backend": "1.3.8",
+        "db": "1.1.7",
+        "content-factory": "1.1.7"
+      }
+    },
     {
       "version": "1.0.3",
       "built_at": "2026-09-17T16:00:51Z",

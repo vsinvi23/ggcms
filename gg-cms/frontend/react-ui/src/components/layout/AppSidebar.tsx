@@ -50,8 +50,8 @@ const standaloneItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' }, // visible to all authenticated users
   { icon: Factory, label: 'AI Content Factory', href: '/factory', adminOnly: true },
   { icon: ListTodo, label: 'My Tasks', href: '/my-tasks', contentOnly: true },
-  { icon: BookOpen, label: 'Courses', href: '/courses', contentOnly: true },
-  { icon: FileText, label: 'Articles', href: '/articles', contentOnly: true },
+  { icon: BookOpen, label: 'Manage Courses', href: '/workspace/courses', contentOnly: true },
+  { icon: FileText, label: 'Manage Articles', href: '/workspace/articles', contentOnly: true },
   { icon: GraduationCap, label: 'My Learning', href: '/my-learning', contentOnly: true },
   { icon: Upload, label: 'Bulk Import', href: '/import', contentOnly: true },
 ];
@@ -59,12 +59,12 @@ const standaloneItems: NavItem[] = [
 const userManagementSection: NavSection = {
   icon: UserCog,
   label: 'User Management',
-  href: '/user-management',
+  href: '/workspace/users',
   adminOnly: true,
   items: [
-    { icon: Users, label: 'Manage Users', href: '/users', adminOnly: true },
-    { icon: Shield, label: 'Roles & Permissions', href: '/roles', adminOnly: true },
-    { icon: Globe, label: 'Content Overview', href: '/admin/content', adminOnly: true },
+    { icon: Users, label: 'Manage Users', href: '/workspace/users', adminOnly: true },
+    { icon: Shield, label: 'Roles & Permissions', href: '/workspace/roles', adminOnly: true },
+    { icon: Globe, label: 'Content Overview', href: '/workspace/content-overview', adminOnly: true },
   ],
 };
 
@@ -75,12 +75,12 @@ const settingsSection: NavSection = {
   adminOnly: true,
   items: [
     { icon: Globe, label: 'System Settings', href: '/settings', adminOnly: true },
-    { icon: Settings2, label: 'Configuration', href: '/configuration', adminOnly: true },
+    { icon: Settings2, label: 'Configuration', href: '/workspace/configuration', adminOnly: true },
   ],
 };
 
 const otherNavItems: NavItem[] = [
-  { icon: BarChart3, label: 'Analytics', href: '/analytics', adminOnly: true },
+  { icon: BarChart3, label: 'Analytics', href: '/workspace/analytics', adminOnly: true },
 ];
 
 const bottomNavItems: NavItem[] = [
