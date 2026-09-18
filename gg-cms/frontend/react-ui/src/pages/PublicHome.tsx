@@ -1,403 +1,420 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { RecommendedContent } from '@/components/personalization/RecommendedContent';
-import { useAuth } from '@/contexts/AuthContext';
-import { useProfile } from '@/api/hooks/useProfile';
-import { useFeatureFlags } from '@/contexts/FeatureFlagContext';
-import {
-  Search, BookOpen, ChevronRight, ArrowRight,
-  FileText, Cloud, ShieldCheck, Database, Brain, Code2,
-  Sparkles, Zap, Target, Award, CheckCircle2, Flame, GraduationCap,
-} from 'lucide-react';
-import { UserLearningSection } from '@/components/home/UserLearningSection';
-import { useDomains } from '@/api/hooks/useDomains';
-import { useTopics } from '@/api/hooks/useTopics';
-import { TopicChip } from '@/components/public/TopicChip';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useState } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { usePublicCmsList, usePublicLearningPaths } from '@/api/hooks/usePublicCms';
-import { useTags } from '@/api/hooks/useTags';
-import { Skeleton } from '@/components/ui/skeleton';
-import { buildArticleUrl, buildCourseUrl } from '@/lib/slug';
-import { DomainDto } from '@/api/types';
-import { cn } from '@/lib/utils';
+import {
+  BookOpen,
+  GraduationCap,
+  Compass,
+  Target,
+  Briefcase,
+  ArrowRight,
+  Clock,
+  Sparkles,
+  CheckCircle2,
+  TrendingUp,
+  Layers,
+  Zap,
+  Play,
+  HelpCircle,
+  FileText,
+  Shield,
+  Server,
+  Cloud,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
-// ─── Section wrapper ───────────────────────────────────────────────────────────
+export function PublicHome() {
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+  const [activeTimeFilter, setActiveTimeFilter] = useState<'5' | '15' | '30'>('5');
 
-function Section({
-  title, subtitle, viewAllHref, viewAllLabel = 'View All', tinted = false, children,
-}: {
-  title: string; subtitle?: string; viewAllHref?: string;
-  viewAllLabel?: string; tinted?: boolean; children: React.ReactNode;
-}) {
-  return (
-    <section className={`border-t border-border py-12 px-6 ${tinted ? 'bg-muted/20' : 'bg-background'}`}>
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <h2 className="text-2xl font-extrabold text-foreground tracking-tight">{title}</h2>
-            {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
-          </div>
-          {viewAllHref && (
-            <Button variant="ghost" size="sm" asChild className="text-primary font-semibold shrink-0">
-              <Link to={viewAllHref}>{viewAllLabel} <ArrowRight className="w-4 h-4 ml-1.5" /></Link>
-            </Button>
-          )}
-        </div>
-        {children}
-      </div>
-    </section>
-  );
-}
-
-// ─── Domain discovery ──────────────────────────────────────────────────────────
-
-const DOMAIN_ICONS: Record<string, React.ElementType> = {
-  'software-engineering': Code2,
-  'cloud-infrastructure': Cloud,
-  'cybersecurity': ShieldCheck,
-  'data': Database,
-  'ai-machine-learning': Brain,
-};
-
-function DomainCard({ domain }: { domain: DomainDto }) {
-  const Icon = DOMAIN_ICONS[domain.slug] ?? BookOpen;
-  const count = (domain.articleCount ?? 0) + (domain.courseCount ?? 0);
-
-  return (
-    <Link to={`/explore/courses?domain=${domain.slug}`}>
-      <Card className="group h-full cursor-pointer transition-all border-border/80 hover:border-primary/40 hover:shadow-md rounded-2xl">
-        <CardContent className="p-5 flex flex-col gap-3">
-          <div className="p-2.5 rounded-xl bg-primary/10 w-fit text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-            <Icon className="h-5 w-5" />
-          </div>
-          <h3 className="font-bold text-base text-foreground leading-snug group-hover:text-primary transition-colors">{domain.name}</h3>
-          {count > 0 && (
-            <span className="text-xs text-muted-foreground flex items-center gap-1 font-medium group-hover:text-primary transition-colors">
-              {count}+ resources <ArrowRight className="h-3 w-3" />
-            </span>
-          )}
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-// ─── Home ─────────────────────────────────────────────────────────────────────
-
-const PublicHome = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const navigate   = useNavigate();
-  const flags      = useFeatureFlags();
-  const { isAuthenticated } = useAuth();
-  const { data: profile }   = useProfile();
-
-  const { data: tagsData }         = useTags();
-  const { data: apiLearningPaths } = usePublicLearningPaths();
-  const { data: domains }          = useDomains();
-  const { data: topics }           = useTopics();
-
-  const trendingTags   = (tagsData ?? []).slice(0, 6).map(t => t.name);
-  const learningPaths  = apiLearningPaths ?? [];
-  const popularTopics  = (topics ?? []).slice(0, 10);
-
-  const { data: latestData, isLoading: loadingLatest } = usePublicCmsList({ type: 'ARTICLE', page: 0, size: 6 });
-  const latestItems = latestData?.items ?? [];
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-  };
+  const popularTechnologies = [
+    { name: 'Go', slug: 'go', count: 12 },
+    { name: 'Java', slug: 'java', count: 8 },
+    { name: 'Python', slug: 'python', count: 15 },
+    { name: 'JavaScript', slug: 'javascript', count: 18 },
+    { name: 'React', slug: 'react', count: 14 },
+    { name: 'Kubernetes', slug: 'kubernetes', count: 10 },
+    { name: 'Docker', slug: 'docker', count: 9 },
+    { name: 'AWS', slug: 'aws', count: 11 },
+    { name: 'GCP', slug: 'gcp', count: 6 },
+    { name: 'Azure', slug: 'azure', count: 5 },
+    { name: 'PostgreSQL', slug: 'postgresql', count: 8 },
+    { name: 'Redis', slug: 'redis', count: 6 },
+    { name: 'Kafka', slug: 'kafka', count: 5 },
+    { name: 'Linux', slug: 'linux', count: 7 },
+    { name: 'Terraform', slug: 'terraform', count: 6 },
+  ];
 
   return (
-    <PublicLayout>
-      <div className="space-y-0">
+    <PublicLayout hideSearch>
+      <div className="min-h-screen bg-background text-foreground pb-20 space-y-16">
+        
+        {/* Section 1 — Hero */}
+        <section className="relative pt-14 pb-16 px-4 sm:px-6 lg:px-8 border-b border-border bg-gradient-to-b from-primary/10 via-primary/5 to-background overflow-hidden">
+          <div className="max-w-5xl mx-auto text-center space-y-6">
+            <Badge variant="outline" className="px-3.5 py-1 text-xs font-bold text-primary border-primary/30 rounded-full shadow-xs">
+              GeekGully Technical Learning Platform
+            </Badge>
 
-        {/* ── Guest Hero Banner (Catchy & High-Converting) ──────────────────── */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-background via-muted/20 to-background border-b border-border py-16 lg:py-24 px-6 text-center">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_center,rgba(99,102,241,0.08),transparent_50%)] pointer-events-none" />
-          <div className="max-w-4xl mx-auto space-y-8 relative z-10">
-            
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary shadow-2xs">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Learn Smarter, Grow Faster with GeekGully</span>
-            </div>
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-none text-foreground">
+              Learn. Explore. Practice. Grow.
+            </h1>
 
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground tracking-tight leading-[1.12]">
-                Master Tech Skills. <br className="hidden sm:inline" />
-                <span className="bg-gradient-to-r from-primary via-cyan-400 to-indigo-500 bg-clip-text text-transparent">
-                  Simple, Guided &amp; Production-Ready.
-                </span>
-              </h1>
-              <p className="text-muted-foreground text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed font-normal">
-                Explore hand-crafted articles, interactive courses, and role-based learning tracks built for modern engineers.
-              </p>
-            </div>
+            <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-normal">
+              Build practical technology skills through structured courses, career learning paths, articles, and active practice.
+            </p>
 
-            {/* Global Search Bar */}
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
-              <div className="relative bg-card rounded-2xl border border-border shadow-lg focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all p-2">
-                <div className="flex items-center gap-3">
-                  <Search className="h-5 w-5 text-muted-foreground ml-3 shrink-0" />
-                  <Input
-                    placeholder="Search topics, courses, or guides (e.g., #Docker, #OAuth, #Go)..."
-                    className="border-0 focus-visible:ring-0 text-base h-11 bg-transparent flex-1 placeholder:text-muted-foreground/60"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                  />
-                  <Button className="rounded-xl px-6 h-11 shrink-0 font-bold text-sm shadow-xs">
-                    Search
-                  </Button>
-                </div>
-              </div>
-            </form>
-
-            {/* Trending tags */}
-            {trendingTags.length > 0 && (
-              <div className="flex flex-wrap justify-center items-center gap-2 text-xs text-muted-foreground">
-                <span className="font-semibold text-foreground">Trending Tags:</span>
-                {trendingTags.map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => navigate(`/search?q=${encodeURIComponent(tag)}`)}
-                    className="px-3 py-1 rounded-full border border-border/80 bg-card text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all font-medium cursor-pointer"
-                  >
-                    #{tag}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Quick Action Buttons for Guest Users */}
-            {!isAuthenticated && (
-              <div className="pt-2 flex items-center justify-center gap-4 flex-wrap">
-                <Button size="lg" asChild className="rounded-xl px-8 h-12 font-bold text-sm shadow-sm gap-2">
-                  <Link to="/explore/courses">
-                    Explore Courses <ArrowRight className="w-4 h-4" />
-                  </Link>
+            {/* "What do you want to do?" Intent Quick-Jump Buttons */}
+            <div className="pt-6 space-y-3">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground block">
+                What do you want to do today?
+              </span>
+              <div className="flex flex-wrap justify-center gap-2.5 max-w-3xl mx-auto">
+                <Button
+                  onClick={() => navigate('/technologies')}
+                  variant="outline"
+                  className="rounded-2xl h-11 px-4 text-xs font-bold bg-card border-border hover:border-primary hover:bg-primary/5 shadow-xs gap-2"
+                >
+                  <BookOpen className="w-4 h-4 text-blue-500" />
+                  Learn a Technology
                 </Button>
-                <Button size="lg" variant="outline" asChild className="rounded-xl px-8 h-12 font-bold text-sm">
-                  <Link to="/explore/paths">
-                    View Learning Paths
-                  </Link>
+                <Button
+                  onClick={() => navigate('/learning-paths')}
+                  variant="outline"
+                  className="rounded-2xl h-11 px-4 text-xs font-bold bg-card border-border hover:border-primary hover:bg-primary/5 shadow-xs gap-2"
+                >
+                  <GraduationCap className="w-4 h-4 text-purple-500" />
+                  Follow a Learning Path
                 </Button>
-              </div>
-            )}
-
-          </div>
-        </section>
-
-        {/* ── 4-Step Value Feature Grid ("How Simple It Is to Learn") ──────── */}
-        <section className="py-14 px-6 bg-background border-b border-border">
-          <div className="max-w-7xl mx-auto space-y-10">
-            <div className="text-center space-y-2 max-w-xl mx-auto">
-              <Badge variant="outline" className="text-[10px] font-bold border-primary/30 text-primary uppercase tracking-wider">
-                Why Engineers Choose GeekGully
-              </Badge>
-              <h2 className="text-3xl font-extrabold text-foreground tracking-tight">
-                Designed to Make Learning Effortless
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                No fluff. Structured knowledge tailored for software, cloud, and security pros.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="p-6 rounded-2xl border border-border/80 bg-card/60 hover:border-cyan-500/40 transition-all space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center font-extrabold text-lg">
-                  <Zap className="w-6 h-6" />
-                </div>
-                <h3 className="font-bold text-lg text-foreground">1. Pick Your Domain</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Focus on Software Engineering, Cloud Architecture, Cybersecurity, Data, or AI/LLMs.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl border border-border/80 bg-card/60 hover:border-amber-500/40 transition-all space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-extrabold text-lg">
-                  <Target className="w-6 h-6" />
-                </div>
-                <h3 className="font-bold text-lg text-foreground">2. Step-by-Step Tracks</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Bite-sized modules, interactive notes, and clear diagrams with zero ambiguity.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl border border-border/80 bg-card/60 hover:border-indigo-500/40 transition-all space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-extrabold text-lg">
-                  <GraduationCap className="w-6 h-6" />
-                </div>
-                <h3 className="font-bold text-lg text-foreground">3. Career &amp; Role Prep</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Targeted interview preparation paths for DevOps, Fullstack, and Security engineers.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl border border-border/80 bg-card/60 hover:border-emerald-500/40 transition-all space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-extrabold text-lg">
-                  <Award className="w-6 h-6" />
-                </div>
-                <h3 className="font-bold text-lg text-foreground">4. Track &amp; Retain</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Save personal highlights, track progress meters, and review key takeaways anytime.
-                </p>
+                <Button
+                  onClick={() => navigate('/explore')}
+                  variant="outline"
+                  className="rounded-2xl h-11 px-4 text-xs font-bold bg-card border-border hover:border-primary hover:bg-primary/5 shadow-xs gap-2"
+                >
+                  <Compass className="w-4 h-4 text-amber-500" />
+                  Explore Resources
+                </Button>
+                <Button
+                  onClick={() => navigate('/practice')}
+                  variant="outline"
+                  className="rounded-2xl h-11 px-4 text-xs font-bold bg-card border-border hover:border-primary hover:bg-primary/5 shadow-xs gap-2"
+                >
+                  <Target className="w-4 h-4 text-emerald-500" />
+                  Practice Knowledge
+                </Button>
+                <Button
+                  onClick={() => navigate('/interview-prep')}
+                  variant="outline"
+                  className="rounded-2xl h-11 px-4 text-xs font-bold bg-card border-border hover:border-primary hover:bg-primary/5 shadow-xs gap-2"
+                >
+                  <Briefcase className="w-4 h-4 text-rose-500" />
+                  Prepare for an Interview
+                </Button>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── Explore by Domain ────────────────────────────────────────────── */}
-        {domains && domains.length > 0 && (
-          <Section title="Explore Tech Domains" subtitle="Discover structured content across core engineering disciplines" tinted>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              {domains.map(domain => <DomainCard key={domain.id} domain={domain} />)}
-            </div>
-          </Section>
-        )}
-
-        {/* ── Continue Learning (authenticated only) ──────────────────────── */}
+        {/* Section 6 & 7 — Continue Learning & Recommended Next Step (for returning users) */}
         {isAuthenticated && (
-          <div className="pt-6">
-            <UserLearningSection />
-          </div>
-        )}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Continue Learning */}
+              <div className="lg:col-span-2 bg-card border border-border rounded-3xl p-6 space-y-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <h3 className="text-base font-extrabold flex items-center gap-2">
+                    <Play className="w-4 h-4 text-primary fill-primary" />
+                    Continue Learning
+                  </h3>
+                  <span className="text-xs text-muted-foreground font-semibold">Welcome back, {user?.name}</span>
+                </div>
 
-        {/* ── Recommended for You (authenticated only) ─────────────────────── */}
-        {isAuthenticated && profile?.onboardingCompleted && (
-          <section className="border-t border-border py-10 px-6 bg-background">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-center gap-2 mb-6">
-                <h2 className="text-xl font-bold">Recommended for You</h2>
-                <Badge variant="secondary" className="text-xs">Personalised</Badge>
-              </div>
-              <RecommendedContent
-                limit={6}
-                onItemClick={item =>
-                  navigate(item.contentType === 'course' ? `/course/${item.publicId}` : `/article/${item.publicId}`)
-                }
-              />
-            </div>
-          </section>
-        )}
-
-        {/* ── Popular Topics ───────────────────────────────────────────────── */}
-        {popularTopics.length > 0 && (
-          <Section title="Popular Technology Topics" subtitle="Trending technical topics and skill tags">
-            <div className="flex flex-wrap gap-2.5">
-              {popularTopics.map(topic => (
-                <TopicChip key={topic.id} name={topic.name} slug={topic.slug} />
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {/* ── New & Updated Articles ───────────────────────────────────────── */}
-        {(latestItems.length > 0 || loadingLatest) && (
-          <Section title="New &amp; Featured Articles" subtitle="Fresh production guides and deep reads" tinted viewAllHref="/explore/articles">
-            {loadingLatest ? (
-              <div className="space-y-3">
-                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-6 w-full" />)}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {latestItems.map(item => {
-                  const isArticle = item.type === 'ARTICLE';
-                  const linkPath  = isArticle ? buildArticleUrl(item) : buildCourseUrl(item);
-                  const readMin   = Math.max(1, (item.blockCount ?? 0) * 2 || 5);
-                  return (
-                    <Link key={item.id} to={linkPath} className="group">
-                      <Card className="h-full rounded-2xl border-border/80 hover:border-primary/40 hover:shadow-md transition-all p-5 flex flex-col justify-between space-y-4">
-                        <div className="space-y-2.5">
-                          <div className="flex items-center justify-between">
-                            <Badge variant="secondary" className="text-[10px] font-bold">
-                              {item.categoryName || 'Article'}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <FileText className="w-3.5 h-3.5 text-primary/70" /> {readMin} min read
-                            </span>
-                          </div>
-                          <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">
-                            {item.title || 'Untitled Article'}
-                          </h3>
-                          {item.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                              {item.description}
-                            </p>
-                          )}
-                        </div>
-                        <div className="pt-3 border-t border-border/40 flex items-center justify-between text-xs font-semibold text-primary">
-                          <span>Read Article</span>
-                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </Card>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </Section>
-        )}
-
-        {/* ── Learning Paths ────────────────────────────────────────────────── */}
-        {flags.learning_paths && learningPaths.length > 0 && (
-          <Section title="Career Learning Paths" subtitle="Structured multi-course roadmaps designed for role advancement" viewAllHref="/explore/paths">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {learningPaths.slice(0, 6).map(path => (
-                <Link key={path.id} to={`/learn/${path.id}`}>
-                  <Card className="group cursor-pointer hover:border-primary/40 hover:shadow-md transition-all h-full border-border/80 rounded-2xl">
-                    <CardContent className="p-5 flex gap-4 items-start">
-                      <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
-                        <BookOpen className="h-5 w-5" />
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-muted/40 border border-border space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <Badge variant="secondary" className="text-[10px] mb-1 font-bold">Course in Progress</Badge>
+                        <h4 className="text-base font-extrabold">Go Backend Engineering</h4>
+                        <p className="text-xs text-muted-foreground">12 of 17 lessons completed</p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-base text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                          {path.title}
-                        </h4>
-                        {path.description && (
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{path.description}</p>
-                        )}
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          </Section>
-        )}
+                      <Button size="sm" onClick={() => navigate('/course/go-backend-engineering')} className="rounded-xl text-xs font-bold">
+                        Continue <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </div>
+                    <Progress value={72} className="h-2" />
+                  </div>
 
-        {/* ── Guest Bottom CTA Banner ───────────────────────────────────────── */}
-        {!isAuthenticated && (
-          <section className="py-16 px-6 bg-gradient-to-r from-primary/10 via-card to-cyan-500/10 border-t border-border text-center">
-            <div className="max-w-3xl mx-auto space-y-6">
-              <Badge variant="outline" className="text-xs font-bold border-primary/30 text-primary uppercase tracking-wider">
-                Start Learning Today
-              </Badge>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
-                Ready to Upgrade Your Engineering Knowledge?
-              </h2>
-              <p className="text-muted-foreground text-base max-w-xl mx-auto leading-relaxed">
-                Join thousands of developers mastering cloud, software engineering, and cybersecurity on GeekGully.
-              </p>
-              <div className="flex justify-center gap-4 flex-wrap pt-2">
-                <Button size="lg" asChild className="rounded-xl px-8 h-12 font-bold text-sm shadow-sm gap-2">
-                  <Link to="/explore/articles">
-                    Start Browsing Free <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  {/* Paths Progress */}
+                  <div className="grid grid-cols-3 gap-3 pt-1">
+                    <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase block">Backend Path</span>
+                      <span className="text-sm font-extrabold text-primary">62%</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase block">Cloud Path</span>
+                      <span className="text-sm font-extrabold text-foreground">24%</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase block">Security Path</span>
+                      <span className="text-sm font-extrabold text-foreground">10%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recommended Next Step */}
+              <div className="bg-gradient-to-br from-primary/10 via-card to-card border border-primary/30 rounded-3xl p-6 flex flex-col justify-between shadow-xs">
+                <div className="space-y-3">
+                  <Badge className="bg-primary text-primary-foreground text-[10px] font-extrabold uppercase">
+                    Your Next Step
+                  </Badge>
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground font-bold block">You completed:</span>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">✓ Go fundamentals · ✓ HTTP · ✓ REST APIs</p>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-extrabold text-foreground">Authentication & Authorization</h4>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                      Learn how OAuth 2.0, PKCE, and JWT authentication work in modern backend applications.
+                    </p>
+                  </div>
+                </div>
+                <Button onClick={() => navigate('/article/oauth-2-explained')} className="w-full mt-4 rounded-xl text-xs font-bold">
+                  Continue Learning <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
               </div>
             </div>
           </section>
         )}
+
+        {/* Section 5 — Explore Technologies */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-extrabold tracking-tight">Explore Technologies</h2>
+              <p className="text-xs text-muted-foreground">Discover structured learning hubs around modern tech stacks.</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/technologies')} className="text-xs font-bold text-primary">
+              View all technologies →
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            {popularTechnologies.map(tech => (
+              <button
+                key={tech.slug}
+                onClick={() => navigate(`/technology/${tech.slug}`)}
+                className="p-4 rounded-2xl bg-card border border-border hover:border-primary/50 text-left transition-all hover:shadow-md group"
+              >
+                <h4 className="font-extrabold text-sm text-foreground group-hover:text-primary transition-colors">{tech.name}</h4>
+                <span className="text-[11px] text-muted-foreground font-medium">{tech.count} resources</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Section 8 — Learn by Goal Cards */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div>
+            <h2 className="text-2xl font-extrabold tracking-tight">What are you trying to achieve?</h2>
+            <p className="text-xs text-muted-foreground">Choose a career goal and follow structured, end-to-end guidance.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 flex flex-col justify-between transition-all hover:shadow-lg space-y-4">
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                  <Server className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-extrabold">Become a Backend Engineer</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Learn programming, APIs, databases, distributed systems, and production engineering.
+                </p>
+              </div>
+              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold">
+                Explore path →
+              </Button>
+            </div>
+
+            <div className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 flex flex-col justify-between transition-all hover:shadow-lg space-y-4">
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                  <Cloud className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-extrabold">Become a Cloud Engineer</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  AWS/GCP/Azure, networking, containers, Kubernetes, and infrastructure.
+                </p>
+              </div>
+              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold">
+                Explore path →
+              </Button>
+            </div>
+
+            <div className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 flex flex-col justify-between transition-all hover:shadow-lg space-y-4">
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-extrabold">Become a Security Engineer</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Identity, OAuth, OIDC, PKI, application security, and cloud security.
+                </p>
+              </div>
+              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold">
+                Explore path →
+              </Button>
+            </div>
+
+            <div className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 flex flex-col justify-between transition-all hover:shadow-lg space-y-4">
+              <div className="space-y-2">
+                <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                  <Briefcase className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-extrabold">Prepare for Interviews</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Coding, system design, backend, cloud, and security interview questions.
+                </p>
+              </div>
+              <Button onClick={() => navigate('/interview-prep')} variant="outline" size="sm" className="w-full text-xs font-bold">
+                Start preparation →
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 11 — Quick Learning (Have 5 / 15 / 30 mins?) */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4">
+              <div>
+                <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
+                  <Clock className="w-6 h-6 text-primary" />
+                  Quick Learning by Available Time
+                </h2>
+                <p className="text-xs text-muted-foreground">Select resources tailored precisely to your time window.</p>
+              </div>
+
+              {/* Time selector tabs */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTimeFilter('5')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    activeTimeFilter === '5' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  Have 5 mins?
+                </button>
+                <button
+                  onClick={() => setActiveTimeFilter('15')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    activeTimeFilter === '15' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  Have 15 mins?
+                </button>
+                <button
+                  onClick={() => setActiveTimeFilter('30')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    activeTimeFilter === '30' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  Have 30+ mins?
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Learning Item Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {activeTimeFilter === '5' && (
+                <>
+                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
+                    ⚡ HTTP Status Codes Cheat Sheet (5 min)
+                  </button>
+                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
+                    ⚡ Git Commands Cheat Sheet (5 min)
+                  </button>
+                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
+                    ⚡ Docker Commands Cheat Sheet (5 min)
+                  </button>
+                </>
+              )}
+
+              {activeTimeFilter === '15' && (
+                <>
+                  <button onClick={() => navigate('/article/oauth-2-explained')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
+                    📖 OAuth 2.0 Explained (10 min)
+                  </button>
+                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
+                    📖 Go Interfaces Deep Dive (12 min)
+                  </button>
+                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
+                    📖 Kubernetes Pods & Architecture (15 min)
+                  </button>
+                </>
+              )}
+
+              {activeTimeFilter === '30' && (
+                <>
+                  <button onClick={() => navigate('/course/go-backend-engineering')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
+                    🚀 Building a Production Go API (30 min Lab)
+                  </button>
+                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
+                    🚀 Kubernetes Networking Deep Dive (25 min)
+                  </button>
+                  <button onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
+                    🚀 Full System Design Practice Test (30 min)
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Section 12 — Practice Preview */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-extrabold tracking-tight">Test yourself</h2>
+              <p className="text-xs text-muted-foreground">Reinforce your knowledge through quick quizzes.</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/practice')} className="text-xs font-bold text-primary">
+              Explore Practice →
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div onClick={() => navigate('/practice')} className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
+              <Badge variant="secondary" className="text-[10px]">Quick Quiz</Badge>
+              <h4 className="font-extrabold text-sm">OAuth & OIDC</h4>
+              <p className="text-xs text-muted-foreground">5 questions · 10 min</p>
+            </div>
+            <div onClick={() => navigate('/practice')} className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
+              <Badge variant="secondary" className="text-[10px]">Fundamentals</Badge>
+              <h4 className="font-extrabold text-sm">Backend Fundamentals</h4>
+              <p className="text-xs text-muted-foreground">25 questions · 15 min</p>
+            </div>
+            <div onClick={() => navigate('/practice')} className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
+              <Badge variant="secondary" className="text-[10px]">Advanced</Badge>
+              <h4 className="font-extrabold text-sm">System Design</h4>
+              <p className="text-xs text-muted-foreground">30 questions · 25 min</p>
+            </div>
+            <div onClick={() => navigate('/practice')} className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
+              <Badge variant="secondary" className="text-[10px]">DevOps</Badge>
+              <h4 className="font-extrabold text-sm">Kubernetes Networking</h4>
+              <p className="text-xs text-muted-foreground">20 questions · 15 min</p>
+            </div>
+          </div>
+        </section>
 
       </div>
     </PublicLayout>
   );
-};
+}
 
 export default PublicHome;
-

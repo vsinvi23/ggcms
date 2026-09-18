@@ -31,6 +31,13 @@ const Auth = lazy(() => import('./pages/Auth'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const TechnologyPage = lazy(() => import('./pages/TechnologyPage'));
+const TechnologiesPage = lazy(() => import('./pages/TechnologiesPage'));
+const DomainsPage = lazy(() => import('./pages/DomainsPage'));
+const CoursesPage = lazy(() => import('./pages/CoursesPage'));
+const LearningPathsHub = lazy(() => import('./pages/LearningPathsHub'));
+const ExplorePage = lazy(() => import('./pages/ExplorePage'));
+const PracticeHub = lazy(() => import('./pages/PracticeHub'));
+const InterviewPrepHub = lazy(() => import('./pages/InterviewPrepHub'));
 const CourseCategoryPage = lazy(() => import('./pages/CourseCategoryPage'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
 const LearningPathPage = lazy(() => import('./pages/LearningPathPage'));
@@ -83,22 +90,29 @@ const App = () => (
             <AppErrorBoundary>
             <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
               <Routes>
-                {/* Public Clean Routes */}
+                {/* Public Clean Intent Routes */}
                 <Route path="/" element={<PublicHome />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<OAuthCallback />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/search" element={<SearchResults />} />
+                
+                {/* Intent-Driven Pages */}
+                <Route path="/courses" element={<CoursesPage />} />
+                <Route path="/learning-paths" element={<LearningPathsHub />} />
+                <Route path="/explore" element={<ExplorePage />} />
+                <Route path="/practice" element={<PracticeHub />} />
+                <Route path="/interview-prep" element={<InterviewPrepHub />} />
+                <Route path="/technologies" element={<TechnologiesPage />} />
+                <Route path="/domains" element={<DomainsPage />} />
+                
                 <Route path="/technology/:slug" element={<TechnologyPage />} />
-                <Route path="/explore" element={<CourseCategoryPage />} />
-                <Route path="/articles" element={<CourseCategoryPage />} />
-                <Route path="/courses" element={<CourseCategoryPage />} />
-                <Route path="/learning-paths" element={<CourseCategoryPage />} />
-                <Route path="/explore/articles" element={<Navigate to="/articles" replace />} />
+                <Route path="/explore/articles" element={<ExplorePage />} />
                 <Route path="/explore/courses" element={<Navigate to="/courses" replace />} />
                 <Route path="/explore/paths" element={<Navigate to="/learning-paths" replace />} />
-                <Route path="/explore/:category" element={<CourseCategoryPage />} />
+                <Route path="/explore/:category" element={<ExplorePage />} />
+                <Route path="/articles" element={<ExplorePage />} />
                 <Route path="/article/*" element={<PublicArticleView />} />
                 <Route path="/course/*" element={<CourseViewPage />} />
                 <Route path="/learn/:path" element={<LearningPathPage />} />

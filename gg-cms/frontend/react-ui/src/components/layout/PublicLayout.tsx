@@ -18,10 +18,12 @@ import {
   LogOut,
   House,
   Compass,
-  Hash,
+  Target,
   Search,
-
+  StickyNote,
+  Bookmark,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -42,10 +44,11 @@ interface PublicLayoutProps {
 }
 
 const allNavItems = [
-  { icon: Compass,       label: 'Explore',         href: '/explore',        flag: null },
-  { icon: FileText,      label: 'Articles',        href: '/articles',       flag: null },
-  { icon: BookOpen,      label: 'Courses',         href: '/courses',        flag: null },
-  { icon: GraduationCap, label: 'Learning Paths',  href: '/learning-paths', flag: 'learning_paths' as const },
+  { icon: BookOpen,      label: 'Courses',        href: '/courses',       exact: false, flag: null },
+  { icon: GraduationCap, label: 'Learning Paths', href: '/learning-paths', exact: false, flag: null },
+  { icon: Compass,       label: 'Explore',        href: '/explore',       exact: false, flag: null },
+  { icon: Target,        label: 'Practice',       href: '/practice',      exact: false, flag: null },
+  { icon: Briefcase,     label: 'Interview Prep', href: '/interview-prep', exact: false, flag: null },
 ];
 
 export function PublicLayout({ children, hideSearch: _hideSearch = false }: PublicLayoutProps) {
@@ -64,6 +67,15 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
     setAuthTab(tab);
     setAuthModalOpen(true);
     setMobileOpen(false);
+  };
+
+  const handleProtectedAction = (targetUrl: string) => {
+    if (isAuthenticated) {
+      navigate(targetUrl);
+    } else {
+      toast.info('Please sign in to access your notes & saved favorites');
+      openAuth('login');
+    }
   };
 
   useEffect(() => {
@@ -91,9 +103,9 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
           </Link>
 
           {/* Nav tabs */}
-          <nav className="hidden sm:flex items-center flex-1 gap-0 overflow-x-auto">
+          <nav className="hidden md:flex items-center flex-1 gap-1 overflow-x-auto">
             {navItems.map(item => {
-              const active = item.href === '/'
+              const active = item.exact
                 ? location.pathname === '/'
                 : location.pathname.startsWith(item.href);
               return (
@@ -101,7 +113,7 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
                   key={item.href}
                   to={item.href}
                   className={cn(
-                    'flex items-center gap-2 px-4 h-14 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap',
+                    'flex items-center gap-1.5 px-3 h-14 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap',
                     active
                       ? 'border-sidebar-primary-foreground text-sidebar-foreground'
                       : 'border-transparent text-sidebar-foreground/50 hover:text-sidebar-foreground hover:border-sidebar-foreground/30',
@@ -114,8 +126,8 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
             })}
           </nav>
 
-          {/* Search trigger & Auth — right side */}
-          <div className="flex items-center gap-2 shrink-0 ml-auto">
+          {/* Search trigger, Notes, Favorites & Auth — right side */}
+          <div className="flex items-center gap-1.5 shrink-0 ml-auto">
             <Button
               variant="outline"
               size="sm"
@@ -128,6 +140,31 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
                 <span className="text-xs">⌘</span>K
               </kbd>
             </Button>
+
+            {/* Notes Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleProtectedAction('/notes-highlights')}
+              className="flex items-center gap-1.5 h-9 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent text-xs rounded-xl transition-all"
+              title="My Notes & Highlights"
+            >
+              <StickyNote className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="hidden lg:inline font-semibold">Notes</span>
+            </Button>
+
+            {/* Bookmarks / Favorites Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleProtectedAction('/my-learning')}
+              className="flex items-center gap-1.5 h-9 px-2.5 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent text-xs rounded-xl transition-all"
+              title="Favorites & Saved Items"
+            >
+              <Bookmark className="w-4 h-4 text-primary shrink-0" />
+              <span className="hidden lg:inline font-semibold">Favorites</span>
+            </Button>
+
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -212,6 +249,20 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
                 {item.label}
               </Link>
             ))}
+            <button
+              onClick={() => { setMobileOpen(false); handleProtectedAction('/notes-highlights'); }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-left"
+            >
+              <StickyNote className="h-5 w-5 text-amber-400" />
+              My Notes & Highlights
+            </button>
+            <button
+              onClick={() => { setMobileOpen(false); handleProtectedAction('/my-learning'); }}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-left"
+            >
+              <Bookmark className="h-5 w-5 text-primary" />
+              Bookmarks & Favorites
+            </button>
             {isAuthenticated ? (
               <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
                 <Button variant="ghost" size="sm" className="w-full mt-2 text-sidebar-foreground border border-sidebar-border/50">

@@ -48,7 +48,8 @@ const ARTICLE_TYPE_OPTIONS = [
   { value: 'BLOG',       label: 'Blog',        description: 'Opinion & insights' },
   { value: 'TUTORIAL',   label: 'Tutorial',    description: 'Step-by-step guide' },
   { value: 'GUIDE',      label: 'Guide',       description: 'Reference guide' },
-  { value: 'NEWS',       label: 'News',        description: 'Industry news' },
+  { value: 'CHEATSHEET', label: 'Cheatsheet',  description: 'Quick reference sheet' },
+  { value: 'TEST',       label: 'Test / Quiz', description: 'Self-assessment quiz' },
   { value: 'CASE_STUDY', label: 'Case Study',  description: 'Real-world analysis' },
 ];
 
@@ -209,7 +210,7 @@ function getDomainTheme(name: string) {
   };
 }
 
-// ─── Explore header — title, stats, domain cards (Panel 2 Spec) ───────────────
+// ─── Explore header — search bar & domain cards ─────────────────────────────
 
 function getDomainIcon(name: string) {
   const lower = name.toLowerCase();
@@ -223,163 +224,87 @@ function getDomainIcon(name: string) {
 
 
 function ExploreHeader({
-  type,
-  totalArticles,
-  totalCourses,
-  domains,
+  tabType = 'EXPLORE',
+  domains = [],
   activeId,
   onSelect,
+  searchQuery,
+  onSearchChange,
 }: {
-  type: 'ARTICLE' | 'COURSE';
-  totalArticles: number;
-  totalCourses: number;
-  domains: DomainDto[];
-  activeId: number | undefined;
-  onSelect: (domain: DomainDto) => void;
+  tabType?: 'EXPLORE' | 'COURSE' | 'PATH';
+  domains?: DomainDto[];
+  activeId?: number | undefined;
+  onSelect?: (domain: DomainDto) => void;
+  searchQuery: string;
+  onSearchChange: (q: string) => void;
 }) {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const isCourse = type === 'COURSE';
-  const domainArticlesTotal = domains.reduce((acc, d) => acc + (d.articleCount || 0), 0);
-  const domainCoursesTotal  = domains.reduce((acc, d) => acc + (d.courseCount || 0), 0);
-  const articlesCount = domainArticlesTotal > 0 ? domainArticlesTotal : totalArticles;
-  const coursesCount  = domainCoursesTotal > 0 ? domainCoursesTotal : totalCourses;
-
-  const isArticlesActive = location.pathname === '/articles' || location.pathname.includes('/articles');
-  const isCoursesActive  = location.pathname === '/courses' || location.pathname.includes('/courses');
-  const isPathsActive    = location.pathname === '/learning-paths' || location.pathname.includes('/paths');
+  const searchPlaceholder =
+    tabType === 'COURSE'
+      ? 'Search courses, byte modules & interview capsules…'
+      : tabType === 'PATH'
+      ? 'Search learning paths, career tracks & skill roadmaps…'
+      : 'Search articles, cheatsheets, tutorials & engineering guides…';
 
   return (
-    <div className="shrink-0 border-b border-border bg-card px-6 py-6 space-y-6">
-      {/* Title & Stats counters */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
-            {isCourse ? (
-              <>
-                <BookOpen className="w-8 h-8 text-primary" />
-                <span>Courses & Learning Catalog</span>
-              </>
-            ) : (
-              <>
-                <Compass className="w-8 h-8 text-primary" />
-                <span>Explore Articles & Technical Guides</span>
-              </>
-            )}
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {isCourse
-              ? 'Browse our curated technical courses, byte-sized modules, interview capsules, and guided learning tracks'
-              : 'Discover articles, step-by-step tutorials, engineering guides, and technical insights by domain'}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <StatBadge
-            icon={FileText}
-            label="Articles"
-            value={articlesCount}
-            suffix="+"
-            active={isArticlesActive}
-            onClick={() => navigate('/articles')}
-          />
-          <StatBadge
-            icon={BookOpen}
-            label="Courses"
-            value={coursesCount}
-            suffix="+"
-            active={isCoursesActive}
-            onClick={() => navigate('/courses')}
-          />
-          <StatBadge
-            icon={GraduationCap}
-            label="Learning Paths"
-            value={20}
-            suffix="+"
-            active={isPathsActive}
-            onClick={() => navigate('/learning-paths')}
-          />
-        </div>
+    <div className="shrink-0 border-b border-border bg-card px-6 py-4 space-y-3.5">
+      {/* Search Bar in heading area */}
+      <div className="relative max-w-3xl">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <Input
+          value={searchQuery}
+          onChange={e => onSearchChange(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="pl-10 pr-10 h-10 rounded-xl border border-border bg-background shadow-xs focus:border-primary text-sm font-normal"
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => onSearchChange('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
-      {/* 5 Domain Selection Cards */}
-
-      {domains.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      {/* Domain Selection Cards */}
+      {domains.length > 0 && onSelect && tabType !== 'PATH' && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
           {domains.map(domain => {
-            const count = domain.articleCount + domain.courseCount;
+            const count = tabType === 'COURSE' ? (domain.courseCount || 0) : (domain.articleCount || 0);
             const active = domain.id === activeId;
             const DomainIcon = getDomainIcon(domain.name);
             const theme = getDomainTheme(domain.name);
             return (
               <button
                 key={domain.id}
+                type="button"
                 onClick={() => onSelect(domain)}
                 className={cn(
-                  'flex flex-col items-start gap-2.5 p-4 rounded-xl border text-left transition-all duration-200 hover:shadow-sm cursor-pointer',
+                  'flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all duration-200 hover:shadow-xs cursor-pointer',
                   active
                     ? theme.activeBorder
                     : 'border-border bg-background hover:bg-muted/50 hover:border-border/80',
                 )}
               >
                 <div className={cn(
-                  'w-10 h-10 shrink-0 rounded-lg flex items-center justify-center transition-colors',
+                  'w-8 h-8 shrink-0 rounded-lg flex items-center justify-center transition-colors',
                   active
                     ? theme.activeIconBg
                     : `${theme.bg} ${theme.text}`,
                 )}>
-                  <DomainIcon className="w-5 h-5" />
+                  <DomainIcon className="w-4 h-4" />
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground leading-tight">{domain.name}</h3>
-                  <span className="text-xs text-muted-foreground mt-0.5 block">{count > 0 ? `${count}+ resources` : 'In-depth topics'}</span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-xs font-bold text-foreground leading-tight truncate">{domain.name}</h3>
+                  <span className="text-[10px] text-muted-foreground block">{count > 0 ? `${count}+ ${tabType === 'COURSE' ? 'courses' : 'articles'}` : 'In-depth topics'}</span>
                 </div>
-
               </button>
             );
           })}
         </div>
       )}
     </div>
-  );
-}
-
-function StatBadge({
-  icon: Icon,
-  label,
-  value,
-  suffix = '',
-  active = false,
-  onClick,
-}: {
-  icon: typeof FileText;
-  label: string;
-  value: number;
-  suffix?: string;
-  active?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-left transition-all duration-200 cursor-pointer shadow-xs select-none',
-        active
-          ? 'border-primary bg-primary/10 ring-2 ring-primary/20 text-foreground font-semibold'
-          : 'border-border bg-background hover:bg-muted/60 hover:border-border/80 text-muted-foreground hover:text-foreground',
-      )}
-    >
-      <div className={cn(
-        'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors',
-        active ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary',
-      )}>
-        <Icon className="h-4 w-4" />
-      </div>
-      <div>
-        <span className="text-sm font-bold text-foreground">{value}{suffix}</span>
-        <span className={cn('text-xs ml-1', active ? 'text-primary font-semibold' : 'text-muted-foreground')}>{label}</span>
-      </div>
-    </button>
   );
 }
 
@@ -543,7 +468,15 @@ function ExploreCard({
 
 // ─── Main list page ───────────────────────────────────────────────────────────
 
-function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE'; initialCourseType?: string }) {
+function ApiContentList({
+  type,
+  initialCourseType,
+  initialSearch,
+}: {
+  type: 'ARTICLE' | 'COURSE';
+  initialCourseType?: string;
+  initialSearch?: string;
+}) {
   const isArticle = type === 'ARTICLE';
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -558,7 +491,7 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
     return m;
   }, [enrollments]);
 
-  const [searchQuery, setSearchQuery]               = useState('');
+  const [searchQuery, setSearchQuery]               = useState(initialSearch ?? '');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [activeDomainId, setActiveDomainId]         = useState<number | undefined>(undefined);
   const [selectedTypes, setSelectedTypes]           = useState<string[]>(initialCourseType ? [initialCourseType] : []);
@@ -706,12 +639,12 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
       <div className="flex flex-col h-full overflow-hidden">
 
         <ExploreHeader
-          type={type}
-          totalArticles={totalArticles}
-          totalCourses={totalCourses}
+          tabType={isArticle ? 'EXPLORE' : 'COURSE'}
           domains={allDomains}
           activeId={activeDomainId}
           onSelect={handleDomainSelect}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
 
         <CategoryGrid
@@ -942,81 +875,111 @@ function ApiContentList({ type, initialCourseType }: { type: 'ARTICLE' | 'COURSE
 
 function LearningPathsCatalog() {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredPaths = useMemo(() => {
+    if (!searchQuery.trim()) return CURATED_LEARNING_PATHS;
+    const q = searchQuery.toLowerCase();
+    return CURATED_LEARNING_PATHS.filter(
+      p =>
+        p.title.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        p.modules.some(m => m.title.toLowerCase().includes(q)),
+    );
+  }, [searchQuery]);
+
   return (
-    <PublicLayout>
-      <div className="max-w-7xl mx-auto px-6 py-10 space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
-          <div>
-            <h1 className="text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-3">
-              <GraduationCap className="w-8 h-8 text-primary" />
-              Learning Paths & Career Tracks
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Structured step-by-step curricula crafted by industry experts to master software, cloud, and security
-            </p>
+    <PublicLayout hideSearch>
+      <div className="flex flex-col h-full overflow-hidden">
+        <ExploreHeader
+          tabType="PATH"
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+
+        <main className="flex-1 overflow-y-auto max-w-7xl w-full mx-auto px-6 py-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-foreground tracking-tight flex items-center gap-2.5">
+                <GraduationCap className="w-6 h-6 text-primary" />
+                <span>Guided Learning Curves & Career Tracks</span>
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Structured step-by-step curricula crafted by industry experts to master software, cloud, and security
+              </p>
+            </div>
+            <Badge variant="secondary" className="text-xs font-semibold px-3 py-1 rounded-full bg-primary/10 text-primary border-primary/20">
+              {filteredPaths.length} Active Tracks
+            </Badge>
           </div>
-          <Badge variant="secondary" className="w-fit text-xs font-semibold px-3.5 py-1.5 rounded-full bg-primary/10 text-primary border-primary/20">
-            6 Core Tracks Available
-          </Badge>
-        </div>
 
-        {/* Path Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {CURATED_LEARNING_PATHS.map(path => (
-            <div
-              key={path.id}
-              onClick={() => navigate(`/learn/${path.slug}`)}
-              className="group flex flex-col justify-between p-6 rounded-2xl border border-border bg-card hover:border-primary/40 hover:shadow-lg transition-all duration-200 cursor-pointer space-y-5"
-            >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="text-xs font-semibold text-primary border-primary/30 bg-primary/10">
-                    {path.kind === 'INTERVIEW_PREP' ? 'Interview Track' : path.kind === 'SECURITY_TRACK' ? 'Security Track' : 'Career Path'}
-                  </Badge>
-                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-primary" /> {path.estimatedHours}h estimated
-                  </span>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-                    {path.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground line-clamp-3 mt-1.5 leading-relaxed">
-                    {path.description}
-                  </p>
-                </div>
-
-                {/* Modules checklist preview */}
-                <div className="space-y-2 pt-2 border-t border-border/50">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
-                    Curriculum Includes ({path.modules.length} Modules)
-                  </span>
-                  <ul className="space-y-1.5 text-xs text-foreground/80">
-                    {path.modules.slice(0, 3).map((m, idx) => (
-                      <li key={m.id} className="flex items-center gap-2 truncate">
-                        <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold flex items-center justify-center shrink-0">
-                          {idx + 1}
-                        </span>
-                        <span className="truncate">{m.title}</span>
-                      </li>
-                    ))}
-                    {path.modules.length > 3 && (
-                      <li className="text-[11px] text-muted-foreground pl-6">
-                        +{path.modules.length - 3} more modules...
-                      </li>
-                    )}
-                  </ul>
-                </div>
-              </div>
-
-              <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-2 shadow-xs group-hover:scale-[1.01] transition-all">
-                Explore Learning Path <ArrowRight className="w-4 h-4" />
+          {filteredPaths.length === 0 ? (
+            <div className="text-center py-16">
+              <Search className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+              <h3 className="text-base font-semibold text-foreground">No learning paths match your search</h3>
+              <p className="text-xs text-muted-foreground mt-1">Try different keywords or clear your search.</p>
+              <Button variant="outline" size="sm" onClick={() => setSearchQuery('')} className="mt-4 text-xs">
+                Clear search
               </Button>
             </div>
-          ))}
-        </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPaths.map(path => (
+                <div
+                  key={path.id}
+                  onClick={() => navigate(`/learn/${path.slug}`)}
+                  className="group flex flex-col justify-between p-6 rounded-2xl border border-border bg-card hover:border-primary/40 hover:shadow-lg transition-all duration-200 cursor-pointer space-y-5"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs font-semibold text-primary border-primary/30 bg-primary/10">
+                        {path.kind === 'INTERVIEW_PREP' ? 'Interview Track' : path.kind === 'SECURITY_TRACK' ? 'Security Track' : 'Career Path'}
+                      </Badge>
+                      <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-primary" /> {path.estimatedHours}h estimated
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                        {path.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground line-clamp-3 mt-1.5 leading-relaxed">
+                        {path.description}
+                      </p>
+                    </div>
+
+                    {/* Modules checklist preview */}
+                    <div className="space-y-2 pt-2 border-t border-border/50">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
+                        Curriculum Includes ({path.modules.length} Modules)
+                      </span>
+                      <ul className="space-y-1.5 text-xs text-foreground/80">
+                        {path.modules.slice(0, 3).map((m, idx) => (
+                          <li key={m.id} className="flex items-center gap-2 truncate">
+                            <span className="w-4 h-4 rounded-full bg-primary/15 text-primary text-[10px] font-bold flex items-center justify-center shrink-0">
+                              {idx + 1}
+                            </span>
+                            <span className="truncate">{m.title}</span>
+                          </li>
+                        ))}
+                        {path.modules.length > 3 && (
+                          <li className="text-[11px] text-muted-foreground pl-6">
+                            +{path.modules.length - 3} more modules...
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-2 shadow-xs group-hover:scale-[1.01] transition-all">
+                    Explore Learning Path <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
       </div>
     </PublicLayout>
   );
@@ -1068,29 +1031,9 @@ function AllCategoriesCatalog() {
               Explore comprehensive categories across software engineering, cloud architecture, cybersecurity, and data systems.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <StatBadge
-              icon={FileText}
-              label="Articles"
-              value={100}
-              suffix="+"
-              onClick={() => navigate('/explore/articles')}
-            />
-            <StatBadge
-              icon={BookOpen}
-              label="Courses"
-              value={50}
-              suffix="+"
-              onClick={() => navigate('/explore/courses')}
-            />
-            <StatBadge
-              icon={GraduationCap}
-              label="Learning Paths"
-              value={20}
-              suffix="+"
-              onClick={() => navigate('/explore/paths')}
-            />
-          </div>
+          <Badge variant="secondary" className="w-fit text-xs font-semibold px-3.5 py-1.5 rounded-full bg-primary/10 text-primary border-primary/20">
+            {categories.length > 0 ? `${categories.length} Categories Available` : 'Technical Topics'}
+          </Badge>
         </div>
 
         {/* Search Input */}
