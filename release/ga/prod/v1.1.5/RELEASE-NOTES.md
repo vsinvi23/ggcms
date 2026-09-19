@@ -2,14 +2,14 @@
 
 - **Target Environment**: prod
 - **Release Version**: v1.1.5
-- **Build Timestamp**: 2026-09-16T17:02:57Z
-- **Git Commit**: b1e0c58
+- **Build Timestamp**: 2026-09-19T16:00:49Z
+- **Git Commit**: 94f59b5
 
 ## Component Version Matrix
-- **React UI**: v1.1.6
-- **Go Backend**: v1.3.6
-- **DB Migrations**: v1.1.5
-- **AI Content Factory**: v1.1.5
+- **React UI**: v1.1.21
+- **Go Backend**: v1.1.21
+- **DB Migrations**: v1.1.10
+- **AI Content Factory**: v1.1.10
 
 ## Deployment Contract & Security Signature
 - **API Contract Version**: v1
@@ -18,14 +18,14 @@
 
 ## Recent Change Log (Git Commits)
 ```
-b1e0c58 feat(import): add zip archive extraction with security scanning, selective document discard, and save to confirm later
-afefbd7 merge: merge release branch with Educative article reader and import preview modal
-0517b2e fix(reader): add Educative table styling and active scroll tracking for Table of Contents navigation
-6182b79 fix(import): add client-side parser fallback for markdown file uploads
-b019d06 feat(import): add imported document Educative reading view modal and Space fonts styling
-f6b913f import for mdfile dixed for error
-6004a33 merge: sync latest release into main
-61343c6 Merge branch 'release' of https://github.com/vsinvi23/ggcms into release
-213ebd8 merge: merge release (including Ui-redesign and import/logging features) into main
-752f94f fix(ui): resolve JSX tag conflicts from Ui-redesign merge in PublicHome, LearningPath, and Topics pages
+94f59b5 chore(version): bump version to 1.1.21
+21885a8 UI: Add apiHelpers update
+031170f UI: Include InterviewPrepHub user updates and sync dist artifacts
+a126d19 UI Fix: Use DashboardLayout for My Learning and Notes pages to preserve left sidebar
+342ca50 feat(interview-prep): add SME curated technical interview tracks for System Design, Go Concurrency, OAuth2/Security, and DevOps with PostgreSQL dynamic seeding and connected course navigation
+aaea85d UI: Make Home page dynamic with live API hooks and compact course cards
+784c660 UI Fix: Remove accuracy and metrics stats banner from PracticeHub page
+7a861a1 fix(react-ui): remove static mock array fallbacks across learning paths, courses, explore, practice, and interview prep hubs to ensure 100% backend-driven configurable data
+4df2c70 feat(versioning): implement public view quick edit & content version request with Master Admin/Super Admin permission control (v1.1.20)
+eab1b90 refactor(course-view): harmonize course view page layout with left navigation sidebar and right content panel including related & recommended courses
 ```

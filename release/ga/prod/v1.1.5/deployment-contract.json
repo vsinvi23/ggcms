@@ -1,15 +1,15 @@
 {
-  "deployment_id": "2026-09-16-prod-001",
+  "deployment_id": "2026-09-19-prod-001",
   "environment": "prod",
-  "ui_version": "1.1.6",
-  "backend_version": "1.3.6",
-  "db_migration_version": "1.1.5",
-  "db_schema_hash": "sha256:8ff48739e942460945554ed376b43fae1cd5f6ebd3e4daa454fdc6e4b02c2bb7",
+  "ui_version": "1.1.21",
+  "backend_version": "1.1.21",
+  "db_migration_version": "1.1.10",
+  "db_schema_hash": "sha256:9ebf355960a2955491d683660e53b3863cfa6bd04e3c5808850c85e96245023f",
   "backup_manifest_ref": "",
   "api_contract_version": "v1",
   "rollback_target": "",
   "deployment_status": "prepared",
-  "created_at": "2026-09-16T17:02:57Z",
-  "updated_at": "2026-09-16T17:02:57Z",
-  "git_commit": "b1e0c58"
+  "created_at": "2026-09-19T16:00:49Z",
+  "updated_at": "2026-09-19T16:00:49Z",
+  "git_commit": "94f59b5"
 }

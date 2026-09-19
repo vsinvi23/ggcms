@@ -2,7 +2,7 @@
   "name": "db-migrations",
   "version": "1.1.10",
   "description": "PostgreSQL Schema Migrations",
-  "last_migration": "036_taxonomy_integrity_auditor.sql",
-  "updated_at": "2026-09-17T16:23:12Z",
-  "db_schema_hash": "sha256:8ff48739e942460945554ed376b43fae1cd5f6ebd3e4daa454fdc6e4b02c2bb7"
+  "last_migration": "039_seed_taxonomy_filter_enums.sql",
+  "updated_at": "2026-09-19T16:01:05Z",
+  "db_schema_hash": "sha256:9ebf355960a2955491d683660e53b3863cfa6bd04e3c5808850c85e96245023f"
 }

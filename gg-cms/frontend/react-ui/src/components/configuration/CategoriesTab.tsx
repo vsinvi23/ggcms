@@ -245,8 +245,8 @@ export function CategoriesTab() {
     return buildCategoryTree(flatItems);
   }, [treeCategories, flatItems]);
 
-  const isLoading = (isTreeLoading || isPagedLoading) && categories.length === 0;
-  const isError = (isTreeError || isPagedError) && categories.length === 0;
+  const isLoading = (isTreeLoading && isPagedLoading) && categories.length === 0;
+  const isError = (isTreeError && isPagedError) && categories.length === 0;
 
   const flatCategories = useMemo(() => flattenCategories(categories), [categories]);
   const allCategoryIds = useMemo(() => flatCategories.map((c) => c.id), [flatCategories]);
