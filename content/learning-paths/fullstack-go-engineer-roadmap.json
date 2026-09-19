@@ -1,0 +1,46 @@
+{
+  "pathId": "fullstack-go-engineer-roadmap",
+  "kind": "Fullstack Engineer",
+  "title": "Go Microservices & Modern Backend Engineering Roadmap",
+  "description": "Master clean architecture, concurrency patterns, gRPC vs REST APIs, Domain-Driven Design (DDD), and PostgreSQL performance tuning.",
+  "targetRole": "Senior Go Backend / Microservices Engineer",
+  "estimatedHours": 40,
+  "level": "INTERMEDIATE_TO_ADVANCED",
+  "prerequisites": ["Go Syntax Fundamentals", "SQL Database Basics"],
+  "sequencedCourses": [
+    {
+      "sequenceOrder": 1,
+      "courseSlug": "mastering-go-microservices-course",
+      "courseTitle": "Mastering Microservices Architecture with Go",
+      "categorySlug": "backend-and-apis",
+      "required": true
+    },
+    {
+      "sequenceOrder": 2,
+      "courseSlug": "go-concurrency-patterns",
+      "courseTitle": "Mastering Go Concurrency: Goroutines, Channels, and Select Patterns",
+      "categorySlug": "programming-languages",
+      "required": true
+    },
+    {
+      "sequenceOrder": 3,
+      "courseSlug": "domain-driven-design-principles",
+      "courseTitle": "Domain-Driven Design (DDD) Principles for Microservices",
+      "categorySlug": "software-design",
+      "required": true
+    },
+    {
+      "sequenceOrder": 4,
+      "courseSlug": "postgresql-indexing-and-query-tuning",
+      "courseTitle": "PostgreSQL Performance Tuning: EXPLAIN ANALYZE & Indexing",
+      "categorySlug": "databases",
+      "required": true
+    }
+  ],
+  "competencies": [
+    "Clean Architecture & Domain Modeling",
+    "Go Concurrency (Goroutines, Channels, Select)",
+    "gRPC & REST Hybrid API Design",
+    "PostgreSQL Index Optimization & EXPLAIN ANALYZE"
+  ]
+}

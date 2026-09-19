@@ -1,0 +1,58 @@
+{
+  "type": "COURSE",
+  "title": "PostgreSQL & Event-Driven Data Architecture",
+  "description": "Master relational database optimization, EXPLAIN ANALYZE query tuning, GIN/B-Tree indexing, and event-driven data modeling.",
+  "categorySlug": "databases",
+  "courseType": "TRACK",
+  "tags": ["sql", "postgresql", "data-modeling"],
+  "body": "A comprehensive database engineering track focusing on high-performance PostgreSQL query execution, indexing strategies, schema migrations, and event streaming integration.",
+  "sections": [
+    {
+      "title": "Section 1: Relational Modeling & PostgreSQL Optimization",
+      "order": 0,
+      "lessons": [
+        {
+          "title": "Lesson 1.1: Database Normalization & Schema Design",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### The Scenario: The Anomalous Database\nA developer stores user addresses as comma-separated text inside the `users` table. When a user updates their state, half the orders table breaks due to stale address strings.\n\n### Relational Integrity (3NF):\nLearn how 3rd Normal Form (3NF) eliminates data redundancy, enforces foreign key constraints, and maintains atomic columns."
+        },
+        {
+          "title": "Lesson 1.2: EXPLAIN ANALYZE & Query Plan Breakdown",
+          "type": "text",
+          "duration": 25,
+          "order": 1,
+          "body": "### The Scenario: 10-Second API Spikes\nYour analytics dashboard takes 12 seconds to load. You open PostgreSQL and run `EXPLAIN (ANALYZE, BUFFERS)`:\n```sql\nEXPLAIN (ANALYZE, BUFFERS)\nSELECT * FROM articles WHERE status = 'PUBLISHED' ORDER BY created_at DESC;\n```\nYou discover a `Seq Scan` reading 2,000,000 table pages from disk into memory on every single HTTP request!"
+        },
+        {
+          "title": "Lesson 1.3: Advanced Indexing: B-Tree, GIN, and Partial Indexes",
+          "type": "text",
+          "duration": 20,
+          "order": 2,
+          "body": "### The Solution: Targeted Indexing\nCreate a Partial B-Tree Index to dramatically reduce index memory footprint:\n```sql\nCREATE INDEX idx_articles_published \nON articles (created_at DESC) \nWHERE status = 'PUBLISHED';\n```\nQuery execution drops from 12,000ms to 2ms!"
+        }
+      ]
+    },
+    {
+      "title": "Section 2: Event-Driven Data Architecture",
+      "order": 1,
+      "lessons": [
+        {
+          "title": "Lesson 2.1: Data Modeling for Event Streams (CloudEvents)",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### The Scenario: Microservice Coupling\nService A needs to notify Service B, C, and D whenever an order is placed. Direct REST calls mean Service A fails if any downstream service is slow or offline.\n\n### The Event Streaming Solution:\nPublish immutable CloudEvents 1.0 JSON payloads to Kafka topics."
+        },
+        {
+          "title": "Lesson 2.2: Command Query Responsibility Segregation (CQRS)",
+          "type": "text",
+          "duration": 25,
+          "order": 1,
+          "body": "### The Solution: Decoupled Read/Write Paths\nSeparate complex query read models (Elasticsearch / Redis) from relational transactional write models (Postgres) using asynchronous event consumption."
+        }
+      ]
+    }
+  ]
+}

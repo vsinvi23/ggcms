@@ -1,0 +1,39 @@
+{
+  "pathId": "devops-engineer-roadmap",
+  "kind": "DevOps Engineer",
+  "title": "Cloud Infrastructure & DevOps Mastery Roadmap",
+  "description": "Master container orchestration, Kubernetes manifests, zero-downtime rolling updates, GCP Cloud Run, and modular Terraform IaC.",
+  "targetRole": "Senior DevOps / Platform Engineer",
+  "estimatedHours": 45,
+  "level": "INTERMEDIATE_TO_ADVANCED",
+  "prerequisites": ["Basic Linux CLI", "Docker Containers Fundamentals"],
+  "sequencedCourses": [
+    {
+      "sequenceOrder": 1,
+      "courseSlug": "cloud-native-kubernetes-masterclass",
+      "courseTitle": "Cloud-Native Infrastructure & Kubernetes Masterclass",
+      "categorySlug": "containers-and-orchestration",
+      "required": true
+    },
+    {
+      "sequenceOrder": 2,
+      "courseSlug": "gcp-cloud-run-deployment-guide",
+      "courseTitle": "Production Deployment of Microservices on GCP Cloud Run",
+      "categorySlug": "cloud-platforms",
+      "required": true
+    },
+    {
+      "sequenceOrder": 3,
+      "courseSlug": "terraform-modular-architecture",
+      "courseTitle": "Building Production Terraform Infrastructure Modules",
+      "categorySlug": "infrastructure-as-code",
+      "required": true
+    }
+  ],
+  "competencies": [
+    "Kubernetes Pod & Service Architecture",
+    "Zero-Downtime Deployment & Health Probes",
+    "Infrastructure as Code with Terraform Modules",
+    "Serverless Container Deployments on GCP Cloud Run"
+  ]
+}

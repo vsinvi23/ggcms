@@ -364,10 +364,27 @@ Evaluating RAG performance requires automated metrics beyond manual spot-checkin
     'PUBLISHED',
     c.id,
     u.id,
-    'art-72abe354624b4b069d78073b32e12515',
-    'enterprise-rag-architecture-vector-search-prompt-engineering',
+    'art-8d7e33021ea84626ae4012d2dfc35a8d',
+    'rag-architecture-llm-applications',
     NOW(),
     'GUIDE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'generative-ai' OR c.slug = 'generative-ai')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'Enterprise RAG Architecture: Vector Search & Prompt Engineering',
+    'A comprehensive technical guide to building enterprise-grade Retrieval-Augmented Generation (RAG) platforms using recursive chunking, pgvector similarity search, hybrid BM25 search, prompt synthesis, and RAGAS evaluation.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-67f1bf970456490cb0eed1b95b6aa63a',
+    'rag-architecture-llm-applications',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'generative-ai' OR c.slug = 'generative-ai')
@@ -494,10 +511,27 @@ def calculate_psi(reference: np.ndarray, current: np.ndarray, num_buckets: int =
     'PUBLISHED',
     c.id,
     u.id,
-    'art-3a3bc2ebed91419abeaf2a2479bb4b28',
-    'machine-learning-model-evaluation-drift-detection',
+    'art-e5f4b8be4f3c42a8a304d91684ce729e',
+    'ml-model-evaluation-metrics',
     NOW(),
     'REFERENCE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'machine-learning-foundations' OR c.slug = 'machine-learning-foundations')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'Machine Learning Model Evaluation & Drift Detection',
+    'A comprehensive reference guide covering classification, regression, and ranking evaluation metrics, alongside data and concept drift detection mechanisms in production MLOps.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-f306c75a869347e6bf777ff0a7056869',
+    'ml-model-evaluation-metrics',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'machine-learning-foundations' OR c.slug = 'machine-learning-foundations')
@@ -598,10 +632,27 @@ When Cloud Run services communicate with private backend databases (e.g. Postgre
     'PUBLISHED',
     c.id,
     u.id,
-    'art-e0cdac748a7541be94c77ef6925470ce',
-    'production-deployment-of-microservices-on-gcp-cloud-run',
+    'art-b06668ba88fe453bacea775b80947642',
+    'gcp-cloud-run-deployment-guide',
     NOW(),
     'TUTORIAL'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'cloud-platforms' OR c.slug = 'cloud-platforms')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'Production Deployment of Microservices on GCP Cloud Run',
+    'A step-by-step guide to deploying secure, serverless containerized microservices on Google Cloud Run with Direct VPC egress, Cloud SQL integration, and Secret Manager.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-e57ca613f7514e45b228bfbd5444ecc1',
+    'gcp-cloud-run-deployment-guide',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'cloud-platforms' OR c.slug = 'cloud-platforms')
@@ -727,10 +778,27 @@ spec:
     'PUBLISHED',
     c.id,
     u.id,
-    'art-29f57a157e8242bfa14201a8e9427117',
-    'kubernetes-zero-downtime-deployments-rollingupdate-probes-pdbs',
+    'art-7127372c47474ff19099240eb4fe09c2',
+    'kubernetes-zero-downtime-deployments',
     NOW(),
     'GUIDE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'Kubernetes Zero-Downtime Deployments: RollingUpdate, Probes, & PDBs',
+    'A production guide to achieving true zero-downtime updates in Kubernetes using RollingUpdate strategies, readiness/liveness probes, preStop lifecycle hooks, and PodDisruptionBudgets.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-f2ecdf91c9354599a00b019b6e6fc6fd',
+    'kubernetes-zero-downtime-deployments',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
@@ -849,10 +917,27 @@ terraform {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-265f2fcb0648495cb16fc7e05b615fab',
-    'production-terraform-modular-architecture-state-management',
+    'art-34bd823fd5d64202920a31445d4ffaf4',
+    'terraform-modular-architecture',
     NOW(),
     'GUIDE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'infrastructure-as-code' OR c.slug = 'infrastructure-as-code')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'Production Terraform Modular Architecture & State Management',
+    'A comprehensive guide to structuring DRY, modular Terraform codebases with remote state locking, environment isolation, input validation, and GCP/AWS provider modules.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-b58b52a8baa14fd79169fc7bf568cab3',
+    'terraform-modular-architecture',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'infrastructure-as-code' OR c.slug = 'infrastructure-as-code')
@@ -985,10 +1070,27 @@ func SanitizeLLMOutput(rawText string) string {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-9f3ae6e67ee342c1a399c7466d58b6b3',
-    'owasp-top-10-for-llm-applications-threat-vectors-defense-mitigation',
+    'art-15fd38b483ce4e27b24444f60c44377b',
+    'owasp-top-10-llm-security',
     NOW(),
     'GUIDE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'appsec-threats' OR c.slug = 'appsec-threats')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'OWASP Top 10 for LLM Applications: Threat Vectors & Defense Mitigation',
+    'A comprehensive security engineering guide detailing prompt injection, insecure output handling, sensitive information disclosure, supply chain threats, and production guardrail implementations.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-5ca78b9cc7334974b45393233eb4ae3d',
+    'owasp-top-10-llm-security',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'appsec-threats' OR c.slug = 'appsec-threats')
@@ -1141,10 +1243,27 @@ func JWTAuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-abb74d49d7cf408d9c6d53215cd76089',
-    'oauth-20-openid-connect-oidc-implementation-architecture',
+    'art-214488082ede49b3850709432a9293aa',
+    'oauth2-oidc-implementation-guide',
     NOW(),
     'GUIDE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'OAuth 2.0 & OpenID Connect (OIDC) Implementation Architecture',
+    'A practical security engineering guide to implementing OAuth 2.0 authorization code flow with PKCE, JWT validation, JWKS caching, and Go middleware.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-bfa0b9e30f764d2aba737706e3596326',
+    'oauth2-oidc-implementation-guide',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
@@ -1292,10 +1411,27 @@ func main() {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-2208a36f93544efd96292c91a9a0e8c3',
-    'public-key-infrastructure-pki-tls-x509-certificate-management',
+    'art-48e0b6d4e20f42518f25a97b84feeb83',
+    'tls-x509-certificate-management',
     NOW(),
     'GUIDE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'pki-cryptography' OR c.slug = 'pki-cryptography')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'Public Key Infrastructure (PKI) & TLS X.509 Certificate Management',
+    'A comprehensive guide to asymmetric cryptography, TLS 1.3 handshakes, X.509 certificate chains, automated ACME renewals, and Go mTLS implementation.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-5af7657eff034a20831d493f78867196',
+    'tls-x509-certificate-management',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'pki-cryptography' OR c.slug = 'pki-cryptography')
@@ -1431,10 +1567,27 @@ func PollOutbox(ctx context.Context, db *sql.DB) {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-c5e86be6483a4c91b5a4a2e89769c33d',
-    'data-modeling-for-event-driven-systems-transactional-outbox-pattern',
+    'art-b2b62cd43d914eb98bd28d86ef8aea7d',
+    'data-modeling-event-driven-systems',
     NOW(),
     'GUIDE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'data-engineering' OR c.slug = 'data-engineering')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'Data Modeling for Event-Driven Systems & Transactional Outbox Pattern',
+    'A practical guide to designing resilient event-driven architectures, event sourcing, CQRS, and implementing the Transactional Outbox Pattern with PostgreSQL.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-f6d4f9877f6c4bfea56b2cb60a007c1f',
+    'data-modeling-event-driven-systems',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'data-engineering' OR c.slug = 'data-engineering')
@@ -1525,10 +1678,27 @@ LIMIT 10;
     'PUBLISHED',
     c.id,
     u.id,
-    'art-40598213a455425da41b78577d5b846f',
-    'postgresql-indexing-strategies-query-performance-tuning',
+    'art-cb1431ec56964ff586b7a88b60dd6cc7',
+    'postgresql-indexing-and-query-tuning',
     NOW(),
     'GUIDE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'databases' OR c.slug = 'databases')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'PostgreSQL Indexing Strategies & Query Performance Tuning',
+    'A comprehensive reference guide covering B-Tree, GIN, GiST, BRIN, pgvector indexes, EXPLAIN ANALYZE execution plans, and connection pooling.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-190914ff3e7f4cc68e9311ad80ac6759',
+    'postgresql-indexing-and-query-tuning',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'databases' OR c.slug = 'databases')
@@ -1651,10 +1821,27 @@ func main() {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-b8ce91d05d1049afb36ea12807864c21',
-    'grpc-vs-rest-microservices-architectural-comparison',
+    'art-830a150b11dc4b31b04fa82c9f552718',
+    'grpc-vs-rest-microservices',
     NOW(),
     'GUIDE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'gRPC vs REST Microservices Architectural Comparison',
+    'An architectural guide comparing HTTP/1.1 JSON REST APIs with HTTP/2 Protocol Buffer gRPC microservices, covering Proto3 schemas, streaming modes, and Go implementations.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-92fabf34fe104cdeaf52307dcd644a88',
+    'grpc-vs-rest-microservices',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
@@ -1837,10 +2024,27 @@ func FanIn(ctx context.Context, channels ...<-chan Result) <-chan Result {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-e1345e475c5946efb32bfce6382a5cb4',
-    'mastering-go-concurrency-goroutines-channels-and-select-patterns',
+    'art-8bd21c68756d4b4e95ff881930669d67',
+    'go-concurrency-patterns',
     NOW(),
     'GUIDE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'programming-languages' OR c.slug = 'programming-languages')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'Mastering Go Concurrency: Goroutines, Channels, and Select Patterns',
+    'A practical guide to building highly concurrent, safe systems in Go using worker pools, fan-out/fan-in, context cancellation, rate limiters, and pipeline patterns.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-4b2aa299683e4f7e974ba46ba6aa27ef',
+    'go-concurrency-patterns',
+    NOW(),
+    'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'programming-languages' OR c.slug = 'programming-languages')
@@ -1980,8 +2184,8 @@ type ArticleRepository interface {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-a2acfdf5297c4273ba8d7e05f75b04b3',
-    'domain-driven-design-ddd-clean-hexagonal-architecture',
+    'art-065b7130d46a4a8881367c415a0a8dee',
+    'domain-driven-design-principles',
     NOW(),
     'GUIDE'
 FROM users u 
@@ -1990,7 +2194,24 @@ WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'software-design' OR c.slug =
 ON CONFLICT (public_id) DO NOTHING;
 
 
--- 2. SEED COURSES
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'Domain-Driven Design (DDD) & Clean Hexagonal Architecture',
+    'A comprehensive guide to Strategic and Tactical Domain-Driven Design, Bounded Contexts, Aggregates, Value Objects, and Hexagonal Architecture in Go.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-bbc55c208c2b4015ae71ece0bdaa69cc',
+    'domain-driven-design-principles',
+    NOW(),
+    'MODULE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'software-design' OR c.slug = 'software-design')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+-- 2. SEED DEDICATED COURSES
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
 SELECT 
@@ -1999,8 +2220,8 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-c711e6f004d244fa98721123b52252c9',
-    'production-rag-llm-systems-engineering',
+    'crs-06566f76fee9448c8da9cf0a634563ed',
+    'production-rag-and-llm-engineering',
     NOW(),
     'TRACK'
 FROM users u 
@@ -2016,8 +2237,8 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-e44bc7f6a02a46639c999a66b89ebead',
-    'enterprise-application-security-engineering',
+    'crs-afffccfdf1024cf29736d65119252d4d',
+    'enterprise-application-security',
     NOW(),
     'TRACK'
 FROM users u 
@@ -2033,8 +2254,8 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-b139d1cb32234c5b86fa13561d940088',
-    'mastering-production-go-microservices',
+    'crs-60bbb06bb7c142f0af5f215740196919',
+    'mastering-go-microservices-course',
     NOW(),
     'TRACK'
 FROM users u 
@@ -2050,8 +2271,8 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-0ef32f99ba5d4c1685d07653aef60230',
-    'cloud-native-infrastructure-kubernetes-masterclass',
+    'crs-e1ab7cf43b0e41efb87f2059463ce744',
+    'cloud-native-kubernetes-masterclass',
     NOW(),
     'TRACK'
 FROM users u 
@@ -2067,8 +2288,8 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-7bfeea8ff25047ebb6eb003c74e22173',
-    'postgresql-event-driven-data-architecture',
+    'crs-d9b37ca688844d879ece4d597bc3e530',
+    'postgresql-and-data-architecture',
     NOW(),
     'TRACK'
 FROM users u 
@@ -2077,7 +2298,7 @@ WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'databases' OR c.slug = 'data
 ON CONFLICT (public_id) DO NOTHING;
 
 
--- 3. SEED LEARNING PATHS
+-- 3. SEED LEARNING PATHS & JUNCTION COURSES
 
 INSERT INTO learning_paths (kind, title, description, created_by_id)
 SELECT 
@@ -2086,6 +2307,30 @@ SELECT
     'Comprehensive engineering roadmap for building production RAG systems, vector search pipelines, LLM guardrails, and automated drift detection.',
     u.id
 FROM users u WHERE u.email = 'admin@gg-cms.local'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 1
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Enterprise AI & LLM Systems Engineering Roadmap' AND crs.slug = 'production-rag-and-llm-engineering'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 2
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Enterprise AI & LLM Systems Engineering Roadmap' AND crs.slug = 'rag-architecture-llm-applications'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 3
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Enterprise AI & LLM Systems Engineering Roadmap' AND crs.slug = 'ml-model-evaluation-metrics'
 ON CONFLICT DO NOTHING;
 
 
@@ -2099,6 +2344,38 @@ FROM users u WHERE u.email = 'admin@gg-cms.local'
 ON CONFLICT DO NOTHING;
 
 
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 1
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Cybersecurity & Application Defense Career Path' AND crs.slug = 'enterprise-application-security'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 2
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Cybersecurity & Application Defense Career Path' AND crs.slug = 'oauth2-oidc-implementation-guide'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 3
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Cybersecurity & Application Defense Career Path' AND crs.slug = 'tls-x509-certificate-management'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 4
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Cybersecurity & Application Defense Career Path' AND crs.slug = 'owasp-top-10-llm-security'
+ON CONFLICT DO NOTHING;
+
+
 INSERT INTO learning_paths (kind, title, description, created_by_id)
 SELECT 
     'DevOps Engineer',
@@ -2109,6 +2386,30 @@ FROM users u WHERE u.email = 'admin@gg-cms.local'
 ON CONFLICT DO NOTHING;
 
 
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 1
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Cloud Infrastructure & DevOps Mastery Roadmap' AND crs.slug = 'cloud-native-kubernetes-masterclass'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 2
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Cloud Infrastructure & DevOps Mastery Roadmap' AND crs.slug = 'gcp-cloud-run-deployment-guide'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 3
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Cloud Infrastructure & DevOps Mastery Roadmap' AND crs.slug = 'terraform-modular-architecture'
+ON CONFLICT DO NOTHING;
+
+
 INSERT INTO learning_paths (kind, title, description, created_by_id)
 SELECT 
     'Fullstack Engineer',
@@ -2116,4 +2417,36 @@ SELECT
     'Master clean architecture, concurrency patterns, gRPC vs REST APIs, Domain-Driven Design (DDD), and PostgreSQL performance tuning.',
     u.id
 FROM users u WHERE u.email = 'admin@gg-cms.local'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 1
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Go Microservices & Modern Backend Engineering Roadmap' AND crs.slug = 'mastering-go-microservices-course'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 2
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Go Microservices & Modern Backend Engineering Roadmap' AND crs.slug = 'go-concurrency-patterns'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 3
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Go Microservices & Modern Backend Engineering Roadmap' AND crs.slug = 'domain-driven-design-principles'
+ON CONFLICT DO NOTHING;
+
+
+INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
+SELECT lp.id, crs.id, 4
+FROM learning_paths lp
+CROSS JOIN courses crs
+WHERE lp.title = 'Go Microservices & Modern Backend Engineering Roadmap' AND crs.slug = 'postgresql-indexing-and-query-tuning'
 ON CONFLICT DO NOTHING;

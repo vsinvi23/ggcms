@@ -1,0 +1,85 @@
+{
+  "type": "COURSE",
+  "title": "Cloud-Native Infrastructure & Kubernetes Masterclass",
+  "description": "Comprehensive hands-on course covering container orchestration, Kubernetes manifests, zero-downtime rolling updates, Helm charts, and Terraform IaC.",
+  "categorySlug": "containers-orchestration",
+  "courseType": "TRACK",
+  "tags": ["kubernetes", "docker", "terraform", "cloud-platforms"],
+  "body": "Master modern cloud-native deployment practices. This course walks you through raw container configuration, production Kubernetes cluster management, ingress routing, and GitOps deployments.",
+  "sections": [
+    {
+      "title": "Section 1: Container Orchestration & Kubernetes Core Primitives",
+      "order": 0,
+      "lessons": [
+        {
+          "title": "Lesson 1.1: Kubernetes Control Plane & Architecture",
+          "type": "text",
+          "duration": 15,
+          "order": 0,
+          "body": "### The Scenario: The Mysterious Outage\nPicture this: You are managing 50 microservices on individual Virtual Machines. Suddenly, a worker VM hardware fails at midnight. Without an automated orchestrator, you must manually launch a new VM, SSH into it, pull Docker images, and reconfigure DNS entries. Meanwhile, customers experience a 45-minute outage.\n\n### Enter Kubernetes\nKubernetes (k8s) automates container scheduling, scaling, and self-healing. Its Control Plane consists of four critical components:\n1. **API Server (`kube-apiserver`):** The central hub that validates and processes REST requests.\n2. **etcd:** Consistent, highly-available key-value store holding all cluster state.\n3. **Kube-Scheduler:** Assigns unscheduled Pods to optimal Worker Nodes based on resource requirements.\n4. **Kube-Controller-Manager:** Enforces desired state (e.g., ensuring 4 replicas are always running).\n\n> 💡 **Interactive Takeaway:** What happens if etcd goes down? The control plane cannot accept state changes, but existing running worker Pods will continue servicing user traffic!"
+        },
+        {
+          "title": "Lesson 1.2: Pods, Deployments, and ReplicaSets",
+          "type": "text",
+          "duration": 20,
+          "order": 1,
+          "body": "### The Scenario: Pod Ephemerality\nIn Kubernetes, Pods are ephemeral. If a Pod crashes or its worker node dies, its IP address is gone forever. You should never launch raw Pods directly in production—instead, wrap them in a **Deployment**.\n\n### Production Deployment Manifest:\n```yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: ggcms-frontend\n  namespace: production\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: ggcms-frontend\n  template:\n    metadata:\n      labels:\n        app: ggcms-frontend\n    spec:\n      containers:\n      - name: web\n        image: gcr.io/ggcms/frontend:v1.2.0\n        resources:\n          requests:\n            memory: \"128Mi\"\n            cpu: \"100m\"\n          limits:\n            memory: \"256Mi\"\n            cpu: \"500m\"\n```"
+        },
+        {
+          "title": "Lesson 1.3: Services, ClusterIP, NodePort, and LoadBalancers",
+          "type": "text",
+          "duration": 25,
+          "order": 2,
+          "body": "### The Scenario: How do clients reach Pods?\nSince Pod IPs change continuously as Pods scale up and down, how do microservices reliably find each other? A **Service** provides a stable virtual IP (ClusterIP) and DNS name that load-balances traffic across matching Pod labels.\n\n### Types of Services:\n- **ClusterIP:** Internal IP accessible only within the Kubernetes cluster.\n- **NodePort:** Exposes service on a static port on every Node's IP.\n- **LoadBalancer:** Integrates with cloud providers (GCP, AWS) to provision a public external IP."
+        }
+      ]
+    },
+    {
+      "title": "Section 2: Zero-Downtime Deployments & Production Operations",
+      "order": 1,
+      "lessons": [
+        {
+          "title": "Lesson 2.1: Zero-Downtime Rolling Updates & MaxSurge Strategy",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### The Scenario: The Dropped Request Incident\nDuring a middle-of-the-day deployment update, your team pushes a new container image. Suddenly, 5% of incoming user checkout requests fail with 502 Bad Gateway errors. Why?\n\n### Tuning RollingUpdate:\nBy setting `maxUnavailable: 0` and `maxSurge: 25%`, Kubernetes creates new v2 Pods and waits for them to pass readiness checks *before* terminating any old v1 Pods!"
+        },
+        {
+          "title": "Lesson 2.2: Liveness, Readiness, and Startup Probes",
+          "type": "text",
+          "duration": 15,
+          "order": 1,
+          "body": "### The Scenario: The Deadlocked Pod\nYour application encounters a deadlock. The process is still running, so Kubernetes thinks it's healthy—but every HTTP request times out.\n\n### Configuring Health Probes:\n- **Readiness Probe:** Determines if the Pod is ready to receive network traffic.\n- **Liveness Probe:** Determines if the container needs to be restarted due to a deadlock."
+        },
+        {
+          "title": "Lesson 2.3: ConfigMaps & Encrypted Secret Management",
+          "type": "text",
+          "duration": 20,
+          "order": 2,
+          "body": "### The Scenario: Hardcoded DB Passwords\nAn engineer accidently commits a Kubernetes YAML file containing plain-text database credentials to a public GitHub repository. Within 10 minutes, crypto-miners hijack the database.\n\n### Best Practice:\nStore non-sensitive config in **ConfigMaps** and mount sensitive credentials as **Secrets** backed by cloud secret managers."
+        }
+      ]
+    },
+    {
+      "title": "Section 3: Infrastructure as Code with Terraform & Helm",
+      "order": 2,
+      "lessons": [
+        {
+          "title": "Lesson 3.1: Packaging Applications with Helm Charts",
+          "type": "text",
+          "duration": 25,
+          "order": 0,
+          "body": "### Helm: The Kubernetes Package Manager\nManaging 30 raw YAML manifests per environment leads to configuration drift. **Helm** parameterizes YAML files into reusable templates using `values.yaml` files for staging and production."
+        },
+        {
+          "title": "Lesson 3.2: Provisioning Managed Kubernetes Clusters via Terraform",
+          "type": "text",
+          "duration": 30,
+          "order": 1,
+          "body": "### Declarative Infrastructure\nLearn how to use Terraform to provision Google Kubernetes Engine (GKE) or AWS EKS clusters with autoscaling node pools, VPC subnets, and IAM permissions."
+        }
+      ]
+    }
+  ]
+}

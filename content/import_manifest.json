@@ -1,0 +1,212 @@
+{
+  "version": "1.1.0",
+  "generatedAt": "2026-09-18T09:11:00Z",
+  "title": "GeekGully Catalog Master Ingestion Manifest",
+  "summary": {
+    "totalArticles": 13,
+    "totalCourses": 5,
+    "totalLearningPaths": 4,
+    "totalFiles": 22
+  },
+  "articles": [
+    {
+      "filePath": "software-engineering/programming-languages/go-concurrency-patterns.md",
+      "type": "ARTICLE",
+      "articleType": "GUIDE",
+      "categorySlug": "programming-languages",
+      "title": "Mastering Go Concurrency: Goroutines, Channels, and Select",
+      "tags": ["go", "concurrency"],
+      "status": "READY"
+    },
+    {
+      "filePath": "software-engineering/backend-and-apis/grpc-vs-rest-microservices.md",
+      "type": "ARTICLE",
+      "articleType": "GUIDE",
+      "categorySlug": "backend-and-apis",
+      "title": "gRPC vs REST in Modern Microservices Architecture",
+      "tags": ["grpc", "rest", "microservices"],
+      "status": "READY"
+    },
+    {
+      "filePath": "software-engineering/software-design/domain-driven-design-principles.md",
+      "type": "ARTICLE",
+      "articleType": "CONCEPT",
+      "categorySlug": "software-design",
+      "title": "Domain-Driven Design (DDD) Principles for Microservices",
+      "tags": ["object-oriented-programming", "software-design"],
+      "status": "READY"
+    },
+    {
+      "filePath": "cloud-and-infrastructure/cloud-platforms/gcp-cloud-run-deployment-guide.md",
+      "type": "ARTICLE",
+      "articleType": "TUTORIAL",
+      "categorySlug": "cloud-platforms",
+      "title": "Production Deployment of Microservices on GCP Cloud Run",
+      "tags": ["gcp", "cloud-platforms"],
+      "status": "READY"
+    },
+    {
+      "filePath": "cloud-and-infrastructure/containers-and-orchestration/kubernetes-zero-downtime-deployments.md",
+      "type": "ARTICLE",
+      "articleType": "GUIDE",
+      "categorySlug": "containers-and-orchestration",
+      "title": "Kubernetes Zero-Downtime Rolling Updates & Deployment Strategies",
+      "tags": ["kubernetes", "docker"],
+      "status": "READY"
+    },
+    {
+      "filePath": "cloud-and-infrastructure/infrastructure-as-code/terraform-modular-architecture.md",
+      "type": "ARTICLE",
+      "articleType": "GUIDE",
+      "categorySlug": "infrastructure-as-code",
+      "title": "Building Production Terraform Infrastructure Modules",
+      "tags": ["terraform", "infrastructure-as-code"],
+      "status": "READY"
+    },
+    {
+      "filePath": "cybersecurity/identity-and-access/oauth2-oidc-implementation-guide.md",
+      "type": "ARTICLE",
+      "articleType": "GUIDE",
+      "categorySlug": "identity-and-access",
+      "title": "Implementing Secure OAuth 2.0 & OpenID Connect in Go",
+      "tags": ["oauth-2", "openid-connect", "jwt"],
+      "status": "READY"
+    },
+    {
+      "filePath": "cybersecurity/pki-and-cryptography/tls-x509-certificate-management.md",
+      "type": "ARTICLE",
+      "articleType": "REFERENCE",
+      "categorySlug": "pki-and-cryptography",
+      "title": "TLS 1.3 & X.509 Public Key Infrastructure (PKI) Guide",
+      "tags": ["tls", "x509-certificates", "public-key-infrastructure"],
+      "status": "READY"
+    },
+    {
+      "filePath": "cybersecurity/appsec-and-threats/owasp-top-10-llm-security.md",
+      "type": "ARTICLE",
+      "articleType": "GUIDE",
+      "categorySlug": "appsec-and-threats",
+      "title": "OWASP Top 10 for LLM Applications: Defense & Mitigation",
+      "tags": ["owasp-top-10", "threat-modeling", "zero-trust-architecture"],
+      "status": "READY"
+    },
+    {
+      "filePath": "data/databases/postgresql-indexing-and-query-tuning.md",
+      "type": "ARTICLE",
+      "articleType": "TUTORIAL",
+      "categorySlug": "databases",
+      "title": "PostgreSQL Performance Tuning: EXPLAIN ANALYZE & Indexing",
+      "tags": ["sql", "postgresql"],
+      "status": "READY"
+    },
+    {
+      "filePath": "data/data-engineering/data-modeling-event-driven-systems.md",
+      "type": "ARTICLE",
+      "articleType": "CONCEPT",
+      "categorySlug": "data-engineering",
+      "title": "Data Modeling Strategies for Event-Driven Architectures",
+      "tags": ["data-modeling"],
+      "status": "READY"
+    },
+    {
+      "filePath": "ai-and-machine-learning/machine-learning-foundations/ml-model-evaluation-metrics.md",
+      "type": "ARTICLE",
+      "articleType": "REFERENCE",
+      "categorySlug": "machine-learning-foundations",
+      "title": "Machine Learning Model Evaluation & Drift Detection",
+      "tags": ["machine-learning"],
+      "status": "READY"
+    },
+    {
+      "filePath": "ai-and-machine-learning/generative-ai/rag-architecture-llm-applications.md",
+      "type": "ARTICLE",
+      "articleType": "GUIDE",
+      "categorySlug": "generative-ai",
+      "title": "Enterprise RAG Architecture: Vector Search & Prompt Engineering",
+      "tags": ["large-language-models", "retrieval-augmented-generation", "prompt-engineering"],
+      "status": "READY"
+    }
+  ],
+  "courses": [
+    {
+      "filePath": "courses/software-engineering/mastering-go-microservices-course.md",
+      "type": "COURSE",
+      "courseType": "TRACK",
+      "categorySlug": "backend-and-apis",
+      "title": "Mastering Microservices Architecture with Go",
+      "sectionsCount": 3,
+      "lessonsCount": 9,
+      "status": "READY"
+    },
+    {
+      "filePath": "courses/cloud-and-infrastructure/cloud-native-kubernetes-masterclass.json",
+      "type": "COURSE",
+      "courseType": "TRACK",
+      "categorySlug": "containers-and-orchestration",
+      "title": "Cloud-Native Infrastructure & Kubernetes Masterclass",
+      "sectionsCount": 3,
+      "lessonsCount": 8,
+      "status": "READY"
+    },
+    {
+      "filePath": "courses/cybersecurity/enterprise-application-security.md",
+      "type": "COURSE",
+      "courseType": "TRACK",
+      "categorySlug": "identity-and-access",
+      "title": "Enterprise Application Security & Defense Course",
+      "sectionsCount": 3,
+      "lessonsCount": 8,
+      "status": "READY"
+    },
+    {
+      "filePath": "courses/data/postgresql-and-data-architecture.json",
+      "type": "COURSE",
+      "courseType": "TRACK",
+      "categorySlug": "databases",
+      "title": "PostgreSQL & Event-Driven Data Architecture",
+      "sectionsCount": 2,
+      "lessonsCount": 5,
+      "status": "READY"
+    },
+    {
+      "filePath": "courses/ai-and-machine-learning/production-rag-and-llm-engineering.md",
+      "type": "COURSE",
+      "courseType": "TRACK",
+      "categorySlug": "generative-ai",
+      "title": "Production RAG & LLM Systems Engineering",
+      "sectionsCount": 3,
+      "lessonsCount": 8,
+      "status": "READY"
+    }
+  ],
+  "learningPaths": [
+    {
+      "filePath": "learning-paths/devops-engineer-roadmap.json",
+      "kind": "DevOps Engineer",
+      "title": "Cloud Infrastructure & DevOps Mastery Roadmap",
+      "coursesCount": 3,
+      "status": "READY"
+    },
+    {
+      "filePath": "learning-paths/cybersecurity-architect-roadmap.json",
+      "kind": "Security Engineer",
+      "title": "Cybersecurity & Application Defense Career Path",
+      "coursesCount": 4,
+      "status": "READY"
+    },
+    {
+      "filePath": "learning-paths/fullstack-go-engineer-roadmap.json",
+      "kind": "Fullstack Engineer",
+      "title": "Go Microservices & Modern Backend Engineering Roadmap",
+      "coursesCount": 4,
+      "status": "READY"
+    },
+    {
+      "filePath": "learning-paths/ai-systems-engineer-roadmap.json",
+      "kind": "AI Architect",
+      "title": "Enterprise AI & LLM Systems Engineering Roadmap",
+      "coursesCount": 3,
+      "status": "READY"
+    }
+  ]
+}

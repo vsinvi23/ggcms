@@ -1,0 +1,39 @@
+{
+  "pathId": "ai-systems-engineer-roadmap",
+  "kind": "AI Architect",
+  "title": "Enterprise AI & LLM Systems Engineering Roadmap",
+  "description": "Comprehensive engineering roadmap for building production RAG systems, vector search pipelines, LLM guardrails, and automated drift detection.",
+  "targetRole": "AI Systems Engineer / AI Solution Architect",
+  "estimatedHours": 45,
+  "level": "ADVANCED",
+  "prerequisites": ["Python Development", "Basic Machine Learning Concepts"],
+  "sequencedCourses": [
+    {
+      "sequenceOrder": 1,
+      "courseSlug": "production-rag-and-llm-engineering",
+      "courseTitle": "Production RAG & LLM Systems Engineering",
+      "categorySlug": "generative-ai",
+      "required": true
+    },
+    {
+      "sequenceOrder": 2,
+      "courseSlug": "rag-architecture-llm-applications",
+      "courseTitle": "Enterprise RAG Architecture: Vector Search & Prompt Engineering",
+      "categorySlug": "generative-ai",
+      "required": true
+    },
+    {
+      "sequenceOrder": 3,
+      "courseSlug": "ml-model-evaluation-metrics",
+      "courseTitle": "Machine Learning Model Evaluation & Drift Detection",
+      "categorySlug": "machine-learning-foundations",
+      "required": true
+    }
+  ],
+  "competencies": [
+    "Enterprise RAG Architecture & Vector Indexing",
+    "Hybrid BM25 + Dense Vector Search (RRF)",
+    "LLM Prompt Engineering & Output Guardrails",
+    "Model Drift Detection (KS Test, PSI) & MLOps"
+  ]
+}
