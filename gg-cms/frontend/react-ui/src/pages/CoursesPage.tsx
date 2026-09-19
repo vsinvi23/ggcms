@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
 import { useCategories } from '@/api/hooks/useCategories';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
+import { useContentTypes } from '@/api/hooks/useContentTypes';
 import { buildCourseUrl } from '@/lib/slug';
 
 interface CourseCardData {
@@ -15,13 +16,13 @@ interface CourseCardData {
   slug: string;
   title: string;
   description: string;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
+  level: string;
   modulesCount: number;
   lessonsCount: number;
   durationText: string;
   category: string;
   technology: string;
-  learningStyle: 'Theory' | 'Hands-on' | 'Project based';
+  learningStyle: string;
   skills: string[];
   progress?: number;
 }
@@ -130,6 +131,9 @@ export function CoursesPage() {
   const { data: backendCategories } = useCategories();
   // Live backend published CMS courses API hook
   const { data: publicCmsData } = usePublicCmsList({ type: 'COURSE', size: 50 });
+  // Live backend levels & learning styles API hooks
+  const { data: backendLevels } = useContentTypes('level');
+  const { data: backendStyles } = useContentTypes('learning_style');
 
   const backendCourses = useMemo(() => {
     if (!publicCmsData?.items || publicCmsData.items.length === 0) return [];
@@ -144,7 +148,7 @@ export function CoursesPage() {
       durationText: item.durationMinutes ? `${Math.floor(item.durationMinutes/60)}h ${item.durationMinutes%60}m` : '4h 30m',
       category: item.categoryName || 'Engineering',
       technology: item.tags?.[0] || 'Go',
-      learningStyle: 'Hands-on' as const,
+      learningStyle: 'Hands-on',
       skills: item.tags || ['Go', 'REST', 'Backend'],
       progress: 0,
     }));
@@ -163,8 +167,21 @@ export function CoursesPage() {
     return ['All', 'Technology', 'Cloud', 'Security', 'Engineering'];
   }, [backendCategories]);
 
-  const levels = ['All', 'Beginner', 'Intermediate', 'Advanced'];
-  const styles = ['All', 'Theory', 'Hands-on', 'Project based'];
+  const levels = useMemo(() => {
+    const fetched = (backendLevels ?? []).map(l => l.label).filter(Boolean);
+    if (fetched.length > 0) {
+      return ['All', ...Array.from(new Set(fetched))];
+    }
+    return ['All', 'Beginner', 'Intermediate', 'Advanced'];
+  }, [backendLevels]);
+
+  const styles = useMemo(() => {
+    const fetched = (backendStyles ?? []).map(s => s.label).filter(Boolean);
+    if (fetched.length > 0) {
+      return ['All', ...Array.from(new Set(fetched))];
+    }
+    return ['All', 'Theory', 'Hands-on', 'Project based'];
+  }, [backendStyles]);
 
   const filteredCourses = useMemo(() => {
     return allCourses.filter(course => {
@@ -202,9 +219,8 @@ export function CoursesPage() {
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-lg font-extrabold tracking-tight flex items-center gap-2">
+                <h1 className="text-lg font-extrabold tracking-tight">
                   Courses
-                  <Badge variant="secondary" className="text-[10px] font-semibold">{filteredCourses.length}</Badge>
                 </h1>
                 <p className="text-[11px] text-muted-foreground hidden lg:block">Systematic learning paths</p>
               </div>
@@ -229,12 +245,8 @@ export function CoursesPage() {
               </div>
             </div>
 
-            {/* Right Spacer / Metadata */}
-            <div className="hidden sm:flex items-center justify-end sm:w-1/4">
-              <span className="text-xs font-medium text-muted-foreground">
-                {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} available
-              </span>
-            </div>
+            {/* Right Spacer */}
+            <div className="hidden sm:block sm:w-1/4"></div>
           </div>
         </div>
 

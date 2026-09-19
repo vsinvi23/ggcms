@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useCategories } from '@/api/hooks/useCategories';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
+import { useContentTypes } from '@/api/hooks/useContentTypes';
 import { buildArticleUrl } from '@/lib/slug';
 
 interface ExploreCardItem {
@@ -15,7 +16,7 @@ interface ExploreCardItem {
   slug: string;
   title: string;
   excerpt: string;
-  contentType: 'Article' | 'Guide' | 'Tutorial' | 'Deep Dive' | 'Cheat Sheet' | 'Reference' | 'Lab' | 'Project';
+  contentType: string;
   category: string;
   readingTimeMinutes: number;
   domain: string;
@@ -99,12 +100,20 @@ export function ExplorePage() {
   const [selectedType, setSelectedType] = useState<string>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-  const contentTypes = ['All', 'Articles', 'Guides', 'Tutorials', 'Deep Dives', 'Cheat Sheets', 'References', 'Labs', 'Projects'];
-  
   // Live backend categories API hook
   const { data: backendCategories } = useCategories();
   // Live backend published CMS articles API hook
   const { data: publicCmsData } = usePublicCmsList({ type: 'ARTICLE', size: 50 });
+  // Live backend content format types API hook
+  const { data: backendArticleTypes } = useContentTypes('article');
+
+  const contentTypes = useMemo(() => {
+    const fetched = (backendArticleTypes ?? []).map(t => t.label).filter(Boolean);
+    if (fetched.length > 0) {
+      return ['All', ...Array.from(new Set(fetched))];
+    }
+    return ['All', 'Articles', 'Guides', 'Tutorials', 'Deep Dives', 'Cheat Sheets', 'References', 'Labs', 'Projects'];
+  }, [backendArticleTypes]);
 
   const backendExploreItems = useMemo(() => {
     if (!publicCmsData?.items || publicCmsData.items.length === 0) return [];
@@ -168,9 +177,8 @@ export function ExplorePage() {
                 <Compass className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-lg font-extrabold tracking-tight flex items-center gap-2">
+                <h1 className="text-lg font-extrabold tracking-tight">
                   Explore
-                  <Badge variant="secondary" className="text-[10px] font-semibold">{filteredItems.length}</Badge>
                 </h1>
                 <p className="text-[11px] text-muted-foreground hidden lg:block">Knowledge & articles</p>
               </div>
@@ -195,12 +203,8 @@ export function ExplorePage() {
               </div>
             </div>
 
-            {/* Right Metadata */}
-            <div className="hidden sm:flex items-center justify-end sm:w-1/4">
-              <span className="text-xs font-medium text-muted-foreground">
-                {filteredItems.length} resource{filteredItems.length !== 1 ? 's' : ''} available
-              </span>
-            </div>
+            {/* Right Spacer */}
+            <div className="hidden sm:block sm:w-1/4"></div>
           </div>
         </div>
 
