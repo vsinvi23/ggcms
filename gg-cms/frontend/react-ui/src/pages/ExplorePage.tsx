@@ -26,74 +26,6 @@ interface ExploreCardItem {
   isFeatured?: boolean;
 }
 
-const mockExploreItems: ExploreCardItem[] = [
-  {
-    id: 'e-1',
-    slug: 'oauth-2-explained',
-    title: 'OAuth 2.0 & PKCE Flow Explained Simply',
-    excerpt: 'OAuth 2.0 is often misunderstood. Learn how authorization flows work, step by step, with code samples and security tokens.',
-    contentType: 'Article',
-    category: 'Security',
-    readingTimeMinutes: 10,
-    domain: 'Identity',
-    tags: ['OAuth', 'Security', 'Identity', 'PKCE'],
-    publishedDate: '2026-03-10',
-    isTrending: true,
-    isFeatured: true,
-  },
-  {
-    id: 'e-2',
-    slug: 'docker-commands-cheat-sheet',
-    title: 'Docker & Container Management Cheat Sheet',
-    excerpt: 'Essential Docker CLI commands for container lifecycle, volume mounts, networking, inspect, and docker-compose overrides.',
-    contentType: 'Cheat Sheet',
-    category: 'DevOps',
-    readingTimeMinutes: 5,
-    domain: 'Infrastructure',
-    tags: ['Docker', 'DevOps', 'Containers', 'CLI'],
-    publishedDate: '2026-03-12',
-    isTrending: true,
-  },
-  {
-    id: 'e-3',
-    slug: 'kubernetes-networking-deep-dive',
-    title: 'Understanding Kubernetes Networking & Service Mesh',
-    excerpt: 'Deep dive into CNI plugins, IPVS, CoreDNS, ingress controllers, and envoy sidecar routing in K8s clusters.',
-    contentType: 'Deep Dive',
-    category: 'Cloud',
-    readingTimeMinutes: 18,
-    domain: 'Cloud Infrastructure',
-    tags: ['Kubernetes', 'Networking', 'Envoy', 'Ingress'],
-    publishedDate: '2026-03-14',
-    isTrending: true,
-  },
-  {
-    id: 'e-4',
-    slug: 'go-concurrency-patterns-tutorial',
-    title: 'Go Concurrency Patterns: Workers, Pipelines & Fan-Out',
-    excerpt: 'Master production-grade concurrency patterns using channels, sync.WaitGroup, context cancellation, and worker pools.',
-    contentType: 'Tutorial',
-    category: 'Engineering',
-    readingTimeMinutes: 12,
-    domain: 'Backend Architecture',
-    tags: ['Go', 'Concurrency', 'Channels', 'Backend'],
-    publishedDate: '2026-03-08',
-  },
-  {
-    id: 'e-5',
-    slug: 'building-production-go-api-lab',
-    title: 'Hands-on Lab: Building a Production Go REST API',
-    excerpt: 'Step-by-step practical lab configuring structured logging, PostgreSQL connection pools, JWT auth middleware, and Docker deployment.',
-    contentType: 'Lab',
-    category: 'Engineering',
-    readingTimeMinutes: 30,
-    domain: 'Backend Engineering',
-    tags: ['Go', 'REST', 'PostgreSQL', 'Lab'],
-    publishedDate: '2026-03-01',
-    isFeatured: true,
-  },
-];
-
 export function ExplorePage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -134,8 +66,7 @@ export function ExplorePage() {
   }, [publicCmsData]);
 
   const allExploreItems = useMemo(() => {
-    if (backendExploreItems.length > 0) return backendExploreItems;
-    return mockExploreItems;
+    return backendExploreItems;
   }, [backendExploreItems]);
 
   const categories = useMemo(() => {

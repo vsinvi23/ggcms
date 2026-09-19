@@ -12,8 +12,31 @@ import { Button } from '@/components/ui/button';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { TopicContentDto } from '@/api/types';
 
+import { useState } from 'react';
+import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
+
 const TopicDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [isViewingPending, setIsViewingPending] = useState(false);
+  const [pendingRevision, setPendingRevision] = useState<any>(null);
+
+  const handleSaveTopicRevision = async (data: { title: string; description: string; body: string; submitForReview: boolean }) => {
+    const newRev = {
+      id: Date.now(),
+      parentContentId: slug || '1',
+      contentType: 'TOPIC',
+      versionNumber: 2,
+      status: data.submitForReview ? 'REVIEW' : 'DRAFT',
+      requestedBy: 1,
+      title: data.title,
+      description: data.description,
+      body: data.body,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setPendingRevision(newRev);
+    setIsViewingPending(true);
+  };
   const { data: topics = [], isLoading: loadingTopics } = useTopics();
   const topic = useMemo(() => topics.find(t => t.slug === slug), [topics, slug]);
 
@@ -85,6 +108,17 @@ const TopicDetailPage = () => {
 
   return (
     <PublicLayout>
+      <PublicQuickEditBar
+        contentType="topic"
+        contentId={topic.id}
+        currentTitle={topic.name}
+        currentDescription={topic.description || ''}
+        currentBody=""
+        pendingRevision={pendingRevision}
+        isViewingPending={isViewingPending}
+        onToggleView={setIsViewingPending}
+        onSaveRevision={handleSaveTopicRevision}
+      />
       <div className="max-w-4xl mx-auto px-6 py-10 space-y-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground">

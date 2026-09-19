@@ -32,6 +32,8 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isMasterAdmin: boolean;
+  canQuickEditPublic: boolean;
   userGroups: GroupResponseDto[];
   groupNames: string[];
   hasNoGroups: boolean;
@@ -53,6 +55,8 @@ const defaultAuthContext: AuthContextType = {
   logout: () => {},
   isAuthenticated: false,
   isAdmin: false,
+  isMasterAdmin: false,
+  canQuickEditPublic: false,
   userGroups: [],
   groupNames: [],
   hasNoGroups: true,
@@ -351,22 +355,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [fetchUserGroups, isAdminRole]);
 
   const groupNames = userGroups.map(g => g.name.toUpperCase());
-  const adminGroupNames = [ADMIN_GROUP_NAME.toUpperCase(), 'ADMIN', 'SUPERADMIN', 'SUPER_ADMIN', 'SUPER-ADMIN'];
-  // isAdmin: primary check is role stored on user object (from JWT/login response),
-  // supplemented by group membership check so either alone is sufficient
+  const adminGroupNames = [ADMIN_GROUP_NAME.toUpperCase(), 'ADMIN', 'SUPERADMIN', 'SUPER_ADMIN', 'SUPER-ADMIN', 'MASTERADMIN', 'MASTER_ADMIN'];
+  const masterAdminGroupNames = ['SUPERADMIN', 'SUPER_ADMIN', 'SUPER-ADMIN', 'MASTERADMIN', 'MASTER_ADMIN'];
+  
   const isAdmin = isAdminRole(user?.role) || groupNames.some(g => adminGroupNames.includes(g));
+  const isMasterAdmin = (user?.role && masterAdminGroupNames.includes(user.role.toUpperCase())) || groupNames.some(g => masterAdminGroupNames.includes(g));
+  const hasGroupWithQuickEdit = userGroups.some(g => g.permissions?.publicQuickEdit?.enabled === true);
+  const canQuickEditPublic = isMasterAdmin || hasGroupWithQuickEdit;
+  
   const hasNoGroups = userGroups.length === 0;
   const hasGroup = useCallback(
     (groupName: string) => groupNames.includes(groupName.toUpperCase()),
     [groupNames]
   );
 
-  // React user state is the single source of truth for authentication.
-  // Token expiry is handled by the setTimeout useEffect above (calls handleLogout).
-  // The 401 interceptor + onForcedLogout handle external invalidation.
-  // Re-checking the JWT on every render via checkIsAuthenticated() is redundant
-  // and fragile — a transient sessionStorage read failure or JWT decode error
-  // would redirect the user to /auth even with a fully valid session.
   const isAuthenticated = !!user;
 
   return (
@@ -382,6 +384,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout: handleLogout,
         isAuthenticated,
         isAdmin,
+        isMasterAdmin,
+        canQuickEditPublic,
         userGroups,
         groupNames,
         hasNoGroups,

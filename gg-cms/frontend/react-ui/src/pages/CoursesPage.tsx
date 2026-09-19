@@ -27,99 +27,6 @@ interface CourseCardData {
   progress?: number;
 }
 
-const mockCourses: CourseCardData[] = [
-  {
-    id: 'c-1',
-    slug: 'go-backend-engineering',
-    title: 'Go Backend Engineering',
-    description: 'Master practical backend architecture, HTTP services, REST APIs, and PostgreSQL in Go.',
-    level: 'Intermediate',
-    modulesCount: 12,
-    lessonsCount: 46,
-    durationText: '8h 20m',
-    category: 'Engineering',
-    technology: 'Go',
-    learningStyle: 'Project based',
-    skills: ['Go', 'HTTP', 'REST', 'PostgreSQL', 'Authentication'],
-    progress: 64,
-  },
-  {
-    id: 'c-2',
-    slug: 'oauth-2-fundamentals',
-    title: 'OAuth 2.0 & OIDC Fundamentals',
-    description: 'Learn modern authentication, Authorization Code with PKCE, JWT tokens, and security best practices.',
-    level: 'Intermediate',
-    modulesCount: 8,
-    lessonsCount: 28,
-    durationText: '4h 45m',
-    category: 'Security',
-    technology: 'OAuth',
-    learningStyle: 'Hands-on',
-    skills: ['OAuth 2.0', 'OIDC', 'PKCE', 'JWT', 'Security'],
-    progress: 0,
-  },
-  {
-    id: 'c-3',
-    slug: 'kubernetes-networking-deep-dive',
-    title: 'Kubernetes Networking & Ingress',
-    description: 'Understand CNI plugins, Pod-to-Pod communication, Services, Ingress controllers, and Service Mesh.',
-    level: 'Advanced',
-    modulesCount: 10,
-    lessonsCount: 35,
-    durationText: '6h 15m',
-    category: 'Cloud',
-    technology: 'Kubernetes',
-    learningStyle: 'Hands-on',
-    skills: ['Kubernetes', 'Networking', 'Ingress', 'DNS', 'Calico'],
-    progress: 15,
-  },
-  {
-    id: 'c-4',
-    slug: 'system-design-for-backend-engineers',
-    title: 'System Design for High Scale Systems',
-    description: 'Design resilient microservices, caching layers with Redis, event streams with Kafka, and database sharding.',
-    level: 'Advanced',
-    modulesCount: 14,
-    lessonsCount: 52,
-    durationText: '11h 30m',
-    category: 'Engineering',
-    technology: 'Architecture',
-    learningStyle: 'Theory',
-    skills: ['Distributed Systems', 'Redis', 'Kafka', 'Caching', 'Load Balancing'],
-    progress: 0,
-  },
-  {
-    id: 'c-5',
-    slug: 'python-asyncio-mastery',
-    title: 'Python AsyncIO & High-Concurrency APIs',
-    description: 'Master asynchronous programming, event loops, FastAPI, and concurrent request handling in Python.',
-    level: 'Intermediate',
-    modulesCount: 6,
-    lessonsCount: 24,
-    durationText: '3h 50m',
-    category: 'Technology',
-    technology: 'Python',
-    learningStyle: 'Hands-on',
-    skills: ['Python', 'AsyncIO', 'FastAPI', 'Event Loop', 'WebSockets'],
-    progress: 0,
-  },
-  {
-    id: 'c-6',
-    slug: 'aws-cloud-security-architecture',
-    title: 'AWS Security Architecture & IAM',
-    description: 'Build enterprise-grade IAM policies, KMS encryption key hierarchies, and VPC security groups.',
-    level: 'Intermediate',
-    modulesCount: 9,
-    lessonsCount: 32,
-    durationText: '5h 10m',
-    category: 'Security',
-    technology: 'AWS',
-    learningStyle: 'Project based',
-    skills: ['AWS', 'IAM', 'KMS', 'VPC Security', 'Cloud Security'],
-    progress: 0,
-  },
-];
-
 export function CoursesPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,8 +62,7 @@ export function CoursesPage() {
   }, [publicCmsData]);
 
   const allCourses = useMemo(() => {
-    if (backendCourses.length > 0) return backendCourses;
-    return mockCourses;
+    return backendCourses;
   }, [backendCourses]);
 
   const categories = useMemo(() => {

@@ -46,121 +46,6 @@ interface LearningPathItem {
   stages: PathStage[];
 }
 
-const mockPaths: LearningPathItem[] = [
-  {
-    id: 'lp-1',
-    slug: 'backend-engineer',
-    title: 'Backend Engineer',
-    subtitle: 'Learn programming, APIs, databases, distributed systems, and production engineering.',
-    category: 'Career',
-    level: 'Beginner → Advanced',
-    stagesCount: 8,
-    resourcesCount: 78,
-    estimatedHours: 120,
-    skills: ['Go', 'API Design', 'Databases', 'Distributed Systems', 'Cloud'],
-    progress: 60,
-    stages: [
-      {
-        id: 'st-1',
-        stageNumber: 1,
-        title: 'Programming Fundamentals',
-        description: 'Core syntax, data types, control structures, and basic algorithms.',
-        whyItMatters: 'Every backend engineer needs strong foundational programming logic.',
-        prerequisites: ['None'],
-        status: 'completed',
-        progressPercentage: 100,
-        resources: [
-          { title: 'Go Fundamentals Course', type: 'Course', estimatedMinutes: 180, url: '/course/go-backend-engineering' },
-          { title: 'Data Structures Quick Reference', type: 'Cheat Sheet', estimatedMinutes: 10, url: '/explore' },
-        ],
-      },
-      {
-        id: 'st-2',
-        stageNumber: 2,
-        title: 'Go Language In-Depth',
-        description: 'Pointers, interfaces, goroutines, channels, and package management.',
-        whyItMatters: 'Go powers high-concurrency microservices across modern backend tech stacks.',
-        prerequisites: ['Programming Fundamentals'],
-        status: 'completed',
-        progressPercentage: 100,
-        resources: [
-          { title: 'Go Concurrency Patterns', type: 'Article', estimatedMinutes: 15, url: '/explore' },
-          { title: 'Go Fundamentals Quiz', type: 'Quiz', estimatedMinutes: 10, url: '/practice' },
-        ],
-      },
-      {
-        id: 'st-3',
-        stageNumber: 3,
-        title: 'Web & HTTP Architecture',
-        description: 'HTTP verbs, headers, RESTful standards, JSON serialization, and status codes.',
-        whyItMatters: 'Before building backend APIs, you need deep comprehension of the HTTP protocol.',
-        prerequisites: ['Go Language In-Depth'],
-        status: 'in_progress',
-        progressPercentage: 60,
-        resources: [
-          { title: 'HTTP Fundamentals', type: 'Course', estimatedMinutes: 120, url: '/course/go-backend-engineering' },
-          { title: 'HTTP Deep Dive', type: 'Article', estimatedMinutes: 20, url: '/explore' },
-          { title: 'HTTP Status Codes Cheat Sheet', type: 'Cheat Sheet', estimatedMinutes: 5, url: '/explore' },
-          { title: 'HTTP Fundamentals Quiz', type: 'Quiz', estimatedMinutes: 15, url: '/practice' },
-          { title: '20 HTTP Interview Questions', type: 'Interview Questions', estimatedMinutes: 25, url: '/interview-prep' },
-        ],
-      },
-      {
-        id: 'st-4',
-        stageNumber: 4,
-        title: 'Databases & Persistence',
-        description: 'Relational DBs, PostgreSQL, indexing, ACID transactions, and Redis caching.',
-        whyItMatters: 'Data integrity and storage performance dictate modern API reliability.',
-        prerequisites: ['Web & HTTP Architecture'],
-        status: 'upcoming',
-        resources: [
-          { title: 'PostgreSQL Indexing & Optimization', type: 'Article', estimatedMinutes: 25, url: '/explore' },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'lp-2',
-    slug: 'cloud-engineer',
-    title: 'Cloud Engineer',
-    subtitle: 'AWS/GCP, networking, containers, Kubernetes, Infrastructure-as-Code, and monitoring.',
-    category: 'Career',
-    level: 'Beginner → Advanced',
-    stagesCount: 7,
-    resourcesCount: 64,
-    estimatedHours: 95,
-    skills: ['AWS', 'Docker', 'Kubernetes', 'Terraform', 'CI/CD'],
-    progress: 24,
-    stages: [
-      {
-        id: 'st-cloud-1',
-        stageNumber: 1,
-        title: 'Cloud & Networking Basics',
-        description: 'VPCs, subnets, DNS, routing tables, and IP addressing.',
-        whyItMatters: 'Cloud infrastructure operates on fundamental computer network principles.',
-        prerequisites: ['None'],
-        status: 'completed',
-        progressPercentage: 100,
-        resources: [{ title: 'Networking for Cloud Engineers', type: 'Course', estimatedMinutes: 150, url: '/courses' }],
-      },
-    ],
-  },
-  {
-    id: 'lp-3',
-    slug: 'security-engineer',
-    title: 'Security Engineer',
-    subtitle: 'Identity, OAuth 2.0, OIDC, PKI, application security, threat modeling, and cloud security.',
-    category: 'Career',
-    level: 'Intermediate → Advanced',
-    stagesCount: 6,
-    resourcesCount: 52,
-    estimatedHours: 80,
-    skills: ['OAuth 2.0', 'OIDC', 'JWT', 'PKI', 'AppSec'],
-    progress: 10,
-    stages: [],
-  },
-];
-
 export function LearningPathsHub() {
   const navigate = useNavigate();
   const { data: dbPathsData } = usePublicLearningPaths();
@@ -172,24 +57,21 @@ export function LearningPathsHub() {
   const categories = ['All', 'Career', 'Technology', 'Domain'];
 
   const allPaths = React.useMemo((): LearningPathItem[] => {
-    if (!dbPathsData || dbPathsData.length === 0) return mockPaths;
-    const mappedDb: LearningPathItem[] = dbPathsData.map((dp: any) => ({
+    if (!dbPathsData || dbPathsData.length === 0) return [];
+    return dbPathsData.map((dp: any) => ({
       id: String(dp.id),
       slug: dp.slug || String(dp.id),
       title: dp.title,
       subtitle: dp.description || dp.subtitle || `Guided learning roadmap for ${dp.title}.`,
-      category: (dp.category as any) || 'Career',
+      category: (dp.category as any) || (dp.kind ? (dp.kind.includes('Engineer') || dp.kind.includes('Architect') ? 'Career' : 'Technology') : 'Career'),
       level: dp.level || 'Intermediate',
-      stagesCount: dp.stages?.length || dp.stagesCount || 5,
-      resourcesCount: dp.resourcesCount || 30,
-      estimatedHours: dp.estimatedHours || 40,
+      stagesCount: dp.stages?.length || dp.courses?.length || 5,
+      resourcesCount: dp.resourcesCount || (dp.courses?.length ? dp.courses.length * 4 : 24),
+      estimatedHours: dp.estimatedHours || (dp.courses?.length ? dp.courses.length * 3 : 20),
       skills: dp.skills || ['Core', 'Architecture', 'Engineering'],
       progress: dp.progress || 0,
       stages: dp.stages || [],
     }));
-    const dbSlugs = new Set(mappedDb.map(p => p.slug));
-    const uniqueMock = mockPaths.filter(m => !dbSlugs.has(m.slug));
-    return [...mappedDb, ...uniqueMock];
   }, [dbPathsData]);
 
   const filteredPaths = allPaths.filter(path => {

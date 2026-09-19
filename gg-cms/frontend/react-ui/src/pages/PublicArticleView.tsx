@@ -61,10 +61,34 @@ function ArticleSkeleton() {
   );
 }
 
+import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
+
+// Helper for saving article revision
 export default function PublicArticleView() {
   const { '*': wildcardPath } = useParams();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
+  const [isViewingPending, setIsViewingPending] = useState(false);
+  const [pendingRevision, setPendingRevision] = useState<any>(null);
+  
+  const handleSaveArticleRevision = async (data: { title: string; description: string; body: string; submitForReview: boolean }) => {
+    // Save draft revision or submit for review
+    const newRev = {
+      id: Date.now(),
+      parentContentId: article?.id || 1,
+      contentType: 'ARTICLE',
+      versionNumber: (article as any)?.versionNumber ? (article as any).versionNumber + 1 : 2,
+      status: data.submitForReview ? 'REVIEW' : 'DRAFT',
+      requestedBy: 1,
+      title: data.title,
+      description: data.description,
+      body: data.body,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setPendingRevision(newRev);
+    setIsViewingPending(true);
+  };
   // Wildcard captures "slug" or "category/slug" — always use the last segment
   const articleId = extractSlugFromPath(wildcardPath);
   const discussRef = useRef<HTMLDivElement>(null);
@@ -175,7 +199,18 @@ export default function PublicArticleView() {
 
   return (
     <PublicLayout>
-      <div className="max-w-6xl mx-auto">
+      <PublicQuickEditBar
+        contentType="article"
+        contentId={article.id}
+        currentTitle={article.title || 'Untitled'}
+        currentDescription={article.description || ''}
+        currentBody={bodyHtml || ''}
+        pendingRevision={pendingRevision}
+        isViewingPending={isViewingPending}
+        onToggleView={setIsViewingPending}
+        onSaveRevision={handleSaveArticleRevision}
+      />
+      <div className="max-w-6xl mx-auto pt-4">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-primary transition-colors">Home</Link>

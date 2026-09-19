@@ -81,13 +81,14 @@ const DEFAULT_ROLES: RoleDefinition[] = [
 ];
 
 const PERMISSION_RESOURCES: { key: keyof GroupPermissions; label: string; actions: string[] }[] = [
-  { key: 'articles',   label: 'Articles',   actions: ['view','create','edit','delete','review','approve','publish'] },
-  { key: 'courses',    label: 'Courses',    actions: ['view','create','edit','delete','review','approve','publish'] },
-  { key: 'users',      label: 'Users',      actions: ['view','create','edit','delete'] },
-  { key: 'groups',     label: 'Groups',     actions: ['view','manage'] },
-  { key: 'categories', label: 'Categories', actions: ['view','create','edit','delete'] },
-  { key: 'analytics',  label: 'Analytics',  actions: ['view'] },
-  { key: 'settings',   label: 'Settings',   actions: ['view','manage'] },
+  { key: 'articles',        label: 'Articles',                        actions: ['view','create','edit','delete','review','approve','publish'] },
+  { key: 'courses',         label: 'Courses',                         actions: ['view','create','edit','delete','review','approve','publish'] },
+  { key: 'users',           label: 'Users',                           actions: ['view','create','edit','delete'] },
+  { key: 'groups',          label: 'Groups',                          actions: ['view','manage'] },
+  { key: 'categories',      label: 'Categories',                      actions: ['view','create','edit','delete'] },
+  { key: 'analytics',       label: 'Analytics',                       actions: ['view'] },
+  { key: 'settings',        label: 'Settings',                        actions: ['view','manage'] },
+  { key: 'publicQuickEdit', label: 'Public View Quick Edit (Specialized)', actions: ['enabled'] },
 ];
 
 const ROLE_PRESETS: Record<string, GroupPermissions> = {

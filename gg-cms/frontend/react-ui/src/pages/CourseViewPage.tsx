@@ -209,6 +209,8 @@ const RecommendedPathsSection = () => {
   );
 };
 
+import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
+
 // ─── Main CourseViewPage Component ────────────────────────────────────────────
 export function CourseViewPage() {
   const { '*': wildcardPath } = useParams();
@@ -217,6 +219,26 @@ export function CourseViewPage() {
   const isPreview = searchParams.get('preview') === 'true';
   const courseId = extractSlugFromPath(wildcardPath);
   const { isAuthenticated } = useAuth();
+  const [isViewingPending, setIsViewingPending] = useState(false);
+  const [pendingRevision, setPendingRevision] = useState<any>(null);
+
+  const handleSaveCourseRevision = async (data: { title: string; description: string; body: string; submitForReview: boolean }) => {
+    const newRev = {
+      id: Date.now(),
+      parentContentId: numericCourseId || 1,
+      contentType: 'COURSE',
+      versionNumber: (displayCourse as any)?.versionNumber ? (displayCourse as any).versionNumber + 1 : 2,
+      status: data.submitForReview ? 'REVIEW' : 'DRAFT',
+      requestedBy: 1,
+      title: data.title,
+      description: data.description,
+      body: data.body,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setPendingRevision(newRev);
+    setIsViewingPending(true);
+  };
 
   const { data: course, isLoading: courseLoading } = usePublicCmsById(
     courseId,
@@ -409,6 +431,17 @@ export function CourseViewPage() {
 
   return (
     <PublicLayout>
+      <PublicQuickEditBar
+        contentType="course"
+        contentId={numericCourseId || 1}
+        currentTitle={title}
+        currentDescription={description}
+        currentBody={displayCourse?.body || ''}
+        pendingRevision={pendingRevision}
+        isViewingPending={isViewingPending}
+        onToggleView={setIsViewingPending}
+        onSaveRevision={handleSaveCourseRevision}
+      />
       {/*
         Full viewport container with Left Navigation Sidebar + Right Content View
       */}

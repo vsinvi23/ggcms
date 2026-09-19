@@ -110,6 +110,24 @@ export interface GroupPermissions {
   categories?: ResourcePerms;
   analytics?: ViewPerms;
   settings?: ManagePerms;
+  publicQuickEdit?: { enabled?: boolean };
+}
+
+export interface ContentRevisionDto {
+  id: number;
+  parentContentId: number;
+  contentType: string;
+  versionNumber: number;
+  status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'REJECTED';
+  requestedBy: number;
+  requestedByName?: string;
+  title: string;
+  description?: string;
+  body?: string;
+  categoryName?: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface GroupCreateDto {
