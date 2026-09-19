@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useNavigate } from 'react-router-dom';
+import { usePublicLearningPaths } from '@/api/hooks/usePublicCms';
 
 interface PathStage {
   id: string;
@@ -162,6 +163,7 @@ const mockPaths: LearningPathItem[] = [
 
 export function LearningPathsHub() {
   const navigate = useNavigate();
+  const { data: dbPathsData } = usePublicLearningPaths();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [activePath, setActivePath] = useState<LearningPathItem | null>(null);
@@ -169,7 +171,28 @@ export function LearningPathsHub() {
 
   const categories = ['All', 'Career', 'Technology', 'Domain'];
 
-  const filteredPaths = mockPaths.filter(path => {
+  const allPaths = React.useMemo((): LearningPathItem[] => {
+    if (!dbPathsData || dbPathsData.length === 0) return mockPaths;
+    const mappedDb: LearningPathItem[] = dbPathsData.map((dp: any) => ({
+      id: String(dp.id),
+      slug: dp.slug || String(dp.id),
+      title: dp.title,
+      subtitle: dp.description || dp.subtitle || `Guided learning roadmap for ${dp.title}.`,
+      category: (dp.category as any) || 'Career',
+      level: dp.level || 'Intermediate',
+      stagesCount: dp.stages?.length || dp.stagesCount || 5,
+      resourcesCount: dp.resourcesCount || 30,
+      estimatedHours: dp.estimatedHours || 40,
+      skills: dp.skills || ['Core', 'Architecture', 'Engineering'],
+      progress: dp.progress || 0,
+      stages: dp.stages || [],
+    }));
+    const dbSlugs = new Set(mappedDb.map(p => p.slug));
+    const uniqueMock = mockPaths.filter(m => !dbSlugs.has(m.slug));
+    return [...mappedDb, ...uniqueMock];
+  }, [dbPathsData]);
+
+  const filteredPaths = allPaths.filter(path => {
     const matchesSearch = searchQuery === '' || 
       path.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       path.subtitle.toLowerCase().includes(searchQuery.toLowerCase());
