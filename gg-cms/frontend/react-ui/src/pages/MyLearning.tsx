@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { HomePersonalizationWidget } from '@/components/personalization/HomePersonalizationWidget';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -595,8 +595,8 @@ const MyLearning = () => {
   ];
 
   return (
-    <PublicLayout>
-      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+    <DashboardLayout>
+      <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-foreground">My Learning</h1>
@@ -716,7 +716,7 @@ const MyLearning = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </PublicLayout>
+    </DashboardLayout>
   );
 };
 

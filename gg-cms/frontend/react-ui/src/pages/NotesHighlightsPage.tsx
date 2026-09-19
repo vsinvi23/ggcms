@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useMyHighlights,
@@ -307,8 +307,8 @@ export default function NotesHighlightsPage() {
   const isLoading = loadingH || loadingN;
 
   return (
-    <PublicLayout>
-      <div className="max-w-5xl mx-auto">
+    <DashboardLayout>
+      <div className="space-y-6">
         {/* Page header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">My Notes and Highlights</h1>
@@ -493,7 +493,7 @@ export default function NotesHighlightsPage() {
           </div>
         </div>
       </div>
-    </PublicLayout>
+    </DashboardLayout>
   );
 }
 
