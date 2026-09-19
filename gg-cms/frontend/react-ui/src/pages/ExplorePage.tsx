@@ -268,7 +268,27 @@ export function ExplorePage() {
             </div>
 
             {/* Right Column — Cards Grid immediately visible */}
-            <div className="md:col-span-3 space-y-4">
+            <div className="md:col-span-3 space-y-5">
+              
+              {/* UX Banner: Curated Learning Pathway Banner */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-primary/10 to-transparent border border-emerald-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-emerald-500 text-white text-[10px] font-bold">Recommended Flow</Badge>
+                    <span className="text-xs text-muted-foreground font-semibold">Beyond Articles & References</span>
+                  </div>
+                  <h3 className="text-sm font-bold text-foreground">Combine Reading with Structured Courses & Hands-on Tests</h3>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button size="sm" onClick={() => navigate('/explore/courses')} className="rounded-xl text-xs font-bold gap-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+                    Explore Courses <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => navigate('/explore/practice')} className="rounded-xl text-xs font-semibold">
+                    Practice Quizzes
+                  </Button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {filteredItems.map(item => (
                   <div
@@ -310,6 +330,18 @@ export function ExplorePage() {
                   </div>
                 ))}
               </div>
+
+              {/* Bottom UX Discovery Banner */}
+              <div className="p-5 rounded-2xl border border-border bg-card/80 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+                <div className="space-y-1 text-center sm:text-left">
+                  <h4 className="text-sm font-bold text-foreground">Looking for Role-Based Career Tracks?</h4>
+                  <p className="text-xs text-muted-foreground">Explore structured Learning Paths designed to take you from foundational concepts to production engineering mastery.</p>
+                </div>
+                <Button onClick={() => navigate('/explore/paths')} variant="outline" className="rounded-xl text-xs font-bold gap-1.5 shrink-0">
+                  Browse Learning Paths <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+
             </div>
           </div>
         </div>

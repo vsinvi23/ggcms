@@ -375,28 +375,47 @@ export default function PublicArticleView() {
             )}
 
             {/* Next Steps Learning Journey Banner */}
-            <div className="mt-10 p-6 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-cyan-500/5 space-y-4 shadow-2xs">
+            <div className="mt-10 p-6 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-emerald-500/5 space-y-6 shadow-xs">
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="space-y-1 max-w-xl">
-                  <Badge variant="outline" className="text-[10px] font-bold border-primary/30 text-primary uppercase tracking-wider">
-                    Accelerate Mastery
+                  <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 uppercase tracking-wider">
+                    Recommended Next Steps
                   </Badge>
-                  <h3 className="text-lg font-bold text-foreground">
-                    Deepen Your Knowledge in {article.categoryName || 'Software & Cloud'}
+                  <h3 className="text-xl font-extrabold text-foreground">
+                    Deepen Your Knowledge in {article.categoryName || 'Software & Security'}
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Take your skills further with structured learning paths, guided courses, and role-based interview preparation tracks.
+                    Take your reading further with hands-on practice quizzes and structured learning courses tailored to this topic.
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button size="sm" asChild className="rounded-xl gap-1.5 font-semibold text-xs">
-                    <Link to="/explore/courses">
-                      Explore Courses <ChevronRight className="w-3.5 h-3.5" />
+              </div>
+
+              {/* Related Course & Practice Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                <div className="p-4 rounded-2xl border border-border bg-card space-y-3 hover:border-primary/40 transition-all">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary" className="text-[10px] font-bold bg-primary/10 text-primary">Interactive Course</Badge>
+                    <span className="text-[11px] text-muted-foreground font-semibold">4h 30m</span>
+                  </div>
+                  <h4 className="text-sm font-bold text-foreground">OAuth 2.0 & OIDC Fundamentals Course</h4>
+                  <p className="text-xs text-muted-foreground line-clamp-2">Master PKCE flows, authorization server implementation, and JWT claims verification.</p>
+                  <Button size="sm" asChild className="w-full rounded-xl text-xs font-bold gap-1 mt-1">
+                    <Link to="/course/oauth-2-fundamentals">
+                      Start Interactive Course <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </Button>
-                  <Button size="sm" variant="outline" asChild className="rounded-xl gap-1.5 font-semibold text-xs">
-                    <Link to="/topics">
-                      All Topics
+                </div>
+
+                <div className="p-4 rounded-2xl border border-border bg-card space-y-3 hover:border-emerald-500/40 transition-all">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary" className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Practice Quiz</Badge>
+                    <span className="text-[11px] text-muted-foreground font-semibold">10 mins</span>
+                  </div>
+                  <h4 className="text-sm font-bold text-foreground">OAuth 2.0 & OIDC Practice Test</h4>
+                  <p className="text-xs text-muted-foreground line-clamp-2">Test your understanding of PKCE verifiers, implicit flow deprecation, and ID tokens.</p>
+                  <Button size="sm" variant="outline" asChild className="w-full rounded-xl text-xs font-bold gap-1 mt-1 hover:bg-emerald-500/10 hover:text-emerald-600">
+                    <Link to="/explore/practice">
+                      Take Practice Quiz <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </Button>
                 </div>
