@@ -1,15 +1,16 @@
 {
   "type": "COURSE",
   "title": "Implementing Secure OAuth 2.0 & OpenID Connect (OIDC) in Go",
-  "description": "A security engineering course covering OAuth 2.0 authorization code flow with PKCE, JWT token validation, JWKS caching, and production Go middlewares.",
+  "description": "A security engineering course covering OAuth 2.0 authorization code flow with PKCE, JWT token validation, JWKS caching, production Go middlewares, assessment quizzes, and interview prep.",
   "categorySlug": "identity-and-access",
   "courseType": "TRACK",
   "tags": [
     "oauth-2",
     "openid-connect",
-    "jwt"
+    "jwt",
+    "interview-prep"
   ],
-  "body": "Master decentralized identity and authorization standards. Learn how to prevent authorization code theft using PKCE, structure JWT claims, validate RSA signatures via JWKS public key rotation, and build Go HTTP middleware.",
+  "body": "Master decentralized identity and authorization standards. Learn how to prevent authorization code theft using PKCE, structure JWT claims, validate RSA signatures via JWKS public key rotation, build Go HTTP middleware, solve assessment quizzes, and prepare for Security Architect interviews.",
   "sections": [
     {
       "title": "Section 1: OAuth 2.0 & OpenID Connect Fundamentals",
@@ -21,26 +22,26 @@
           "duration": 20,
           "order": 0,
           "body": "### Proof Key for Code Exchange (PKCE)\nPrevent authorization code interception attacks on public clients (Single Page Applications & mobile apps) using dynamic code_verifier and code_challenge SHA-256 hashes."
-        },
-        {
-          "title": "Lesson 1.2: JWT Structure & Claims Verification",
-          "type": "text",
-          "duration": 20,
-          "order": 1,
-          "body": "### JWT Claims Validation\nVerify standard claims: iss (issuer), aud (audience), exp (expiration), sub (subject ID), and roles (RBAC/ABAC scopes)."
         }
       ]
     },
     {
-      "title": "Section 2: Production Go Middleware & Server Implementation",
+      "title": "Section 2: Assessment Quiz, Technical Interview Prep & Practice Coding Challenge",
       "order": 1,
       "lessons": [
         {
-          "title": "Lesson 2.1: Go Bearer Token Verification Middleware",
-          "type": "text",
-          "duration": 30,
+          "title": "Lesson 2.1: Identity & OAuth2 Assessment Quiz",
+          "type": "quiz",
+          "duration": 15,
           "order": 0,
-          "body": "### Building Go JWT Auth Handler\n\n```go\npackage middleware\n\nimport (\n\t\"context\"\n\t\"net/http\"\n\t\"strings\"\n\t\"github.com/golang-jwt/jwt/v5\"\n)\n\nfunc JWTAuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {\n\treturn func(next http.Handler) http.Handler {\n\t\treturn http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n\t\t\tauthHeader := r.Header.Get(\"Authorization\")\n\t\t\tif authHeader == \"\" || !strings.HasPrefix(authHeader, \"Bearer \") {\n\t\t\t\thttp.Error(w, `{\"error\":\"missing authorization header\"}`, http.StatusUnauthorized)\n\t\t\t\treturn\n\t\t\t}\n\t\t\tnext.ServeHTTP(w, r)\n\t\t})\n\t}\n}\n```"
+          "body": "### Assessment Quiz: OAuth 2.0 & JWT Security\n\n#### Question 1: What security attack vector does PKCE (Proof Key for Code Exchange) prevent?\n- **A)** SQL Injection in user login forms.\n- **B)** Authorization Code Interception on public clients (SPAs and mobile apps).\n- **C)** Cross-Site Scripting (XSS) in HTML rendering.\n- **D)** Database password leaks.\n\n*Correct Answer:* **B**\n*Explanation:* PKCE binds the token exchange to the original client instance that initiated authorization, preventing intercepted auth codes from being redeemed by malicious apps.\n\n#### Question 2: What is the purpose of the `kid` (Key ID) header parameter in a JWT?\n- **A)** It specifies the encryption algorithm (e.g. RS256).\n- **B)** It identifies which public key in a JWKS set was used to sign the token.\n- **C)** It holds the user's database primary key.\n- **D)** It sets the token expiration timestamp.\n\n*Correct Answer:* **B**\n*Explanation:* The `kid` header parameter directs the Resource Server to the exact public key in the identity provider's JWKS endpoint used for signature verification."
+        },
+        {
+          "title": "Lesson 2.2: AppSec & Identity Engineer Technical Interview Prep",
+          "type": "interview_prep",
+          "duration": 25,
+          "order": 1,
+          "body": "### Technical Interview Q&A\n\n#### Q1: What is the fundamental difference between OAuth 2.0 and OpenID Connect (OIDC)?\n**Model Answer:** OAuth 2.0 is an **Authorization** framework designed to grant third-party applications limited access to user resources via Access Tokens. OpenID Connect (OIDC) is an **Authentication** layer built on top of OAuth 2.0 that provides identity verification (verifying *who* the user is) using signed ID Tokens (JWTs).\n\n#### Q2: How should JWT access tokens be stored securely in Single Page Applications (SPAs)?\n**Model Answer:** Never store sensitive JWT access tokens in `localStorage` or `sessionStorage` due to Cross-Site Scripting (XSS) risks. Instead, store session tokens inside HTTP-only, Secure, SameSite=Strict cookies, or use the BFF (Backend-For-Frontend) proxy pattern."
         }
       ]
     }

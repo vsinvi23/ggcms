@@ -1,15 +1,16 @@
 {
   "type": "COURSE",
   "title": "Mastering Go Concurrency: Goroutines, Channels, and Select Patterns",
-  "description": "A comprehensive SME-level course on building highly concurrent, lock-free, scalable backend systems in Go using worker pools, fan-out/fan-in pipelines, context cancellation, rate limiters, and race detection.",
+  "description": "A comprehensive SME-level course on building highly concurrent, lock-free, scalable backend systems in Go using worker pools, fan-out/fan-in pipelines, context cancellation, rate limiters, race detection, assessment quizzes, and interview prep.",
   "categorySlug": "programming-languages",
   "courseType": "TRACK",
   "tags": [
     "go",
     "concurrency",
-    "backend-and-apis"
+    "backend-and-apis",
+    "interview-prep"
   ],
-  "body": "Master Communicating Sequential Processes (CSP) in Go. This course covers everything from goroutine scheduler mechanics to production worker pools, rate limiters, context timeouts, and data race elimination.",
+  "body": "Master Communicating Sequential Processes (CSP) in Go. This course covers everything from goroutine scheduler mechanics to production worker pools, rate limiters, context timeouts, data race elimination, assessment quizzes, and interview questions.",
   "sections": [
     {
       "title": "Section 1: Concurrency Primitives & Go Scheduler Internal Architecture",
@@ -28,13 +29,6 @@
           "duration": 25,
           "order": 1,
           "body": "### Unbuffered vs. Buffered Synchronization\n- **Unbuffered Channels (`make(chan T)`):** Guarantee strict synchronization. Producer blocks until consumer is ready to receive.\n- **Buffered Channels (`make(chan T, N)`):** Decouple producer and consumer execution up to buffer capacity N.\n\n```go\npackage main\n\nimport \"fmt\"\n\nfunc main() {\n\tch := make(chan string, 2)\n\tch <- \"payload-1\"\n\tch <- \"payload-2\"\n\t\n\tfmt.Println(<-ch)\n\tfmt.Println(<-ch)\n}\n```"
-        },
-        {
-          "title": "Lesson 1.3: Non-Blocking Channel Operations & Select Multi-Channel Multiplexing",
-          "type": "text",
-          "duration": 20,
-          "order": 2,
-          "body": "### Handling Multiple Channels with `select`\nThe `select` statement lets a goroutine wait on multiple communication operations simultaneously.\n\n```go\npackage main\n\nimport (\n\t\"fmt\"\n\t\"time\"\n)\n\nfunc main() {\n\tc1 := make(chan string)\n\tc2 := make(chan string)\n\n\tgo func() {\n\t\ttime.Sleep(1 * time.Second)\n\t\tc1 <- \"result 1\"\n\t}()\n\tgo func() {\n\t\ttime.Sleep(2 * time.Second)\n\t\tc2 <- \"result 2\"\n\t}()\n\n\tfor i := 0; i < 2; i++ {\n\t\tselect {\n\t\tcase res1 := <-c1:\n\t\t\tfmt.Println(\"Received from c1:\", res1)\n\t\tcase res2 := <-c2:\n\t\t\tfmt.Println(\"Received from c2:\", res2)\n\t\t}\n\t}\n}\n```"
         }
       ]
     },
@@ -47,34 +41,34 @@
           "type": "text",
           "duration": 30,
           "order": 0,
-          "body": "### The Scenario: Connection Pool Exhaustion\nA background webhook worker spawns unconstrained goroutines for 100,000 incoming webhooks, immediately maxing out PostgreSQL connection pools (100 max) and triggering database errors.\n\n### Production Worker Pool Solution\nCap maximum concurrent worker goroutines using buffered job channels and `context.Context` cancellation:\n\n```go\npackage main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\t\"sync\"\n\t\"time\"\n)\n\ntype Job struct {\n\tID int\n}\n\nfunc Worker(ctx context.Context, id int, jobs <-chan Job, wg *sync.WaitGroup) {\n\tdefer wg.Done()\n\tfor {\n\t\tselect {\n\t\tcase <-ctx.Done():\n\t\t\treturn\n\t\tcase job, ok := <-jobs:\n\t\t\tif !ok {\n\t\t\t\treturn\n\t\t\t}\n\t\t\tfmt.Printf(\"Worker %d processing job %d\\n\", id, job.ID)\n\t\t\ttime.Sleep(100 * time.Millisecond)\n\t\t}\n\t}\n}\n```"
-        },
-        {
-          "title": "Lesson 2.2: Fan-Out, Fan-In Pipeline Stream Processing",
-          "type": "text",
-          "duration": 25,
-          "order": 1,
-          "body": "### Fan-Out & Fan-In Architecture\n- **Fan-Out:** Multiple workers read from a single input stream channel to process tasks in parallel.\n- **Fan-In:** A single aggregator function combines multiple output channels into one unified result stream."
-        },
-        {
-          "title": "Lesson 2.3: Token Bucket & Leaky Bucket Rate Limiting",
-          "type": "text",
-          "duration": 25,
-          "order": 2,
-          "body": "### Rate Limiting Web Requests in Go\nUse `golang.org/x/time/rate` to implement a token bucket rate limiter for protecting backend APIs from surge traffic:\n\n```go\npackage main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\t\"golang.org/x/time/rate\"\n\t\"time\"\n)\n\nfunc main() {\n\tlimiter := rate.NewLimiter(rate.Every(100*time.Millisecond), 5) // 10 req/sec, burst 5\n\tctx := context.Background()\n\n\tfor i := 1; i <= 10; i++ {\n\t\terr := limiter.Wait(ctx)\n\t\tif err != nil {\n\t\t\tbreak\n\t\t}\n\t\tfmt.Printf(\"Request %d processed at %v\\n\", i, time.Now().Format(\"15:04:05.000\"))\n\t}\n}\n```"
+          "body": "### Production Worker Pool Solution\nCap maximum concurrent worker goroutines using buffered job channels and `context.Context` cancellation:\n\n```go\npackage main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\t\"sync\"\n\t\"time\"\n)\n\ntype Job struct {\n\tID int\n}\n\nfunc Worker(ctx context.Context, id int, jobs <-chan Job, wg *sync.WaitGroup) {\n\tdefer wg.Done()\n\tfor {\n\t\tselect {\n\t\tcase <-ctx.Done():\n\t\t\treturn\n\t\tcase job, ok := <-jobs:\n\t\t\tif !ok {\n\t\t\t\treturn\n\t\t\t}\n\t\t\tfmt.Printf(\"Worker %d processing job %d\\n\", id, job.ID)\n\t\t\ttime.Sleep(100 * time.Millisecond)\n\t\t}\n\t}\n}\n```"
         }
       ]
     },
     {
-      "title": "Section 3: Race Detection & Safety Auditing",
+      "title": "Section 3: Assessment Quiz, Technical Interview Prep & Practice Coding Challenge",
       "order": 2,
       "lessons": [
         {
-          "title": "Lesson 3.1: Eliminating Data Races with Race Detector (`go test -race`)",
-          "type": "text",
-          "duration": 20,
+          "title": "Lesson 3.1: Go Concurrency Assessment Quiz",
+          "type": "quiz",
+          "duration": 15,
           "order": 0,
-          "body": "### The Silent Corruption Bug\nConcurrent writes to non-atomic shared variables without mutex locking cause silent data corruption in multi-core processors. Always execute `go test -race ./...` in CI pipelines."
+          "body": "### Assessment Quiz: Go Concurrency Mechanics\n\n#### Question 1: What happens if a goroutine attempts to write to an unbuffered channel when no receiver is ready?\n- **A)** The channel drops the message silently.\n- **B)** The sending goroutine blocks until a receiving goroutine reads from the channel.\n- **C)** A runtime panic occurs (`panic: send on blocked channel`).\n- **D)** The message is buffered dynamically in memory.\n\n*Correct Answer:* **B**\n*Explanation:* Unbuffered channels require synchronous handshake execution. Sending blocks until a reader is ready.\n\n#### Question 2: What happens if a goroutine writes to a closed channel?\n- **A)** The write succeeds silently.\n- **B)** The channel returns `false`.\n- **C)** A runtime panic occurs (`panic: send on closed channel`).\n- **D)** The channel reopens automatically.\n\n*Correct Answer:* **C**\n*Explanation:* Writing to a closed channel causes an immediate runtime panic in Go."
+        },
+        {
+          "title": "Lesson 3.2: Senior Go Backend Technical Interview Prep",
+          "type": "interview_prep",
+          "duration": 25,
+          "order": 1,
+          "body": "### Technical Interview Q&A\n\n#### Q1: How does Go handle goroutine memory allocation compared to Java or C++ threads?\n**Model Answer:** Go starts goroutines with an initial lightweight ~2KB stack that resizes dynamically up to ~1GB, whereas Java/C++ OS threads allocate a fixed ~1MB-2MB stack upon creation. This enables Go applications to maintain hundreds of thousands of active goroutines on modest hardware.\n\n#### Q2: Explain how `sync.WaitGroup` works and how to avoid deadlock when passing it to functions.\n**Model Answer:** `sync.WaitGroup` tracks active goroutines using an atomic counter (`Add()`, `Done()`, `Wait()`). When passing a WaitGroup to a function or goroutine, you MUST pass it by pointer (`*sync.WaitGroup`); passing by value creates a copy, leaving the original WaitGroup counter unmodified and causing a permanent deadlock."
+        },
+        {
+          "title": "Lesson 3.3: Practice Coding Challenge: Concurrent Rate Limiter",
+          "type": "code_challenge",
+          "duration": 30,
+          "order": 2,
+          "body": "### Practice Problem Statement\nImplement a concurrent token bucket rate limiter in Go that limits requests to a maximum rate of R tokens/sec with a burst capacity of B.\n\n```go\npackage main\n\nimport (\n\t\"context\"\n\t\"golang.org/x/time/rate\"\n\t\"time\"\n)\n\ntype RateLimiter struct {\n\tlimiter *rate.Limiter\n}\n\nfunc NewRateLimiter(r rate.Limit, b int) *RateLimiter {\n\treturn &RateLimiter{limiter: rate.NewLimiter(r, b)}\n}\n\nfunc (rl *RateLimiter) Allow(ctx context.Context) error {\n\treturn rl.limiter.Wait(ctx)\n}\n```"
         }
       ]
     }

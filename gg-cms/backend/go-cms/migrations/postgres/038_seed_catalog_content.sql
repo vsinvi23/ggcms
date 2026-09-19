@@ -364,7 +364,7 @@ Evaluating RAG performance requires automated metrics beyond manual spot-checkin
     'PUBLISHED',
     c.id,
     u.id,
-    'art-7116fba13ac1463cb15267d713694c02',
+    'art-783d2e076d7749f8b40302df578b2adc',
     'rag-architecture-llm-applications',
     NOW(),
     'GUIDE'
@@ -381,7 +381,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-2166e26c9272495ab699b9c9435bd473',
+    'crs-aea633d99270466ead4c221240918dbf',
     'rag-architecture-llm-applications',
     NOW(),
     'MODULE'
@@ -511,7 +511,7 @@ def calculate_psi(reference: np.ndarray, current: np.ndarray, num_buckets: int =
     'PUBLISHED',
     c.id,
     u.id,
-    'art-2a46dfe6695d41cb9cfbdeffdceb1b4d',
+    'art-9cdf462319ff4012ad28a749d593668a',
     'ml-model-evaluation-metrics',
     NOW(),
     'REFERENCE'
@@ -528,7 +528,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-31c7e4fd6a5b4d91abf0425f89cd19d0',
+    'crs-5683da80b7c7486492d184f9d3914150',
     'ml-model-evaluation-metrics',
     NOW(),
     'MODULE'
@@ -632,7 +632,7 @@ When Cloud Run services communicate with private backend databases (e.g. Postgre
     'PUBLISHED',
     c.id,
     u.id,
-    'art-92bfd3f5821a49b2b3f50f4c98148362',
+    'art-4889e25379134756a1795165f5a106d1',
     'gcp-cloud-run-deployment-guide',
     NOW(),
     'TUTORIAL'
@@ -649,7 +649,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-502c0515cb3741168a7f784c05d540e9',
+    'crs-ec94695a067142ba98ff2754ccd676ac',
     'gcp-cloud-run-deployment-guide',
     NOW(),
     'MODULE'
@@ -778,7 +778,7 @@ spec:
     'PUBLISHED',
     c.id,
     u.id,
-    'art-90ce76f07ade4bfa86ba643ac70b882e',
+    'art-b6002cd5c4a4458e92a2795f6eef56c2',
     'kubernetes-zero-downtime-deployments',
     NOW(),
     'GUIDE'
@@ -795,7 +795,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-5a3a9545b6f5487293ed898893677e54',
+    'crs-2ccab3c8fcb84b0981e3a5578cb5dc7e',
     'kubernetes-zero-downtime-deployments',
     NOW(),
     'MODULE'
@@ -917,7 +917,7 @@ terraform {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-4dd41bd0bd2a41f78e61d06efd4fec98',
+    'art-fac2254f020e4594bcda22d813ccdac8',
     'terraform-modular-architecture',
     NOW(),
     'GUIDE'
@@ -934,7 +934,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-588229a6eb4d46e8a9bb26161e1b827f',
+    'crs-bcf4fb8e858e4cf2b20fdbfc525b05f9',
     'terraform-modular-architecture',
     NOW(),
     'MODULE'
@@ -1070,7 +1070,7 @@ func SanitizeLLMOutput(rawText string) string {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-9cc4f515d569428781063836ff4bb59d',
+    'art-597e3257d83642e5aaa865036d3ce16c',
     'owasp-top-10-llm-security',
     NOW(),
     'GUIDE'
@@ -1087,7 +1087,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-ab409f55d058439199e501f61a6b7f41',
+    'crs-dceec18b99f94607975f17470d1f2a54',
     'owasp-top-10-llm-security',
     NOW(),
     'MODULE'
@@ -1243,7 +1243,7 @@ func JWTAuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-508f7834d3f145168920254cdda6285f',
+    'art-ff3757eb51b34699bf0542aed6203b91',
     'oauth2-oidc-implementation-guide',
     NOW(),
     'GUIDE'
@@ -1260,7 +1260,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-3ec6b45fd28e4598a1a37d3c39bee1a2',
+    'crs-2179951bab994468811de0d89495f89b',
     'oauth2-oidc-implementation-guide',
     NOW(),
     'MODULE'
@@ -1411,7 +1411,7 @@ func main() {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-d7260cc0efe94ed1b5fae2de6d50f1b1',
+    'art-71dd719aa3654082b471130fcb9a6246',
     'tls-x509-certificate-management',
     NOW(),
     'GUIDE'
@@ -1428,7 +1428,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-072d32d07f7b42068eab37bd13a46888',
+    'crs-70bd5088b3fa4e1ba3d172c3ddf162da',
     'tls-x509-certificate-management',
     NOW(),
     'MODULE'
@@ -1567,7 +1567,7 @@ func PollOutbox(ctx context.Context, db *sql.DB) {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-8c41d7fa292143bb80bb8f519e5eb6a9',
+    'art-9d189cbd3c0746f98f3a7216628689ab',
     'data-modeling-event-driven-systems',
     NOW(),
     'GUIDE'
@@ -1584,7 +1584,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-264468f92f104b109de81ed46688bda7',
+    'crs-8461511f499f457b85ddbaa2494d364b',
     'data-modeling-event-driven-systems',
     NOW(),
     'MODULE'
@@ -1678,7 +1678,7 @@ LIMIT 10;
     'PUBLISHED',
     c.id,
     u.id,
-    'art-dd5af0b218664b8e832a9537fc257df1',
+    'art-835a64bcdf6a4dffa1e5f83cce1c38a9',
     'postgresql-indexing-and-query-tuning',
     NOW(),
     'GUIDE'
@@ -1695,7 +1695,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-8d021f5893c94be683101d21d92b4788',
+    'crs-93a10e032f1944b98d9e676888a22556',
     'postgresql-indexing-and-query-tuning',
     NOW(),
     'MODULE'
@@ -1821,7 +1821,7 @@ func main() {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-dff1cd5681e54e62bcaf84256869513e',
+    'art-fad0217f368847b086af371d5be65cab',
     'grpc-vs-rest-microservices',
     NOW(),
     'GUIDE'
@@ -1838,7 +1838,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-6ca33d4888904fe284e126ddc39163e8',
+    'crs-d632cd817ce04c218d33bc74d9e34e4b',
     'grpc-vs-rest-microservices',
     NOW(),
     'MODULE'
@@ -2024,7 +2024,7 @@ func FanIn(ctx context.Context, channels ...<-chan Result) <-chan Result {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-283f8a5ce2bf43c2b8df192e5583b57a',
+    'art-eac3037882154274a54260d6fd3cf439',
     'go-concurrency-patterns',
     NOW(),
     'GUIDE'
@@ -2041,7 +2041,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-babd3b4e19d44869b16f50486d4bd9b9',
+    'crs-cbd2507af4064068aa4798bda58eecae',
     'go-concurrency-patterns',
     NOW(),
     'MODULE'
@@ -2184,7 +2184,7 @@ type ArticleRepository interface {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-41d64b6c2b3244a8a991f9ee058fbc88',
+    'art-6d856283edb0429fae5b60f3556bf9eb',
     'domain-driven-design-principles',
     NOW(),
     'GUIDE'
@@ -2201,7 +2201,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-69ea7f08d1dd47de9ec9ae31cdf48335',
+    'crs-e1141606bc474c66bcc381bd50c3dbf9',
     'domain-driven-design-principles',
     NOW(),
     'MODULE'
@@ -2220,7 +2220,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-b897431311244b13a1b9110070314ecd',
+    'crs-84f1fd5208ed44869051945f3ebe3cf6',
     'production-rag-and-llm-engineering',
     NOW(),
     'TRACK'
@@ -2237,7 +2237,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-17755bd386854e768f1709c6ab175607',
+    'crs-b3c7fd70a1cc4d979fdcc076dde0f8e8',
     'enterprise-application-security',
     NOW(),
     'TRACK'
@@ -2254,7 +2254,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-9bc79ed16ef04fbc88d24f59096b7951',
+    'crs-95a0b22d4ac94f8fb5d46f6005a49d79',
     'mastering-go-microservices-course',
     NOW(),
     'TRACK'
@@ -2271,7 +2271,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-ddb8ce70acd64dd0865851d3bff0e20b',
+    'crs-55e57c66f72f43b6ac362d3c612d57d1',
     'ml-model-evaluation-metrics',
     NOW(),
     'TRACK'
@@ -2284,11 +2284,11 @@ ON CONFLICT (public_id) DO NOTHING;
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
 SELECT 
     'Enterprise RAG Architecture: Vector Search & Prompt Engineering',
-    'Master enterprise Retrieval-Augmented Generation (RAG) platforms using document chunking, pgvector similarity search, hybrid BM25 search, prompt synthesis, and RAGAS evaluation.',
+    'Master enterprise Retrieval-Augmented Generation (RAG) platforms using document chunking, pgvector similarity search, hybrid BM25 search, prompt synthesis, RAGAS evaluation, assessment quizzes, and interview prep.',
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-e454c585454b429e84658da01c75e0b1',
+    'crs-28ddeaa9b74447f5b6a98e3d6e2ce279',
     'rag-architecture-llm-applications',
     NOW(),
     'TRACK'
@@ -2305,7 +2305,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-f8430fe5b62e4e9e998aa8b6eb9a549f',
+    'crs-b43d8a460c034bc78540390218a4e197',
     'cloud-native-kubernetes-masterclass',
     NOW(),
     'TRACK'
@@ -2322,7 +2322,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-42784af963c1458488bfd8f5c9675c25',
+    'crs-7c38db8b528043e0b29da1b456504295',
     'gcp-cloud-run-deployment-guide',
     NOW(),
     'TRACK'
@@ -2339,7 +2339,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-71ff16ddad4840fc802b6ef72d38d65e',
+    'crs-27b9e9f66a474830b65eea17f40635a2',
     'terraform-modular-architecture',
     NOW(),
     'TRACK'
@@ -2352,11 +2352,11 @@ ON CONFLICT (public_id) DO NOTHING;
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
 SELECT 
     'Implementing Secure OAuth 2.0 & OpenID Connect (OIDC) in Go',
-    'A security engineering course covering OAuth 2.0 authorization code flow with PKCE, JWT token validation, JWKS caching, and production Go middlewares.',
+    'A security engineering course covering OAuth 2.0 authorization code flow with PKCE, JWT token validation, JWKS caching, production Go middlewares, assessment quizzes, and interview prep.',
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-0585085af35d41f993953abf450e95a7',
+    'crs-7c783f5e0d6e484abfbe4c169ac4a790',
     'oauth2-oidc-implementation-guide',
     NOW(),
     'TRACK'
@@ -2373,7 +2373,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-540094659df546449676540d8bb589eb',
+    'crs-9048c3d258f24f569837b0e276e6169e',
     'owasp-top-10-llm-security',
     NOW(),
     'TRACK'
@@ -2390,7 +2390,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-7ac78fdc1fff4ba484a22e2495aba240',
+    'crs-b074f37b8fc24adbba422b363f5815b0',
     'tls-x509-certificate-management',
     NOW(),
     'TRACK'
@@ -2407,7 +2407,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-320aa83d284344488a89064dd7953f0e',
+    'crs-ff8e8d2844994f049e1a8d6c4392028f',
     'postgresql-and-data-architecture',
     NOW(),
     'TRACK'
@@ -2424,7 +2424,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-303cf6d86368405e9282e6fb9108b29f',
+    'crs-dc4946aa5ba84a03bf113b7601910c67',
     'postgresql-indexing-and-query-tuning',
     NOW(),
     'TRACK'
@@ -2441,7 +2441,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-5bbab1442e5f4ddbbd44161bab7e9030',
+    'crs-168e405fa506412a8e6dad36d470b4a1',
     'domain-driven-design-principles',
     NOW(),
     'TRACK'
@@ -2454,11 +2454,11 @@ ON CONFLICT (public_id) DO NOTHING;
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
 SELECT 
     'Mastering Go Concurrency: Goroutines, Channels, and Select Patterns',
-    'A comprehensive SME-level course on building highly concurrent, lock-free, scalable backend systems in Go using worker pools, fan-out/fan-in pipelines, context cancellation, rate limiters, and race detection.',
+    'A comprehensive SME-level course on building highly concurrent, lock-free, scalable backend systems in Go using worker pools, fan-out/fan-in pipelines, context cancellation, rate limiters, race detection, assessment quizzes, and interview prep.',
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-d28ae8ec17164e57800bb0e9d8dd9b9d',
+    'crs-fa348e8bf89146fd8904213dbfff8275',
     'go-concurrency-patterns',
     NOW(),
     'TRACK'
