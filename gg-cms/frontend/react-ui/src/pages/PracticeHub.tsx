@@ -520,25 +520,6 @@ export function PracticeHub() {
               {/* Right Column — Cards Grid */}
               <div className="md:col-span-3 space-y-4">
                 
-                {/* Compact Stats Row */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-card border border-border rounded-2xl p-4">
-                  <div className="text-center sm:border-r border-border/60">
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase block">Accuracy</span>
-                    <span className="text-lg font-extrabold text-primary">78%</span>
-                  </div>
-                  <div className="text-center sm:border-r border-border/60">
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase block">Solved</span>
-                    <span className="text-lg font-extrabold text-foreground">384</span>
-                  </div>
-                  <div className="text-center sm:border-r border-border/60">
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase block">Strong</span>
-                    <span className="text-xs font-bold text-foreground truncate block">Go · HTTP</span>
-                  </div>
-                  <div className="text-center">
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase block">Review</span>
-                    <span className="text-xs font-bold text-foreground truncate block">Kubernetes</span>
-                  </div>
-                </div>
 
                 {/* Quizzes Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
