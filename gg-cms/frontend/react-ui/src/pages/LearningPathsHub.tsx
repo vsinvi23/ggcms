@@ -272,7 +272,8 @@ export function LearningPathsHub() {
                 {filteredPaths.map(path => (
                   <div
                     key={path.id}
-                    className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md group"
+                    onClick={() => navigate(`/learn/${path.slug}`)}
+                    className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md group cursor-pointer"
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -325,11 +326,9 @@ export function LearningPathsHub() {
                       )}
 
                       <Button
-                        onClick={() => {
-                          setActivePath(path);
-                          if (path.stages.length > 0) {
-                            setSelectedStage(path.stages[2] || path.stages[0]);
-                          }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/learn/${path.slug}`);
                         }}
                         className="w-full justify-between font-bold rounded-xl text-xs h-9 bg-primary text-primary-foreground"
                       >
@@ -343,103 +342,6 @@ export function LearningPathsHub() {
             </div>
           </div>
         </div>
-
-        {/* Path Journey Modal */}
-        {activePath && (
-          <Dialog open={!!activePath} onOpenChange={() => setActivePath(null)}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8">
-              <DialogHeader>
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="secondary" className="text-xs">{activePath.category} Path</Badge>
-                  <span className="text-xs text-muted-foreground">{activePath.level}</span>
-                </div>
-                <DialogTitle className="text-2xl font-extrabold">{activePath.title}</DialogTitle>
-                <p className="text-xs sm:text-sm text-muted-foreground">{activePath.subtitle}</p>
-              </DialogHeader>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-                <div className="space-y-2 border-r border-border/60 pr-4">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                    YOUR JOURNEY ({activePath.stages.length} Stages)
-                  </h4>
-                  <div className="space-y-2">
-                    {activePath.stages.map((stg) => (
-                      <button
-                        key={stg.id}
-                        onClick={() => setSelectedStage(stg)}
-                        className={`w-full text-left p-3 rounded-xl border text-xs font-medium transition-all ${
-                          selectedStage?.id === stg.id
-                            ? 'bg-primary/10 border-primary text-primary font-bold shadow-xs'
-                            : stg.status === 'completed'
-                            ? 'bg-emerald-500/5 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                            : 'bg-card border-border text-foreground hover:bg-muted/50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] font-bold uppercase">Stage {stg.stageNumber}</span>
-                          {stg.status === 'completed' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                          {stg.status === 'upcoming' && <Lock className="w-3.5 h-3.5 text-muted-foreground/60" />}
-                        </div>
-                        <p className="font-bold text-sm truncate">{stg.title}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="md:col-span-2 space-y-5">
-                  {selectedStage ? (
-                    <div className="space-y-4">
-                      <div>
-                        <Badge variant="outline" className="text-[10px] mb-1 font-bold">
-                          Stage {selectedStage.stageNumber}
-                        </Badge>
-                        <h3 className="text-lg font-bold">{selectedStage.title}</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">{selectedStage.description}</p>
-                      </div>
-
-                      <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 space-y-1">
-                        <span className="text-xs font-bold text-primary block uppercase tracking-wider">Why this matters</span>
-                        <p className="text-xs text-foreground/90 leading-relaxed">{selectedStage.whyItMatters}</p>
-                      </div>
-
-                      <div className="space-y-2 pt-1">
-                        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                          Stage Learning & Practice Items ({selectedStage.resources.length})
-                        </span>
-                        <div className="space-y-2">
-                          {selectedStage.resources.map((res, i) => (
-                            <div
-                              key={i}
-                              onClick={() => { setActivePath(null); navigate(res.url); }}
-                              className="p-3 rounded-xl border border-border bg-card hover:border-primary/50 transition-all cursor-pointer flex items-center justify-between group"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="p-1.5 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                                  {getResourceTypeIcon(res.type)}
-                                </div>
-                                <div>
-                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 mb-0.5">
-                                    {res.type}
-                                  </Badge>
-                                  <h5 className="text-xs font-bold group-hover:text-primary transition-colors">
-                                    {res.title}
-                                  </h5>
-                                </div>
-                              </div>
-                              <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
-                                {res.estimatedMinutes}m
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
       </div>
     </PublicLayout>
   );

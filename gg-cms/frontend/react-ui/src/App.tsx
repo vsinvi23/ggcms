@@ -115,7 +115,10 @@ const App = () => (
                 <Route path="/articles" element={<ExplorePage />} />
                 <Route path="/article/*" element={<PublicArticleView />} />
                 <Route path="/course/*" element={<CourseViewPage />} />
+                <Route path="/courses/:id" element={<CourseViewPage />} />
                 <Route path="/learn/:path" element={<LearningPathPage />} />
+                <Route path="/learning-paths/:path" element={<LearningPathPage />} />
+                <Route path="/learning-path/:path" element={<LearningPathPage />} />
                 <Route path="/topics" element={<TopicsPage />} />
                 <Route path="/topics/:slug" element={<TopicDetailPage />} />
 
