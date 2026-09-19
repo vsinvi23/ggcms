@@ -287,12 +287,63 @@ function generateQuestionsForTrack(slug: string): InterviewQuestionItem[] {
   ];
 }
 
+function extractQuestionsFromCmsItem(item: any): InterviewQuestionItem[] {
+  const contentStr = item.body || item.content || item.description || '';
+  
+  // Check if content has Markdown or HTML structured questions
+  if (contentStr.includes('Q1:') || contentStr.includes('Question 1') || contentStr.includes('### Question') || contentStr.includes('1. Question')) {
+    const parsedQuestions: InterviewQuestionItem[] = [];
+    const questionBlocks = contentStr.split(/(?:###\s*Question|Question\s*\d+:?|Q\d+:?)/i).filter((b: string) => b.trim().length > 10);
+    
+    questionBlocks.forEach((block: string, idx: number) => {
+      const lines = block.trim().split('\n').map((l: string) => l.trim()).filter(Boolean);
+      const questionText = lines[0]?.replace(/^[:\d.\-\s]+/, '') || `Scenario ${idx + 1}`;
+      
+      let answerExplanation = '';
+      let thinkPrompt = 'Consider architectural tradeoffs, data structures, and edge cases.';
+      const commonMistakes: string[] = [];
+      const relatedConcepts: string[] = [item.categoryName || 'Engineering', 'Architecture'];
+      
+      let mode = 'explanation';
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.toLowerCase().includes('think prompt:') || line.toLowerCase().includes('hint:')) {
+          thinkPrompt = line.replace(/^(think prompt:|hint:)/i, '').trim();
+        } else if (line.toLowerCase().includes('mistake:') || line.toLowerCase().includes('common mistakes:')) {
+          mode = 'mistakes';
+        } else if (mode === 'mistakes') {
+          commonMistakes.push(line.replace(/^[-*•\d.]+\s*/, ''));
+        } else {
+          answerExplanation += line + '\n';
+        }
+      }
+      
+      parsedQuestions.push({
+        id: `db-${item.id}-q${idx + 1}`,
+        questionNumber: idx + 1,
+        question: questionText,
+        thinkPrompt: thinkPrompt || 'Analyze scalability, fault tolerance, and concurrency.',
+        answerExplanation: answerExplanation.trim() || `Key concepts for ${questionText}:\n1. Evaluate system boundaries and data flow.\n2. Ensure zero single points of failure.\n3. Apply caching and database indexing.`,
+        commonMistakes: commonMistakes.length > 0 ? commonMistakes : ['Neglecting bottleneck analysis under peak load'],
+        relatedConcepts,
+      });
+    });
+    
+    if (parsedQuestions.length > 0) {
+      return parsedQuestions;
+    }
+  }
+  
+  return generateQuestionsForTrack(item.slug || item.title || 'engineering');
+}
+
 export function InterviewPrepHub() {
   const navigate = useNavigate();
   const { trackSlug } = useParams<{ trackSlug?: string }>();
 
-  // Live backend database API hooks
-  const { data: publicCmsData } = usePublicCmsList({ size: 50 });
+  // Live backend database API hooks - fetching both ARTICLES and COURSES from PostgreSQL
+  const { data: publicArticles } = usePublicCmsList({ size: 50, type: 'ARTICLE' });
+  const { data: publicCourses } = usePublicCmsList({ size: 50, type: 'COURSE' });
   const { data: backendCategories } = useCategories();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -307,20 +358,26 @@ export function InterviewPrepHub() {
     'ic-1': true,
   });
 
+  const combinedCmsItems = useMemo(() => {
+    const articles = publicArticles?.items || [];
+    const courses = publicCourses?.items || [];
+    return [...courses, ...articles];
+  }, [publicArticles, publicCourses]);
+
   const dbInterviewCourses = useMemo((): InterviewCourse[] => {
-    if (!publicCmsData?.items || publicCmsData.items.length === 0) return [];
-    return publicCmsData.items.map((item, idx) => ({
+    if (combinedCmsItems.length === 0) return [];
+    return combinedCmsItems.map((item, idx) => ({
       id: String(item.id),
       slug: item.slug || String(item.id),
-      title: `${item.title} Interview Track`,
+      title: item.title.includes('Track') || item.title.includes('Interview') ? item.title : `${item.title} Interview Track`,
       description: item.description || `Technical interview prep track for ${item.title}.`,
       difficulty: (item.level as any) || 'Senior',
       role: (item.categoryName as any) || 'Software Engineer',
       round: idx % 2 === 0 ? 'System Design' : 'Technical',
       estimatedHours: item.durationMinutes ? Math.ceil(item.durationMinutes / 60) : 8,
-      questions: generateQuestionsForTrack(item.slug || item.title),
+      questions: extractQuestionsFromCmsItem(item),
     }));
-  }, [publicCmsData]);
+  }, [combinedCmsItems]);
 
   const allInterviewCourses = useMemo(() => {
     if (dbInterviewCourses.length > 0) {

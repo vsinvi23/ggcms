@@ -349,8 +349,9 @@ export function PracticeHub() {
   const navigate = useNavigate();
   const { quizId } = useParams<{ quizId?: string }>();
 
-  // Live backend database API hooks
-  const { data: publicCmsData } = usePublicCmsList({ size: 50 });
+  // Live backend database API hooks - fetching both ARTICLES and COURSES from PostgreSQL
+  const { data: publicArticles } = usePublicCmsList({ size: 50, type: 'ARTICLE' });
+  const { data: publicCourses } = usePublicCmsList({ size: 50, type: 'COURSE' });
   const { data: backendCategories } = useCategories();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -361,12 +362,18 @@ export function PracticeHub() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  const combinedCmsItems = useMemo(() => {
+    const articles = publicArticles?.items || [];
+    const courses = publicCourses?.items || [];
+    return [...courses, ...articles];
+  }, [publicArticles, publicCourses]);
+
   const dbQuizzes = useMemo((): Quiz[] => {
-    if (!publicCmsData?.items || publicCmsData.items.length === 0) return [];
-    return publicCmsData.items.map(item => ({
+    if (combinedCmsItems.length === 0) return [];
+    return combinedCmsItems.map(item => ({
       id: String(item.id),
       slug: item.slug || String(item.id),
-      title: `${item.title} Assessment`,
+      title: item.title.includes('Assessment') || item.title.includes('Quiz') ? item.title : `${item.title} Assessment`,
       description: item.description || `Test key concepts and practice hands-on scenarios for ${item.title}.`,
       topicSlug: item.tags?.[0] || item.slug || 'general',
       domainSlug: (item.categoryName || 'Engineering').toLowerCase(),
@@ -375,7 +382,7 @@ export function PracticeHub() {
       estimatedMinutes: item.durationMinutes || 10,
       questions: generateQuestionsForSlug(item.slug || item.title),
     }));
-  }, [publicCmsData]);
+  }, [combinedCmsItems]);
 
   const allQuizzes = useMemo(() => {
     if (dbQuizzes.length > 0) {
