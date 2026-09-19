@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import {
   BookOpen,
@@ -9,45 +9,67 @@ import {
   ArrowRight,
   Clock,
   Sparkles,
-  CheckCircle2,
-  TrendingUp,
   Layers,
   Zap,
-  Play,
   HelpCircle,
   FileText,
   Shield,
   Server,
   Cloud,
+  ChevronRight,
+  Bookmark,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { usePublicCmsList, usePublicLearningPaths } from '@/api/hooks/usePublicCms';
+import { useCategories } from '@/api/hooks/useCategories';
+import { buildCourseUrl, buildArticleUrl } from '@/lib/slug';
 
 export function PublicHome() {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
   const [activeTimeFilter, setActiveTimeFilter] = useState<'5' | '15' | '30'>('5');
 
-  const popularTechnologies = [
-    { name: 'Go', slug: 'go', count: 12 },
-    { name: 'Java', slug: 'java', count: 8 },
-    { name: 'Python', slug: 'python', count: 15 },
-    { name: 'JavaScript', slug: 'javascript', count: 18 },
-    { name: 'React', slug: 'react', count: 14 },
-    { name: 'Kubernetes', slug: 'kubernetes', count: 10 },
-    { name: 'Docker', slug: 'docker', count: 9 },
-    { name: 'AWS', slug: 'aws', count: 11 },
-    { name: 'GCP', slug: 'gcp', count: 6 },
-    { name: 'Azure', slug: 'azure', count: 5 },
-    { name: 'PostgreSQL', slug: 'postgresql', count: 8 },
-    { name: 'Redis', slug: 'redis', count: 6 },
-    { name: 'Kafka', slug: 'kafka', count: 5 },
-    { name: 'Linux', slug: 'linux', count: 7 },
-    { name: 'Terraform', slug: 'terraform', count: 6 },
-  ];
+  // Live dynamic backend database API hooks
+  const { data: publicCoursesData, isLoading: coursesLoading } = usePublicCmsList({ type: 'COURSE', size: 6 });
+  const { data: publicArticlesData, isLoading: articlesLoading } = usePublicCmsList({ type: 'ARTICLE', size: 6 });
+  const { data: backendCategories } = useCategories();
+  const { data: learningPathsData } = usePublicLearningPaths();
+
+  const courses = useMemo(() => publicCoursesData?.items || [], [publicCoursesData]);
+  const articles = useMemo(() => publicArticlesData?.items || [], [publicArticlesData]);
+
+  const categoriesList = useMemo(() => {
+    if (backendCategories && backendCategories.length > 0) {
+      return backendCategories.map(c => ({
+        name: c.name,
+        slug: c.slug || c.name.toLowerCase().replace(/\s+/g, '-'),
+        count: c.contentCount || 5,
+      }));
+    }
+    return [
+      { name: 'Go', slug: 'go', count: 12 },
+      { name: 'Java', slug: 'java', count: 8 },
+      { name: 'Python', slug: 'python', count: 15 },
+      { name: 'JavaScript', slug: 'javascript', count: 18 },
+      { name: 'Kubernetes', slug: 'kubernetes', count: 10 },
+      { name: 'Docker', slug: 'docker', count: 9 },
+      { name: 'AWS', slug: 'aws', count: 11 },
+      { name: 'PostgreSQL', slug: 'postgresql', count: 8 },
+    ];
+  }, [backendCategories]);
+
+  // Dynamically filter content for Quick Learning section based on time
+  const timeFilteredContent = useMemo(() => {
+    const combined = [...articles, ...courses];
+    if (activeTimeFilter === '5') {
+      return combined.filter(item => (item.durationMinutes || 5) <= 7).slice(0, 3);
+    } else if (activeTimeFilter === '15') {
+      return combined.filter(item => (item.durationMinutes || 10) > 7 && (item.durationMinutes || 10) <= 20).slice(0, 3);
+    } else {
+      return combined.filter(item => (item.durationMinutes || 25) > 20).slice(0, 3);
+    }
+  }, [articles, courses, activeTimeFilter]);
 
   return (
     <PublicLayout hideSearch>
@@ -119,80 +141,138 @@ export function PublicHome() {
           </div>
         </section>
 
-        {/* Section 6 & 7 — Continue Learning & Recommended Next Step (for returning users) */}
-        {isAuthenticated && (
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* Continue Learning */}
-              <div className="lg:col-span-2 bg-card border border-border rounded-3xl p-6 space-y-4 shadow-xs">
-                <div className="flex items-center justify-between border-b border-border pb-3">
-                  <h3 className="text-base font-extrabold flex items-center gap-2">
-                    <Play className="w-4 h-4 text-primary fill-primary" />
-                    Continue Learning
-                  </h3>
-                  <span className="text-xs text-muted-foreground font-semibold">Welcome back, {user?.name}</span>
-                </div>
+        {/* Section 2 — Featured Courses (Dynamic, Compact Display) */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                Featured Courses
+              </h2>
+              <p className="text-xs text-muted-foreground">Comprehensive, step-by-step technical courses.</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/courses')} className="text-xs font-bold text-primary">
+              Browse all courses →
+            </Button>
+          </div>
 
-                <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-muted/40 border border-border space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <Badge variant="secondary" className="text-[10px] mb-1 font-bold">Course in Progress</Badge>
-                        <h4 className="text-base font-extrabold">Go Backend Engineering</h4>
-                        <p className="text-xs text-muted-foreground">12 of 17 lessons completed</p>
-                      </div>
-                      <Button size="sm" onClick={() => navigate('/course/go-backend-engineering')} className="rounded-xl text-xs font-bold">
-                        Continue <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                      </Button>
+          {coursesLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
+              {[1, 2, 3].map(n => (
+                <div key={n} className="h-44 bg-card/60 rounded-2xl border border-border" />
+              ))}
+            </div>
+          ) : courses.length === 0 ? (
+            <div className="p-8 text-center bg-card border border-border rounded-2xl text-xs text-muted-foreground">
+              No published courses found yet. Check back soon!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {courses.map((course, idx) => (
+                <div
+                  key={`${course.id}-${idx}`}
+                  onClick={() => navigate(buildCourseUrl(course))}
+                  className="bg-card border border-border hover:border-primary/50 rounded-2xl p-4 flex flex-col justify-between transition-all hover:shadow-md cursor-pointer group space-y-3"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge variant="secondary" className="text-[10px] font-bold">
+                        {course.categoryName || 'Engineering'}
+                      </Badge>
+                      <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                        {course.level || 'Intermediate'}
+                      </span>
                     </div>
-                    <Progress value={72} className="h-2" />
-                  </div>
 
-                  {/* Paths Progress */}
-                  <div className="grid grid-cols-3 gap-3 pt-1">
-                    <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
-                      <span className="text-[10px] text-muted-foreground font-bold uppercase block">Backend Path</span>
-                      <span className="text-sm font-extrabold text-primary">62%</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
-                      <span className="text-[10px] text-muted-foreground font-bold uppercase block">Cloud Path</span>
-                      <span className="text-sm font-extrabold text-foreground">24%</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
-                      <span className="text-[10px] text-muted-foreground font-bold uppercase block">Security Path</span>
-                      <span className="text-sm font-extrabold text-foreground">10%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                    <h3 className="text-sm font-extrabold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                      {course.title}
+                    </h3>
 
-              {/* Recommended Next Step */}
-              <div className="bg-gradient-to-br from-primary/10 via-card to-card border border-primary/30 rounded-3xl p-6 flex flex-col justify-between shadow-xs">
-                <div className="space-y-3">
-                  <Badge className="bg-primary text-primary-foreground text-[10px] font-extrabold uppercase">
-                    Your Next Step
-                  </Badge>
-                  <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground font-bold block">You completed:</span>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">✓ Go fundamentals · ✓ HTTP · ✓ REST APIs</p>
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-extrabold text-foreground">Authentication & Authorization</h4>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                      Learn how OAuth 2.0, PKCE, and JWT authentication work in modern backend applications.
+                    <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                      {course.description || 'Master key fundamentals and practical patterns.'}
                     </p>
                   </div>
-                </div>
-                <Button onClick={() => navigate('/article/oauth-2-explained')} className="w-full mt-4 rounded-xl text-xs font-bold">
-                  Continue Learning <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-              </div>
-            </div>
-          </section>
-        )}
 
-        {/* Section 5 — Explore Technologies */}
+                  <div className="pt-2 border-t border-border/60 flex items-center justify-between text-[11px]">
+                    <span className="flex items-center gap-1 text-muted-foreground font-medium">
+                      <Layers className="w-3.5 h-3.5 text-primary" />
+                      {course.sectionsCount || 4} modules &bull; {course.durationMinutes || 30}m
+                    </span>
+                    <span className="font-bold text-primary flex items-center gap-0.5 group-hover:translate-x-0.5 transition-transform">
+                      Start <ChevronRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Section 3 — Latest Technical Articles (Dynamic) */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-extrabold tracking-tight flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                Latest Guides & Articles
+              </h2>
+              <p className="text-xs text-muted-foreground">In-depth technical writeups and architecture deep-dives.</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/explore')} className="text-xs font-bold text-primary">
+              Explore all articles →
+            </Button>
+          </div>
+
+          {articlesLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
+              {[1, 2, 3].map(n => (
+                <div key={n} className="h-36 bg-card/60 rounded-2xl border border-border" />
+              ))}
+            </div>
+          ) : articles.length === 0 ? (
+            <div className="p-8 text-center bg-card border border-border rounded-2xl text-xs text-muted-foreground">
+              No published articles found yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {articles.map((article, idx) => (
+                <div
+                  key={`${article.id}-${idx}`}
+                  onClick={() => navigate(buildArticleUrl(article))}
+                  className="bg-card border border-border hover:border-primary/50 rounded-2xl p-4 flex flex-col justify-between transition-all hover:shadow-md cursor-pointer group space-y-3"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/30">
+                        {article.categoryName || 'Guide'}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {article.durationMinutes || 8} min read
+                      </span>
+                    </div>
+
+                    <h3 className="text-sm font-extrabold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                      {article.title}
+                    </h3>
+
+                    <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                      {article.description || 'Read the full guide and practical examples.'}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-border/60 flex items-center justify-end">
+                    <span className="text-xs font-bold text-primary flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                      Read Guide <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Section 4 — Explore Technologies */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -204,91 +284,91 @@ export function PublicHome() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {popularTechnologies.map(tech => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {categoriesList.map(tech => (
               <button
                 key={tech.slug}
                 onClick={() => navigate(`/technology/${tech.slug}`)}
-                className="p-4 rounded-2xl bg-card border border-border hover:border-primary/50 text-left transition-all hover:shadow-md group"
+                className="p-3.5 rounded-2xl bg-card border border-border hover:border-primary/50 text-left transition-all hover:shadow-sm group"
               >
-                <h4 className="font-extrabold text-sm text-foreground group-hover:text-primary transition-colors">{tech.name}</h4>
-                <span className="text-[11px] text-muted-foreground font-medium">{tech.count} resources</span>
+                <h4 className="font-extrabold text-xs text-foreground group-hover:text-primary transition-colors truncate">{tech.name}</h4>
+                <span className="text-[10px] text-muted-foreground font-medium">{tech.count} topics</span>
               </button>
             ))}
           </div>
         </section>
 
-        {/* Section 8 — Learn by Goal Cards */}
+        {/* Section 5 — Learn by Goal Cards */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div>
             <h2 className="text-2xl font-extrabold tracking-tight">What are you trying to achieve?</h2>
             <p className="text-xs text-muted-foreground">Choose a career goal and follow structured, end-to-end guidance.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 flex flex-col justify-between transition-all hover:shadow-lg space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md space-y-4">
               <div className="space-y-2">
-                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                  <Server className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                  <Server className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-extrabold">Become a Backend Engineer</h3>
+                <h3 className="text-base font-extrabold">Become a Backend Engineer</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Learn programming, APIs, databases, distributed systems, and production engineering.
                 </p>
               </div>
-              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold">
+              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold rounded-xl">
                 Explore path →
               </Button>
             </div>
 
-            <div className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 flex flex-col justify-between transition-all hover:shadow-lg space-y-4">
+            <div className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md space-y-4">
               <div className="space-y-2">
-                <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
-                  <Cloud className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                  <Cloud className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-extrabold">Become a Cloud Engineer</h3>
+                <h3 className="text-base font-extrabold">Become a Cloud Engineer</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   AWS/GCP/Azure, networking, containers, Kubernetes, and infrastructure.
                 </p>
               </div>
-              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold">
+              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold rounded-xl">
                 Explore path →
               </Button>
             </div>
 
-            <div className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 flex flex-col justify-between transition-all hover:shadow-lg space-y-4">
+            <div className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md space-y-4">
               <div className="space-y-2">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                  <Shield className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                  <Shield className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-extrabold">Become a Security Engineer</h3>
+                <h3 className="text-base font-extrabold">Become a Security Engineer</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Identity, OAuth, OIDC, PKI, application security, and cloud security.
                 </p>
               </div>
-              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold">
+              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold rounded-xl">
                 Explore path →
               </Button>
             </div>
 
-            <div className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 flex flex-col justify-between transition-all hover:shadow-lg space-y-4">
+            <div className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md space-y-4">
               <div className="space-y-2">
-                <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
-                  <Briefcase className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                  <Briefcase className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-extrabold">Prepare for Interviews</h3>
+                <h3 className="text-base font-extrabold">Prepare for Interviews</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Coding, system design, backend, cloud, and security interview questions.
                 </p>
               </div>
-              <Button onClick={() => navigate('/interview-prep')} variant="outline" size="sm" className="w-full text-xs font-bold">
+              <Button onClick={() => navigate('/interview-prep')} variant="outline" size="sm" className="w-full text-xs font-bold rounded-xl">
                 Start preparation →
               </Button>
             </div>
           </div>
         </section>
 
-        {/* Section 11 — Quick Learning (Have 5 / 15 / 30 mins?) */}
+        {/* Section 6 — Quick Learning by Available Time (Dynamic) */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-4">
@@ -297,14 +377,14 @@ export function PublicHome() {
                   <Clock className="w-6 h-6 text-primary" />
                   Quick Learning by Available Time
                 </h2>
-                <p className="text-xs text-muted-foreground">Select resources tailored precisely to your time window.</p>
+                <p className="text-xs text-muted-foreground">Select resources tailored precisely to your available time.</p>
               </div>
 
               {/* Time selector tabs */}
               <div className="flex gap-2">
                 <button
                   onClick={() => setActiveTimeFilter('5')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     activeTimeFilter === '5' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                   }`}
                 >
@@ -312,7 +392,7 @@ export function PublicHome() {
                 </button>
                 <button
                   onClick={() => setActiveTimeFilter('15')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     activeTimeFilter === '15' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                   }`}
                 >
@@ -320,7 +400,7 @@ export function PublicHome() {
                 </button>
                 <button
                   onClick={() => setActiveTimeFilter('30')}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     activeTimeFilter === '30' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                   }`}
                 >
@@ -329,46 +409,31 @@ export function PublicHome() {
               </div>
             </div>
 
-            {/* Quick Learning Item Buttons */}
+            {/* Dynamic Content Items */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {activeTimeFilter === '5' && (
+              {timeFilteredContent.length > 0 ? (
+                timeFilteredContent.map((item, idx) => (
+                  <button
+                    key={`${item.id}-${idx}`}
+                    onClick={() => navigate(item.type === 'COURSE' ? buildCourseUrl(item) : buildArticleUrl(item))}
+                    className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-xs transition-all space-y-1.5"
+                  >
+                    <span className="text-[10px] text-primary uppercase font-extrabold block">
+                      {item.type === 'COURSE' ? '🚀 Course' : '📖 Article'} &bull; {item.durationMinutes || 10} min
+                    </span>
+                    <span className="line-clamp-1 block text-sm font-extrabold">{item.title}</span>
+                  </button>
+                ))
+              ) : (
                 <>
-                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
+                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-xs transition-all">
                     ⚡ HTTP Status Codes Cheat Sheet (5 min)
                   </button>
-                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
-                    ⚡ Git Commands Cheat Sheet (5 min)
+                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-xs transition-all">
+                    ⚡ Git & Docker Commands Cheat Sheet (5 min)
                   </button>
-                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
-                    ⚡ Docker Commands Cheat Sheet (5 min)
-                  </button>
-                </>
-              )}
-
-              {activeTimeFilter === '15' && (
-                <>
-                  <button onClick={() => navigate('/article/oauth-2-explained')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
-                    📖 OAuth 2.0 Explained (10 min)
-                  </button>
-                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
-                    📖 Go Interfaces Deep Dive (12 min)
-                  </button>
-                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
-                    📖 Kubernetes Pods & Architecture (15 min)
-                  </button>
-                </>
-              )}
-
-              {activeTimeFilter === '30' && (
-                <>
-                  <button onClick={() => navigate('/course/go-backend-engineering')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
-                    🚀 Building a Production Go API (30 min Lab)
-                  </button>
-                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
-                    🚀 Kubernetes Networking Deep Dive (25 min)
-                  </button>
-                  <button onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-sm transition-all">
-                    🚀 Full System Design Practice Test (30 min)
+                  <button onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-xs transition-all">
+                    ⚡ Quick Practice Assessment (5 min)
                   </button>
                 </>
               )}
@@ -376,12 +441,12 @@ export function PublicHome() {
           </div>
         </section>
 
-        {/* Section 12 — Practice Preview */}
+        {/* Section 7 — Practice Preview */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-extrabold tracking-tight">Test yourself</h2>
-              <p className="text-xs text-muted-foreground">Reinforce your knowledge through quick quizzes.</p>
+              <p className="text-xs text-muted-foreground">Reinforce your knowledge through quick interactive practice quizzes.</p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => navigate('/practice')} className="text-xs font-bold text-primary">
               Explore Practice →
@@ -389,25 +454,25 @@ export function PublicHome() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div onClick={() => navigate('/practice')} className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
+            <div onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
               <Badge variant="secondary" className="text-[10px]">Quick Quiz</Badge>
               <h4 className="font-extrabold text-sm">OAuth & OIDC</h4>
-              <p className="text-xs text-muted-foreground">5 questions · 10 min</p>
+              <p className="text-xs text-muted-foreground">4 questions · 10 min</p>
             </div>
-            <div onClick={() => navigate('/practice')} className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
+            <div onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
               <Badge variant="secondary" className="text-[10px]">Fundamentals</Badge>
               <h4 className="font-extrabold text-sm">Backend Fundamentals</h4>
-              <p className="text-xs text-muted-foreground">25 questions · 15 min</p>
+              <p className="text-xs text-muted-foreground">4 questions · 10 min</p>
             </div>
-            <div onClick={() => navigate('/practice')} className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
+            <div onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
               <Badge variant="secondary" className="text-[10px]">Advanced</Badge>
               <h4 className="font-extrabold text-sm">System Design</h4>
-              <p className="text-xs text-muted-foreground">30 questions · 25 min</p>
+              <p className="text-xs text-muted-foreground">4 questions · 10 min</p>
             </div>
-            <div onClick={() => navigate('/practice')} className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
+            <div onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
               <Badge variant="secondary" className="text-[10px]">DevOps</Badge>
               <h4 className="font-extrabold text-sm">Kubernetes Networking</h4>
-              <p className="text-xs text-muted-foreground">20 questions · 15 min</p>
+              <p className="text-xs text-muted-foreground">4 questions · 10 min</p>
             </div>
           </div>
         </section>

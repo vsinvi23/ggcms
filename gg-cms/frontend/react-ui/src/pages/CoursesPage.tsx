@@ -245,71 +245,63 @@ export function CoursesPage() {
                   <Button variant="outline" size="sm" onClick={resetFilters}>Reset All Filters</Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredCourses.map(course => (
                     <div
                       key={course.id}
-                      className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md group"
+                      className="bg-card border border-border hover:border-primary/50 rounded-2xl p-4 flex flex-col justify-between transition-all hover:shadow-md group space-y-3"
                     >
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="flex items-center justify-between gap-2">
                           <Badge variant="secondary" className="text-[10px] font-bold">
                             {course.category}
                           </Badge>
-                          <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                          <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
                             {course.level}
                           </span>
                         </div>
 
-                        <h3 className="text-base font-extrabold text-foreground group-hover:text-primary transition-colors">
+                        <h3 className="text-sm font-extrabold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                           {course.title}
                         </h3>
 
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                        <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
                           {course.description}
                         </p>
 
-                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium pt-1">
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium pt-0.5">
                           <span className="flex items-center gap-1">
                             <Layers className="w-3.5 h-3.5 text-primary" />
-                            {course.modulesCount} mod · {course.lessonsCount} lessons
+                            {course.modulesCount} mod &bull; {course.lessonsCount} lessons
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5 text-primary" />
                             {course.durationText}
                           </span>
                         </div>
-
-                        <div className="flex flex-wrap gap-1 pt-1">
-                          {course.skills.map(skill => (
-                            <span key={skill} className="text-[10px] font-semibold bg-muted px-2 py-0.5 rounded-md text-muted-foreground">
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
                       </div>
 
-                      <div className="pt-4 border-t border-border/60 mt-4 space-y-2">
+                      <div className="pt-2.5 border-t border-border/60 mt-2 space-y-2">
                         {typeof course.progress === 'number' && course.progress > 0 && (
                           <div className="space-y-1">
-                            <div className="flex justify-between text-[11px] font-bold">
+                            <div className="flex justify-between text-[10px] font-bold">
                               <span className="text-muted-foreground">Progress</span>
                               <span className="text-primary">{course.progress}%</span>
                             </div>
-                            <Progress value={course.progress} className="h-1.5" />
+                            <Progress value={course.progress} className="h-1" />
                           </div>
                         )}
 
                         <Button
                           onClick={() => navigate(`/course/${course.slug}`)}
-                          className={`w-full justify-between font-bold rounded-xl text-xs h-9 ${
+                          className={`w-full justify-between font-bold rounded-xl text-xs h-8.5 ${
                             course.progress && course.progress > 0
                               ? 'bg-primary text-primary-foreground'
-                              : 'bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground'
+                              : 'bg-primary text-primary-foreground hover:bg-primary/90'
                           }`}
                         >
                           <span>{course.progress && course.progress > 0 ? 'Continue' : 'Start Course'}</span>
-                          <ChevronRight className="w-4 h-4" />
+                          <ChevronRight className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </div>
