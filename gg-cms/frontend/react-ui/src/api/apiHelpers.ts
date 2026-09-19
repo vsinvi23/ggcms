@@ -56,7 +56,7 @@ export const transformCategory = (c: RawRecord) => {
     isVirtual: (c.isVirtual as boolean | undefined) ?? false,
     requiredApprovals: (c.requiredApprovals as number | undefined) ?? 1,
     articleCount: c.articleCount as number | undefined,
-    children: (c.children as RawRecord[] | undefined)?.map(transformCategory) || [],
+    children: ((c.children as RawRecord[] | undefined)?.map(transformCategory).filter(Boolean) || []) as any,
     createdAt: c.createdAt as string | undefined,
     updatedAt: c.updatedAt as string | undefined,
   };
