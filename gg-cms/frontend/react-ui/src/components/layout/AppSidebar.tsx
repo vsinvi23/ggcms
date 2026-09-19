@@ -53,7 +53,7 @@ const standaloneItems: NavItem[] = [
   { icon: BookOpen, label: 'Manage Courses', href: '/workspace/courses', contentOnly: true },
   { icon: FileText, label: 'Manage Articles', href: '/workspace/articles', contentOnly: true },
   { icon: GraduationCap, label: 'My Learning', href: '/my-learning', contentOnly: true },
-  { icon: Upload, label: 'Bulk Import', href: '/import', contentOnly: true },
+  { icon: Upload, label: 'Bulk Import', href: '/dashboard/import', contentOnly: true },
 ];
 
 const userManagementSection: NavSection = {

@@ -48,12 +48,12 @@ describe('AppSidebar — items visible to all authenticated users', () => {
 
   it('regular user sees Courses nav item', () => {
     renderSidebar(false);
-    expect(screen.getByText('Courses')).toBeInTheDocument();
+    expect(screen.getByText('Manage Courses')).toBeInTheDocument();
   });
 
   it('regular user sees Articles nav item', () => {
     renderSidebar(false);
-    expect(screen.getByText('Articles')).toBeInTheDocument();
+    expect(screen.getByText('Manage Articles')).toBeInTheDocument();
   });
 
   it('regular user sees My Learning nav item', () => {
@@ -86,12 +86,12 @@ describe('AppSidebar — admin-only items visible only to admins', () => {
   });
 
   it('admin sees Manage Users link inside User Management', () => {
-    renderSidebar(true, true, '/users');
+    renderSidebar(true, true, '/workspace/users');
     expect(screen.getByText('Manage Users')).toBeInTheDocument();
   });
 
   it('admin sees Roles & Permissions link', () => {
-    renderSidebar(true, true, '/roles');
+    renderSidebar(true, true, '/workspace/roles');
     expect(screen.getByText('Roles & Permissions')).toBeInTheDocument();
   });
 

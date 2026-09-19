@@ -140,9 +140,8 @@ export function PracticeHub() {
                 <Target className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-lg font-extrabold tracking-tight flex items-center gap-2">
+                <h1 className="text-lg font-extrabold tracking-tight">
                   Practice
-                  <Badge variant="secondary" className="text-[10px] font-semibold">{mockQuizzes.length}</Badge>
                 </h1>
                 <p className="text-[11px] text-muted-foreground hidden lg:block">Quizzes & tests</p>
               </div>
@@ -167,12 +166,8 @@ export function PracticeHub() {
               </div>
             </div>
 
-            {/* Right Metadata */}
-            <div className="hidden sm:flex items-center justify-end sm:w-1/4">
-              <span className="text-xs font-medium text-muted-foreground">
-                {mockQuizzes.length} quiz set{mockQuizzes.length !== 1 ? 's' : ''} available
-              </span>
-            </div>
+            {/* Right Spacer */}
+            <div className="hidden sm:block sm:w-1/4"></div>
           </div>
         </div>
 

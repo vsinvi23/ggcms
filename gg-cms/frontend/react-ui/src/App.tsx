@@ -121,6 +121,19 @@ const App = () => (
 
                 {/* Protected Workspace / Management Routes */}
                 <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                <Route path="/dashboard/import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
+                <Route path="/dashboard/content" element={<ProtectedRoute><ContentManagement /></ProtectedRoute>} />
+                <Route path="/dashboard/courses" element={<ProtectedRoute><CourseManagement /></ProtectedRoute>} />
+                <Route path="/dashboard/courses/create" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/dashboard/courses/:id/edit" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/dashboard/articles" element={<ProtectedRoute><ArticleManagement /></ProtectedRoute>} />
+                <Route path="/dashboard/articles/create" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
+                <Route path="/dashboard/users" element={<ProtectedRoute requireAdmin><UserManagementDashboard /></ProtectedRoute>} />
+                <Route path="/dashboard/roles" element={<ProtectedRoute requireAdmin><GroupsPage /></ProtectedRoute>} />
+                <Route path="/dashboard/content-overview" element={<ProtectedRoute requireAdmin><AdminContentOverview /></ProtectedRoute>} />
+                <Route path="/dashboard/configuration" element={<ProtectedRoute requireAdmin><ConfigurationPage /></ProtectedRoute>} />
+                <Route path="/dashboard/analytics" element={<ProtectedRoute requireAdmin><Analytics /></ProtectedRoute>} />
+
                 <Route path="/workspace/content" element={<ProtectedRoute><ContentManagement /></ProtectedRoute>} />
                 <Route path="/workspace/courses" element={<ProtectedRoute><CourseManagement /></ProtectedRoute>} />
                 <Route path="/workspace/courses/create" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
@@ -134,7 +147,8 @@ const App = () => (
                 <Route path="/workspace/analytics" element={<ProtectedRoute requireAdmin><Analytics /></ProtectedRoute>} />
                 
                 {/* Legacy & Shortcut Alias Redirects */}
-                <Route path="/admin" element={<Navigate to="/workspace/content" replace />} />
+                <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/admin/*" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/content" element={<Navigate to="/workspace/content" replace />} />
                 <Route path="/user-management" element={<Navigate to="/workspace/users" replace />} />
                 <Route path="/users" element={<Navigate to="/workspace/users" replace />} />
@@ -142,9 +156,9 @@ const App = () => (
                 <Route path="/groups" element={<Navigate to="/workspace/roles" replace />} />
                 <Route path="/categories" element={<Navigate to="/workspace/configuration" replace />} />
                 <Route path="/configuration" element={<Navigate to="/workspace/configuration" replace />} />
-                <Route path="/import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
-                <Route path="/admin/import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
-                <Route path="/bulk-import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
+                <Route path="/import" element={<Navigate to="/dashboard/import" replace />} />
+                <Route path="/admin/import" element={<Navigate to="/dashboard/import" replace />} />
+                <Route path="/bulk-import" element={<Navigate to="/dashboard/import" replace />} />
                 <Route path="/my-tasks" element={<ProtectedRoute><MyTasks /></ProtectedRoute>} />
                 <Route path="/my-learning" element={<ProtectedRoute><MyLearning /></ProtectedRoute>} />
                 <Route path="/notes-highlights" element={<ProtectedRoute><NotesHighlightsPage /></ProtectedRoute>} />

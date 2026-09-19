@@ -1,4 +1,4 @@
-import { useState, useMemo, KeyboardEvent } from 'react';
+import { useState, useMemo, useEffect, KeyboardEvent } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  useCategories,
   useCategoriesPaged,
   useCreateCategory,
   useUpdateCategory,
@@ -228,18 +229,45 @@ function CategoryItem({
 // ─── CategoriesTab ─────────────────────────────────────────────────────────────
 
 export function CategoriesTab() {
-  const { data: pagedData, isLoading } = useCategoriesPaged({ page: 0, size: 150 });
+  const { data: treeCategories = [], isLoading: isTreeLoading } = useCategories();
+  const { data: pagedData, isLoading: isPagedLoading } = useCategoriesPaged({ page: 0, size: 500 });
   const createMutation = useCreateCategory();
   const updateMutation = useUpdateCategory();
   const deleteMutation = useDeleteCategory();
 
+  const isLoading = isTreeLoading && isPagedLoading;
   const flatItems = pagedData?.items || [];
-  const categories = buildCategoryTree(flatItems);
-  const totalCount = pagedData?.totalElements || flatItems.length;
+  
+  // Use backend tree categories if available, or build tree from flat items
+  const categories = useMemo(() => {
+    if (treeCategories && treeCategories.length > 0) {
+      return treeCategories;
+    }
+    return buildCategoryTree(flatItems);
+  }, [treeCategories, flatItems]);
+
+  const totalCount = pagedData?.totalElements || flattenCategories(categories).length;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryResponseDto | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+
+  // Auto-expand all category nodes when categories load for immediate visibility
+  useEffect(() => {
+    if (categories.length > 0) {
+      const allIds = new Set<number>();
+      const collectIds = (nodes: CategoryResponseDto[]) => {
+        nodes.forEach((node) => {
+          allIds.add(node.id);
+          if (node.children && node.children.length > 0) {
+            collectIds(node.children);
+          }
+        });
+      };
+      collectIds(categories);
+      setExpandedIds(allIds);
+    }
+  }, [categories]);
   const [formOpen, setFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryResponseDto | null>(null);
   const [categoryName, setCategoryName] = useState('');

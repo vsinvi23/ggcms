@@ -119,9 +119,8 @@ export function InterviewPrepHub() {
                 <Briefcase className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-lg font-extrabold tracking-tight flex items-center gap-2">
+                <h1 className="text-lg font-extrabold tracking-tight">
                   Interview Prep
-                  <Badge variant="secondary" className="text-[10px] font-semibold">{filteredQuestions.length}</Badge>
                 </h1>
                 <p className="text-[11px] text-muted-foreground hidden lg:block">Active recall question cards</p>
               </div>
@@ -146,12 +145,8 @@ export function InterviewPrepHub() {
               </div>
             </div>
 
-            {/* Right Metadata */}
-            <div className="hidden sm:flex items-center justify-end sm:w-1/4">
-              <span className="text-xs font-medium text-muted-foreground">
-                {filteredQuestions.length} question{filteredQuestions.length !== 1 ? 's' : ''} available
-              </span>
-            </div>
+            {/* Right Spacer */}
+            <div className="hidden sm:block sm:w-1/4"></div>
           </div>
         </div>
 

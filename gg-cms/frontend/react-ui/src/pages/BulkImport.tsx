@@ -336,7 +336,22 @@ export default function BulkImport() {
   };
 
   const { data: categoriesData } = useCategories();
-  const categories = (categoriesData ?? []).filter((c: { isVirtual?: boolean }) => !c.isVirtual);
+  const flatCategories = useMemo(() => {
+    const flatten = (nodes: any[]): { id: number; slug: string; name: string }[] => {
+      let list: { id: number; slug: string; name: string }[] = [];
+      for (const node of nodes) {
+        if (!node.isVirtual) {
+          list.push({ id: node.id, slug: node.slug, name: node.name });
+        }
+        if (node.children && node.children.length > 0) {
+          list = list.concat(flatten(node.children));
+        }
+      }
+      return list;
+    };
+    return flatten(categoriesData ?? []);
+  }, [categoriesData]);
+  const categories = flatCategories;
 
   const preview = useImportPreview();
   const confirm = useImportConfirm();
@@ -353,20 +368,20 @@ export default function BulkImport() {
 
           if (!categoryId && it.categorySlug) {
             const slugLower = it.categorySlug.toLowerCase().trim();
-            const matched = categories.find(
-              (c: { id: number; slug: string; name: string }) =>
+            const matched = flatCategories.find(
+              (c) =>
                 c.slug.toLowerCase() === slugLower ||
                 c.name.toLowerCase() === slugLower ||
                 c.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === slugLower.replace(/[^a-z0-9]/g, '')
             );
             if (matched) {
               categoryId = matched.id;
-            } else if (categories.length > 0) {
+            } else if (flatCategories.length > 0) {
               // Default to first category if categorySlug not matched
-              categoryId = categories[0].id;
+              categoryId = flatCategories[0].id;
             }
-          } else if (!categoryId && categories.length > 0) {
-            categoryId = categories[0].id;
+          } else if (!categoryId && flatCategories.length > 0) {
+            categoryId = flatCategories[0].id;
           }
 
           // Any document with a title and body or sections is valid for import

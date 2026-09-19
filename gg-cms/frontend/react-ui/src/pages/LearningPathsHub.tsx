@@ -200,9 +200,8 @@ export function LearningPathsHub() {
                 <GraduationCap className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-lg font-extrabold tracking-tight flex items-center gap-2">
+                <h1 className="text-lg font-extrabold tracking-tight">
                   Learning Paths
-                  <Badge variant="secondary" className="text-[10px] font-semibold">{filteredPaths.length}</Badge>
                 </h1>
                 <p className="text-[11px] text-muted-foreground hidden lg:block">Guided roadmaps</p>
               </div>
@@ -228,11 +227,7 @@ export function LearningPathsHub() {
             </div>
 
             {/* Right Spacer */}
-            <div className="hidden sm:flex items-center justify-end sm:w-1/4">
-              <span className="text-xs font-medium text-muted-foreground">
-                {filteredPaths.length} path{filteredPaths.length !== 1 ? 's' : ''} available
-              </span>
-            </div>
+            <div className="hidden sm:block sm:w-1/4"></div>
           </div>
         </div>
 
