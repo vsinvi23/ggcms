@@ -1,18 +1,19 @@
-import { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { extractSlugFromPath, buildCourseUrl } from '@/lib/slug';
 import {
   ChevronLeft, ChevronDown, ChevronRight, Search, Play,
   CheckCircle2, Circle, BookOpen, FileText, GraduationCap, Award,
-  Globe, Share2, Facebook, Twitter, Linkedin, Clock, Users,
-  Bookmark, Highlighter,
+  Globe, Share2, Clock, Bookmark, Highlighter, Star, ArrowRight, Shield, Check,
+  Sparkles, LayoutList
 } from 'lucide-react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
@@ -25,829 +26,223 @@ import { SectionDto, LessonDto, CmsResponseDto } from '@/api/types';
 import { HighlightOverlay } from '@/components/engagement/HighlightOverlay';
 import { HighlightsPanel } from '@/components/engagement/HighlightsPanel';
 import { InteractionBar } from '@/components/engagement/InteractionBar';
+import { CommentsSection } from '@/components/shared/CommentsSection';
+import { CURATED_LEARNING_PATHS } from '@/data/learningPathData';
 
-// ─── Body heading extraction ───────────────────────────────────────────────────
+// ─── Utility to flatten lessons ────────────────────────────────────────────────
+function getAllLessons(section: SectionDto): LessonDto[] {
+  return section.lessons ?? [];
+}
 
+// ─── Extract body headings ────────────────────────────────────────────────────
 function extractHeadings(body: string | null | undefined): string[] {
-  if (!body?.trim() || !body.trim().startsWith('[')) return [];
-  try {
-    const blocks: Array<{ type: string; content?: string }> = JSON.parse(body.trim());
-    if (!Array.isArray(blocks)) return [];
-    return blocks
-      .filter(b => b.type === 'heading1' || b.type === 'heading2' || b.type === 'heading3')
-      .map(b => b.content?.trim() ?? '')
-      .filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-// ─── Body-based curriculum preview ────────────────────────────────────────────
-
-function BodyCurriculumPreview({
-  body,
-  onSignIn,
-  isAuthenticated,
-}: {
-  body: string | null | undefined;
-  onSignIn: () => void;
-  isAuthenticated: boolean;
-}) {
-  if (!body?.trim()) {
-    return (
-      <p className="text-muted-foreground text-sm text-center py-8">
-        Course content will be available soon.
-      </p>
-    );
-  }
-  return (
-    <div>
-      <div
-        className="lesson-content text-foreground leading-relaxed"
-        dangerouslySetInnerHTML={{ __html: sanitizeHtml(parseBodyToHtml(body)) }}
-      />
-      {!isAuthenticated && (
-        <div className="mt-6 p-4 bg-muted/50 rounded-lg text-center border border-dashed border-border">
-          <p className="text-sm text-muted-foreground mb-3">
-            Sign in and enroll to track your progress and access all course materials.
-          </p>
-          <Button size="sm" onClick={onSignIn}>
-            <GraduationCap className="h-4 w-4 mr-2" />
-            Sign in to Enroll
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Curriculum Section (overview tab) ────────────────────────────────────────
-
-const CurriculumSection = ({
-  section,
-  index,
-  isEnrolled = false,
-  completedLessonIds = [],
-  learningUrl = '',
-}: {
-  section: SectionDto;
-  index: number;
-  isEnrolled?: boolean;
-  completedLessonIds?: number[];
-  learningUrl?: string;  // base URL of the learning view — enrolled users are linked there
-}) => {
-  const [isExpanded, setIsExpanded] = useState(index < 2);
-  const lessons: LessonDto[] = section.lessons ?? [];
-  const totalMins = lessons.reduce((acc, l) => acc + (l.duration ?? 0), 0);
-
-  // How many lessons in this section are completed?
-  const doneInSection = isEnrolled
-    ? lessons.filter(l => completedLessonIds.includes(l.id)).length
-    : 0;
-
-  const LessonRow = ({ lesson }: { lesson: LessonDto }) => {
-    const isCompleted = isEnrolled && completedLessonIds.includes(lesson.id);
-
-    const TypeIcon = lesson.type === 'video'
-      ? Play
-      : lesson.type === 'text'
-      ? FileText
-      : BookOpen;
-
-    const inner = (
-      <div
-        className={cn(
-          'flex items-center gap-3 p-3.5 text-sm transition-colors',
-          isEnrolled && 'hover:bg-muted/40 cursor-pointer',
-        )}
-      >
-        {/* Type icon */}
-        <TypeIcon
-          className={cn(
-            'h-4 w-4 flex-shrink-0',
-            isCompleted ? 'text-success' : 'text-muted-foreground',
-          )}
-        />
-
-        {/* Title */}
-        <span className={cn('flex-1', isCompleted && 'text-muted-foreground line-through decoration-muted-foreground/40')}>
-          {lesson.title}
-        </span>
-
-        {/* Status badge / label */}
-        {isEnrolled ? (
-          isCompleted ? (
-            <span className="flex items-center gap-1 text-xs font-medium text-success">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Done
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Circle className="h-3.5 w-3.5" />
-            </span>
-          )
-        ) : (
-          <span className="text-primary text-xs font-medium">Preview</span>
-        )}
-
-        {/* Duration */}
-        {lesson.duration != null && (
-          <span className="text-xs text-muted-foreground ml-1">{lesson.duration} min</span>
-        )}
-      </div>
-    );
-
-    // Enrolled users can click the row to jump to the learning view
-    if (isEnrolled && learningUrl) {
-      return (
-        <Link to={learningUrl} className="block">
-          {inner}
-        </Link>
-      );
+  if (!body?.trim()) return [];
+  if (body.trim().startsWith('[')) {
+    try {
+      const blocks: Array<{ type: string; content?: string }> = JSON.parse(body.trim());
+      if (Array.isArray(blocks)) {
+        return blocks
+          .filter(b => b.type === 'heading1' || b.type === 'heading2' || b.type === 'heading3')
+          .map(b => b.content?.trim() ?? '')
+          .filter(Boolean);
+      }
+    } catch {
+      // fallback
     }
-    return <div>{inner}</div>;
-  };
+  }
+  const matches = body.match(/<h[1-3][^>]*>(.*?)<\/h[1-3]>/gi);
+  if (matches) {
+    return matches.map(m => m.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+  }
+  return [];
+}
 
-  return (
-    <div className="border border-border rounded-lg overflow-hidden">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/50 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-          <span className="font-medium">{section.title}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Progress chip for enrolled users */}
-          {isEnrolled && lessons.length > 0 && (
-            <span className={cn(
-              'text-xs px-2 py-0.5 rounded-full font-medium',
-              doneInSection === lessons.length
-                ? 'bg-success/15 text-success'
-                : doneInSection > 0
-                ? 'bg-primary/10 text-primary'
-                : 'bg-muted text-muted-foreground',
-            )}>
-              {doneInSection}/{lessons.length}
-            </span>
-          )}
-          <span className="text-sm text-muted-foreground">
-            {lessons.length} lesson{lessons.length !== 1 ? 's' : ''}
-            {totalMins > 0 ? ` • ${totalMins} min` : ''}
-          </span>
-        </div>
-      </button>
-
-      {isExpanded && lessons.length > 0 && (
-        <div className="divide-y divide-border">
-          {lessons.map(lesson => <LessonRow key={lesson.id} lesson={lesson} />)}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ─── Helpers ───────────────────────────────────────────────────────────────────
-
-const getAllLessons = (section: SectionDto): LessonDto[] => [
-  ...(section.lessons ?? []),
-  ...(section.childSections ?? []).flatMap(cs => cs.lessons ?? []),
-];
-
-// ─── Lesson status dot ────────────────────────────────────────────────────────
-
+// ─── Lesson indicator dot ─────────────────────────────────────────────────────
 const LessonDot = ({ isCompleted, isCurrent }: { isCompleted: boolean; isCurrent: boolean }) => {
   if (isCompleted) {
-    return (
-      <span
-        className="flex-shrink-0 inline-flex items-center justify-center rounded-full"
-        style={{ width: 14, height: 14, background: '#22c55e' }}
-      >
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-          <path d="M1.5 4L3.2 5.7L6.5 2.3" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </span>
-    );
+    return <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />;
   }
   if (isCurrent) {
     return (
-      <span
-        className="flex-shrink-0 inline-block rounded-full"
-        style={{ width: 14, height: 14, background: '#c7c9d1', border: '2px solid #6b7280' }}
-      />
+      <span className="w-3.5 h-3.5 flex items-center justify-center flex-shrink-0">
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+      </span>
     );
   }
-  return (
-    <span
-      className="flex-shrink-0 inline-block rounded-full"
-      style={{ width: 14, height: 14, background: 'transparent', border: '2px solid #4b5563' }}
-    />
-  );
+  return <Circle size={13} className="text-muted-foreground/50 flex-shrink-0" />;
 };
 
-// ─── Course Learning Page ─────────────────────────────────────────────────────
-
-// ─── LeetCode-style course syllabus sidebar ───────────────────────────────────
-
-const CourseSyllabusSidebar = ({
-  sections,
-  completedLessonIds,
-  isEnrolled,
-  learningUrl,
-  fullWidth = false,
-}: {
-  sections: SectionDto[];
-  completedLessonIds: number[];
-  isEnrolled: boolean;
-  learningUrl: string;
-  fullWidth?: boolean;
-}) => {
-  const [openId, setOpenId] = useState<number | null>(sections[0]?.id ?? null);
-  const totalLessons = sections.reduce((a, s) => a + (s.lessons?.length ?? 0), 0);
-
-  return (
-    <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
-      {/* Header — hidden when full-width (parent section already shows title + count) */}
-      {!fullWidth && (
-        <div className="px-4 py-3 border-b border-border bg-muted/30">
-          <h3 className="text-sm font-semibold text-foreground">Course Content</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {sections.length} section{sections.length !== 1 ? 's' : ''} &bull; {totalLessons} lesson{totalLessons !== 1 ? 's' : ''}
-          </p>
-        </div>
-      )}
-
-      {/* Section list — scrollable in sidebar, full-height when full-width */}
-      <div className={cn(
-        'divide-y divide-border',
-        !fullWidth && 'max-h-[420px] overflow-y-auto edu-sidebar-scroll',
-      )}>
-        {sections.map((section, idx) => {
-          const lessons = section.lessons ?? [];
-          const done = isEnrolled
-            ? lessons.filter(l => completedLessonIds.includes(l.id)).length
-            : 0;
-          const allDone = done === lessons.length && lessons.length > 0;
-          const isOpen = openId === section.id;
-
-          return (
-            <div key={section.id}>
-              {/* Section toggle */}
-              <button
-                onClick={() => setOpenId(isOpen ? null : section.id)}
-                className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/40 text-left transition-colors"
-              >
-                {/* Number badge */}
-                <div
-                  className={cn(
-                    'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold transition-colors',
-                    isOpen
-                      ? 'bg-primary text-primary-foreground'
-                      : allDone
-                      ? 'bg-success/15 text-success'
-                      : 'bg-muted text-muted-foreground',
-                  )}
-                >
-                  {allDone ? <CheckCircle2 size={14} /> : idx + 1}
-                </div>
-
-                {/* Title + lesson count */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium leading-snug line-clamp-2">{section.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {lessons.length} lesson{lessons.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
-
-                {/* Enrolled progress count */}
-                {isEnrolled && lessons.length > 0 && (
-                  <span className={cn(
-                    'text-xs font-semibold flex-shrink-0',
-                    allDone ? 'text-success' : done > 0 ? 'text-primary' : 'text-muted-foreground',
-                  )}>
-                    {done}/{lessons.length}
-                  </span>
-                )}
-
-                <ChevronDown
-                  size={14}
-                  className={cn(
-                    'flex-shrink-0 text-muted-foreground transition-transform duration-200',
-                    isOpen && 'rotate-180',
-                  )}
-                />
-              </button>
-
-              {/* Lesson list */}
-              {isOpen && lessons.length > 0 && (
-                <div className="bg-muted/20 divide-y divide-border/50">
-                  {lessons.map(lesson => {
-                    const isDone = isEnrolled && completedLessonIds.includes(lesson.id);
-                    const TypeIcon = lesson.type === 'video' ? Play
-                      : lesson.type === 'text' ? FileText : BookOpen;
-
-                    const row = (
-                      <div
-                        className={cn(
-                          'flex items-start gap-3 px-5 py-2.5 transition-colors text-sm',
-                          isEnrolled && 'hover:bg-muted/40 cursor-pointer',
-                        )}
-                      >
-                        {isDone
-                          ? <CheckCircle2 className="h-3.5 w-3.5 text-success mt-0.5 flex-shrink-0" />
-                          : <Circle className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />}
-                        <span className={cn('leading-snug flex-1', isDone && 'text-muted-foreground')}>
-                          {lesson.title}
-                        </span>
-                        <TypeIcon className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                      </div>
-                    );
-
-                    return isEnrolled
-                      ? <Link key={lesson.id} to={learningUrl}>{row}</Link>
-                      : <div key={lesson.id}>{row}</div>;
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-// ─── Course Learning Page ─────────────────────────────────────────────────────
-
-const CourseLearningPage = ({
-  courseTitle,
-  courseUrl,
-  numericCourseId,
-  sections,
-  progressPercent,
-  completedLessonIds,
-  onMarkComplete,
-  isMarkingComplete,
-}: {
-  courseTitle: string;
-  courseUrl: string;         // e.g. /course/go-programming — used by Back link
-  numericCourseId: number;
-  sections: SectionDto[];
-  progressPercent: number;
-  completedLessonIds: number[];
-  onMarkComplete: (lessonId: number) => Promise<void>;
-  isMarkingComplete: boolean;
-}) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [expandedSections, setExpandedSections] = useState<number[]>(
-    sections.slice(0, 2).map(s => s.id),
-  );
-  const firstLesson = sections.length > 0 ? getAllLessons(sections[0])[0] : undefined;
-  const [selectedLessonId, setSelectedLessonId] = useState<number | null>(firstLesson?.id ?? null);
-  const [bookmarked, setBookmarked] = useState(false);
-  const [highlightsOpen, setHighlightsOpen] = useState(false);
-  const discussRef = useRef<HTMLDivElement>(null);
-
-  const totalLessons = sections.reduce((acc, s) => acc + getAllLessons(s).length, 0);
-  const completedCount = completedLessonIds.length;
-
-  const currentSection = sections.find(s =>
-    getAllLessons(s).some(l => l.id === selectedLessonId),
-  );
-  const currentLesson = currentSection
-    ? getAllLessons(currentSection).find(l => l.id === selectedLessonId)
-    : undefined;
-
-  const allLessons = sections.flatMap(getAllLessons);
-  const currentLessonIndex = allLessons.findIndex(l => l.id === selectedLessonId);
-  const nextLesson = allLessons[currentLessonIndex + 1] ?? null;
-  const prevLesson = allLessons[currentLessonIndex - 1] ?? null;
-
-  const goToLesson = (lessonId: number) => {
-    setSelectedLessonId(lessonId);
-    const sec = sections.find(s => getAllLessons(s).some(l => l.id === lessonId));
-    if (sec && !expandedSections.includes(sec.id)) {
-      setExpandedSections(prev => [...prev, sec.id]);
-    }
-  };
-
-  const filteredSections = sections
-    .map(section => {
-      const allSectionLessons = getAllLessons(section);
-      const displayLessons = searchQuery.trim()
-        ? allSectionLessons.filter(l =>
-            l.title.toLowerCase().includes(searchQuery.toLowerCase()),
-          )
-        : allSectionLessons;
-      return { ...section, lessons: displayLessons };
-    })
-    .filter(section => !searchQuery.trim() || section.lessons.length > 0);
-
-  const toggleSection = (sectionId: number) => {
-    setExpandedSections(prev =>
-      prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId],
-    );
-  };
-
-  return (
-    <PublicLayout>
-      {/*
-        -m-4 cancels PublicLayout's p-4; height calc fills the remaining viewport
-        after the h-14 (56px) top header.
-      */}
-      <div
-        className="-m-4 flex overflow-hidden"
-        style={{ height: 'calc(100% + 2rem)' }}
-      >
-        {/* ── Left sidebar ─────────────────────────────────────────────────── */}
-        <aside
-          className="flex-shrink-0 flex flex-col overflow-hidden"
-          style={{
-            width: 272,
-            background: '#1a1c23',
-            borderRight: '1px solid rgba(255,255,255,0.06)',   /* separates sidebar from content */
-          }}
-        >
-          {/* Header — back, title, progress */}
-          <div className="px-5 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-            <Link
-              to={courseUrl}
-              className="inline-flex items-center gap-1.5 text-xs font-medium mb-4 hover:opacity-80 transition-opacity"
-              style={{ color: '#9ca3af' }}
-            >
-              <ChevronLeft size={13} />
-              Back to Course
-            </Link>
-
-            <h1 className="text-sm font-semibold leading-snug mb-3.5" style={{ color: '#e8e9f0' }}>
-              {courseTitle}
-            </h1>
-
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs" style={{ color: '#6b7280' }}>
-                {progressPercent}% completed
-              </span>
-            </div>
-            <div className="rounded-full overflow-hidden" style={{ height: 3, background: '#2a2b35' }}>
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%`, background: '#22c55e' }}
-              />
-            </div>
-          </div>
-
-          {/* Search */}
-          <div className="px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <div className="relative">
-              <Search
-                size={13}
-                className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                style={{ color: '#6b7280' }}
-              />
-              <input
-                type="text"
-                placeholder="Search Module"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs rounded-lg outline-none"
-                style={{
-                  background: '#252631',
-                  border: '1px solid #2f3040',
-                  color: '#c9cad4',
-                  padding: '7px 10px 7px 30px',
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Section + lesson tree */}
-          <div className="flex-1 overflow-y-auto edu-sidebar-scroll pt-2 pb-4">
-            {filteredSections.map((section) => {
-              const isOpen = searchQuery.trim() !== '' || expandedSections.includes(section.id);
-              const sectionLessons = section.lessons ?? [];
-              return (
-                <div key={section.id} className="mb-1">
-                  {/*
-                    Section header: chevron is on the LEFT so it visually
-                    indicates hierarchy and the connector line below can
-                    align with it naturally.
-                    pl-5 (20px) + icon-width (12px) / 2 = ~26px → connector
-                    line sits at ml-[26px] which centres it on the chevron.
-                  */}
-                  <button
-                    onClick={() => toggleSection(section.id)}
-                    className="w-full flex items-start gap-2 px-5 py-2.5 transition-colors text-left hover:bg-white/[0.04]"
-                  >
-                    <span className="flex-shrink-0 mt-0.5" style={{ color: '#6b7280' }}>
-                      {isOpen
-                        ? <ChevronDown size={12} />
-                        : <ChevronRight size={12} />}
-                    </span>
-                    <span className="text-xs font-semibold leading-snug" style={{ color: '#e2e4ed' }}>
-                      {section.title}
-                    </span>
-                  </button>
-
-                  {/*
-                    Lesson list: ml-[26px] centres the left border on the
-                    chevron above; mr-3 gives right breathing room.
-                  */}
-                  {isOpen && sectionLessons.length > 0 && (
-                    <div
-                      className="mb-2 px-2"   /* px-2 gives 8px breathing room on both sides */
-                      style={{
-                        marginLeft: 26,
-                        borderLeft: '1px solid rgba(255,255,255,0.09)',
-                      }}
-                    >
-                      {sectionLessons.map((lesson) => {
-                        const isCompleted = completedLessonIds.includes(lesson.id);
-                        const isCurrent = selectedLessonId === lesson.id;
-                        return (
-                          <button
-                            key={lesson.id}
-                            onClick={() => setSelectedLessonId(lesson.id)}
-                            className="w-full text-left flex items-center gap-2.5 py-2 rounded-lg transition-colors"
-                            style={{
-                              paddingLeft: 12,
-                              paddingRight: 8,
-                              background: isCurrent
-                                ? 'rgba(124,58,237,0.15)'
-                                : 'transparent',
-                              outline: isCurrent
-                                ? '1px solid rgba(124,58,237,0.25)'
-                                : 'none',
-                            }}
-                          >
-                            <LessonDot isCompleted={isCompleted} isCurrent={isCurrent} />
-                            <span
-                              className="flex-1 text-xs leading-snug"
-                              style={{ color: isCurrent ? '#e8e9f0' : '#9ca3af' }}
-                            >
-                              {lesson.title}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {filteredSections.length === 0 && searchQuery.trim() && (
-              <p className="text-center text-xs py-8 px-5" style={{ color: '#6b7280' }}>
-                No lessons match &ldquo;{searchQuery}&rdquo;
-              </p>
-            )}
-          </div>
-        </aside>
-
-        {/* ── Main content ──────────────────────────────────────────────────── */}
-        <main className="flex-1 overflow-y-auto bg-background edu-content-scroll">
-          <div className="max-w-3xl mx-auto px-8 py-8">
-
-            {/* Breadcrumb — Course > Section > Lesson (no ellipsis) */}
-            <nav className="flex items-center gap-1.5 text-xs mb-7 flex-wrap" aria-label="breadcrumb">
-              <Link
-                to={courseUrl}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {courseTitle}
-              </Link>
-              {currentSection && (
-                <>
-                  <ChevronRight size={12} className="text-muted-foreground/50 flex-shrink-0" />
-                  <span className="text-muted-foreground">{currentSection.title}</span>
-                </>
-              )}
-              {currentLesson && (
-                <>
-                  <ChevronRight size={12} className="text-muted-foreground/50 flex-shrink-0" />
-                  <span className="text-foreground font-medium">{currentLesson.title}</span>
-                </>
-              )}
-            </nav>
-
-            {currentLesson ? (
-              <>
-                {/* Title row */}
-                <div className="flex items-start justify-between gap-4 mb-1">
-                  <h1 className="text-2xl font-bold text-foreground leading-tight">
-                    {currentLesson.title}
-                  </h1>
-                  <button
-                    onClick={() => setBookmarked(b => !b)}
-                    title={bookmarked ? 'Remove bookmark' : 'Bookmark lesson'}
-                    className="mt-1 flex-shrink-0 transition-colors"
-                    style={{ color: bookmarked ? '#f59e0b' : '#9ca3af' }}
-                  >
-                    <Bookmark size={18} fill={bookmarked ? 'currentColor' : 'none'} />
-                  </button>
-                </div>
-
-                {/* Subtitle */}
-                <p className="text-sm text-muted-foreground italic mb-6">
-                  {currentLesson.type === 'video'
-                    ? 'Watch the video below to continue learning.'
-                    : "In this lesson, we'll explore the concepts in detail."}
-                </p>
-
-                {/* ── Engagement toolbar ──────────────────────────────────── */}
-                <div className="flex items-center justify-between gap-4 mb-6 pb-5 border-b border-border flex-wrap">
-                  <InteractionBar
-                    contentType="course"
-                    contentId={numericCourseId}
-                    discussRef={discussRef as React.RefObject<HTMLElement>}
-                  />
-                  <button
-                    onClick={() => setHighlightsOpen(true)}
-                    className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                  >
-                    <Highlighter size={14} />
-                    My Highlights
-                  </button>
-                </div>
-
-                {/* Video placeholder */}
-                {currentLesson.type === 'video' && (
-                  <div className="aspect-video rounded-xl mb-8 flex items-center justify-center bg-muted">
-                    <button
-                      className="flex items-center justify-center rounded-full hover:opacity-80 transition-opacity"
-                      style={{ width: 64, height: 64, background: '#7c3aed' }}
-                    >
-                      <Play size={24} fill="white" className="text-white ml-1" />
-                    </button>
-                  </div>
-                )}
-
-                {/* Lesson content with highlight overlay */}
-                {currentLesson.content ? (
-                  <HighlightOverlay
-                    contentType="course"
-                    contentId={numericCourseId}
-                    contentTitle={courseTitle}
-                  >
-                    <div
-                      className="edu-lesson-content text-foreground leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(parseBodyToHtml(currentLesson.content)) }}
-                    />
-                  </HighlightOverlay>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No content added for this lesson yet.
-                  </p>
-                )}
-
-                {/* Course progress */}
-                <div className="mt-10 mb-4 rounded-xl p-4 bg-muted/40">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                    <span className="font-medium">Course Progress</span>
-                    <span>
-                      {completedCount}/{totalLessons} lessons &bull; {progressPercent}%
-                    </span>
-                  </div>
-                  <Progress value={progressPercent} className="h-1.5" />
-                </div>
-
-                {/* Navigation footer */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-5 border-t border-border">
-                  <div className="flex gap-2">
-                    {prevLesson && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToLesson(prevLesson.id)}
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                      </Button>
-                    )}
-                    {nextLesson && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToLesson(nextLesson.id)}
-                      >
-                        Next <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    )}
-                  </div>
-
-                  {completedLessonIds.includes(currentLesson.id) ? (
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-success/15 text-success">
-                        <CheckCircle2 size={14} /> Lesson Completed
-                      </span>
-                      {nextLesson && (
-                        <Button
-                          size="sm"
-                          onClick={() => goToLesson(nextLesson.id)}
-                        >
-                          Next Lesson <ChevronRight className="h-4 w-4 ml-1" />
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={async () => {
-                        await onMarkComplete(currentLesson.id);
-                        if (nextLesson) goToLesson(nextLesson.id);
-                      }}
-                      disabled={isMarkingComplete}
-                      className="bg-success hover:bg-success/90 text-success-foreground"
-                    >
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      {isMarkingComplete ? 'Saving…' : 'Mark as Complete'}
-                    </Button>
-                  )}
-                </div>
-
-                {/* Discussion anchor */}
-                <div ref={discussRef} className="mt-14 pt-6 border-t border-border">
-                  <h3 className="text-base font-semibold text-foreground mb-1">Discussion</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Questions about this lesson? Start a discussion.
-                  </p>
-                </div>
-              </>
-            ) : (
-              <div className="py-20 flex flex-col items-center gap-3 text-muted-foreground">
-                <BookOpen size={40} className="opacity-30" />
-                <p className="text-sm">Select a lesson from the sidebar to begin.</p>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-
-      {/* Highlights slide-over */}
-      <HighlightsPanel
-        open={highlightsOpen}
-        onClose={() => setHighlightsOpen(false)}
-        contentType="course"
-        contentId={numericCourseId}
-        contentUrl={courseUrl}
-        contentTitle={courseTitle}
-      />
-
-      <EduCourseStyles />
-    </PublicLayout>
-  );
-};
-
-// ─── Course Overview Skeleton ──────────────────────────────────────────────────
-
-const CourseOverviewSkeleton = () => (
-  <div className="max-w-7xl mx-auto">
-    <Skeleton className="h-5 w-28 mb-6" />
-    <div className="grid lg:grid-cols-3 gap-8">
-      <div className="lg:col-span-2 space-y-5">
-        <Skeleton className="w-full aspect-video rounded-xl" />
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <div className="space-y-2 pt-2">
-          {[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
-        </div>
-      </div>
-      <div className="space-y-4">
-        <Skeleton className="w-full aspect-video rounded-xl" />
-        <Skeleton className="h-12 w-full rounded-lg" />
-        <Skeleton className="h-40 w-full rounded-xl" />
+// ─── Skeleton Loading State ────────────────────────────────────────────────────
+const CourseViewSkeleton = () => (
+  <div className="max-w-7xl mx-auto p-6 space-y-6 animate-pulse">
+    <Skeleton className="h-28 w-full rounded-2xl" />
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <Skeleton className="h-[500px] rounded-xl" />
+      <div className="lg:col-span-3 space-y-4">
+        <Skeleton className="h-10 w-3/4 rounded-lg" />
+        <Skeleton className="h-6 w-1/2 rounded" />
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <Skeleton className="h-48 w-full rounded-xl" />
       </div>
     </div>
   </div>
 );
 
-// ─── Main Page Component ───────────────────────────────────────────────────────
+// ─── Related & Recommended Courses Component ─────────────────────────────────
+const RelatedCoursesSection = ({
+  relatedCourses,
+}: {
+  relatedCourses: CmsResponseDto[];
+}) => {
+  if (!relatedCourses || relatedCourses.length === 0) return null;
 
-const CourseViewPage = () => {
+  return (
+    <section className="pt-8 border-t border-border space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-emerald-500" />
+            Related & Recommended Courses
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Expand your engineering skills with these recommended tracks.
+          </p>
+        </div>
+        <Link to="/courses" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+          Explore Catalog <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {relatedCourses.slice(0, 6).map(rc => (
+          <Link key={rc.id} to={buildCourseUrl(rc)} className="group">
+            <Card className="p-4 rounded-xl border border-border hover:border-emerald-500/40 hover:shadow-md transition-all bg-card/70 h-full flex flex-col justify-between space-y-3">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                    {rc.categoryName || 'Engineering'}
+                  </Badge>
+                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-emerald-500" />
+                    {rc.durationMinutes ? `${Math.floor(rc.durationMinutes / 60)}h ${rc.durationMinutes % 60}m` : '4h 30m'}
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  {rc.title ?? 'Untitled Course'}
+                </h4>
+                {rc.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                    {rc.description}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1 font-medium">
+                  <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+                  {rc.sectionsCount || 8} Modules
+                </span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                  View <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+// ─── Recommended Learning Paths Component ─────────────────────────────────────
+const RecommendedPathsSection = () => {
+  return (
+    <section className="pt-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-emerald-500" />
+            Recommended Learning Paths
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Structured career pathways combining courses, labs, and assessments.
+          </p>
+        </div>
+        <Link to="/learning-paths" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+          All Paths <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {CURATED_LEARNING_PATHS.slice(0, 2).map(path => (
+          <Card key={path.id} className="p-5 rounded-xl border border-border hover:border-emerald-500/40 transition-all bg-card/60 flex flex-col justify-between space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs">
+                  {path.kind === 'SECURITY_TRACK' ? 'Security Track' : 'Structured Path'}
+                </Badge>
+                <div className="flex items-center gap-1 text-xs text-amber-500 font-semibold">
+                  <Star className="w-3.5 h-3.5 fill-amber-500" />
+                  {path.rating}
+                </div>
+              </div>
+              <h4 className="text-base font-bold text-foreground line-clamp-1">{path.title}</h4>
+              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{path.description}</p>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
+              <span className="text-muted-foreground font-medium flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-emerald-500" /> ~{path.estimatedHours}h
+                <span>&bull;</span>
+                <BookOpen className="w-3.5 h-3.5 text-emerald-500" /> {path.modules.length} Modules
+              </span>
+              <Link to={`/learn/${path.slug}`}>
+                <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs gap-1 font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
+                  View Path <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+// ─── Main CourseViewPage Component ────────────────────────────────────────────
+export function CourseViewPage() {
   const { '*': wildcardPath } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
-  // ?learn=true is the only signal that should open the learning view for enrolled users.
-  // Without it, always show the course detail page first (even when enrolled).
-  const showLearn = searchParams.get('learn') === 'true';
   const courseId = extractSlugFromPath(wildcardPath);
   const { isAuthenticated } = useAuth();
 
-  const { data: course, isLoading: courseLoading, isError: courseError } = usePublicCmsById(
+  const { data: course, isLoading: courseLoading } = usePublicCmsById(
     courseId,
     !!courseId,
     isPreview,
     'COURSE',
   );
   const numericCourseId = course?.id ?? 0;
-  const { data: sections = [], isLoading: sectionsLoading } = useSectionsByCourse(
+  const { data: sections = [] } = useSectionsByCourse(
     numericCourseId,
     !!numericCourseId,
   );
   const { data: enrollment } = useMyEnrollment(numericCourseId, isAuthenticated && !!numericCourseId);
   const { mutate: enroll, isPending: enrolling } = useEnroll();
   const { mutateAsync: updateProgress, isPending: isMarkingComplete } = useUpdateProgress();
-  const { data: allCoursesData } = usePublicCmsList({ type: 'COURSE', size: 20 });
+  const { data: allCoursesData } = usePublicCmsList({ type: 'COURSE', size: 30 });
 
+  // State management for navigation & interactive tools
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
+  const [expandedSections, setExpandedSections] = useState<number[]>([]);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [highlightsOpen, setHighlightsOpen] = useState(false);
+  const discussRef = useRef<HTMLDivElement>(null);
+
+  // Fallback course data for seamless UX
   const displayCourse = useMemo(() => {
     if (course) return course;
     if (!courseId) return null;
@@ -865,75 +260,105 @@ const CourseViewPage = () => {
       type: 'COURSE',
       categoryName: 'Engineering',
       durationMinutes: 480,
-      sectionsCount: 2,
-      lessonsCount: 5,
+      sectionsCount: 3,
+      lessonsCount: 8,
     } as CmsResponseDto;
   }, [course, courseId]);
 
+  // Fallback sections & lessons data
   const displaySections = useMemo((): SectionDto[] => {
     if (sections && sections.length > 0) return sections;
     return [
       {
         id: 101,
-        title: 'Module 1: Foundational Architecture & Core Concepts',
+        title: 'Module 1: Foundations & Architecture',
         courseId: numericCourseId || 1,
         sortOrder: 1,
         lessons: [
-          { id: 1001, sectionId: 101, title: 'Course Overview & Environment Setup', type: 'video', duration: 12, content: '<h2>Course Overview</h2><p>Welcome to this course! In this lesson, we cover essential prerequisites, toolchain setup, and core concepts.</p>' },
-          { id: 1002, sectionId: 101, title: 'Core Principles & Clean Architecture', type: 'text', duration: 18, content: '<h2>Clean Architecture</h2><p>Learn how to separate concerns, isolate domain logic, and construct maintainable interfaces.</p>' },
-          { id: 1003, sectionId: 101, title: 'Practical Hands-on Implementation', type: 'text', duration: 25, content: '<h2>Hands-on Implementation</h2><p>Step-by-step code walkthrough applying idiomatic patterns to real-world scenarios.</p>' },
+          { id: 1001, sectionId: 101, title: 'Course Overview & Prerequisites', type: 'video', duration: 12, content: '<h2>Course Overview</h2><p>Welcome to this track. We cover essential prerequisites, toolchain setup, and core production patterns.</p>' },
+          { id: 1002, sectionId: 101, title: 'Core Principles & Domain Isolation', type: 'text', duration: 18, content: '<h2>Domain Isolation</h2><p>Learn how to separate concerns, isolate domain logic, and construct clean maintainable interfaces.</p>' },
+          { id: 1003, sectionId: 101, title: 'Hands-on Implementation Lab', type: 'text', duration: 25, content: '<h2>Hands-on Implementation</h2><p>Step-by-step code walkthrough applying idiomatic patterns to production scenarios.</p>' },
         ],
       },
       {
         id: 102,
-        title: 'Module 2: Advanced Production & Security Hardening',
+        title: 'Module 2: Advanced Design & Security Hardening',
         courseId: numericCourseId || 1,
         sortOrder: 2,
         lessons: [
-          { id: 1004, sectionId: 102, title: 'Security Best Practices & Authentication', type: 'text', duration: 20, content: '<h2>Security Hardening</h2><p>Implement secure token handling, rate limiting, and zero-trust authentication checks.</p>' },
-          { id: 1005, sectionId: 102, title: 'Observability & Cloud Deployment Specs', type: 'video', duration: 15, content: '<p>Configure structured logging, OpenTelemetry tracing, and Docker containerization for production deployment.</p>' },
+          { id: 1004, sectionId: 102, title: 'Security Hardening & Token Auth', type: 'text', duration: 20, content: '<h2>Security Hardening</h2><p>Implement secure token handling, rate limiting, and zero-trust authentication checks.</p>' },
+          { id: 1005, sectionId: 102, title: 'Cloud Infrastructure & Deployments', type: 'video', duration: 15, content: '<h2>Cloud Deployments</h2><p>Configure structured logging, OpenTelemetry tracing, and Docker containerization for production deployment.</p>' },
         ],
       },
     ];
   }, [sections, numericCourseId]);
 
-  const isLoading = courseLoading && !displayCourse;
+  // Expand all sections by default once sections load
+  React.useEffect(() => {
+    if (displaySections.length > 0 && expandedSections.length === 0) {
+      setExpandedSections(displaySections.map(s => s.id));
+    }
+  }, [displaySections]);
 
+  const isEnrolled = !!enrollment;
+  const completedLessonIds: number[] = (enrollment?.completedLessons ?? []).map(l => l.id);
+  const allLessons = useMemo(() => displaySections.flatMap(getAllLessons), [displaySections]);
+  const totalLessons = allLessons.length;
+  const completedCount = completedLessonIds.length;
+  const progressPercent = totalLessons > 0
+    ? Math.round((completedCount / totalLessons) * 100)
+    : Math.round((enrollment?.progress ?? 0) * 100);
+
+  const title = displayCourse?.title ?? 'Technical Course';
+  const description = displayCourse?.description ?? '';
   const bodyHeadings = useMemo(() => extractHeadings(displayCourse?.body), [displayCourse?.body]);
 
+  // Current lesson & section context
+  const currentSection = useMemo(() => {
+    if (selectedLessonId === null) return undefined;
+    return displaySections.find(s => getAllLessons(s).some(l => l.id === selectedLessonId));
+  }, [selectedLessonId, displaySections]);
+
+  const currentLesson = useMemo(() => {
+    if (selectedLessonId === null || !currentSection) return undefined;
+    return getAllLessons(currentSection).find(l => l.id === selectedLessonId);
+  }, [selectedLessonId, currentSection]);
+
+  const currentLessonIndex = useMemo(() => {
+    if (selectedLessonId === null) return -1;
+    return allLessons.findIndex(l => l.id === selectedLessonId);
+  }, [selectedLessonId, allLessons]);
+
+  const nextLesson = currentLessonIndex !== -1 ? allLessons[currentLessonIndex + 1] ?? null : null;
+  const prevLesson = currentLessonIndex !== -1 ? allLessons[currentLessonIndex - 1] ?? null : null;
+
+  // Filtered sections according to search
+  const filteredSections = useMemo(() => {
+    return displaySections
+      .map(section => {
+        const sectionLessons = getAllLessons(section);
+        const matched = searchQuery.trim()
+          ? sectionLessons.filter(l => l.title.toLowerCase().includes(searchQuery.toLowerCase()))
+          : sectionLessons;
+        return { ...section, lessons: matched };
+      })
+      .filter(section => !searchQuery.trim() || section.lessons.length > 0);
+  }, [displaySections, searchQuery]);
+
+  // Related courses calculation
   const relatedCourses = useMemo((): CmsResponseDto[] => {
     const all = allCoursesData?.items ?? [];
     const others = all.filter(c => c.id !== numericCourseId);
-    const sameCategory = others.filter(c => c.categoryId === displayCourse?.categoryId);
-    const different = others.filter(c => c.categoryId !== displayCourse?.categoryId);
-    return [...sameCategory, ...different].slice(0, 5);
+    const sameCat = others.filter(c => c.categoryId === displayCourse?.categoryId);
+    const diffCat = others.filter(c => c.categoryId !== displayCourse?.categoryId);
+    return [...sameCat, ...diffCat].slice(0, 6);
   }, [allCoursesData, numericCourseId, displayCourse?.categoryId]);
 
-  if (!courseId) {
-    return (
-      <PublicLayout>
-        <div className="flex flex-col items-center justify-center py-20">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Course Not Found</h1>
-          <p className="text-muted-foreground mb-6">
-            The course you&apos;re looking for doesn&apos;t exist.
-          </p>
-          <Link to="/">
-            <Button>
-              <ChevronLeft className="h-4 w-4 mr-2" /> Back to Home
-            </Button>
-          </Link>
-        </div>
-      </PublicLayout>
+  const toggleSection = (sId: number) => {
+    setExpandedSections(prev =>
+      prev.includes(sId) ? prev.filter(id => id !== sId) : [...prev, sId]
     );
-  }
-
-  if (isLoading) {
-    return (
-      <PublicLayout>
-        <CourseOverviewSkeleton />
-      </PublicLayout>
-    );
-  }
+  };
 
   const handleEnroll = () => {
     if (!isAuthenticated) {
@@ -942,8 +367,8 @@ const CourseViewPage = () => {
     }
     enroll(numericCourseId, {
       onSuccess: () => {
-        toast.success('Successfully enrolled in the course!', {
-          description: 'You now have access to all course materials.',
+        toast.success('Enrolled successfully!', {
+          description: 'You now have full access to all course modules.',
         });
       },
       onError: (err) => {
@@ -952,393 +377,499 @@ const CourseViewPage = () => {
     });
   };
 
-  const isEnrolled = !!enrollment || showLearn;
-  const completedLessonIds: number[] = (enrollment?.completedLessons ?? []).map(l => l.id);
-  const totalLessons = displaySections.reduce((acc, s) => acc + getAllLessons(s).length, 0);
-  const progressPercent = totalLessons > 0
-    ? Math.round((completedLessonIds.length / totalLessons) * 100)
-    : Math.round((enrollment?.progress ?? 0) * 100);
-
-  const title = displayCourse?.title ?? 'Technical Course';
-  const description = displayCourse?.description ?? '';
-  // "Back to Course" goes to the plain course URL — no params means detail page shows.
-  const thisCourseUrl = displayCourse ? buildCourseUrl(displayCourse) : '/';
-
-  const handleMarkComplete = async (lessonId: number) => {
-    if (!enrollment) return;
-    const newCompleted = completedLessonIds.includes(lessonId)
+  const handleMarkComplete = async (lId: number) => {
+    if (!enrollment) {
+      toast.info('Please enroll to track lesson progress.');
+      return;
+    }
+    const newCompleted = completedLessonIds.includes(lId)
       ? completedLessonIds
-      : [...completedLessonIds, lessonId];
+      : [...completedLessonIds, lId];
     const newProgress = totalLessons > 0 ? newCompleted.length / totalLessons : 0;
     await updateProgress({
       enrollmentId: enrollment.id,
       data: {
-        completedLessonId: lessonId,
+        completedLessonId: lId,
         progress: newProgress,
         status: newProgress >= 1 ? 'completed' : 'active',
       },
     });
     if (newProgress >= 1) {
-      toast.success('Congratulations! You have completed the course!');
+      toast.success('Congratulations! Course completed! 🎓');
     }
   };
 
-  // Only enter the learning view when ?learn=true is explicitly in the URL.
-  // All other navigation (course cards, links, direct URL) shows the detail page first.
-  if (isEnrolled && showLearn) {
+  if (courseLoading && !displayCourse) {
     return (
-      <CourseLearningPage
-        courseTitle={title}
-        courseUrl={thisCourseUrl}
-        numericCourseId={numericCourseId}
-        sections={displaySections}
-        progressPercent={progressPercent}
-        completedLessonIds={completedLessonIds}
-        onMarkComplete={handleMarkComplete}
-        isMarkingComplete={isMarkingComplete}
-      />
+      <PublicLayout>
+        <CourseViewSkeleton />
+      </PublicLayout>
     );
   }
 
-  // ── Course overview page (pre-enrollment or ?overview=true) ───────────────
-  const learningUrl = displayCourse ? buildCourseUrl(displayCourse) : (courseId ? `/course/${courseId}` : '/');
-  const courseTypeBadgeColor = displayCourse?.courseType === 'BYTE'
-    ? 'bg-amber-500 text-white border-none'
-    : 'bg-primary text-primary-foreground border-none';
-
   return (
     <PublicLayout>
-      {/* Cancel the p-4 from PublicLayout so the hero can be full-width */}
-      <div className="-m-4">
-
-        {/* ── Gradient Hero ──────────────────────────────────────────────── */}
-        <div
-          className="relative overflow-hidden"
-          style={{
-            background: displayCourse?.thumbnailUrl
-              ? undefined
-              : 'linear-gradient(135deg, hsl(270 70% 12%) 0%, hsl(270 60% 32%) 55%, hsl(250 65% 28%) 100%)',
-          }}
+      {/*
+        Full viewport container with Left Navigation Sidebar + Right Content View
+      */}
+      <div
+        className="-m-4 flex overflow-hidden bg-background"
+        style={{ height: 'calc(100vh - 3.5rem)' }}
+      >
+        {/* ── LEFT NAVIGATION SIDEBAR ────────────────────────────────────────── */}
+        <aside
+          className="flex-shrink-0 flex flex-col overflow-hidden w-72 md:w-80 border-r border-border/80"
+          style={{ background: '#16171d' }}
         >
-          {/* Thumbnail as blurred hero background */}
-          {displayCourse?.thumbnailUrl && (
-            <>
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${displayCourse.thumbnailUrl})`, filter: 'blur(2px) brightness(0.35)', transform: 'scale(1.05)' }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent" />
-            </>
-          )}
-
-          <div className="relative max-w-6xl mx-auto px-6 pt-5 pb-8">
-            {/* Back link */}
+          {/* Header section with back button, title, and progress bar */}
+          <div className="p-5 border-b border-white/[0.08] space-y-3">
             <Link
-              to="/"
-              className="inline-flex items-center gap-1 text-sm mb-5 hover:opacity-80 transition-opacity"
-              style={{ color: 'rgba(255,255,255,0.65)' }}
+              to="/courses"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ChevronLeft size={15} /> Back to Courses
+              <ChevronLeft size={14} /> Back to Courses
             </Link>
 
-            {/* Type + category row */}
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              {displayCourse?.courseType && (
-                <Badge className={courseTypeBadgeColor}>{displayCourse.courseType}</Badge>
-              )}
-              {displayCourse?.categoryName && (
-                <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                  {displayCourse.categoryName}
-                </span>
-              )}
-              {isEnrolled && (
-                <Badge className="bg-success text-success-foreground border-none ml-1">
-                  <CheckCircle2 className="h-3 w-3 mr-1" /> Enrolled
+            <div>
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <Badge variant="secondary" className="text-[10px] px-2 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                  {displayCourse?.categoryName || 'Engineering'}
                 </Badge>
-              )}
+                {isEnrolled && (
+                  <Badge variant="outline" className="text-[10px] px-2 py-0 border-emerald-500/40 text-emerald-400">
+                    Enrolled
+                  </Badge>
+                )}
+              </div>
+              <h1 className="text-sm font-bold text-foreground line-clamp-2 leading-snug">
+                {title}
+              </h1>
             </div>
 
-            {/* Title */}
-            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-3 max-w-2xl">
-              {title}
-            </h1>
+            {/* Course Progress */}
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                <span>{progressPercent}% completed</span>
+                <span>{completedCount}/{totalLessons} lessons</span>
+              </div>
+              <Progress value={progressPercent} className="h-1.5 bg-white/10" />
+            </div>
+          </div>
 
-            {/* Description */}
-            {description && (
-              <p className="text-base max-w-2xl mb-5 leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
-                {description}
+          {/* Search bar */}
+          <div className="p-3 border-b border-white/[0.06]">
+            <div className="relative">
+              <Search
+                size={13}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+              />
+              <input
+                type="text"
+                placeholder="Search modules & lessons..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-xs rounded-lg outline-none bg-white/[0.06] border border-white/10 text-foreground placeholder:text-muted-foreground/60 pl-8 pr-3 py-1.5 focus:border-emerald-500/50 transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Overview button & Section list */}
+          <div className="flex-1 overflow-y-auto edu-sidebar-scroll p-3 space-y-1">
+            {/* Main Overview option */}
+            <button
+              onClick={() => setSelectedLessonId(null)}
+              className={cn(
+                'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-left mb-2',
+                selectedLessonId === null
+                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                  : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground'
+              )}
+            >
+              <LayoutList size={14} className={selectedLessonId === null ? 'text-emerald-400' : 'text-muted-foreground'} />
+              <span>Course Overview & Syllabus</span>
+            </button>
+
+            {/* Section + Lesson Tree */}
+            {filteredSections.map((section) => {
+              const isOpen = searchQuery.trim() !== '' || expandedSections.includes(section.id);
+              const sectionLessons = section.lessons ?? [];
+              const sectionDone = sectionLessons.filter(l => completedLessonIds.includes(l.id)).length;
+
+              return (
+                <div key={section.id} className="rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => toggleSection(section.id)}
+                    className="w-full flex items-start justify-between gap-2 px-3 py-2 text-left hover:bg-white/[0.04] transition-colors rounded-lg group"
+                  >
+                    <div className="flex items-start gap-2 min-w-0">
+                      <span className="mt-0.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
+                        {isOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                      </span>
+                      <div className="min-w-0">
+                        <span className="text-xs font-bold text-foreground leading-snug line-clamp-1">
+                          {section.title}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-medium block mt-0.5">
+                          {sectionDone}/{sectionLessons.length} done
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Lessons inside section */}
+                  {isOpen && sectionLessons.length > 0 && (
+                    <div className="ml-5 pl-2.5 border-l border-white/[0.1] my-1 space-y-1">
+                      {sectionLessons.map((lesson) => {
+                        const isCompleted = completedLessonIds.includes(lesson.id);
+                        const isCurrent = selectedLessonId === lesson.id;
+                        const TypeIcon = lesson.type === 'video' ? Play : FileText;
+
+                        return (
+                          <button
+                            key={lesson.id}
+                            onClick={() => setSelectedLessonId(lesson.id)}
+                            className={cn(
+                              'w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all text-xs',
+                              isCurrent
+                                ? 'bg-emerald-500/20 text-foreground font-bold border border-emerald-500/40'
+                                : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground'
+                            )}
+                          >
+                            <LessonDot isCompleted={isCompleted} isCurrent={isCurrent} />
+                            <span className="flex-1 truncate">{lesson.title}</span>
+                            <TypeIcon size={12} className="text-muted-foreground/60 shrink-0" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {filteredSections.length === 0 && searchQuery.trim() && (
+              <p className="text-center text-xs py-6 text-muted-foreground">
+                No lessons match &ldquo;{searchQuery}&rdquo;
               </p>
             )}
-
-            {/* Topic chips (derived from category + courseType + bodyHeadings) */}
-            {bodyHeadings.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-5">
-                {[displayCourse?.categoryName, displayCourse?.courseType]
-                  .filter(Boolean)
-                  .concat(bodyHeadings.slice(0, 4))
-                  .slice(0, 6)
-                  .map((chip, i) => (
-                    <span
-                      key={i}
-                      className="text-xs px-2.5 py-1 rounded-full font-medium"
-                      style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.85)' }}
-                    >
-                      {chip}
-                    </span>
-                  ))}
-              </div>
-            )}
-
-            {/* Stats row */}
-            <div className="flex flex-wrap gap-5 text-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>
-              {displaySections.length > 0 && (
-                <span className="flex items-center gap-1.5">
-                  <BookOpen size={14} />
-                  <span><strong className="text-white">{displaySections.length}</strong> section{displaySections.length !== 1 ? 's' : ''}</span>
-                </span>
-              )}
-              {totalLessons > 0 && (
-                <span className="flex items-center gap-1.5">
-                  <FileText size={14} />
-                  <span><strong className="text-white">{totalLessons}</strong> lesson{totalLessons !== 1 ? 's' : ''}</span>
-                </span>
-              )}
-              <span className="flex items-center gap-1.5">
-                <Globe size={14} /> Full lifetime access
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Award size={14} /> Certificate on completion
-              </span>
-            </div>
           </div>
-        </div>
 
-        {/* ── Two-column body ────────────────────────────────────────────── */}
-        <div className="max-w-6xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8 items-start">
+          {/* Sidebar CTA Footer if not enrolled */}
+          {!isEnrolled && (
+            <div className="p-4 border-t border-white/[0.08] bg-white/[0.02] space-y-2">
+              <Button onClick={handleEnroll} size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs" disabled={enrolling}>
+                <GraduationCap className="w-3.5 h-3.5 mr-1.5" />
+                {enrolling ? 'Enrolling…' : 'Enroll Now — Free'}
+              </Button>
+            </div>
+          )}
+        </aside>
 
-          {/* ── LEFT: Sticky sidebar ────────────────────────────────────── */}
-          <div className="space-y-4 lg:sticky lg:top-4">
+        {/* ── RIGHT MAIN CONTENT AREA ────────────────────────────────────────── */}
+        <main className="flex-1 overflow-y-auto bg-background edu-content-scroll">
+          <div className="max-w-5xl mx-auto px-6 md:px-10 py-8 space-y-8">
+            {selectedLessonId === null ? (
+              /* ── 1. COURSE OVERVIEW VIEW ──────────────────────────────── */
+              <div className="space-y-8">
+                {/* Hero Card */}
+                <div className="relative rounded-2xl overflow-hidden p-8 border border-border shadow-sm bg-card bg-gradient-to-br from-emerald-950/30 via-card to-card">
+                  <div className="space-y-4 max-w-3xl">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-bold">
+                        <BookOpen className="w-3.5 h-3.5 mr-1" />
+                        Course Overview
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">{displayCourse?.categoryName || 'Engineering'}</Badge>
+                      {isEnrolled && (
+                        <Badge className="bg-emerald-500 text-white border-none text-xs">
+                          <CheckCircle2 className="w-3 h-3 mr-1" /> Enrolled
+                        </Badge>
+                      )}
+                    </div>
 
-            {/* Enroll / Continue card */}
-            <div className="rounded-xl border border-border bg-card overflow-hidden shadow-md">
-              <div className="p-5 space-y-4">
-                {/* Price / status */}
-                <div className="flex items-baseline gap-2">
-                  {isEnrolled
-                    ? <span className="text-xl font-bold text-success">Enrolled</span>
-                    : <span className="text-xl font-bold text-primary">Free</span>}
-                  <span className="text-sm text-muted-foreground">
-                    {isEnrolled ? '— you have full access' : '— full access on enrollment'}
-                  </span>
+                    <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
+                      {title}
+                    </h1>
+
+                    {description && (
+                      <p className="text-base text-muted-foreground leading-relaxed">
+                        {description}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-6 text-xs sm:text-sm text-muted-foreground pt-2">
+                      <div className="flex items-center gap-1.5">
+                        <BookOpen className="w-4 h-4 text-emerald-500" />
+                        <span className="font-semibold text-foreground">{displaySections.length}</span> Modules
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <FileText className="w-4 h-4 text-emerald-500" />
+                        <span className="font-semibold text-foreground">{totalLessons}</span> Lessons
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-emerald-500" />
+                        <span className="font-semibold text-foreground">{displayCourse?.durationMinutes ? `${Math.floor(displayCourse.durationMinutes / 60)}h ${displayCourse.durationMinutes % 60}m` : '4h 30m'}</span> Estimated
+                      </div>
+                      <div className="flex items-center gap-1.5 text-amber-500 font-semibold">
+                        <Star className="w-4 h-4 fill-amber-500" />
+                        <span>4.9</span>
+                        <span className="text-muted-foreground font-normal text-xs">(350+ reviews)</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-3">
+                      {isEnrolled ? (
+                        <Button
+                          size="lg"
+                          onClick={() => {
+                            if (allLessons.length > 0) setSelectedLessonId(allLessons[0].id);
+                          }}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2 font-bold px-6 shadow-md"
+                        >
+                          <Play className="w-4 h-4" /> Start Learning
+                        </Button>
+                      ) : (
+                        <Button
+                          size="lg"
+                          onClick={handleEnroll}
+                          disabled={enrolling}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2 font-bold px-6 shadow-md"
+                        >
+                          <GraduationCap className="w-5 h-5" />
+                          {enrolling ? 'Enrolling…' : 'Enroll Now — Free'}
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => setBookmarked(b => !b)}
+                        className={cn('rounded-xl border-border', bookmarked && 'text-emerald-500 border-emerald-500 bg-emerald-500/10')}
+                      >
+                        <Bookmark className={cn('w-4 h-4', bookmarked && 'fill-emerald-500')} />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
-                {/* CTA button */}
-                {isEnrolled ? (
-                  <Button
-                    onClick={() => navigate(`${learningUrl}?learn=true`)}
-                    className="w-full bg-success hover:bg-success/90 text-success-foreground font-semibold"
-                    size="lg"
-                  >
-                    <CheckCircle2 className="h-4 w-4 mr-2" /> Resume Learning
-                  </Button>
-                ) : isAuthenticated ? (
-                  <Button onClick={handleEnroll} className="w-full font-semibold" size="lg" disabled={enrolling}>
-                    <GraduationCap className="h-4 w-4 mr-2" />
-                    {enrolling ? 'Enrolling…' : 'Enroll Now — It\'s Free'}
-                  </Button>
-                ) : (
-                  <Button onClick={() => navigate('/auth')} className="w-full font-semibold" size="lg">
-                    <GraduationCap className="h-4 w-4 mr-2" /> Sign in to Enroll
-                  </Button>
+                {/* Key Outcomes / What You'll Learn */}
+                {bodyHeadings.length > 0 && (
+                  <Card className="p-6 rounded-2xl border border-border bg-card space-y-4">
+                    <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-emerald-500" />
+                      What You&apos;ll Master in This Course
+                    </h2>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {bodyHeadings.map((heading, idx) => (
+                        <div key={idx} className="flex items-start gap-2.5 text-sm">
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                          <span className="text-muted-foreground font-medium">{heading}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
                 )}
 
-                {/* What's included */}
-                <div className="pt-3 border-t border-border space-y-2 text-sm text-muted-foreground">
-                  <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                    This course includes
-                  </p>
-                  {totalLessons > 0 && (
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-                      {totalLessons} lesson{totalLessons !== 1 ? 's' : ''}
-                    </div>
-                  )}
-                  {sections.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
-                      {sections.length} section{sections.length !== 1 ? 's' : ''}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-primary flex-shrink-0" /> Full lifetime access
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-primary flex-shrink-0" /> Certificate of completion
-                  </div>
-                </div>
-
-                {/* Share */}
-                <div className="pt-3 border-t border-border">
-                  <p className="text-xs text-muted-foreground mb-2">Share this course</p>
-                  <div className="flex items-center gap-2">
-                    {[
-                      { Icon: Facebook, color: '#1877F2' },
-                      { Icon: Twitter, color: '#1DA1F2' },
-                      { Icon: Linkedin, color: '#0A66C2' },
-                      { Icon: Share2,   color: undefined  },
-                    ].map(({ Icon, color }, i) => (
-                      <Button key={i} size="icon" variant="outline" className="h-8 w-8 rounded-full">
-                        <Icon className="h-3.5 w-3.5" style={color ? { color } : undefined} />
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* ── RIGHT: Main content ─────────────────────────────────────── */}
-          <div className="space-y-8 min-w-0">
-
-            {/* About */}
-            {description && (
-              <section>
-                <h2 className="text-xl font-bold text-foreground mb-3">About This Course</h2>
-                <p className="text-muted-foreground leading-relaxed">{description}</p>
-              </section>
-            )}
-
-            {/* What you'll learn */}
-            {bodyHeadings.length > 0 && (
-              <section className="rounded-xl border border-primary/20 bg-primary/5 p-6">
-                <h2 className="text-lg font-bold text-foreground mb-4">What You&apos;ll Learn</h2>
-                <div className="grid sm:grid-cols-2 gap-2.5">
-                  {bodyHeadings.map((h, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span>{h}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Full body content */}
-            {course?.body && (
-              <section>
-                <h2 className="text-xl font-bold text-foreground mb-4">Course Overview</h2>
-                <div
-                  className="edu-lesson-content text-foreground"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(parseBodyToHtml(course.body)) }}
-                />
-              </section>
-            )}
-
-            {/* Course Content (syllabus) — replaces "Course Curriculum" */}
-            {sections.length > 0 ? (
-              <section>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-xl font-bold text-foreground">Course Content</h2>
-                  <span className="text-sm text-muted-foreground">
-                    {sections.length} section{sections.length !== 1 ? 's' : ''} &bull; {totalLessons} lesson{totalLessons !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                <CourseSyllabusSidebar
-                  sections={sections}
-                  completedLessonIds={completedLessonIds}
-                  isEnrolled={isEnrolled}
-                  learningUrl={learningUrl}
-                  fullWidth
-                />
-              </section>
-            ) : course?.body ? (
-              <section>
-                <h2 className="text-xl font-bold text-foreground mb-3">Course Content</h2>
-                <BodyCurriculumPreview
-                  body={course.body}
-                  isAuthenticated={isAuthenticated}
-                  onSignIn={() => navigate('/auth')}
-                />
-              </section>
-            ) : null}
-
-            {/* Category, Type, Author — below Course Content */}
-            {[course?.categoryName, course?.courseType, course?.createdByName].some(Boolean) && (
-              <section className="flex flex-wrap gap-2.5">
-                {[
-                  { label: 'Category', value: course?.categoryName },
-                  { label: 'Type',     value: course?.courseType },
-                  { label: 'By',       value: course?.createdByName },
-                ]
-                  .filter(m => m.value)
-                  .map(m => (
+                {/* Course Body Overview */}
+                {displayCourse?.body && (
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold text-foreground">Course Overview & Syllabus</h2>
                     <div
-                      key={m.label}
-                      className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-border bg-muted/40"
-                    >
-                      <span className="text-muted-foreground text-xs font-medium">{m.label}:</span>
-                      <span className="font-semibold text-foreground">{m.value}</span>
+                      className="edu-lesson-content text-foreground leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(parseBodyToHtml(displayCourse.body)) }}
+                    />
+                  </div>
+                )}
+
+                {/* Related & Recommended Courses Section */}
+                <RelatedCoursesSection relatedCourses={relatedCourses} />
+
+                {/* Recommended Learning Paths Section */}
+                <RecommendedPathsSection />
+              </div>
+            ) : (
+              /* ── 2. INDIVIDUAL LESSON CONTENT VIEW ────────────────────── */
+              <div className="space-y-6">
+                {/* Breadcrumbs */}
+                <nav className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
+                  <button onClick={() => setSelectedLessonId(null)} className="hover:text-foreground transition-colors">
+                    {title}
+                  </button>
+                  {currentSection && (
+                    <>
+                      <ChevronRight size={12} className="opacity-40" />
+                      <span>{currentSection.title}</span>
+                    </>
+                  )}
+                  {currentLesson && (
+                    <>
+                      <ChevronRight size={12} className="opacity-40" />
+                      <span className="text-foreground font-semibold">{currentLesson.title}</span>
+                    </>
+                  )}
+                </nav>
+
+                {currentLesson ? (
+                  <>
+                    {/* Lesson Title & Bookmark */}
+                    <div className="flex items-start justify-between gap-4">
+                      <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground leading-tight">
+                        {currentLesson.title}
+                      </h1>
+                      <button
+                        onClick={() => setBookmarked(b => !b)}
+                        className="mt-1 p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                      >
+                        <Bookmark size={18} fill={bookmarked ? 'currentColor' : 'none'} className={bookmarked ? 'text-amber-500' : ''} />
+                      </button>
                     </div>
-                  ))}
-              </section>
-            )}
 
-            {/* Related courses */}
-            {relatedCourses.length > 0 && (
-              <section>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-foreground">
-                    {relatedCourses.some(c => c.categoryId === course?.categoryId) ? 'Related Courses' : 'More Courses'}
-                  </h2>
-                  <Link to="/" className="text-sm text-primary hover:underline">Explore all</Link>
-                </div>
-                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {relatedCourses.slice(0, 6).map(rc => (
-                    <Link key={rc.id} to={buildCourseUrl(rc)} className="group">
-                      <div className="flex gap-3 p-3 rounded-lg border border-border hover:border-primary/30 hover:shadow-sm transition-all bg-card">
-                        <div className="flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-primary/10 flex items-center justify-center">
-                          {rc.thumbnailUrl
-                            ? <img src={rc.thumbnailUrl} alt={rc.title ?? ''} className="w-full h-full object-cover" />
-                            : <GraduationCap className="h-5 w-5 text-primary/50" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-                            {rc.title ?? 'Untitled'}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            {rc.categoryName && <span className="text-xs text-muted-foreground">{rc.categoryName}</span>}
-                            {rc.blockCount != null && rc.blockCount > 0 && (
-                              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Clock className="h-3 w-3" /> {rc.blockCount} lesson{rc.blockCount !== 1 ? 's' : ''}
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                    {/* Engagement toolbar */}
+                    <div className="flex items-center justify-between gap-4 py-3 border-y border-border flex-wrap">
+                      <InteractionBar
+                        contentType="course"
+                        contentId={numericCourseId}
+                        discussRef={discussRef as React.RefObject<HTMLElement>}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setHighlightsOpen(true)}
+                        className="gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-lg"
+                      >
+                        <Highlighter size={14} /> My Highlights
+                      </Button>
+                    </div>
+
+                    {/* Video Player Placeholder if video lesson */}
+                    {currentLesson.type === 'video' && (
+                      <div className="aspect-video rounded-2xl overflow-hidden bg-slate-900 flex items-center justify-center border border-border shadow-md">
+                        <button className="w-16 h-16 rounded-full bg-emerald-600 hover:bg-emerald-700 flex items-center justify-center text-white transition-transform hover:scale-105 shadow-lg">
+                          <Play size={26} fill="white" className="ml-1" />
+                        </button>
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
+                    )}
 
+                    {/* Lesson HTML / Markdown Content */}
+                    {currentLesson.content ? (
+                      <HighlightOverlay
+                        contentType="course"
+                        contentId={numericCourseId}
+                        contentTitle={title}
+                      >
+                        <div
+                          className="edu-lesson-content text-foreground leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(parseBodyToHtml(currentLesson.content)) }}
+                        />
+                      </HighlightOverlay>
+                    ) : (
+                      <div className="py-12 text-center text-muted-foreground bg-card/40 rounded-xl border border-dashed">
+                        <BookOpen className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                        <p className="text-sm">Lesson content is being finalized.</p>
+                      </div>
+                    )}
+
+                    {/* Footer Navigation bar */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-6 border-t border-border">
+                      <div className="flex gap-2">
+                        {prevLesson && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedLessonId(prevLesson.id)}
+                            className="rounded-xl gap-1"
+                          >
+                            <ChevronLeft className="h-4 w-4" /> Previous
+                          </Button>
+                        )}
+                        {nextLesson && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedLessonId(nextLesson.id)}
+                            className="rounded-xl gap-1"
+                          >
+                            Next <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+
+                      {completedLessonIds.includes(currentLesson.id) ? (
+                        <div className="flex items-center gap-2">
+                          <span className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                            <CheckCircle2 size={14} /> Completed
+                          </span>
+                          {nextLesson && (
+                            <Button
+                              size="sm"
+                              onClick={() => setSelectedLessonId(nextLesson.id)}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-1 font-bold"
+                            >
+                              Next Lesson <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={async () => {
+                            await handleMarkComplete(currentLesson.id);
+                            if (nextLesson) setSelectedLessonId(nextLesson.id);
+                          }}
+                          disabled={isMarkingComplete}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold gap-2"
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          {isMarkingComplete ? 'Saving…' : 'Mark as Complete'}
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Discussion section */}
+                    <div ref={discussRef} className="pt-8 border-t border-border">
+                      <CommentsSection contentType="course" contentId={numericCourseId} />
+                    </div>
+
+                    {/* Related & Recommended Courses Section inside Lesson view */}
+                    <RelatedCoursesSection relatedCourses={relatedCourses} />
+
+                    {/* Recommended Learning Paths Section */}
+                    <RecommendedPathsSection />
+                  </>
+                ) : (
+                  <div className="py-20 text-center text-muted-foreground">
+                    <BookOpen size={40} className="mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">Select a lesson from the left navigation sidebar to begin.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </div>
+        </main>
       </div>
+
+      {/* Highlights slide-over panel */}
+      <HighlightsPanel
+        open={highlightsOpen}
+        onClose={() => setHighlightsOpen(false)}
+        contentType="course"
+        contentId={numericCourseId}
+        contentUrl={buildCourseUrl(displayCourse ?? { title })}
+        contentTitle={title}
+      />
+
+      <EduCourseStyles />
     </PublicLayout>
   );
-};
+}
 
-// ─── Educative course styles (scoped to learning page) ────────────────────────
+// ─── Educative / Clean Course Lesson Styles ───────────────────────────────────
 const EduCourseStyles = () => (
   <style>{`
     .edu-sidebar-scroll {
       scrollbar-width: thin;
-      scrollbar-color: rgba(255,255,255,0.08) transparent;
+      scrollbar-color: rgba(255,255,255,0.1) transparent;
     }
     .edu-sidebar-scroll::-webkit-scrollbar { width: 4px; }
-    .edu-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
-    .edu-sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+    .edu-sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
 
     .edu-content-scroll {
       scrollbar-width: thin;
@@ -1354,26 +885,27 @@ const EduCourseStyles = () => (
     .edu-lesson-content ul { list-style-type: disc; padding-left: 1.75rem; margin-bottom: 1rem; }
     .edu-lesson-content ol { list-style-type: decimal; padding-left: 1.75rem; margin-bottom: 1rem; }
     .edu-lesson-content li { margin-bottom: 0.35rem; line-height: 1.75; }
-    .edu-lesson-content a  { color: #2563eb; text-decoration: underline; }
+    .edu-lesson-content a  { color: #10b981; text-decoration: underline; }
     .edu-lesson-content a:hover { text-decoration: none; }
     .edu-lesson-content pre {
-      background: #1e2028; color: #c9cad4;
-      padding: 1.1rem 1.25rem; border-radius: 0.5rem;
+      background: #181920; color: #e2e8f0;
+      padding: 1.1rem 1.25rem; border-radius: 0.75rem;
       overflow-x: auto; margin-bottom: 1.25rem;
-      font-family: 'Courier New', monospace; font-size: 0.875em; line-height: 1.6;
+      font-family: monospace; font-size: 0.875em; line-height: 1.6;
+      border: 1px solid rgba(255,255,255,0.08);
     }
     .edu-lesson-content code {
-      font-family: 'Courier New', monospace;
+      font-family: monospace;
       background: hsl(var(--muted)); color: hsl(var(--foreground));
       padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em;
     }
     .edu-lesson-content pre code { background: none; padding: 0; color: inherit; }
     .edu-lesson-content blockquote {
-      border-left: 3px solid hsl(var(--primary)); padding: 0.5rem 1rem;
+      border-left: 3px solid #10b981; padding: 0.5rem 1rem;
       margin: 1.25rem 0; background: hsl(var(--accent)/0.4);
-      border-radius: 0 0.25rem 0.25rem 0;
+      border-radius: 0 0.5rem 0.5rem 0;
     }
-    .edu-lesson-content img { max-width: 100%; border-radius: 0.5rem; margin: 1.25rem 0; }
+    .edu-lesson-content img { max-width: 100%; border-radius: 0.75rem; margin: 1.25rem 0; }
     .edu-lesson-content hr { margin: 1.75rem 0; border: none; border-top: 1px solid hsl(var(--border)); }
     .edu-lesson-content strong { font-weight: 600; }
   `}</style>

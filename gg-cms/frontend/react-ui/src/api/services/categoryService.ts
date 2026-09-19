@@ -39,46 +39,31 @@ export const categoryService = {
    * Uses custom Strapi endpoint with tree structure support
    */
   getCategories: async (): Promise<CategoryListResponse> => {
-    try {
-      // Use tree=true to get hierarchical structure
-      const response = await apiClient.get(CATEGORIES_BASE, {
-        params: { tree: 'true' },
-      });
-      
-      const categories = response.data.data || [];
-      return categories.map(transformCategory);
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
-      return [];
-    }
+    const response = await apiClient.get(CATEGORIES_BASE, {
+      params: { tree: 'true' },
+    });
+    
+    const categories = response.data.data || [];
+    return categories.map(transformCategory).filter(Boolean) as CategoryResponseDto[];
   },
 
-  /**
-   * Get paginated list of categories (flat, not tree)
-   * GET /categories?pagination[page]=1&pagination[pageSize]=10
-   */
   getCategoriesPaged: async (params?: CategoryQueryParams): Promise<CategoryPagedResponse> => {
-    try {
-      const response = await apiClient.get(CATEGORIES_BASE, {
-        params: {
-          'pagination[page]': (params?.page ?? 0) + 1,
-          'pagination[pageSize]': params?.size ?? 10,
-        },
-      });
-      
-      const categories = response.data.data || [];
-      const pagination = response.data.meta?.pagination || {};
-      
-      return {
-        items: categories.map(transformCategory),
-        totalElements: pagination.total || 0,
-        page: (pagination.page || 1) - 1,
-        size: pagination.pageSize || 10,
-      };
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
-      return { items: [], totalElements: 0, page: 0, size: 10 };
-    }
+    const response = await apiClient.get(CATEGORIES_BASE, {
+      params: {
+        'pagination[page]': (params?.page ?? 0) + 1,
+        'pagination[pageSize]': params?.size ?? 10,
+      },
+    });
+    
+    const categories = response.data.data || [];
+    const pagination = response.data.meta?.pagination || {};
+    
+    return {
+      items: categories.map(transformCategory).filter(Boolean) as CategoryResponseDto[],
+      totalElements: pagination.total || 0,
+      page: (pagination.page || 1) - 1,
+      size: pagination.pageSize || 10,
+    };
   },
 
   /**

@@ -229,8 +229,8 @@ function CategoryItem({
 // ─── CategoriesTab ─────────────────────────────────────────────────────────────
 
 export function CategoriesTab() {
-  const { data: treeCategories = [], isLoading: isTreeLoading } = useCategories();
-  const { data: pagedData, isLoading: isPagedLoading } = useCategoriesPaged({ page: 0, size: 500 });
+  const { data: treeCategories = [], isLoading: isTreeLoading, isError: isTreeError, error: treeError, refetch: refetchTree } = useCategories();
+  const { data: pagedData, isLoading: isPagedLoading, isError: isPagedError, error: pagedError, refetch: refetchPaged } = useCategoriesPaged({ page: 0, size: 500 });
   const createMutation = useCreateCategory();
   const updateMutation = useUpdateCategory();
   const deleteMutation = useDeleteCategory();
@@ -246,6 +246,7 @@ export function CategoriesTab() {
   }, [treeCategories, flatItems]);
 
   const isLoading = (isTreeLoading || isPagedLoading) && categories.length === 0;
+  const isError = (isTreeError || isPagedError) && categories.length === 0;
 
   const flatCategories = useMemo(() => flattenCategories(categories), [categories]);
   const allCategoryIds = useMemo(() => flatCategories.map((c) => c.id), [flatCategories]);
@@ -421,6 +422,14 @@ export function CategoriesTab() {
               <CardContent>
                 {isLoading ? (
                   <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+                ) : isError ? (
+                  <div className="text-center py-12 space-y-3 bg-destructive/5 rounded-xl border border-destructive/20 p-6">
+                    <p className="text-sm font-semibold text-destructive">Failed to load categories from backend</p>
+                    <p className="text-xs text-muted-foreground font-mono">{toUserMessage(treeError || pagedError)}</p>
+                    <Button variant="outline" size="sm" className="rounded-xl mt-2" onClick={() => { refetchTree(); refetchPaged(); }}>
+                      Retry Loading
+                    </Button>
+                  </div>
                 ) : filteredCategories.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground space-y-3">
                     <FolderTree className="w-12 h-12 mx-auto opacity-40" />
