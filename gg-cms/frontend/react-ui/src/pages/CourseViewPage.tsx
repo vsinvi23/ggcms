@@ -1001,8 +1001,8 @@ const CourseViewPage = () => {
   }
 
   // ── Course overview page (pre-enrollment or ?overview=true) ───────────────
-  const learningUrl = buildCourseUrl(course!);
-  const courseTypeBadgeColor = course?.courseType === 'BYTE'
+  const learningUrl = displayCourse ? buildCourseUrl(displayCourse) : (courseId ? `/course/${courseId}` : '/');
+  const courseTypeBadgeColor = displayCourse?.courseType === 'BYTE'
     ? 'bg-amber-500 text-white border-none'
     : 'bg-primary text-primary-foreground border-none';
 
@@ -1015,17 +1015,17 @@ const CourseViewPage = () => {
         <div
           className="relative overflow-hidden"
           style={{
-            background: course?.thumbnailUrl
+            background: displayCourse?.thumbnailUrl
               ? undefined
               : 'linear-gradient(135deg, hsl(270 70% 12%) 0%, hsl(270 60% 32%) 55%, hsl(250 65% 28%) 100%)',
           }}
         >
           {/* Thumbnail as blurred hero background */}
-          {course?.thumbnailUrl && (
+          {displayCourse?.thumbnailUrl && (
             <>
               <div
                 className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${course.thumbnailUrl})`, filter: 'blur(2px) brightness(0.35)', transform: 'scale(1.05)' }}
+                style={{ backgroundImage: `url(${displayCourse.thumbnailUrl})`, filter: 'blur(2px) brightness(0.35)', transform: 'scale(1.05)' }}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent" />
             </>
@@ -1043,12 +1043,12 @@ const CourseViewPage = () => {
 
             {/* Type + category row */}
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              {course?.courseType && (
-                <Badge className={courseTypeBadgeColor}>{course.courseType}</Badge>
+              {displayCourse?.courseType && (
+                <Badge className={courseTypeBadgeColor}>{displayCourse.courseType}</Badge>
               )}
-              {course?.categoryName && (
+              {displayCourse?.categoryName && (
                 <span className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                  {course.categoryName}
+                  {displayCourse.categoryName}
                 </span>
               )}
               {isEnrolled && (
@@ -1073,7 +1073,7 @@ const CourseViewPage = () => {
             {/* Topic chips (derived from category + courseType + bodyHeadings) */}
             {bodyHeadings.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-5">
-                {[course?.categoryName, course?.courseType]
+                {[displayCourse?.categoryName, displayCourse?.courseType]
                   .filter(Boolean)
                   .concat(bodyHeadings.slice(0, 4))
                   .slice(0, 6)
@@ -1091,10 +1091,10 @@ const CourseViewPage = () => {
 
             {/* Stats row */}
             <div className="flex flex-wrap gap-5 text-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>
-              {sections.length > 0 && (
+              {displaySections.length > 0 && (
                 <span className="flex items-center gap-1.5">
                   <BookOpen size={14} />
-                  <span><strong className="text-white">{sections.length}</strong> section{sections.length !== 1 ? 's' : ''}</span>
+                  <span><strong className="text-white">{displaySections.length}</strong> section{displaySections.length !== 1 ? 's' : ''}</span>
                 </span>
               )}
               {totalLessons > 0 && (

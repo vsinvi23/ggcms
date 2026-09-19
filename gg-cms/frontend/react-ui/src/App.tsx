@@ -54,18 +54,47 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const BulkImport = lazy(() => import('./pages/BulkImport'));
 const FactoryPage = lazy(() => import('./pages/FactoryPage'));
 
-class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
-  state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
+interface AppErrorBoundaryState {
+  hasError: boolean;
+  error?: Error | null;
+}
+
+class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBoundaryState> {
+  state: AppErrorBoundaryState = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('AppErrorBoundary caught an unhandled error:', error, errorInfo);
+  }
+
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen items-center justify-center p-8 text-center">
-          <div>
-            <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
-            <button className="text-sm text-primary underline" onClick={() => window.location.reload()}>
-              Reload page
-            </button>
+        <div className="flex min-h-screen items-center justify-center p-8 text-center bg-background text-foreground">
+          <div className="max-w-xl w-full p-6 bg-card border border-border rounded-xl shadow-lg text-left">
+            <h2 className="text-xl font-bold mb-2 text-destructive">Something went wrong</h2>
+            <p className="text-sm text-muted-foreground mb-4 font-mono bg-muted/50 p-2 rounded border border-border/50">
+              {this.state.error?.message || 'An unexpected runtime error occurred.'}
+            </p>
+            {this.state.error?.stack && (
+              <pre className="text-xs bg-muted p-3 rounded-lg overflow-auto max-h-48 mb-4 font-mono text-muted-foreground border border-border/50">
+                {this.state.error.stack}
+              </pre>
+            )}
+            <div className="flex gap-3 justify-end">
+              <button
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.reload();
+                }}
+              >
+                Reload page
+              </button>
+            </div>
           </div>
         </div>
       );

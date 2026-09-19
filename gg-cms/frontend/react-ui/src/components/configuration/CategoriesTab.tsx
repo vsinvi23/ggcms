@@ -235,7 +235,6 @@ export function CategoriesTab() {
   const updateMutation = useUpdateCategory();
   const deleteMutation = useDeleteCategory();
 
-  const isLoading = (isTreeLoading || isPagedLoading) && categories.length === 0;
   const flatItems = pagedData?.items || [];
   
   // Use backend tree categories if available, or build tree from flat items
@@ -245,6 +244,8 @@ export function CategoriesTab() {
     }
     return buildCategoryTree(flatItems);
   }, [treeCategories, flatItems]);
+
+  const isLoading = (isTreeLoading || isPagedLoading) && categories.length === 0;
 
   const flatCategories = useMemo(() => flattenCategories(categories), [categories]);
   const allCategoryIds = useMemo(() => flatCategories.map((c) => c.id), [flatCategories]);
