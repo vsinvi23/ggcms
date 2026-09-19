@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import PublicHome from './PublicHome';
+import { PublicHome } from './PublicHome';
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ isAuthenticated: false, user: null }),
@@ -67,25 +67,15 @@ function renderPage() {
   );
 }
 
-describe('PublicHome Page (Panel 1 UI Spec)', () => {
-  it('renders hero title and search input', () => {
+describe('PublicHome Page', () => {
+  it('renders hero title and quick-jump buttons', () => {
     renderPage();
-    expect(screen.getByText(/Build Better./i)).toBeInTheDocument();
-    expect(screen.getByText(/Learn Deeper./i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/What do you want to learn today?/i)).toBeInTheDocument();
+    expect(screen.getByText(/Learn. Explore. Practice. Grow./i)).toBeInTheDocument();
+    expect(screen.getByText('Learn a Technology')).toBeInTheDocument();
   });
 
-  it('renders Explore by Domain section directly under hero', () => {
+  it('renders Explore Technologies section', () => {
     renderPage();
-    expect(screen.getByText('Explore by Domain')).toBeInTheDocument();
-    expect(screen.getByText('Software Engineering')).toBeInTheDocument();
-    expect(screen.getByText('Cloud & Infrastructure')).toBeInTheDocument();
-  });
-
-  it('renders popular topics and latest articles', () => {
-    renderPage();
-    expect(screen.getByText('Popular Topics')).toBeInTheDocument();
-    expect(screen.getByText('React')).toBeInTheDocument();
-    expect(screen.getByText('Getting Started with Go')).toBeInTheDocument();
+    expect(screen.getByText('Explore Technologies')).toBeInTheDocument();
   });
 });

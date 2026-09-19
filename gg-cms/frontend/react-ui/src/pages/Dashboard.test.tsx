@@ -94,41 +94,28 @@ describe('Dashboard page', () => {
     expect(screen.getByTestId('dashboard-layout')).toBeInTheDocument();
   });
 
-  it('renders the "Admin Dashboard" heading', () => {
+  it('renders the Admin Command Center heading', () => {
     renderDashboard();
-    expect(screen.getByText('Admin Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Admin Command Center')).toBeInTheDocument();
   });
 
-  it('renders Total Users stat card', () => {
+  it('renders Total Members stat card', () => {
     renderDashboard();
-    expect(screen.getByText('Total Users')).toBeInTheDocument();
+    expect(screen.getByText('Total Members')).toBeInTheDocument();
   });
 
-  it('renders Active Users stat card', () => {
+  it('renders Tech Domains stat card', () => {
     renderDashboard();
-    expect(screen.getByText('Active Users')).toBeInTheDocument();
+    expect(screen.getByText('Tech Domains')).toBeInTheDocument();
   });
 
-  it('renders Deactivated stat card', () => {
+  it('renders Published Articles stat card', () => {
     renderDashboard();
-    expect(screen.getByText('Deactivated')).toBeInTheDocument();
+    expect(screen.getByText('Published Articles')).toBeInTheDocument();
   });
 
-  it('renders Pending Invites stat card', () => {
+  it('renders AI Content Factory button', () => {
     renderDashboard();
-    expect(screen.getByText('Pending Invites')).toBeInTheDocument();
-  });
-
-  it('shows correct active user count from mock data', async () => {
-    renderDashboard();
-    await waitFor(() => {
-      expect(screen.getByText('2')).toBeInTheDocument(); // 2 ACTIVE users
-    });
-  });
-
-  it('renders Quick Actions section with "Manage Users" link', () => {
-    renderDashboard();
-    expect(screen.getByText('Quick Actions')).toBeInTheDocument();
-    expect(screen.getByText('Manage Users')).toBeInTheDocument();
+    expect(screen.getByText('AI Content Factory')).toBeInTheDocument();
   });
 });

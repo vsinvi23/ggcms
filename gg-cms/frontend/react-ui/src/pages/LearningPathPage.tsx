@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { usePublicLearningPathById, usePublicCmsList } from '@/api/hooks/usePublicCms';
+import { usePublicLearningPathById, usePublicLearningPaths, usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useMyEnrollments } from '@/api/hooks/useEnrollments';
 import { useAuth } from '@/contexts/AuthContext';
 import { EnrollmentDto } from '@/api/types';

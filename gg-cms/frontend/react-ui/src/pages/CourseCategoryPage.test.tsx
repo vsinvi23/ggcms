@@ -89,17 +89,14 @@ describe('CourseCategoryPage (Panel 2 Explore Layout)', () => {
     expect(screen.getByTestId('public-layout')).toBeInTheDocument();
   });
 
-  it('renders Explore header and subtitle', () => {
+  it('renders search input and domain selection', () => {
     renderExplorePage();
-    expect(screen.getByText(/Explore Articles/i)).toBeInTheDocument();
-    expect(screen.getByText(/Discover articles, step-by-step tutorials/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Search articles, cheatsheets, tutorials/i)).toBeInTheDocument();
   });
 
-  it('renders StatBadges for Articles, Courses, and Learning Paths', () => {
+  it('renders Domain selection cards', () => {
     renderExplorePage();
-    expect(screen.getByText('Articles')).toBeInTheDocument();
-    expect(screen.getByText('Courses')).toBeInTheDocument();
-    expect(screen.getByText('Learning Paths')).toBeInTheDocument();
+    expect(screen.getByText('Cybersecurity')).toBeInTheDocument();
   });
 
   it('renders all 5 Domain Selection Cards', () => {

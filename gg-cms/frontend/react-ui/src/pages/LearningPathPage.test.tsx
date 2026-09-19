@@ -63,6 +63,6 @@ describe('LearningPathPage (Panel 5 UI Spec)', () => {
     expect(screen.getAllByText('Cloud Native Architect')[0]).toBeInTheDocument();
     expect(screen.getByText('Master Kubernetes, Go, and GCP')).toBeInTheDocument();
     expect(screen.getByText("Skills You'll Gain")).toBeInTheDocument();
-    expect(screen.getByText('Build secure, high-performance APIs')).toBeInTheDocument();
+    expect(screen.getAllByText('Master Container Security Masterclass')[0]).toBeInTheDocument();
   });
 });

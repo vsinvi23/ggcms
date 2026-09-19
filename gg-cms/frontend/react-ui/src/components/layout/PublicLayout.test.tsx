@@ -42,7 +42,10 @@ describe('PublicLayout Component (Brand Shell & Header)', () => {
     renderComponent();
 
     expect(screen.getByText('Test Page Content')).toBeInTheDocument();
-    expect(screen.getByText('Explore')).toBeInTheDocument();
-    expect(screen.getByText('Topics')).toBeInTheDocument();
+    expect(screen.getAllByText('Courses')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Learning Paths')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Explore')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Practice')[0]).toBeInTheDocument();
+    expect(screen.getAllByText('Interview Prep')[0]).toBeInTheDocument();
   });
 });
