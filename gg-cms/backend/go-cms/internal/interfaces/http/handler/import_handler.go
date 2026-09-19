@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -102,12 +103,19 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 
 			if p.CategorySlug != "" && len(dbCategories) > 0 {
 				slugLower := strings.ToLower(strings.TrimSpace(p.CategorySlug))
+				slugClean := regexp.MustCompile(`[^a-z0-9]`).ReplaceAllString(slugLower, "")
 				var matched *entity.Category
 				for _, cat := range dbCategories {
 					if cat.IsVirtual {
 						continue
 					}
-					if strings.ToLower(cat.Slug) == slugLower || strings.ToLower(cat.Name) == slugLower {
+					catSlugLower := strings.ToLower(cat.Slug)
+					catNameLower := strings.ToLower(cat.Name)
+					catSlugClean := regexp.MustCompile(`[^a-z0-9]`).ReplaceAllString(catSlugLower, "")
+					catNameClean := regexp.MustCompile(`[^a-z0-9]`).ReplaceAllString(catNameLower, "")
+
+					if catSlugLower == slugLower || catNameLower == slugLower ||
+						(slugClean != "" && (catSlugClean == slugClean || catNameClean == slugClean)) {
 						matched = cat
 						break
 					}

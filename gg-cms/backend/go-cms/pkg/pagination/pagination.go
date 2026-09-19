@@ -18,8 +18,11 @@ func FromQuery(c *gin.Context) Params {
 	if page < 0 {
 		page = 0
 	}
-	if size <= 0 || size > 100 {
+	if size <= 0 {
 		size = 10
+	}
+	if size > 500 {
+		size = 500
 	}
 	return Params{Page: page, Size: size}
 }
@@ -27,13 +30,24 @@ func FromQuery(c *gin.Context) Params {
 // FromStrapiQuery parses Strapi-style pagination[page] / pagination[pageSize] (1-indexed).
 // Converts to 0-indexed page for service layer.
 func FromStrapiQuery(c *gin.Context) Params {
-	page, _ := strconv.Atoi(c.DefaultQuery("pagination[page]", "1"))
-	size, _ := strconv.Atoi(c.DefaultQuery("pagination[pageSize]", "10"))
+	pageStr := c.Query("pagination[page]")
+	if pageStr == "" {
+		pageStr = c.DefaultQuery("page", "1")
+	}
+	sizeStr := c.Query("pagination[pageSize]")
+	if sizeStr == "" {
+		sizeStr = c.DefaultQuery("pageSize", "10")
+	}
+	page, _ := strconv.Atoi(pageStr)
+	size, _ := strconv.Atoi(sizeStr)
 	if page < 1 {
 		page = 1
 	}
-	if size <= 0 || size > 100 {
+	if size <= 0 {
 		size = 10
+	}
+	if size > 500 {
+		size = 500
 	}
 	return Params{Page: page - 1, Size: size} // convert to 0-indexed
 }
