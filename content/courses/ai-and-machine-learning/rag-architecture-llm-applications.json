@@ -28,6 +28,13 @@
           "duration": 25,
           "order": 1,
           "body": "### Implementing Python Document Chunker\n\n```python\nfrom typing import List, Dict, Any\nimport tiktoken\n\nclass DocumentChunker:\n    def __init__(self, max_tokens: int = 500, overlap_tokens: int = 50):\n        self.max_tokens = max_tokens\n        self.overlap_tokens = overlap_tokens\n        self.tokenizer = tiktoken.get_encoding(\"cl100k_base\")\n\n    def count_tokens(self, text: str) -> int:\n        return len(self.tokenizer.encode(text))\n```"
+        },
+        {
+          "title": "Lesson 1.3: Parent-Document & Child-Chunk Dual-Retrieval",
+          "type": "text",
+          "duration": 20,
+          "order": 2,
+          "body": "### Parent-Child Retrieval Pattern\nIndex small sub-chunks (200 tokens) for sharp semantic vector matching, but return the larger parent document section (1000 tokens) to the LLM to preserve full background context."
         }
       ]
     },
@@ -56,11 +63,11 @@
       "order": 2,
       "lessons": [
         {
-          "title": "Lesson 3.1: Building Grounded Prompt Templates",
+          "title": "Lesson 3.1: Building Grounded Prompt Templates & Query Expansion (HyDE)",
           "type": "text",
-          "duration": 20,
+          "duration": 25,
           "order": 0,
-          "body": "Inject context chunks into system prompts with strict instruction boundaries to prevent hallucinated answers."
+          "body": "Inject context chunks into system prompts with strict instruction boundaries to prevent hallucinated answers. Use Hypothetical Document Embeddings (HyDE) to generate hypothetical answers before vector retrieval."
         },
         {
           "title": "Lesson 3.2: Automated RAGAS Evaluation Framework",

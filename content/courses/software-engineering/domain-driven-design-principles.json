@@ -21,6 +21,13 @@
           "duration": 20,
           "order": 0,
           "body": "### The Scenario: Misaligned Terminology\nIn an e-commerce organization, the Sales team defines an 'Account' as a billing target, while the Security team defines 'Account' as an authentication login identity. When developers combine both into a single giant database table, every feature update breaks adjacent team code.\n\n### Strategic Solution: Bounded Contexts\nStructure your system into decoupled **Bounded Contexts** with explicit boundaries and domain-specific Ubiquitous Language."
+        },
+        {
+          "title": "Lesson 1.2: Context Mapping Strategies (Shared Kernel, Customer-Supplier, ACL)",
+          "type": "text",
+          "duration": 25,
+          "order": 1,
+          "body": "### Anti-Corruption Layer (ACL)\nWhen integrating with legacy systems or third-party APIs, build an Anti-Corruption Layer (ACL) to translate external domain schemas into your clean internal domain models."
         }
       ]
     },

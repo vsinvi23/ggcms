@@ -131,8 +131,7 @@ export function PracticeHub() {
   return (
     <PublicLayout hideSearch>
       <div className="min-h-screen bg-background text-foreground pb-12">
-        
-        {/* Clean Sub-Header Bar — Title Left, Centered Search Bar */}
+        {/* Clean Sub-Header Bar */}
         <div className="border-b border-border bg-card/40 px-4 sm:px-6 lg:px-8 py-3.5">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3 shrink-0 sm:w-1/4">
@@ -148,151 +147,53 @@ export function PracticeHub() {
             </div>
 
             {/* Centered Search Bar */}
-            <div className="relative w-full max-w-md sm:w-1/2 flex justify-center">
-              <div className="relative w-full">
-                <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search practice quizzes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-8 h-9 text-xs rounded-xl bg-background border-border shadow-2xs w-full"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Right Spacer */}
-            <div className="hidden sm:block sm:w-1/4"></div>
-          </div>
-        </div>
-
-        {/* 2-Column Space-Optimized Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            
-            {/* Left-Aligned Compact Filter Panel */}
-            <div className="md:col-span-1 space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs">
-              <div className="flex items-center justify-between border-b border-border pb-2">
-                <span className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <Filter className="w-3 h-3 text-primary" />
-                  Practice Type
-                </span>
-                {selectedCategory !== 'All' && (
-                  <button onClick={() => setSelectedCategory('All')} className="text-[11px] text-primary hover:underline font-semibold">
-                    Reset
-                  </button>
-                )}
-              </div>
-
-              <div className="flex flex-wrap gap-1">
-                {categories.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                      selectedCategory === cat
-                        ? 'bg-primary text-primary-foreground shadow-2xs'
-                        : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Column — Cards Grid */}
-            <div className="md:col-span-3 space-y-4">
-              
-              {/* Compact Stats Row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-card border border-border rounded-2xl p-4">
-                <div className="text-center sm:border-r border-border/60">
-                  <span className="text-[10px] text-muted-foreground font-bold uppercase block">Accuracy</span>
-                  <span className="text-lg font-extrabold text-primary">78%</span>
-                </div>
-                <div className="text-center sm:border-r border-border/60">
-                  <span className="text-[10px] text-muted-foreground font-bold uppercase block">Solved</span>
-                  <span className="text-lg font-extrabold text-foreground">384</span>
-                </div>
-                <div className="text-center sm:border-r border-border/60">
-                  <span className="text-[10px] text-muted-foreground font-bold uppercase block">Strong</span>
-                  <span className="text-xs font-bold text-foreground truncate block">Go · HTTP</span>
-                </div>
-                <div className="text-center">
-                  <span className="text-[10px] text-muted-foreground font-bold uppercase block">Review</span>
-                  <span className="text-xs font-bold text-foreground truncate block">Kubernetes</span>
+            {!activeQuiz && (
+              <div className="relative w-full max-w-md sm:w-1/2 flex justify-center">
+                <div className="relative w-full">
+                  <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search practice quizzes..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 pr-8 h-9 text-xs rounded-xl bg-background border-border shadow-2xs w-full"
+                  />
+                  {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
+            )}
 
-              {/* Quizzes Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {mockQuizzes.map(quiz => (
-                  <div
-                    key={quiz.id}
-                    className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md group"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="text-[10px] font-bold">
-                          {quiz.domainSlug.toUpperCase()}
-                        </Badge>
-                        <span className="text-[11px] font-semibold text-muted-foreground capitalize">
-                          {quiz.difficulty}
-                        </span>
-                      </div>
-
-                      <h3 className="text-base font-extrabold text-foreground group-hover:text-primary transition-colors">
-                        {quiz.title}
-                      </h3>
-
-                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                        {quiz.description}
-                      </p>
-
-                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium pt-1">
-                        <span className="flex items-center gap-1">
-                          <HelpCircle className="w-3.5 h-3.5 text-primary" />
-                          {quiz.questionsCount} questions
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-primary" />
-                          {quiz.estimatedMinutes} mins
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-border/60 mt-4">
-                      <Button
-                        onClick={() => startQuiz(quiz)}
-                        className="w-full justify-between font-bold rounded-xl text-xs h-9 bg-primary text-primary-foreground"
-                      >
-                        <span>Start Practice Test</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {/* Right Spacer / Back Button */}
+            <div className="sm:w-1/4 flex justify-end">
+              {activeQuiz && (
+                <Button variant="outline" size="sm" onClick={() => setActiveQuiz(null)} className="rounded-xl gap-2 text-xs">
+                  <X className="w-3.5 h-3.5" /> Close Quiz
+                </Button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Interactive Quiz Modal */}
-        {activeQuiz && (
-          <Dialog open={!!activeQuiz} onOpenChange={() => setActiveQuiz(null)}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8">
-              <DialogHeader>
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="secondary">{activeQuiz.domainSlug}</Badge>
+        {activeQuiz ? (
+          /* In-Page Interactive Quiz View */
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+            <Button variant="ghost" size="sm" onClick={() => setActiveQuiz(null)} className="rounded-xl gap-2 text-muted-foreground hover:text-foreground mb-2">
+              <ArrowRight className="w-4 h-4 rotate-180" /> Back to All Practice Tests
+            </Button>
+
+            <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
+              <div className="border-b border-border pb-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">{activeQuiz.domainSlug.toUpperCase()}</Badge>
                   <span className="text-xs text-muted-foreground font-semibold uppercase">{activeQuiz.difficulty}</span>
                 </div>
-                <DialogTitle className="text-xl font-extrabold">{activeQuiz.title}</DialogTitle>
-              </DialogHeader>
+                <h2 className="text-2xl font-extrabold text-foreground">{activeQuiz.title}</h2>
+                <p className="text-xs text-muted-foreground">{activeQuiz.description}</p>
+              </div>
 
               {activeQuiz.questions.length === 0 ? (
                 <div className="py-12 text-center text-muted-foreground text-sm">
@@ -406,8 +307,119 @@ export function PracticeHub() {
                   </div>
                 </div>
               )}
-            </DialogContent>
-          </Dialog>
+            </div>
+          </div>
+        ) : (
+          /* 2-Column Space-Optimized Grid */
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              
+              {/* Left-Aligned Compact Filter Panel */}
+              <div className="md:col-span-1 space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <span className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Filter className="w-3 h-3 text-primary" />
+                    Practice Type
+                  </span>
+                  {selectedCategory !== 'All' && (
+                    <button onClick={() => setSelectedCategory('All')} className="text-[11px] text-primary hover:underline font-semibold">
+                      Reset
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-1">
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                        selectedCategory === cat
+                          ? 'bg-primary text-primary-foreground shadow-2xs'
+                          : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Column — Cards Grid */}
+              <div className="md:col-span-3 space-y-4">
+                
+                {/* Compact Stats Row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-card border border-border rounded-2xl p-4">
+                  <div className="text-center sm:border-r border-border/60">
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase block">Accuracy</span>
+                    <span className="text-lg font-extrabold text-primary">78%</span>
+                  </div>
+                  <div className="text-center sm:border-r border-border/60">
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase block">Solved</span>
+                    <span className="text-lg font-extrabold text-foreground">384</span>
+                  </div>
+                  <div className="text-center sm:border-r border-border/60">
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase block">Strong</span>
+                    <span className="text-xs font-bold text-foreground truncate block">Go · HTTP</span>
+                  </div>
+                  <div className="text-center">
+                    <span className="text-[10px] text-muted-foreground font-bold uppercase block">Review</span>
+                    <span className="text-xs font-bold text-foreground truncate block">Kubernetes</span>
+                  </div>
+                </div>
+
+                {/* Quizzes Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {mockQuizzes.map(quiz => (
+                    <div
+                      key={quiz.id}
+                      className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md group"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="secondary" className="text-[10px] font-bold">
+                            {quiz.domainSlug.toUpperCase()}
+                          </Badge>
+                          <span className="text-[11px] font-semibold text-muted-foreground capitalize">
+                            {quiz.difficulty}
+                          </span>
+                        </div>
+
+                        <h3 className="text-base font-extrabold text-foreground group-hover:text-primary transition-colors">
+                          {quiz.title}
+                        </h3>
+
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                          {quiz.description}
+                        </p>
+
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium pt-1">
+                          <span className="flex items-center gap-1">
+                            <HelpCircle className="w-3.5 h-3.5 text-primary" />
+                            {quiz.questionsCount} questions
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-primary" />
+                            {quiz.estimatedMinutes} mins
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-border/60 mt-4">
+                        <Button
+                          onClick={() => startQuiz(quiz)}
+                          className="w-full justify-between font-bold rounded-xl text-xs h-9 bg-primary text-primary-foreground"
+                        >
+                          <span>Start Practice Test</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </PublicLayout>

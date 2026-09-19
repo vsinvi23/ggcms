@@ -4,7 +4,11 @@
   "description": "A security engineering course detailing prompt injection, insecure output handling, sensitive data leakage, system prompt theft, and dual-LLM guardrail architectures.",
   "categorySlug": "appsec-and-threats",
   "courseType": "TRACK",
-  "tags": ["owasp-top-10", "threat-modeling", "zero-trust-architecture"],
+  "tags": [
+    "owasp-top-10",
+    "threat-modeling",
+    "zero-trust-architecture"
+  ],
   "body": "Protect AI applications from modern attack vectors. Learn how to defend against direct and indirect prompt injection, implement dual-LLM guardrails, sanitize LLM HTML output, and redact PII.",
   "sections": [
     {

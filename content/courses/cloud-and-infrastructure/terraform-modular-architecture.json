@@ -4,7 +4,11 @@
   "description": "A comprehensive Infrastructure-as-Code (IaC) course on designing reusable Terraform modules, GCS/S3 remote state locking, input validation, and environment isolation.",
   "categorySlug": "infrastructure-as-code",
   "courseType": "TRACK",
-  "tags": ["terraform", "infrastructure-as-code", "ansible"],
+  "tags": [
+    "terraform",
+    "infrastructure-as-code",
+    "ansible"
+  ],
   "body": "Master modular cloud infrastructure management. Learn how to structure dry Terraform codebases, manage remote backend state locks in Google Cloud Storage, enforce input validation, and automate CI/CD plan checks.",
   "sections": [
     {

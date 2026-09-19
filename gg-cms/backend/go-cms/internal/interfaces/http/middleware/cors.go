@@ -20,7 +20,18 @@ func CORS() gin.HandlerFunc {
 		}
 	}
 	if len(allowedOrigins) == 0 {
-		allowedOrigins = []string{"http://localhost:5173", "http://localhost:3000", "http://localhost:8080"}
+		allowedOrigins = []string{"http://localhost:5173", "http://localhost:3000", "http://localhost:8080", "http://localhost"}
+	} else if os.Getenv("APP_ENV") != "production" {
+		hasDev5173 := false
+		for _, o := range allowedOrigins {
+			if o == "http://localhost:5173" || o == "*" {
+				hasDev5173 = true
+				break
+			}
+		}
+		if !hasDev5173 {
+			allowedOrigins = append(allowedOrigins, "http://localhost:5173", "http://localhost:8080")
+		}
 	}
 
 	headersStr := os.Getenv("CORS_ALLOWED_HEADERS")

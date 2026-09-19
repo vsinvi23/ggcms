@@ -235,7 +235,7 @@ export function CategoriesTab() {
   const updateMutation = useUpdateCategory();
   const deleteMutation = useDeleteCategory();
 
-  const isLoading = isTreeLoading && isPagedLoading;
+  const isLoading = (isTreeLoading || isPagedLoading) && categories.length === 0;
   const flatItems = pagedData?.items || [];
   
   // Use backend tree categories if available, or build tree from flat items
@@ -246,7 +246,9 @@ export function CategoriesTab() {
     return buildCategoryTree(flatItems);
   }, [treeCategories, flatItems]);
 
-  const totalCount = pagedData?.totalElements || flattenCategories(categories).length;
+  const flatCategories = useMemo(() => flattenCategories(categories), [categories]);
+  const allCategoryIds = useMemo(() => flatCategories.map((c) => c.id), [flatCategories]);
+  const totalCount = pagedData?.totalElements || flatCategories.length;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryResponseDto | null>(null);
@@ -271,11 +273,8 @@ export function CategoriesTab() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryResponseDto | null>(null);
   const [categoryName, setCategoryName] = useState('');
-  const [parentId, setParentId] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<CategoryResponseDto | null>(null);
-
-  const flatCategories = flattenCategories(categories);
 
   // Search filtering
   const filteredCategories = useMemo(() => {
@@ -407,7 +406,7 @@ export function CategoriesTab() {
                   </div>
                   {categories.length > 0 && (
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setExpandedIds(new Set(flatItems.map((c) => c.id)))} className="h-8 text-xs rounded-lg">
+                      <Button variant="outline" size="sm" onClick={() => setExpandedIds(new Set(allCategoryIds))} className="h-8 text-xs rounded-lg">
                         Expand All
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => setExpandedIds(new Set())} className="h-8 text-xs rounded-lg">

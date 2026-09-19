@@ -110,6 +110,7 @@ const LearningPathPage = () => {
     if (enrollment.status === 'active' && enrollment.progress > 0) return 'current';
     return 'upcoming';
   };
+
   const handleStartPath = () => {
     if (courses.length > 0) {
       const firstCourse = courses[0];
@@ -117,6 +118,33 @@ const LearningPathPage = () => {
     }
   };
 
+  // Dynamic Skills Gained derivation
+  const skillsList = useMemo(() => {
+    if (data.skillsGained && data.skillsGained.length > 0) {
+      return data.skillsGained;
+    }
+    if (courses.length > 0) {
+      return courses.map(c => `Master ${c.title}`);
+    }
+    return [
+      'Architect production-grade scalable web software',
+      'Design RESTful & gRPC backend APIs',
+      'Implement enterprise security, OAuth 2.0 & identity controls',
+      'Deploy containerized services to Cloud Run & Kubernetes',
+    ];
+  }, [data.skillsGained, courses]);
+
+  // Dynamic Related Paths
+  const relatedPaths = useMemo(() => {
+    return CURATED_LEARNING_PATHS.filter(
+      p => p.id.toString() !== String(data.id) && p.slug !== pathId
+    );
+  }, [data.id, pathId]);
+
+  const estimatedHours = data.estimatedHours || (courses.length ? courses.length * 4 : 24);
+  const rating = data.rating || 4.9;
+  const ratingCount = data.ratingCount || 180;
+  const levelText = data.level || 'Intermediate';
 
   return (
     <PublicLayout>
@@ -138,7 +166,7 @@ const LearningPathPage = () => {
                 <GraduationCap className="w-3.5 h-3.5 mr-1" />
                 {data.kind === 'INTERVIEW_PREP' ? 'Interview Prep Track' : 'Structured Learning Path'}
               </Badge>
-              <Badge variant="outline" className="text-xs">Intermediate</Badge>
+              <Badge variant="outline" className="text-xs">{levelText}</Badge>
             </div>
 
             <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
@@ -159,12 +187,12 @@ const LearningPathPage = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="font-semibold text-foreground">{courses.length * 2}</span> hours estimated
+                <span className="font-semibold text-foreground">{estimatedHours}</span> hours estimated
               </div>
               <div className="flex items-center gap-1.5 text-amber-500 font-semibold">
                 <Star className="w-4 h-4 fill-amber-500" />
-                <span>4.8</span>
-                <span className="text-muted-foreground font-normal text-xs">(320 ratings)</span>
+                <span>{rating}</span>
+                <span className="text-muted-foreground font-normal text-xs">({ratingCount} ratings)</span>
               </div>
             </div>
 
@@ -185,29 +213,19 @@ const LearningPathPage = () => {
             </div>
           </div>
 
-          {/* Right Card: Skills You'll Gain (Panel 5 Spec) */}
+          {/* Right Card: Dynamic Skills You'll Gain */}
           <Card className="rounded-2xl border border-border shadow-sm bg-card p-6 space-y-4">
             <h3 className="text-base font-bold text-foreground flex items-center gap-2">
               <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               Skills You&apos;ll Gain
             </h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2.5">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                <span>Build secure, high-performance APIs</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                <span>Implement OAuth 2.0 / OIDC authentication</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                <span>Deploy to production cloud (GCP)</span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                <span>Follow cloud security best practices</span>
-              </li>
+              {skillsList.map((skill, index) => (
+                <li key={index} className="flex items-start gap-2.5">
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <span>{skill}</span>
+                </li>
+              ))}
             </ul>
           </Card>
         </div>
@@ -238,69 +256,185 @@ const LearningPathPage = () => {
           </div>
         </div>
 
-        {data.description && (
-          <p className="text-muted-foreground max-w-2xl">{data.description}</p>
-        )}
+        {/* Dynamic Tab Content */}
+        {activeTab === 'overview' && (
+          <div className="space-y-8 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="p-6 rounded-2xl border border-border space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground font-medium">Curriculum Scope</div>
+                    <div className="text-base font-bold">{courses.length} Structured Modules</div>
+                  </div>
+                </div>
+              </Card>
 
-        <div className="flex flex-wrap items-center gap-6">
-          {courses.length > 0 && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <BookOpen className="h-5 w-5" />
-              <span>{courses.length} Course{courses.length !== 1 ? 's' : ''}</span>
+              <Card className="p-6 rounded-2xl border border-border space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground font-medium">Time Commitment</div>
+                    <div className="text-base font-bold">~{estimatedHours} Total Hours</div>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-6 rounded-2xl border border-border space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground font-medium">Difficulty Level</div>
+                    <div className="text-base font-bold">{levelText}</div>
+                  </div>
+                </div>
+              </Card>
             </div>
-          )}
-          <Badge variant="outline">{data.kind === 'INTERVIEW_PREP' ? 'Interview Prep' : 'Learning Plan'}</Badge>
-        </div>
 
-        {/* Curriculum List */}
-        {courses.length > 0 ? (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-foreground">Path Curriculum ({courses.length} Modules)</h2>
-            <div className="space-y-3">
-              {courses.map((course, index) => {
-                const status = getCourseStatus(course.id);
-                return (
-                  <Link key={course.id} to={buildCourseUrl(course)}>
-                    <Card className="hover:shadow-md hover:border-emerald-500/40 transition-all cursor-pointer group rounded-xl border border-border">
-                      <CardContent className="p-5 flex items-center justify-between gap-4">
-                        <div className="flex items-start gap-4 min-w-0">
-                          <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
-                            {status === 'completed' && <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
-                            {status === 'current' && <PlayCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
-                            {status === 'upcoming' && <Circle className="h-5 w-5 text-muted-foreground" />}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                              Module {String(index + 1).padStart(2, '0')}
-                            </span>
-                            <h3 className="text-base font-bold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1">
-                              {course.title}
-                            </h3>
-                            {course.description && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                                {course.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-x-1 transition-all shrink-0 ml-2" />
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-foreground">Path Overview & Learning Goals</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                {data.description} This learning path is structured to guide software professionals from fundamental principles to production engineering mastery.
+              </p>
+            </div>
+
+            {/* Path Key Highlights */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-foreground">Key Outcomes</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {skillsList.map((skill, index) => (
+                  <div key={index} className="p-4 rounded-xl border border-border bg-card/60 flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                    <span className="text-sm font-medium text-foreground">{skill}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-between border-t border-border">
+              <p className="text-sm text-muted-foreground">Ready to start? Begin with Module 01 in the curriculum.</p>
+              <Button onClick={() => setActiveTab('curriculum')} variant="outline" className="rounded-xl gap-2">
+                View Curriculum <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
           </div>
-        ) : (
-          <div className="text-center py-16 border border-dashed rounded-2xl p-8 space-y-3">
-            <BookOpen className="h-10 w-10 mx-auto text-muted-foreground/40" />
-            <h3 className="text-base font-bold text-foreground">Curriculum updating</h3>
-            <p className="text-sm text-muted-foreground">Courses are being added to this path. Check back soon!</p>
+        )}
+
+        {activeTab === 'curriculum' && (
+          <div className="space-y-6 pt-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Path Curriculum ({courses.length} Modules)</h2>
+                <p className="text-sm text-muted-foreground mt-0.5">Step-by-step module breakdown designed by industry authors.</p>
+              </div>
+              <Badge variant="outline">{estimatedHours} Total Hours</Badge>
+            </div>
+
+            {courses.length > 0 ? (
+              <div className="space-y-3">
+                {courses.map((course, index) => {
+                  const status = getCourseStatus(course.id);
+                  return (
+                    <Link key={course.id} to={buildCourseUrl(course)}>
+                      <Card className="hover:shadow-md hover:border-emerald-500/40 transition-all cursor-pointer group rounded-xl border border-border">
+                        <CardContent className="p-5 flex items-center justify-between gap-4">
+                          <div className="flex items-start gap-4 min-w-0">
+                            <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                              {status === 'completed' && <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+                              {status === 'current' && <PlayCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+                              {status === 'upcoming' && <Circle className="h-5 w-5 text-muted-foreground" />}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                Module {String(index + 1).padStart(2, '0')}
+                              </span>
+                              <h3 className="text-base font-bold text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-1">
+                                {course.title}
+                              </h3>
+                              {course.description && (
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                                  {course.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-muted-foreground/40 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-x-1 transition-all shrink-0 ml-2" />
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-16 border border-dashed rounded-2xl p-8 space-y-3">
+                <BookOpen className="h-10 w-10 mx-auto text-muted-foreground/40" />
+                <h3 className="text-base font-bold text-foreground">Curriculum updating</h3>
+                <p className="text-sm text-muted-foreground">Courses are being added to this path. Check back soon!</p>
+              </div>
+            )}
           </div>
         )}
-        <div className="pt-4">
-          <Button size="lg">{hasProgress ? 'Continue Path' : 'Start Learning Path'}</Button>
-        </div>
+
+        {activeTab === 'related' && (
+          <div className="space-y-6 pt-2">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">Related Learning Paths</h2>
+              <p className="text-sm text-muted-foreground mt-0.5">Explore recommended paths to complement your skills.</p>
+            </div>
+
+            {relatedPaths.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {relatedPaths.map(rp => (
+                  <Card key={rp.id} className="p-6 rounded-2xl border border-border hover:border-emerald-500/40 transition-all flex flex-col justify-between space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                          {rp.kind === 'INTERVIEW_PREP' ? 'Interview Prep' : 'Structured Path'}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground font-semibold">{rp.level}</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-foreground line-clamp-1">{rp.title}</h3>
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{rp.description}</p>
+                      
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
+                        <span className="flex items-center gap-1">
+                          <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          {rp.modules.length} Modules
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          {rp.estimatedHours} Hours
+                        </span>
+                        <span className="flex items-center gap-1 text-amber-500 font-semibold">
+                          <Star className="w-3.5 h-3.5 fill-amber-500" />
+                          {rp.rating}
+                        </span>
+                      </div>
+                    </div>
+
+                    <Link to={`/learn/${rp.slug}`}>
+                      <Button variant="outline" className="w-full rounded-xl gap-2 hover:bg-emerald-500/10 hover:text-emerald-600">
+                        View Path <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16 border border-dashed rounded-2xl p-8 space-y-3">
+                <BookOpen className="h-10 w-10 mx-auto text-muted-foreground/40" />
+                <h3 className="text-base font-bold text-foreground">No related paths found</h3>
+                <p className="text-sm text-muted-foreground">Check back as new learning paths are added.</p>
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
     </PublicLayout>
