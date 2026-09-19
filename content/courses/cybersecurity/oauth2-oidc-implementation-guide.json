@@ -1,0 +1,48 @@
+{
+  "type": "COURSE",
+  "title": "Implementing Secure OAuth 2.0 & OpenID Connect (OIDC) in Go",
+  "description": "A security engineering course covering OAuth 2.0 authorization code flow with PKCE, JWT token validation, JWKS caching, and production Go middlewares.",
+  "categorySlug": "identity-and-access",
+  "courseType": "TRACK",
+  "tags": [
+    "oauth-2",
+    "openid-connect",
+    "jwt"
+  ],
+  "body": "Master decentralized identity and authorization standards. Learn how to prevent authorization code theft using PKCE, structure JWT claims, validate RSA signatures via JWKS public key rotation, and build Go HTTP middleware.",
+  "sections": [
+    {
+      "title": "Section 1: OAuth 2.0 & OpenID Connect Fundamentals",
+      "order": 0,
+      "lessons": [
+        {
+          "title": "Lesson 1.1: Authorization Code Flow with PKCE Sequence",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### Proof Key for Code Exchange (PKCE)\nPrevent authorization code interception attacks on public clients (Single Page Applications & mobile apps) using dynamic code_verifier and code_challenge SHA-256 hashes."
+        },
+        {
+          "title": "Lesson 1.2: JWT Structure & Claims Verification",
+          "type": "text",
+          "duration": 20,
+          "order": 1,
+          "body": "### JWT Claims Validation\nVerify standard claims: iss (issuer), aud (audience), exp (expiration), sub (subject ID), and roles (RBAC/ABAC scopes)."
+        }
+      ]
+    },
+    {
+      "title": "Section 2: Production Go Middleware & Server Implementation",
+      "order": 1,
+      "lessons": [
+        {
+          "title": "Lesson 2.1: Go Bearer Token Verification Middleware",
+          "type": "text",
+          "duration": 30,
+          "order": 0,
+          "body": "### Building Go JWT Auth Handler\n\n```go\npackage middleware\n\nimport (\n\t\"context\"\n\t\"net/http\"\n\t\"strings\"\n\t\"github.com/golang-jwt/jwt/v5\"\n)\n\nfunc JWTAuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {\n\treturn func(next http.Handler) http.Handler {\n\t\treturn http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n\t\t\tauthHeader := r.Header.Get(\"Authorization\")\n\t\t\tif authHeader == \"\" || !strings.HasPrefix(authHeader, \"Bearer \") {\n\t\t\t\thttp.Error(w, `{\"error\":\"missing authorization header\"}`, http.StatusUnauthorized)\n\t\t\t\treturn\n\t\t\t}\n\t\t\tnext.ServeHTTP(w, r)\n\t\t})\n\t}\n}\n```"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "type": "COURSE",
+  "title": "PostgreSQL Performance Tuning: EXPLAIN ANALYZE & Indexing",
+  "description": "A deep database performance course covering B-Tree, GIN, GiST, BRIN, pgvector indexes, reading EXPLAIN ANALYZE execution plans, autovacuum tuning, and PgBouncer.",
+  "categorySlug": "databases",
+  "courseType": "TRACK",
+  "tags": [
+    "sql",
+    "postgresql",
+    "databases"
+  ],
+  "body": "Optimize high-throughput PostgreSQL databases. Master index selection strategies (B-Tree, GIN, BRIN, pgvector), analyze execution plan buffer reads, tune autovacuum parameters, and manage connection pools with PgBouncer.",
+  "sections": [
+    {
+      "title": "Section 1: Index Selection Strategies & Partial Indexing",
+      "order": 0,
+      "lessons": [
+        {
+          "title": "Lesson 1.1: B-Tree, GIN, GiST, BRIN, and Vector Indexes",
+          "type": "text",
+          "duration": 25,
+          "order": 0,
+          "body": "### Choosing the Right Index Type\n- **B-Tree:** Default index for equality and range queries.\n- **GIN:** Full-text search (`to_tsvector`) and JSONB searching (`@>`).\n- **BRIN:** Append-only time-series data tables.\n- **HNSW:** AI vector embeddings (`pgvector` `<=>` distance)."
+        },
+        {
+          "title": "Lesson 1.2: Partial & Expression Indexing",
+          "type": "text",
+          "duration": 20,
+          "order": 1,
+          "body": "```sql\n-- Partial index covering active published articles\nCREATE INDEX idx_articles_published_active \nON articles (published_at DESC, category_id) \nWHERE status = 'PUBLISHED';\n```"
+        }
+      ]
+    },
+    {
+      "title": "Section 2: Execution Plan Analysis & Connection Pooling",
+      "order": 1,
+      "lessons": [
+        {
+          "title": "Lesson 2.1: Interpreting `EXPLAIN (ANALYZE, BUFFERS)` Plans",
+          "type": "text",
+          "duration": 25,
+          "order": 0,
+          "body": "Analyze shared buffer cache hits vs disk reads to identify sequential scans and unindexed join keys."
+        },
+        {
+          "title": "Lesson 2.2: Connection Pooling with PgBouncer",
+          "type": "text",
+          "duration": 20,
+          "order": 1,
+          "body": "Configure PgBouncer transaction pooling to prevent backend PostgreSQL process memory exhaustion."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "type": "COURSE",
+  "title": "Enterprise RAG Architecture: Vector Search & Prompt Engineering",
+  "description": "Master enterprise Retrieval-Augmented Generation (RAG) platforms using document chunking, pgvector similarity search, hybrid BM25 search, prompt synthesis, and RAGAS evaluation.",
+  "categorySlug": "generative-ai",
+  "courseType": "TRACK",
+  "tags": [
+    "large-language-models",
+    "retrieval-augmented-generation",
+    "prompt-engineering"
+  ],
+  "body": "Build production-ready grounded AI applications. Learn how to prevent LLM hallucinations, implement HNSW vector indexing in PostgreSQL, execute hybrid Reciprocal Rank Fusion (RRF) search, and measure RAG precision.",
+  "sections": [
+    {
+      "title": "Section 1: Ingestion Pipelines & Document Chunking Strategies",
+      "order": 0,
+      "lessons": [
+        {
+          "title": "Lesson 1.1: Why RAG is Essential for Enterprise LLMs",
+          "type": "text",
+          "duration": 15,
+          "order": 0,
+          "body": "### The Hallucination Problem\nLLMs lack access to internal company wiki pages, live database records, and private documents. Passing an entire enterprise database into the context window is slow, expensive, and insecure. RAG retrieves relevant passages dynamically at query time."
+        },
+        {
+          "title": "Lesson 1.2: Metadata-Aware Recursive Character Chunking",
+          "type": "text",
+          "duration": 25,
+          "order": 1,
+          "body": "### Implementing Python Document Chunker\n\n```python\nfrom typing import List, Dict, Any\nimport tiktoken\n\nclass DocumentChunker:\n    def __init__(self, max_tokens: int = 500, overlap_tokens: int = 50):\n        self.max_tokens = max_tokens\n        self.overlap_tokens = overlap_tokens\n        self.tokenizer = tiktoken.get_encoding(\"cl100k_base\")\n\n    def count_tokens(self, text: str) -> int:\n        return len(self.tokenizer.encode(text))\n```"
+        }
+      ]
+    },
+    {
+      "title": "Section 2: Vector Database Indexing with PostgreSQL `pgvector`",
+      "order": 1,
+      "lessons": [
+        {
+          "title": "Lesson 2.1: HNSW Vector Indexing & Cosine Distance Queries",
+          "type": "text",
+          "duration": 25,
+          "order": 0,
+          "body": "### PostgreSQL `pgvector` Schema\n\n```sql\nCREATE EXTENSION IF NOT EXISTS vector;\n\nCREATE TABLE document_chunks (\n    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),\n    title VARCHAR(255) NOT NULL,\n    content TEXT NOT NULL,\n    embedding vector(1536) NOT NULL\n);\n\nCREATE INDEX idx_chunks_hnsw ON document_chunks \nUSING hnsw (embedding vector_cosine_ops);\n```"
+        },
+        {
+          "title": "Lesson 2.2: Hybrid BM25 + Dense Search via Reciprocal Rank Fusion (RRF)",
+          "type": "text",
+          "duration": 30,
+          "order": 1,
+          "body": "### Sparse + Dense Retrieval\nDense vector embeddings capture conceptual similarity but fail on exact technical error codes (e.g. `ERR-9012`). Combining sparse keyword search (BM25) with dense vector search using RRF solves keyword matching failures."
+        }
+      ]
+    },
+    {
+      "title": "Section 3: RAG Prompt Synthesis & RAGAS Quality Evaluation",
+      "order": 2,
+      "lessons": [
+        {
+          "title": "Lesson 3.1: Building Grounded Prompt Templates",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "Inject context chunks into system prompts with strict instruction boundaries to prevent hallucinated answers."
+        },
+        {
+          "title": "Lesson 3.2: Automated RAGAS Evaluation Framework",
+          "type": "text",
+          "duration": 20,
+          "order": 1,
+          "body": "Evaluate system performance across Faithfulness, Answer Relevance, and Context Precision using RAGAS benchmarks."
+        }
+      ]
+    }
+  ]
+}

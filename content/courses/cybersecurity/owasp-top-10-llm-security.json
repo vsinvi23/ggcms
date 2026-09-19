@@ -1,0 +1,44 @@
+{
+  "type": "COURSE",
+  "title": "OWASP Top 10 for LLM Applications: Defense & Mitigation",
+  "description": "A security engineering course detailing prompt injection, insecure output handling, sensitive data leakage, system prompt theft, and dual-LLM guardrail architectures.",
+  "categorySlug": "appsec-and-threats",
+  "courseType": "TRACK",
+  "tags": ["owasp-top-10", "threat-modeling", "zero-trust-architecture"],
+  "body": "Protect AI applications from modern attack vectors. Learn how to defend against direct and indirect prompt injection, implement dual-LLM guardrails, sanitize LLM HTML output, and redact PII.",
+  "sections": [
+    {
+      "title": "Section 1: Threat Modeling & Prompt Injection",
+      "order": 0,
+      "lessons": [
+        {
+          "title": "Lesson 1.1: Direct Jailbreaks vs. Indirect Prompt Injection",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### Attack Vectors\n- **Direct Injection:** Malicious user prompt designed to override system instructions.\n- **Indirect Injection:** Malicious payload hidden inside untrusted RAG documents (uploaded PDFs, scraped web content)."
+        }
+      ]
+    },
+    {
+      "title": "Section 2: Production Mitigation & Security Controls",
+      "order": 1,
+      "lessons": [
+        {
+          "title": "Lesson 2.1: Python Dual-LLM Guardrail Scanner Pattern",
+          "type": "text",
+          "duration": 25,
+          "order": 0,
+          "body": "Pass all incoming user prompts through a dedicated lightweight guardrail model before execution."
+        },
+        {
+          "title": "Lesson 2.2: Go Output Sanitization & XSS Defense",
+          "type": "text",
+          "duration": 20,
+          "order": 1,
+          "body": "Sanitize generated LLM Markdown/HTML content using HTML escaping to eliminate XSS risks."
+        }
+      ]
+    }
+  ]
+}

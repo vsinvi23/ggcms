@@ -1,0 +1,55 @@
+{
+  "type": "COURSE",
+  "title": "TLS 1.3 & X.509 Public Key Infrastructure (PKI) Guide",
+  "description": "A comprehensive course on asymmetric cryptography, TLS 1.3 handshakes, X.509 certificate chains, OpenSSL automation, ACME certbot renewals, and Go mTLS.",
+  "categorySlug": "pki-and-cryptography",
+  "courseType": "TRACK",
+  "tags": [
+    "tls",
+    "x509-certificates",
+    "public-key-infrastructure"
+  ],
+  "body": "Master Public Key Infrastructure (PKI). Learn TLS 1.3 1-RTT handshake mechanics, certificate authority chains (Root CA -> Intermediate CA -> Leaf Cert), OpenSSL CLI command usage, and mutual TLS (mTLS) enforcement.",
+  "sections": [
+    {
+      "title": "Section 1: Cryptographic Foundations & TLS 1.3 Handshake",
+      "order": 0,
+      "lessons": [
+        {
+          "title": "Lesson 1.1: TLS 1.3 1-RTT Handshake Architecture",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### 1-RTT Latency Reduction\nTLS 1.3 combines key exchange (ECDHE) and cipher agreement into ClientHello, reducing handshake latency to a single round trip."
+        },
+        {
+          "title": "Lesson 1.2: X.509 Certificate Chain Hierarchy",
+          "type": "text",
+          "duration": 20,
+          "order": 1,
+          "body": "Understanding Root CAs, Intermediate CAs, Leaf Server Certificates, and CRL / OCSP revocation checks."
+        }
+      ]
+    },
+    {
+      "title": "Section 2: Production OpenSSL & Go mTLS Implementation",
+      "order": 1,
+      "lessons": [
+        {
+          "title": "Lesson 2.1: OpenSSL CLI Certificate Management Cheatsheet",
+          "type": "text",
+          "duration": 25,
+          "order": 0,
+          "body": "```bash\n# Generate RSA 4096-bit private key\nopenssl genrsa -out server.key 4096\n\n# Generate Certificate Signing Request (CSR)\nopenssl req -new -key server.key -out server.csr -subj \"/CN=api.geekgully.local\"\n\n# Generate self-signed certificate\nopenssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt\n```"
+        },
+        {
+          "title": "Lesson 2.2: Enforcing Mutual TLS (mTLS) in Go Backend Microservices",
+          "type": "text",
+          "duration": 25,
+          "order": 1,
+          "body": "Configure tls.Config with ClientAuth: tls.RequireAndVerifyClientCert to enforce zero-trust service-to-service mTLS."
+        }
+      ]
+    }
+  ]
+}

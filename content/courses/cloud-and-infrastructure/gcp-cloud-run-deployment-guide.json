@@ -1,0 +1,48 @@
+{
+  "type": "COURSE",
+  "title": "Production Deployment of Microservices on GCP Cloud Run",
+  "description": "A hands-on DevOps course covering serverless container deployment on Google Cloud Run, Direct VPC egress, Cloud SQL integration, and Secret Manager.",
+  "categorySlug": "cloud-platforms",
+  "courseType": "TRACK",
+  "tags": [
+    "gcp",
+    "cloud-platforms",
+    "docker"
+  ],
+  "body": "Deploy production containerized workloads on Google Cloud Run. Master multi-stage Docker builds, gcloud deployment CLI commands, Direct VPC egress networking for internal database communication, and Secret Manager bindings.",
+  "sections": [
+    {
+      "title": "Section 1: Multi-Stage Containerization & Optimization",
+      "order": 0,
+      "lessons": [
+        {
+          "title": "Lesson 1.1: Building Minimal Multi-Stage Docker Images",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### Multi-Stage Dockerfile for Go Microservices\nKeep container images under 30MB to reduce security vulnerabilities and eliminate container deployment cold starts."
+        }
+      ]
+    },
+    {
+      "title": "Section 2: Production Deployment & Direct VPC Egress",
+      "order": 1,
+      "lessons": [
+        {
+          "title": "Lesson 2.1: Production `gcloud run deploy` Specification",
+          "type": "text",
+          "duration": 25,
+          "order": 0,
+          "body": "```bash\ngcloud run deploy gg-cms-backend \\\n  --image gcr.io/ggcms/backend:latest \\\n  --region us-central1 \\\n  --min-instances 1 \\\n  --max-instances 10 \\\n  --network default \\\n  --subnet default \\\n  --vpc-egress private-ranges-only \\\n  --set-secrets \"DB_WRITE_URL=gg-cms-db-write-url:latest\"\n```"
+        },
+        {
+          "title": "Lesson 2.2: Connecting Cloud Run to Private Cloud SQL / Compute Engine VMs",
+          "type": "text",
+          "duration": 25,
+          "order": 1,
+          "body": "Route database traffic securely through internal VPC RFC 1918 IPs using `--vpc-egress private-ranges-only`."
+        }
+      ]
+    }
+  ]
+}

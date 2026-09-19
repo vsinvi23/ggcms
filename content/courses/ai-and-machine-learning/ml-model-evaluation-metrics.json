@@ -1,0 +1,54 @@
+{
+  "type": "COURSE",
+  "title": "Machine Learning Model Evaluation & Drift Detection",
+  "description": "A comprehensive reference course covering classification, regression, and ranking metrics, alongside Kolmogorov-Smirnov (KS) testing and Population Stability Index (PSI) drift monitoring in MLOps.",
+  "categorySlug": "machine-learning-foundations",
+  "courseType": "TRACK",
+  "tags": [
+    "machine-learning",
+    "generative-ai"
+  ],
+  "body": "Maintain production machine learning reliability. Master offline model evaluation metrics, ranking metrics (NDCG, MAP), and automated statistical drift detection pipelines.",
+  "sections": [
+    {
+      "title": "Section 1: Classification & Ranking Metrics",
+      "order": 0,
+      "lessons": [
+        {
+          "title": "Lesson 1.1: Precision vs. Recall Trade-Offs & F1 Score",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### Cost Asymmetry in Machine Learning\nSelect evaluation metrics based on the business penalty of False Positives vs False Negatives:\n- **Precision:** TP / (TP + FP) (Critical for spam filtering)\n- **Recall:** TP / (TP + FN) (Critical for medical diagnosis & security threat detection)\n- **F1 Score:** 2 * (Precision * Recall) / (Precision + Recall)"
+        },
+        {
+          "title": "Lesson 1.2: Recommendation & Search Ranking Metrics (NDCG & MAP)",
+          "type": "text",
+          "duration": 25,
+          "order": 1,
+          "body": "### Measuring Result Position Ordering\nNormalized Discounted Cumulative Gain (NDCG) penalizes highly relevant search items placed lower in recommendation lists."
+        }
+      ]
+    },
+    {
+      "title": "Section 2: Detecting Production Data Drift & Concept Drift",
+      "order": 1,
+      "lessons": [
+        {
+          "title": "Lesson 2.1: Data Drift (Covariate Shift) vs. Concept Drift",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### The Shift Problem\n- **Data Drift:** Input feature distribution P(X) changes while target relationship P(Y|X) remains static.\n- **Concept Drift:** Relationship P(Y|X) shifts due to real-world behavioral changes."
+        },
+        {
+          "title": "Lesson 2.2: Python Implementation: Kolmogorov-Smirnov (KS) & PSI",
+          "type": "text",
+          "duration": 30,
+          "order": 1,
+          "body": "### Automated Monitoring Script\n\n```python\nimport numpy as np\nfrom scipy.stats import ks_2samp\n\ndef detect_ks_drift(reference_data: np.ndarray, current_data: np.ndarray, threshold: float = 0.05) -> bool:\n    statistic, p_value = ks_2samp(reference_data, current_data)\n    return p_value < threshold\n```"
+        }
+      ]
+    }
+  ]
+}

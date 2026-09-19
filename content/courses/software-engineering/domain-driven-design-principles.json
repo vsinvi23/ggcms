@@ -1,0 +1,61 @@
+{
+  "type": "COURSE",
+  "title": "Domain-Driven Design (DDD) Principles for Microservices",
+  "description": "Master Strategic and Tactical Domain-Driven Design, Bounded Contexts, Aggregates, Value Objects, Domain Events, and Clean Hexagonal Architecture in Go.",
+  "categorySlug": "software-design",
+  "courseType": "TRACK",
+  "tags": [
+    "object-oriented-programming",
+    "software-design",
+    "go"
+  ],
+  "body": "Structure complex enterprise microservices without cluttering business logic with SQL queries or HTTP web framework details. Learn DDD strategic context mapping, aggregate roots, value objects, and hexagonal ports & adapters.",
+  "sections": [
+    {
+      "title": "Section 1: DDD Strategic Patterns & Bounded Contexts",
+      "order": 0,
+      "lessons": [
+        {
+          "title": "Lesson 1.1: Bounded Contexts & Ubiquitous Language",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### The Scenario: Misaligned Terminology\nIn an e-commerce organization, the Sales team defines an 'Account' as a billing target, while the Security team defines 'Account' as an authentication login identity. When developers combine both into a single giant database table, every feature update breaks adjacent team code.\n\n### Strategic Solution: Bounded Contexts\nStructure your system into decoupled **Bounded Contexts** with explicit boundaries and domain-specific Ubiquitous Language."
+        }
+      ]
+    },
+    {
+      "title": "Section 2: Tactical DDD Patterns (Aggregates, Entities & Value Objects)",
+      "order": 1,
+      "lessons": [
+        {
+          "title": "Lesson 2.1: Designing Pure Aggregate Roots & Immutable Value Objects in Go",
+          "type": "text",
+          "duration": 30,
+          "order": 0,
+          "body": "### Implementing Immutable Value Objects\nValue objects have no identity and are defined purely by their properties:\n\n```go\npackage domain\n\nimport (\n\t\"errors\"\n\t\"strings\"\n)\n\ntype Slug struct {\n\tvalue string\n}\n\nfunc NewSlug(raw string) (Slug, error) {\n\tclean := strings.ToLower(strings.TrimSpace(raw))\n\tif clean == \"\" {\n\t\treturn Slug{}, errors.New(\"slug cannot be empty\")\n\t}\n\treturn Slug{value: clean}, nil\n}\n```"
+        },
+        {
+          "title": "Lesson 2.2: Emitting Domain Events for Async Decoupling",
+          "type": "text",
+          "duration": 25,
+          "order": 1,
+          "body": "### Decoupling Secondary Actions\nWhen an `Article` state transitions to `PUBLISHED`, avoid calling email notification services or search indexers directly inside the aggregate. Emit a `DomainEvent` (`ArticlePublishedEvent`) to be processed asynchronously."
+        }
+      ]
+    },
+    {
+      "title": "Section 3: Clean Hexagonal Architecture (Ports & Adapters)",
+      "order": 2,
+      "lessons": [
+        {
+          "title": "Lesson 3.1: Structuring Hexagonal Go Directory Layouts",
+          "type": "text",
+          "duration": 25,
+          "order": 0,
+          "body": "### Layer Isolation Rules\n- **`domain/`**: Pure Go models and interfaces. ZERO third-party dependencies.\n- **`usecase/`**: Business application workflow coordinators.\n- **`infrastructure/`**: Database SQL queries, HTTP handlers, and external API clients."
+        }
+      ]
+    }
+  ]
+}

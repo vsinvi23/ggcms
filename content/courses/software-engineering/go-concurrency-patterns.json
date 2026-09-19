@@ -1,0 +1,68 @@
+{
+  "type": "COURSE",
+  "title": "Mastering Go Concurrency: Goroutines, Channels, and Select Patterns",
+  "description": "A comprehensive hands-on course on building highly concurrent, lock-free, scalable backend systems in Go using worker pools, fan-out/fan-in pipelines, context cancellation, and race detection.",
+  "categorySlug": "programming-languages",
+  "courseType": "TRACK",
+  "tags": [
+    "go",
+    "concurrency",
+    "backend-and-apis"
+  ],
+  "body": "Master Communicating Sequential Processes (CSP) in Go. This course covers everything from goroutine scheduler mechanics to production worker pools, rate limiters, context timeouts, and data race elimination.",
+  "sections": [
+    {
+      "title": "Section 1: Concurrency Primitives & Go Scheduler Internal Architecture",
+      "order": 0,
+      "lessons": [
+        {
+          "title": "Lesson 1.1: OS Threads vs. Go Scheduler M:N Model",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### The Scenario: Thread Starvation Crisis\nImagine running a backend service handling 50,000 concurrent HTTP requests. On traditional systems allocating 1MB OS thread stacks, 50,000 threads consume 50GB of RAM just for stack overhead, causing kernel thrashing and OS crash.\n\n### Go's M:N Runtime Scheduler Solution\nGo multiplexes N goroutines onto M operating system threads using P logical processors:\n- **G (Goroutine):** Starts with an initial lightweight ~2KB resizable stack.\n- **M (Machine):** OS kernel thread.\n- **P (Processor):** Context resource managing runnable Goroutine queues (`GOMAXPROCS`).\n\n```go\npackage main\n\nimport (\n\t\"fmt\"\n\t\"runtime\"\n\t\"sync\"\n)\n\nfunc main() {\n\tfmt.Printf(\"Logical CPUs (P): %d\\n\", runtime.NumCPU())\n\tvar wg sync.WaitGroup\n\tfor i := 0; i < 5; i++ {\n\t\twg.Add(1)\n\t\tgo func(id int) {\n\t\t\tdefer wg.Done()\n\t\t\tfmt.Printf(\"Goroutine %d executing\\n\", id)\n\t\t}(i)\n\t}\n\twg.Wait()\n}\n```"
+        },
+        {
+          "title": "Lesson 1.2: Channel Internals: Unbuffered vs. Buffered Channels",
+          "type": "text",
+          "duration": 25,
+          "order": 1,
+          "body": "### Unbuffered vs. Buffered Synchronization\n- **Unbuffered Channels (`make(chan T)`):** Guarantee strict synchronization. Producer blocks until consumer is ready to receive.\n- **Buffered Channels (`make(chan T, N)`):** Decouple producer and consumer execution up to buffer capacity N.\n\n```go\npackage main\n\nimport \"fmt\"\n\nfunc main() {\n\tch := make(chan string, 2)\n\tch <- \"payload-1\"\n\tch <- \"payload-2\"\n\t\n\tfmt.Println(<-ch)\n\tfmt.Println(<-ch)\n}\n```"
+        }
+      ]
+    },
+    {
+      "title": "Section 2: Production Concurrency Design Patterns",
+      "order": 1,
+      "lessons": [
+        {
+          "title": "Lesson 2.1: Bounded Worker Pools & Context Cancellation",
+          "type": "text",
+          "duration": 30,
+          "order": 0,
+          "body": "### The Scenario: Connection Pool Exhaustion\nA background webhook worker spawns unconstrained goroutines for 100,000 incoming webhooks, immediately maxing out PostgreSQL connection pools (100 max) and triggering database errors.\n\n### Production Worker Pool Solution\nCap maximum concurrent worker goroutines using buffered job channels and `context.Context` cancellation:\n\n```go\npackage main\n\nimport (\n\t\"context\"\n\t\"fmt\"\n\t\"sync\"\n\t\"time\"\n)\n\ntype Job struct {\n\tID int\n}\n\nfunc Worker(ctx context.Context, id int, jobs <-chan Job, wg *sync.WaitGroup) {\n\tdefer wg.Done()\n\tfor {\n\t\tselect {\n\t\tcase <-ctx.Done():\n\t\t\treturn\n\t\tcase job, ok := <-jobs:\n\t\t\tif !ok {\n\t\t\t\treturn\n\t\t\t}\n\t\t\tfmt.Printf(\"Worker %d processing job %d\\n\", id, job.ID)\n\t\t\ttime.Sleep(100 * time.Millisecond)\n\t\t}\n\t}\n}\n```"
+        },
+        {
+          "title": "Lesson 2.2: Fan-Out, Fan-In Pipeline Stream Processing",
+          "type": "text",
+          "duration": 25,
+          "order": 1,
+          "body": "### Fan-Out & Fan-In Architecture\n- **Fan-Out:** Multiple workers read from a single input stream channel to process tasks in parallel.\n- **Fan-In:** A single aggregator function combines multiple output channels into one unified result stream."
+        }
+      ]
+    },
+    {
+      "title": "Section 3: Race Detection & Safety Auditing",
+      "order": 2,
+      "lessons": [
+        {
+          "title": "Lesson 3.1: Eliminating Data Races with Race Detector (`go test -race`)",
+          "type": "text",
+          "duration": 20,
+          "order": 0,
+          "body": "### The Silent Corruption Bug\nConcurrent writes to non-atomic shared variables without mutex locking cause silent data corruption in multi-core processors. Always execute `go test -race ./...` in CI pipelines."
+        }
+      ]
+    }
+  ]
+}
