@@ -135,6 +135,8 @@ const App = () => (
                 <Route path="/practice/:quizId" element={<PracticeHub />} />
                 <Route path="/practice/*" element={<PracticeHub />} />
                 <Route path="/interview-prep" element={<InterviewPrepHub />} />
+                <Route path="/interview-prep/:trackSlug" element={<InterviewPrepHub />} />
+                <Route path="/interview-prep/*" element={<InterviewPrepHub />} />
                 <Route path="/technologies" element={<TechnologiesPage />} />
                 <Route path="/domains" element={<DomainsPage />} />
                 

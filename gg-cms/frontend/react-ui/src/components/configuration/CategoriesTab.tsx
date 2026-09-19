@@ -274,6 +274,7 @@ export function CategoriesTab() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryResponseDto | null>(null);
   const [categoryName, setCategoryName] = useState('');
+  const [parentId, setParentId] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<CategoryResponseDto | null>(null);
 
