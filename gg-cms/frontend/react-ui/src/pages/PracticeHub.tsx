@@ -179,134 +179,265 @@ export function PracticeHub() {
         </div>
 
         {activeQuiz ? (
-          /* In-Page Interactive Quiz View */
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
-            <Button variant="ghost" size="sm" onClick={() => setActiveQuiz(null)} className="rounded-xl gap-2 text-muted-foreground hover:text-foreground mb-2">
-              <ArrowRight className="w-4 h-4 rotate-180" /> Back to All Practice Tests
-            </Button>
+          /* 3-Column Interactive Quiz View */
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <Button variant="ghost" size="sm" onClick={() => setActiveQuiz(null)} className="rounded-xl gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="w-4 h-4" /> Back to All Practice Tests
+              </Button>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs font-bold uppercase">{activeQuiz.domainSlug}</Badge>
+                <Badge variant="outline" className="text-xs font-semibold capitalize">{activeQuiz.difficulty}</Badge>
+              </div>
+            </div>
 
-            <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
-              <div className="border-b border-border pb-4 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{activeQuiz.domainSlug.toUpperCase()}</Badge>
-                  <span className="text-xs text-muted-foreground font-semibold uppercase">{activeQuiz.difficulty}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              
+              {/* LEFT COLUMN: Questions Navigator (3 Cols) */}
+              <div className="lg:col-span-3 space-y-3 bg-card border border-border rounded-2xl p-4 shadow-2xs">
+                <div className="flex items-center justify-between border-b border-border pb-2.5">
+                  <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <Target className="w-4 h-4 text-primary" />
+                    Questions
+                  </span>
+                  <span className="text-xs font-bold text-primary">
+                    {Object.keys(selectedAnswers).length} / {activeQuiz.questions.length} Answered
+                  </span>
                 </div>
-                <h2 className="text-2xl font-extrabold text-foreground">{activeQuiz.title}</h2>
-                <p className="text-xs text-muted-foreground">{activeQuiz.description}</p>
+
+                <div className="space-y-2">
+                  {activeQuiz.questions.map((q, qIdx) => {
+                    const isCurrent = currentQuestionIdx === qIdx;
+                    const isAnswered = selectedAnswers[qIdx] !== undefined;
+
+                    return (
+                      <button
+                        key={q.id || qIdx}
+                        onClick={() => setCurrentQuestionIdx(qIdx)}
+                        className={cn(
+                          'w-full text-left p-3 rounded-xl border text-xs font-semibold transition-all flex items-center justify-between gap-2',
+                          isCurrent
+                            ? 'border-primary bg-primary/10 text-primary shadow-2xs font-bold'
+                            : isAnswered
+                            ? 'border-emerald-500/40 bg-emerald-500/5 text-foreground'
+                            : 'border-border bg-card hover:bg-muted/50 text-muted-foreground'
+                        )}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <span className={cn(
+                            'w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 font-bold',
+                            isCurrent ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                          )}>
+                            {qIdx + 1}
+                          </span>
+                          <span className="truncate">Question {qIdx + 1}</span>
+                        </div>
+
+                        {isAnswered && (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-2 border-t border-border">
+                  <Progress value={(Object.keys(selectedAnswers).length / (activeQuiz.questions.length || 1)) * 100} className="h-1.5" />
+                  <p className="text-[11px] text-muted-foreground mt-1.5 text-center font-medium">
+                    Click any question above to jump directly.
+                  </p>
+                </div>
               </div>
 
-              {activeQuiz.questions.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground text-sm">
-                  Full practice set coming soon. Select &ldquo;OAuth 2.0 & OIDC Practice Test&rdquo; for live interactive questions.
-                </div>
-              ) : !isSubmitted ? (
-                <div className="space-y-6 pt-2">
-                  <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                    <span>Question {currentQuestionIdx + 1} of {activeQuiz.questions.length}</span>
-                    <span>{Math.round(((currentQuestionIdx + 1) / activeQuiz.questions.length) * 100)}% Complete</span>
+              {/* CENTER COLUMN: Main Content & Question Runner (6 Cols) */}
+              <div className="lg:col-span-6 space-y-6">
+                <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
+                  <div className="border-b border-border pb-4 space-y-1">
+                    <h2 className="text-xl font-extrabold text-foreground">{activeQuiz.title}</h2>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{activeQuiz.description}</p>
                   </div>
-                  <Progress value={((currentQuestionIdx + 1) / activeQuiz.questions.length) * 100} className="h-1.5" />
 
-                  <div className="space-y-4">
-                    <h4 className="text-base font-bold text-foreground leading-snug">
-                      {activeQuiz.questions[currentQuestionIdx].question}
-                    </h4>
+                  {activeQuiz.questions.length === 0 ? (
+                    <div className="py-12 text-center text-muted-foreground text-sm">
+                      Full practice set coming soon. Select &ldquo;OAuth 2.0 & OIDC Practice Test&rdquo; for live interactive questions.
+                    </div>
+                  ) : !isSubmitted ? (
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                        <span>Question {currentQuestionIdx + 1} of {activeQuiz.questions.length}</span>
+                        <span>{Math.round(((currentQuestionIdx + 1) / activeQuiz.questions.length) * 100)}% Complete</span>
+                      </div>
+                      <Progress value={((currentQuestionIdx + 1) / activeQuiz.questions.length) * 100} className="h-1.5" />
 
-                    <div className="space-y-2.5 pt-2">
-                      {activeQuiz.questions[currentQuestionIdx].options.map((opt, optIdx) => {
-                        const isSelected = selectedAnswers[currentQuestionIdx] === optIdx;
-                        return (
-                          <button
-                            key={optIdx}
-                            onClick={() => handleSelectOption(currentQuestionIdx, optIdx)}
-                            className={`w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between ${
-                              isSelected
-                                ? 'bg-primary/10 border-primary text-primary font-bold shadow-xs'
-                                : 'bg-card border-border text-foreground hover:bg-muted/60'
-                            }`}
+                      <div className="space-y-4">
+                        <h3 className="text-base font-bold text-foreground leading-snug">
+                          {activeQuiz.questions[currentQuestionIdx].question}
+                        </h3>
+
+                        <div className="space-y-2.5 pt-2">
+                          {activeQuiz.questions[currentQuestionIdx].options.map((opt, optIdx) => {
+                            const isSelected = selectedAnswers[currentQuestionIdx] === optIdx;
+                            return (
+                              <button
+                                key={optIdx}
+                                onClick={() => handleSelectOption(currentQuestionIdx, optIdx)}
+                                className={cn(
+                                  'w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between',
+                                  isSelected
+                                    ? 'bg-primary/10 border-primary text-primary font-bold shadow-xs'
+                                    : 'bg-card border-border text-foreground hover:bg-muted/60'
+                                )}
+                              >
+                                <span>{opt}</span>
+                                <div className={cn(
+                                  'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
+                                  isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40'
+                                )}>
+                                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-background" />}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t border-border">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={currentQuestionIdx === 0}
+                          onClick={() => setCurrentQuestionIdx(prev => prev - 1)}
+                          className="rounded-xl text-xs"
+                        >
+                          Previous
+                        </Button>
+
+                        {currentQuestionIdx < activeQuiz.questions.length - 1 ? (
+                          <Button
+                            size="sm"
+                            disabled={selectedAnswers[currentQuestionIdx] === undefined}
+                            onClick={() => setCurrentQuestionIdx(prev => prev + 1)}
+                            className="rounded-xl text-xs font-bold"
                           >
-                            <span>{opt}</span>
-                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                              isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40'
-                            }`}>
-                              {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-background" />}
+                            Next Question
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            disabled={Object.keys(selectedAnswers).length < activeQuiz.questions.length}
+                            onClick={() => setIsSubmitted(true)}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs"
+                          >
+                            Submit Test
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6 text-center">
+                      <div className="p-6 rounded-3xl bg-primary/5 border border-primary/20 space-y-2">
+                        <Trophy className="w-12 h-12 text-primary mx-auto mb-1" />
+                        <h3 className="text-3xl font-extrabold text-foreground">{calculateScore()}% Score</h3>
+                        <p className="text-xs text-muted-foreground">
+                          Correct Answers: {activeQuiz.questions.filter((q, i) => selectedAnswers[i] === q.correctOptionIndex).length} / {activeQuiz.questions.length}
+                        </p>
+                      </div>
+
+                      <div className="space-y-4 text-left">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Question Review</h4>
+                        {activeQuiz.questions.map((q, i) => {
+                          const isCorrect = selectedAnswers[i] === q.correctOptionIndex;
+                          return (
+                            <div key={q.id} className={cn(
+                              'p-4 rounded-2xl border text-xs space-y-2',
+                              isCorrect ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-rose-500/5 border-rose-500/30'
+                            )}>
+                              <div className="flex items-center gap-2 font-bold">
+                                {isCorrect ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />}
+                                <span>Q{i+1}: {q.question}</span>
+                              </div>
+                              <p className="text-muted-foreground leading-relaxed pl-6">
+                                <span className="font-semibold text-foreground">Explanation:</span> {q.explanation}
+                              </p>
                             </div>
-                          </button>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 pt-2 justify-center">
+                        <Button variant="outline" size="sm" onClick={() => startQuiz(activeQuiz)} className="rounded-xl text-xs">
+                          <RefreshCw className="w-3.5 h-3.5 mr-1" /> Try Again
+                        </Button>
+                        <Button size="sm" onClick={() => { setActiveQuiz(null); navigate('/explore'); }} className="rounded-xl text-xs">
+                          <BookOpen className="w-3.5 h-3.5 mr-1" /> Practice Weak Areas
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* RIGHTMOST COLUMN: Related Content & Recommended Courses (3 Cols) */}
+              <div className="lg:col-span-3 space-y-4">
+                
+                {/* Related Practice Sets */}
+                <div className="bg-card border border-border rounded-2xl p-4 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-border pb-2">
+                    <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <HelpCircle className="w-4 h-4 text-primary" />
+                      More Practice Sets
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {mockQuizzes.filter(q => q.id !== activeQuiz.id).map(q => (
+                      <div key={q.id} className="p-3 rounded-xl border border-border hover:border-primary/40 transition-all bg-card/60 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="secondary" className="text-[10px] font-bold">{q.domainSlug.toUpperCase()}</Badge>
+                          <span className="text-[10px] text-muted-foreground capitalize font-semibold">{q.difficulty}</span>
+                        </div>
+                        <h4 className="text-xs font-bold text-foreground line-clamp-1">{q.title}</h4>
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1">
+                          <span>{q.questionsCount} Questions &bull; {q.estimatedMinutes}m</span>
+                          <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] font-bold text-primary" onClick={() => startQuiz(q)}>
+                            Switch <ArrowRight className="w-3 h-3 ml-0.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Related Learning Courses */}
+                <div className="bg-card border border-border rounded-2xl p-4 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between border-b border-border pb-2">
+                    <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <BookOpen className="w-4 h-4 text-primary" />
+                      Related Courses
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <div className="p-3 rounded-xl border border-border/70 space-y-1.5 bg-card/40">
+                      <h4 className="text-xs font-bold text-foreground line-clamp-1">OAuth 2.0 & OIDC Fundamentals</h4>
+                      <p className="text-[11px] text-muted-foreground line-clamp-2">Master PKCE flows, authorization server setup, and JWT claims.</p>
+                      <Button size="sm" variant="outline" className="w-full text-[11px] font-semibold h-7 rounded-lg mt-1" onClick={() => navigate('/course/oauth-2-fundamentals')}>
+                        Study Course
+                      </Button>
+                    </div>
+
+                    <div className="p-3 rounded-xl border border-border/70 space-y-1.5 bg-card/40">
+                      <h4 className="text-xs font-bold text-foreground line-clamp-1">Go Backend Engineering</h4>
+                      <p className="text-[11px] text-muted-foreground line-clamp-2">Learn concurrency, channels, and REST microservices in Go.</p>
+                      <Button size="sm" variant="outline" className="w-full text-[11px] font-semibold h-7 rounded-lg mt-1" onClick={() => navigate('/course/go-backend-engineering')}>
+                        Study Course
+                      </Button>
                     </div>
                   </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={currentQuestionIdx === 0}
-                      onClick={() => setCurrentQuestionIdx(prev => prev - 1)}
-                    >
-                      Previous
-                    </Button>
-
-                    {currentQuestionIdx < activeQuiz.questions.length - 1 ? (
-                      <Button
-                        size="sm"
-                        disabled={selectedAnswers[currentQuestionIdx] === undefined}
-                        onClick={() => setCurrentQuestionIdx(prev => prev + 1)}
-                      >
-                        Next Question
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        disabled={Object.keys(selectedAnswers).length < activeQuiz.questions.length}
-                        onClick={() => setIsSubmitted(true)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-                      >
-                        Submit Test
-                      </Button>
-                    )}
-                  </div>
                 </div>
-              ) : (
-                <div className="space-y-6 pt-2 text-center">
-                  <div className="p-6 rounded-3xl bg-primary/5 border border-primary/20 space-y-2">
-                    <Trophy className="w-12 h-12 text-primary mx-auto mb-1" />
-                    <h3 className="text-3xl font-extrabold text-foreground">{calculateScore()}% Score</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Correct Answers: {activeQuiz.questions.filter((q, i) => selectedAnswers[i] === q.correctOptionIndex).length} / {activeQuiz.questions.length}
-                    </p>
-                  </div>
 
-                  <div className="space-y-4 text-left">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Question Review</h4>
-                    {activeQuiz.questions.map((q, i) => {
-                      const isCorrect = selectedAnswers[i] === q.correctOptionIndex;
-                      return (
-                        <div key={q.id} className={`p-4 rounded-2xl border text-xs space-y-2 ${
-                          isCorrect ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-rose-500/5 border-rose-500/30'
-                        }`}>
-                          <div className="flex items-center gap-2 font-bold">
-                            {isCorrect ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />}
-                            <span>Q{i+1}: {q.question}</span>
-                          </div>
-                          <p className="text-muted-foreground leading-relaxed pl-6">
-                            <span className="font-semibold text-foreground">Explanation:</span> {q.explanation}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
+              </div>
 
-                  <div className="flex flex-wrap gap-2 pt-2 justify-center">
-                    <Button variant="outline" size="sm" onClick={() => startQuiz(activeQuiz)}>
-                      <RefreshCw className="w-3.5 h-3.5 mr-1" /> Try Again
-                    </Button>
-                    <Button size="sm" onClick={() => { setActiveQuiz(null); navigate('/explore'); }}>
-                      <BookOpen className="w-3.5 h-3.5 mr-1" /> Practice Weak Areas
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         ) : (
