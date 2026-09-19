@@ -103,6 +103,8 @@ const App = () => (
                 <Route path="/learning-paths" element={<LearningPathsHub />} />
                 <Route path="/explore" element={<ExplorePage />} />
                 <Route path="/practice" element={<PracticeHub />} />
+                <Route path="/practice/:quizId" element={<PracticeHub />} />
+                <Route path="/practice/*" element={<PracticeHub />} />
                 <Route path="/interview-prep" element={<InterviewPrepHub />} />
                 <Route path="/technologies" element={<TechnologiesPage />} />
                 <Route path="/domains" element={<DomainsPage />} />
@@ -111,6 +113,8 @@ const App = () => (
                 <Route path="/explore/articles" element={<ExplorePage />} />
                 <Route path="/explore/courses" element={<Navigate to="/courses" replace />} />
                 <Route path="/explore/paths" element={<Navigate to="/learning-paths" replace />} />
+                <Route path="/explore/practice" element={<Navigate to="/practice" replace />} />
+                <Route path="/explore/quizzes" element={<Navigate to="/practice" replace />} />
                 <Route path="/explore/:category" element={<ExplorePage />} />
                 <Route path="/articles" element={<ExplorePage />} />
                 <Route path="/article/*" element={<PublicArticleView />} />

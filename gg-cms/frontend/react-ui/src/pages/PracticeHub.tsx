@@ -1,18 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { Search, Target, CheckCircle2, AlertTriangle, Trophy, BarChart3, Clock, ArrowRight, HelpCircle, BookOpen, Filter, X, RefreshCw } from 'lucide-react';
+import { Search, Target, CheckCircle2, AlertTriangle, Trophy, BarChart3, Clock, ArrowRight, HelpCircle, BookOpen, Filter, X, RefreshCw, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Quiz } from '@/types/knowledge-graph';
-import { useNavigate } from 'react-router-dom';
+import { Quiz, QuestionItem } from '@/types/knowledge-graph';
+import { cn } from '@/lib/utils';
 
 const mockQuizzes: Quiz[] = [
   {
@@ -65,6 +60,32 @@ const mockQuizzes: Quiz[] = [
         explanation: 'ID Tokens (JSON Web Tokens) are formatted specifically for the client app to consume identity assertions about the authenticated end-user.',
         topicSlug: 'oidc',
       },
+      {
+        id: 'q1-4',
+        question: 'What is the main security purpose of the `state` parameter in an OAuth 2.0 Authorization Request?',
+        options: [
+          'To store user profile parameters like email and display name',
+          'To protect against Cross-Site Request Forgery (CSRF) attacks',
+          'To encrypt the client application secret key',
+          'To specify the requested scopes for the access token',
+        ],
+        correctOptionIndex: 1,
+        explanation: 'The state parameter binds the authorization request to the user browser session, preventing attackers from injecting arbitrary authorization codes.',
+        topicSlug: 'security',
+      },
+      {
+        id: 'q1-5',
+        question: 'Which HTTP Header is standard for transmitting a JWT Access Token to a protected Resource Server?',
+        options: [
+          'Authorization: Bearer <token>',
+          'X-Access-Token: <token>',
+          'Content-Type: application/jwt',
+          'Authentication: Basic <token>',
+        ],
+        correctOptionIndex: 0,
+        explanation: 'RFC 6750 specifies transmitting OAuth 2.0 Bearer Tokens in the HTTP Authorization header using the format "Bearer <token>".',
+        topicSlug: 'jwt',
+      },
     ],
   },
   {
@@ -77,7 +98,60 @@ const mockQuizzes: Quiz[] = [
     difficulty: 'intermediate',
     questionsCount: 4,
     estimatedMinutes: 8,
-    questions: [],
+    questions: [
+      {
+        id: 'q2-1',
+        question: 'What happens when sending data to an unbuffered channel in Go when no receiver goroutine is ready?',
+        options: [
+          'The send operation fails immediately with a runtime error',
+          'The sending goroutine blocks until a receiver reads from the channel',
+          'Data is stored in a temporary heap buffer automatically',
+          'The value is silently discarded',
+        ],
+        correctOptionIndex: 1,
+        explanation: 'Unbuffered channels perform synchronous communication. A send operation blocks until a receiver is ready to read the value.',
+        topicSlug: 'channels',
+      },
+      {
+        id: 'q2-2',
+        question: 'Which sync primitive is best used to wait for a collection of goroutines to finish executing?',
+        options: [
+          'sync.Mutex',
+          'sync.Cond',
+          'sync.WaitGroup',
+          'sync.Once',
+        ],
+        correctOptionIndex: 2,
+        explanation: 'sync.WaitGroup provides Add(), Done(), and Wait() methods specifically designed to synchronize the completion of concurrent worker goroutines.',
+        topicSlug: 'sync',
+      },
+      {
+        id: 'q2-3',
+        question: 'How does Go select statement behave when multiple channel operations are simultaneously ready?',
+        options: [
+          'It executes the top-most case in code order',
+          'It executes all ready cases concurrently',
+          'It selects one ready case uniform-randomly',
+          'It throws a deadlock panic',
+        ],
+        correctOptionIndex: 2,
+        explanation: 'If multiple channel cases are ready in a select block, Go selects one case at random to prevent starvation and unfair bias.',
+        topicSlug: 'select',
+      },
+      {
+        id: 'q2-4',
+        question: 'What is the primary advantage of sync.RWMutex over a standard sync.Mutex?',
+        options: [
+          'It automatically resolves deadlocks',
+          'Multiple readers can hold the lock simultaneously as long as no writer holds it',
+          'It operates without any memory allocation',
+          'It automatically garbage-collects idle goroutines',
+        ],
+        correctOptionIndex: 1,
+        explanation: 'sync.RWMutex allows concurrent read locks (RLock), dramatically improving read throughput when writes are infrequent.',
+        topicSlug: 'mutex',
+      },
+    ],
   },
   {
     id: 'q-3',
@@ -87,14 +161,192 @@ const mockQuizzes: Quiz[] = [
     topicSlug: 'kubernetes',
     domainSlug: 'cloud',
     difficulty: 'advanced',
-    questionsCount: 6,
-    estimatedMinutes: 15,
-    questions: [],
+    questionsCount: 4,
+    estimatedMinutes: 10,
+    questions: [
+      {
+        id: 'q3-1',
+        question: 'What is the default Service type in Kubernetes when no type is explicitly specified in the spec?',
+        options: [
+          'NodePort',
+          'LoadBalancer',
+          'ClusterIP',
+          'ExternalName',
+        ],
+        correctOptionIndex: 2,
+        explanation: 'ClusterIP is the default service type, exposing the service on a cluster-internal IP address accessible only from within the cluster.',
+        topicSlug: 'k8s-services',
+      },
+      {
+        id: 'q3-2',
+        question: 'What is the main function of an Ingress Controller in a Kubernetes cluster?',
+        options: [
+          'To assign IP addresses to newly scheduled pods',
+          'To manage HTTP/HTTPS layer 7 routing rules from outside the cluster to internal services',
+          'To encrypt container disk volumes at rest',
+          'To automatically scale worker nodes based on CPU usage',
+        ],
+        correctOptionIndex: 1,
+        explanation: 'An Ingress Controller evaluates Ingress rules to route external HTTP/HTTPS traffic to internal Kubernetes services.',
+        topicSlug: 'k8s-ingress',
+      },
+      {
+        id: 'q3-3',
+        question: 'How does a Headless Service (`spec.clusterIP: None`) behave in Kubernetes DNS?',
+        options: [
+          'It assigns a virtual cluster IP that load balances requests across pods',
+          'It creates DNS A/AAAA records returning direct pod IP addresses directly',
+          'It blocks all inbound network traffic to matching pods',
+          'It exposes the pods directly on external cloud load balancer ports',
+        ],
+        correctOptionIndex: 1,
+        explanation: 'Headless services return direct A records pointing to pod IPs without cluster IP proxying, commonly used for StatefulSets.',
+        topicSlug: 'k8s-dns',
+      },
+      {
+        id: 'q3-4',
+        question: 'What role does a CNI (Container Network Interface) plugin play in Kubernetes?',
+        options: [
+          'It compiles Go code into container binaries',
+          'It configures network interfaces and IP routing for pods across cluster nodes',
+          'It manages container log aggregation and storage',
+          'It generates TLS certificates for API server clients',
+        ],
+        correctOptionIndex: 1,
+        explanation: 'CNI plugins (like Calico, Cilium, Flannel) establish network connectivity, pod IP allocation, and network policy enforcement across cluster nodes.',
+        topicSlug: 'cni',
+      },
+    ],
+  },
+  {
+    id: 'q-4',
+    slug: 'system-design-quiz',
+    title: 'System Design & Distributed Systems Quiz',
+    description: 'Test CAP Theorem, caching topologies, message queues, and horizontal partitioning strategies.',
+    topicSlug: 'system-design',
+    domainSlug: 'architecture',
+    difficulty: 'advanced',
+    questionsCount: 4,
+    estimatedMinutes: 12,
+    questions: [
+      {
+        id: 'q4-1',
+        question: 'According to the CAP Theorem, what two guarantees can a distributed system choose during a network partition (P)?',
+        options: [
+          'Consistency and Availability',
+          'Consistency and Performance',
+          'Availability and Latency',
+          'Partition Tolerance and Security',
+        ],
+        correctOptionIndex: 0,
+        explanation: 'When a network partition (P) occurs, a distributed system must trade off between Consistency (CP) or Availability (AP).',
+        topicSlug: 'cap-theorem',
+      },
+      {
+        id: 'q4-2',
+        question: 'Which caching pattern reads from the database on a cache miss, populates the cache, and returns the result?',
+        options: [
+          'Write-Through',
+          'Write-Behind / Write-Back',
+          'Cache-Aside (Lazy Loading)',
+          'Refresh-Ahead',
+        ],
+        correctOptionIndex: 2,
+        explanation: 'In the Cache-Aside pattern, the application code checks the cache first, reads from DB on miss, writes the entry into cache, and returns data to client.',
+        topicSlug: 'caching',
+      },
+      {
+        id: 'q4-3',
+        question: 'What is the primary role of the Circuit Breaker pattern in microservices architecture?',
+        options: [
+          'To encrypt network packets between services',
+          'To prevent cascading service failures by failing fast when a remote call consistently fails',
+          'To balance HTTP traffic across web servers',
+          'To replicate database tables to read replicas',
+        ],
+        correctOptionIndex: 1,
+        explanation: 'Circuit Breakers track remote call failures and temporarily trip open to prevent overloading a degraded downstream service.',
+        topicSlug: 'microservices',
+      },
+      {
+        id: 'q4-4',
+        question: 'What is Consistent Hashing primarily used for in distributed storage systems?',
+        options: [
+          'To hash user passwords securely before storing in SQL',
+          'To minimize data remapping when nodes are added or removed from a distributed cache/cluster',
+          'To compress JSON data sent over REST APIs',
+          'To verify signature hashes in JWT tokens',
+        ],
+        correctOptionIndex: 1,
+        explanation: 'Consistent Hashing maps keys to nodes on a virtual ring, ensuring that adding/removing a node only reassigns K/n keys on average.',
+        topicSlug: 'distributed-systems',
+      },
+    ],
   },
 ];
 
+function generateQuestionsForSlug(slug: string): QuestionItem[] {
+  const cleanTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  return [
+    {
+      id: `${slug}-1`,
+      question: `What is a primary architectural principle of ${cleanTitle}?`,
+      options: [
+        'Separation of concerns and modular component isolation',
+        'Direct hardcoding of credentials inside application source files',
+        'Bypassing network encryption in local dev environments',
+        'Executing synchronous blocking calls on UI looper threads',
+      ],
+      correctOptionIndex: 0,
+      explanation: `${cleanTitle} relies on clear separation of concerns, abstraction boundaries, and resilient microservice design.`,
+      topicSlug: slug,
+    },
+    {
+      id: `${slug}-2`,
+      question: `Which approach is best practice when scaling ${cleanTitle} for high-traffic workloads?`,
+      options: [
+        'Horizontal pod autoscaling combined with connection pooling and caching',
+        'Increasing single-node RAM without load balancing',
+        'Disabling database indexing to speed up write throughput',
+        'Storing transient session states in local container filesystems',
+      ],
+      correctOptionIndex: 0,
+      explanation: 'Stateless service scaling with connection pooling and caching ensures linear horizontal scalability under load.',
+      topicSlug: slug,
+    },
+    {
+      id: `${slug}-3`,
+      question: `How should security and authentication be enforced in ${cleanTitle}?`,
+      options: [
+        'Relying on perimeter firewalls without internal token validation',
+        'Enforcing Zero Trust verification with JWT Bearer tokens and TLS encryption',
+        'Using hardcoded fallback tokens in HTTP client headers',
+        'Disabling CORS checks on public API endpoints',
+      ],
+      correctOptionIndex: 1,
+      explanation: 'Zero Trust architecture mandates cryptographically validated tokens and TLS encryption across every boundary.',
+      topicSlug: slug,
+    },
+    {
+      id: `${slug}-4`,
+      question: `What metric is most critical for monitoring health in ${cleanTitle}?`,
+      options: [
+        'Latency percentiles (p95/p99), error rate, and saturation',
+        'Raw git commit count per developer per day',
+        'Total line count of client-side bundles',
+        'Database table column count',
+      ],
+      correctOptionIndex: 0,
+      explanation: 'SRE Golden Signals (Latency, Traffic, Errors, and Saturation) provide the most accurate visibility into system performance.',
+      topicSlug: slug,
+    },
+  ];
+}
+
 export function PracticeHub() {
   const navigate = useNavigate();
+  const { quizId } = useParams<{ quizId?: string }>();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
@@ -111,6 +363,30 @@ export function PracticeHub() {
     setSelectedAnswers({});
     setIsSubmitted(false);
   };
+
+  useEffect(() => {
+    if (quizId) {
+      const found = mockQuizzes.find(q => q.id === quizId || q.slug === quizId);
+      if (found) {
+        startQuiz(found);
+      } else {
+        const cleanTitle = quizId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        const fallbackQuiz: Quiz = {
+          id: quizId,
+          slug: quizId,
+          title: cleanTitle.includes('Quiz') || cleanTitle.includes('Test') ? cleanTitle : `${cleanTitle} Practice Test`,
+          description: `Comprehensive interactive practice assessment for ${cleanTitle}.`,
+          topicSlug: quizId,
+          domainSlug: 'practice',
+          difficulty: 'intermediate',
+          questionsCount: 4,
+          estimatedMinutes: 10,
+          questions: generateQuestionsForSlug(quizId),
+        };
+        startQuiz(fallbackQuiz);
+      }
+    }
+  }, [quizId]);
 
   const handleSelectOption = (qIdx: number, optionIdx: number) => {
     if (isSubmitted) return;
