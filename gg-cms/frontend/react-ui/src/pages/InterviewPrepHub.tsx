@@ -38,20 +38,20 @@ export const mockInterviewCourses: InterviewCourse[] = [
     id: 'ic-1',
     slug: 'system-design',
     title: 'System Design & Technical Interview Track',
-    description: 'Comprehensive interview track covering high-scale system design, load balancing, caching, database sharding, and real-time distributed systems.',
+    description: 'Comprehensive interview track covering high-scale system design, load balancing, caching, database sharding, distributed transactions, and real-time systems.',
     difficulty: 'Senior',
     role: 'Software Engineer',
     round: 'System Design',
-    estimatedHours: 12,
+    estimatedHours: 14,
     questions: [
       {
         id: 'iq-101',
         questionNumber: 1,
         question: 'How would you design a distributed rate limiter to handle 100k requests/sec across multiple data centers?',
         thinkPrompt: 'Consider Token Bucket vs Leaky Bucket algorithms, Redis atomicity (Lua scripts), and sliding window log counters.',
-        answerExplanation: `1. Algorithm Selection: Use Sliding Window Counter with Redis for memory efficiency and precision.
+        answerExplanation: `1. Algorithm Selection: Use Sliding Window Counter with Redis for memory efficiency and high sub-millisecond precision.
 2. Atomicity: Execute rate-limit evaluation inside a Redis Lua Script to ensure atomic check-and-increment operations without race conditions.
-3. Multi-DC Sync: Deploy local Redis clusters per region with local rate-limiting counters, periodically syncing aggregate usage asynchronously to avoid inter-region latency.`,
+3. Multi-DC Sync: Deploy local Redis clusters per region with local rate-limiting counters, periodically syncing aggregate usage asynchronously to avoid inter-region latency penalty.`,
         commonMistakes: [
           'Using fixed window counters which allow 2x burst traffic at window boundaries',
           'Making remote synchronous API calls across regions during the rate-limit evaluation path',
@@ -64,8 +64,8 @@ export const mockInterviewCourses: InterviewCourse[] = [
         question: 'How do you design a high-throughput real-time notification system with delivery guarantees?',
         thinkPrompt: 'Think about WebSocket connection gateways, message queues (Kafka), idempotent delivery, and push notifications.',
         answerExplanation: `1. Gateway Layer: Stateful WebSocket gateway servers maintain persistent client connections.
-2. Queue Layer: Use Kafka topics partitioned by userId to guarantee ordered message delivery.
-3. Idempotency & Persistence: Store notification status in PostgreSQL with unique message UUIDs to handle retries cleanly.`,
+2. Queue Layer: Use Kafka topics partitioned by userId to guarantee ordered message delivery across consumer groups.
+3. Idempotency & Persistence: Store notification status in PostgreSQL with unique message UUIDs to handle retries cleanly without duplicating alerts.`,
         commonMistakes: [
           'Storing active WebSocket connection state in single monolithic app memory without a pub/sub backbone',
           'Failing to implement client-side deduplication using unique message IDs',
@@ -77,14 +77,56 @@ export const mockInterviewCourses: InterviewCourse[] = [
         questionNumber: 3,
         question: 'How do you handle database sharding and rebalancing without downtime in a high-growth SaaS application?',
         thinkPrompt: 'Evaluate Consistent Hashing, virtual nodes, dual-writing during migration, and backfill scripts.',
-        answerExplanation: `1. Sharding Key: Choose a high-cardinality key (e.g. tenant_id or user_id) to avoid hotspotting.
+        answerExplanation: `1. Sharding Key: Choose a high-cardinality key (e.g. tenant_id or user_id) to avoid hotspotting across database nodes.
 2. Consistent Hashing: Map shard ranges using a virtual node ring to minimize key movements when adding new database instances.
-3. Zero-Downtime Migration: Dual-write to old and new shards, asynchronously backfill historical data, verify checksums, and switch read traffic.`,
+3. Zero-Downtime Migration: Dual-write to old and new shards, asynchronously backfill historical data, verify checksums, and switch read traffic safely.`,
         commonMistakes: [
           'Selecting low-cardinality keys like country or gender resulting in uneven shard sizes',
           'Performing hard cutovers without shadow writes or automated fallback mechanisms',
         ],
         relatedConcepts: ['Sharding', 'Consistent Hashing', 'Database Scaling', 'Zero Downtime'],
+      },
+      {
+        id: 'iq-104',
+        questionNumber: 4,
+        question: 'How do you manage distributed transactions across microservices without relying on 2-Phase Commit (2PC)?',
+        thinkPrompt: 'Evaluate the Saga Pattern (Choreography vs Orchestration), Compensating Transactions, and the Transactional Outbox Pattern.',
+        answerExplanation: `1. Saga Pattern: Break the distributed transaction into a sequence of local transactions. Each step executes a local DB write and publishes an event.
+2. Orchestration vs Choreography: Prefer Orchestration for complex workflows where a dedicated Coordinator service drives execution and handles compensations.
+3. Transactional Outbox: Write domain updates and outgoing event payloads into an outbox table within the same DB transaction, then tail outbox via CDC (Debezium/Kafka) for 100% atomicity.`,
+        commonMistakes: [
+          'Using synchronous 2PC (Two-Phase Commit) which locks resources and drastically reduces throughput under network partitions',
+          'Publishing Kafka events before committing local DB transactions, risking ghost events if DB rolls back',
+        ],
+        relatedConcepts: ['Saga Pattern', 'Transactional Outbox', 'Eventual Consistency', 'Microservices'],
+      },
+      {
+        id: 'iq-105',
+        questionNumber: 5,
+        question: 'How do you prevent Cache Stampede (Thundering Herd) and manage multi-tier caching (Edge CDN + L2 Redis)?',
+        thinkPrompt: 'Consider Singleflight mutex request deduplication, probabilistic early expiration (XFetch algorithm), and cache write-through strategies.',
+        answerExplanation: `1. Singleflight Deduplication: Use Go singleflight or in-memory mutex locks to ensure only ONE worker fetches expensive data from PostgreSQL when cache expires.
+2. Probabilistic Expiration: Implement XFetch or background refresh tasks before TTL expires to keep hot keys warm automatically.
+3. Tiering: Cache static assets at Cloudflare CDN edge, aggregated JSON payloads in L2 Redis cluster, and index lookups in process memory.`,
+        commonMistakes: [
+          'Allowing 10,000 concurrent requests to hit the DB directly when a cache key expires simultaneously',
+          'Setting static TTLs without jitter, causing massive simultaneous key evaporations',
+        ],
+        relatedConcepts: ['Cache Stampede', 'Singleflight', 'Redis L2', 'Multi-Tier Caching'],
+      },
+      {
+        id: 'iq-106',
+        questionNumber: 6,
+        question: 'How do you implement distributed locking securely across cluster instances, and how do you protect against GC pauses?',
+        thinkPrompt: 'Evaluate Redis Redlock, Zookeeper/etcd lease locks, Fencing Tokens, and clock drift vulnerabilities.',
+        answerExplanation: `1. Algorithm & Lease: Use etcd or Redis with TTL leases. Set lock duration larger than maximum expected execution window.
+2. Fencing Tokens: Generate a monotonically increasing fencing token with each lock acquisition. Storage backends validate token version before applying writes.
+3. GC Pause Resilience: Even if a process suffers a stop-the-world GC pause causing lock expiry, the storage engine rejects stale writes with outdated fencing tokens.`,
+        commonMistakes: [
+          'Assuming a basic Redis SETNX key lock is sufficient without fencing tokens or lease renewals',
+          'Ignoring clock drift across servers when relying on time-based lock expirations',
+        ],
+        relatedConcepts: ['Distributed Locking', 'Redlock', 'Fencing Tokens', 'etcd / Zookeeper'],
       }
     ],
   },
@@ -201,7 +243,7 @@ function generateQuestionsForTrack(slug: string): InterviewQuestionItem[] {
     {
       id: `${slug}-q1`,
       questionNumber: 1,
-      question: `How would you architect a production-grade system for ${cleanTitle}?`,
+      question: `How would you architect a high-availability, production-grade system for ${cleanTitle}?`,
       thinkPrompt: 'Consider microservice decoupling, stateless API layers, caching strategies, and database indexing.',
       answerExplanation: `1. System Boundaries: Define distinct microservices with REST/gRPC API boundaries.
 2. Resiliency: Implement circuit breakers, rate limiters, and retry logic with exponential backoff.
@@ -212,13 +254,35 @@ function generateQuestionsForTrack(slug: string): InterviewQuestionItem[] {
     {
       id: `${slug}-q2`,
       questionNumber: 2,
-      question: `What telemetry and observability metrics are essential for ${cleanTitle}?`,
+      question: `What telemetry and observability metrics are essential for diagnosing issues in ${cleanTitle}?`,
       thinkPrompt: 'Evaluate OpenTelemetry tracing, Prometheus metrics, structured JSON logging, and alerting thresholds.',
       answerExplanation: `1. Golden Signals: Track Latency, Traffic, Error Rates, and Saturation.
 2. Tracing: Inject distributed trace IDs across HTTP request headers.
 3. Alerting: Configure PagerDuty alerts on p99 latency spikes and error rate breaches (>1%).`,
       commonMistakes: ['Logging sensitive credentials in plain text', 'Alerting on transient non-actionable spikes'],
       relatedConcepts: ['Observability', 'OpenTelemetry', 'Prometheus', 'Metrics'],
+    },
+    {
+      id: `${slug}-q3`,
+      questionNumber: 3,
+      question: `How do you handle database concurrency, distributed locking, and cache invalidation in ${cleanTitle}?`,
+      thinkPrompt: 'Consider pessimistic vs optimistic locking, Redis cache eviction policies, and CDC sync.',
+      answerExplanation: `1. Optimistic Locking: Use version numbers on database records to prevent lost updates under low contention.
+2. Cache Invalidation: Implement write-through caching or tail DB logs via Change Data Capture (CDC) to keep Redis synchronized.
+3. Distributed Locks: Use Redis/etcd locks with fencing tokens when coordinating shared resources across cluster nodes.`,
+      commonMistakes: ['Using long-running database transactions for external network calls', 'Omitting TTLs on cache entries'],
+      relatedConcepts: ['Concurrency', 'Cache Invalidation', 'CDC', 'Optimistic Locking'],
+    },
+    {
+      id: `${slug}-q4`,
+      questionNumber: 4,
+      question: `How would you scale ${cleanTitle} for 10x traffic growth while preserving low-latency SLA guarantees?`,
+      thinkPrompt: 'Evaluate horizontal autoscaling (HPA), read replica pooling, CDN edge caching, and asynchronous job processing.',
+      answerExplanation: `1. Autoscaling: Configure Kubernetes Horizontal Pod Autoscaler (HPA) targeting 70% CPU/Memory utilization.
+2. Read Scaling: Offload read queries to PostgreSQL read replicas using a connection pooler like PgBouncer.
+3. Async Queues: Move heavy computations and background tasks to asynchronous workers via Kafka/RabbitMQ.`,
+      commonMistakes: ['Over-provisioning fixed hardware instead of leveraging dynamic autoscaling', 'Sending heavy background tasks synchronously during request execution'],
+      relatedConcepts: ['Scalability', 'Autoscaling', 'Read Replicas', 'Async Queues'],
     },
   ];
 }
