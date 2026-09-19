@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
+import { usePublicCmsList } from '@/api/hooks/usePublicCms';
+import { useCategories } from '@/api/hooks/useCategories';
 import { cn } from '@/lib/utils';
 
 export interface InterviewQuestionItem {
@@ -225,6 +227,10 @@ export function InterviewPrepHub() {
   const navigate = useNavigate();
   const { trackSlug } = useParams<{ trackSlug?: string }>();
 
+  // Live backend database API hooks
+  const { data: publicCmsData } = usePublicCmsList({ size: 50 });
+  const { data: backendCategories } = useCategories();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('All');
   const [selectedRound, setSelectedRound] = useState<string>('All');
@@ -237,7 +243,38 @@ export function InterviewPrepHub() {
     'ic-1': true,
   });
 
-  const roles = ['All', 'Backend', 'Cloud', 'DevOps', 'Security', 'SRE', 'Software Engineer'];
+  const dbInterviewCourses = useMemo((): InterviewCourse[] => {
+    if (!publicCmsData?.items || publicCmsData.items.length === 0) return [];
+    return publicCmsData.items.map((item, idx) => ({
+      id: String(item.id),
+      slug: item.slug || String(item.id),
+      title: `${item.title} Interview Track`,
+      description: item.description || `Technical interview prep track for ${item.title}.`,
+      difficulty: (item.level as any) || 'Senior',
+      role: (item.categoryName as any) || 'Software Engineer',
+      round: idx % 2 === 0 ? 'System Design' : 'Technical',
+      estimatedHours: item.durationMinutes ? Math.ceil(item.durationMinutes / 60) : 8,
+      questions: generateQuestionsForTrack(item.slug || item.title),
+    }));
+  }, [publicCmsData]);
+
+  const allInterviewCourses = useMemo(() => {
+    if (dbInterviewCourses.length > 0) {
+      const dbSlugs = new Set(dbInterviewCourses.map(c => c.slug));
+      const uniqueMock = mockInterviewCourses.filter(m => !dbSlugs.has(m.slug));
+      return [...dbInterviewCourses, ...uniqueMock];
+    }
+    return mockInterviewCourses;
+  }, [dbInterviewCourses]);
+
+  const roles = useMemo(() => {
+    const fetched = (backendCategories ?? []).map(c => c.name).filter(Boolean);
+    if (fetched.length > 0) {
+      return ['All', ...Array.from(new Set(fetched))];
+    }
+    return ['All', 'Backend', 'Cloud', 'DevOps', 'Security', 'SRE', 'Software Engineer'];
+  }, [backendCategories]);
+
   const rounds = ['All', 'Coding', 'Technical', 'System Design', 'Scenario', 'Behavioral'];
 
   const startTrack = (track: InterviewCourse) => {
@@ -248,7 +285,7 @@ export function InterviewPrepHub() {
 
   useEffect(() => {
     if (trackSlug) {
-      const found = mockInterviewCourses.find(c => c.id === trackSlug || c.slug === trackSlug);
+      const found = allInterviewCourses.find(c => c.id === trackSlug || c.slug === trackSlug);
       if (found) {
         startTrack(found);
       } else {
@@ -267,7 +304,7 @@ export function InterviewPrepHub() {
         startTrack(fallbackTrack);
       }
     }
-  }, [trackSlug]);
+  }, [trackSlug, allInterviewCourses]);
 
   const toggleCourseExpand = (id: string) => {
     setExpandedCourses(prev => ({ ...prev, [id]: !prev[id] }));
@@ -282,7 +319,7 @@ export function InterviewPrepHub() {
   };
 
   const filteredCourses = useMemo(() => {
-    return mockInterviewCourses.filter(c => {
+    return allInterviewCourses.filter(c => {
       const matchesSearch = searchQuery === '' ||
         c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -293,7 +330,7 @@ export function InterviewPrepHub() {
 
       return matchesSearch && matchesRole && matchesRound;
     });
-  }, [searchQuery, selectedRole, selectedRound]);
+  }, [searchQuery, selectedRole, selectedRound, allInterviewCourses]);
 
   return (
     <PublicLayout hideSearch>
@@ -561,7 +598,7 @@ export function InterviewPrepHub() {
                   </div>
 
                   <div className="space-y-3">
-                    {mockInterviewCourses.filter(t => t.id !== activeTrack.id).map(track => (
+                    {allInterviewCourses.filter(t => t.id !== activeTrack.id).map(track => (
                       <div key={track.id} className="p-3 rounded-xl border border-border hover:border-primary/40 transition-all bg-card/60 space-y-2">
                         <div className="flex items-center justify-between">
                           <Badge variant="secondary" className="text-[10px] font-bold">{track.role}</Badge>

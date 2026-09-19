@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Search, Target, CheckCircle2, AlertTriangle, Trophy, BarChart3, Clock, ArrowRight, HelpCircle, BookOpen, Filter, X, RefreshCw, ArrowLeft } from 'lucide-react';
@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Quiz, QuestionItem } from '@/types/knowledge-graph';
+import { usePublicCmsList } from '@/api/hooks/usePublicCms';
+import { useCategories } from '@/api/hooks/useCategories';
 import { cn } from '@/lib/utils';
 
 const mockQuizzes: Quiz[] = [
@@ -347,6 +349,10 @@ export function PracticeHub() {
   const navigate = useNavigate();
   const { quizId } = useParams<{ quizId?: string }>();
 
+  // Live backend database API hooks
+  const { data: publicCmsData } = usePublicCmsList({ size: 50 });
+  const { data: backendCategories } = useCategories();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
@@ -355,7 +361,38 @@ export function PracticeHub() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const categories = ['All', 'Quizzes', 'Tests', 'Coding', 'Hands-on Labs', 'Challenges'];
+  const dbQuizzes = useMemo((): Quiz[] => {
+    if (!publicCmsData?.items || publicCmsData.items.length === 0) return [];
+    return publicCmsData.items.map(item => ({
+      id: String(item.id),
+      slug: item.slug || String(item.id),
+      title: `${item.title} Assessment`,
+      description: item.description || `Test key concepts and practice hands-on scenarios for ${item.title}.`,
+      topicSlug: item.tags?.[0] || item.slug || 'general',
+      domainSlug: (item.categoryName || 'Engineering').toLowerCase(),
+      difficulty: (item.level as any)?.toLowerCase() || 'intermediate',
+      questionsCount: 4,
+      estimatedMinutes: item.durationMinutes || 10,
+      questions: generateQuestionsForSlug(item.slug || item.title),
+    }));
+  }, [publicCmsData]);
+
+  const allQuizzes = useMemo(() => {
+    if (dbQuizzes.length > 0) {
+      const dbSlugs = new Set(dbQuizzes.map(q => q.slug));
+      const uniqueMock = mockQuizzes.filter(m => !dbSlugs.has(m.slug));
+      return [...dbQuizzes, ...uniqueMock];
+    }
+    return mockQuizzes;
+  }, [dbQuizzes]);
+
+  const categories = useMemo(() => {
+    const fetched = (backendCategories ?? []).map(c => c.name).filter(Boolean);
+    if (fetched.length > 0) {
+      return ['All', ...Array.from(new Set(fetched))];
+    }
+    return ['All', 'Quizzes', 'Tests', 'Coding', 'Hands-on Labs', 'Challenges'];
+  }, [backendCategories]);
 
   const startQuiz = (quiz: Quiz) => {
     setActiveQuiz(quiz);
@@ -366,7 +403,7 @@ export function PracticeHub() {
 
   useEffect(() => {
     if (quizId) {
-      const found = mockQuizzes.find(q => q.id === quizId || q.slug === quizId);
+      const found = allQuizzes.find(q => q.id === quizId || q.slug === quizId);
       if (found) {
         startQuiz(found);
       } else {
@@ -386,7 +423,7 @@ export function PracticeHub() {
         startQuiz(fallbackQuiz);
       }
     }
-  }, [quizId]);
+  }, [quizId, allQuizzes]);
 
   const handleSelectOption = (qIdx: number, optionIdx: number) => {
     if (isSubmitted) return;
@@ -666,7 +703,7 @@ export function PracticeHub() {
                   </div>
 
                   <div className="space-y-3">
-                    {mockQuizzes.filter(q => q.id !== activeQuiz.id).map(q => (
+                    {allQuizzes.filter(q => q.id !== activeQuiz.id).map(q => (
                       <div key={q.id} className="p-3 rounded-xl border border-border hover:border-primary/40 transition-all bg-card/60 space-y-2">
                         <div className="flex items-center justify-between">
                           <Badge variant="secondary" className="text-[10px] font-bold">{q.domainSlug.toUpperCase()}</Badge>
@@ -777,7 +814,7 @@ export function PracticeHub() {
 
                 {/* Quizzes Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {mockQuizzes.map(quiz => (
+                  {allQuizzes.map(quiz => (
                     <div
                       key={quiz.id}
                       className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md group"
