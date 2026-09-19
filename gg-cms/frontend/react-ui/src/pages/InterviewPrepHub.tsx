@@ -45,6 +45,7 @@ function generateQuestionsForTrack(slug: string): InterviewQuestionItem[] {
 3. Storage & Caching: Use PostgreSQL for relational data and Redis for hot data caching.`,
       commonMistakes: ['Coupling domain logic across service boundaries', 'Omitting rate limiting on public API gateways'],
       relatedConcepts: [cleanTitle, 'Architecture', 'Microservices', 'Resiliency'],
+      relatedCourses: [{ slug: 'grpc-vs-rest-microservices', title: 'gRPC vs REST Microservices Architecture' }],
     },
     {
       id: `${slug}-q2`,
@@ -56,6 +57,7 @@ function generateQuestionsForTrack(slug: string): InterviewQuestionItem[] {
 3. Alerting: Configure PagerDuty alerts on p99 latency spikes and error rate breaches (>1%).`,
       commonMistakes: ['Logging sensitive credentials in plain text', 'Alerting on transient non-actionable spikes'],
       relatedConcepts: ['Observability', 'OpenTelemetry', 'Prometheus', 'Metrics'],
+      relatedCourses: [{ slug: 'kubernetes-zero-downtime-deployments', title: 'Kubernetes Telemetry & Zero Downtime' }],
     },
     {
       id: `${slug}-q3`,
@@ -67,6 +69,7 @@ function generateQuestionsForTrack(slug: string): InterviewQuestionItem[] {
 3. Distributed Locks: Use Redis/etcd locks with fencing tokens when coordinating shared resources across cluster nodes.`,
       commonMistakes: ['Using long-running database transactions for external network calls', 'Omitting TTLs on cache entries'],
       relatedConcepts: ['Concurrency', 'Cache Invalidation', 'CDC', 'Optimistic Locking'],
+      relatedCourses: [{ slug: 'postgresql-indexing-and-query-tuning', title: 'PostgreSQL Indexing & Query Tuning' }],
     },
     {
       id: `${slug}-q4`,
@@ -78,6 +81,7 @@ function generateQuestionsForTrack(slug: string): InterviewQuestionItem[] {
 3. Async Queues: Move heavy computations and background tasks to asynchronous workers via Kafka/RabbitMQ.`,
       commonMistakes: ['Over-provisioning fixed hardware instead of leveraging dynamic autoscaling', 'Sending heavy background tasks synchronously during request execution'],
       relatedConcepts: ['Scalability', 'Autoscaling', 'Read Replicas', 'Async Queues'],
+      relatedCourses: [{ slug: 'gcp-cloud-run-deployment-guide', title: 'GCP Cloud Run & Cloud Native Scale' }],
     },
   ];
 }
@@ -97,7 +101,8 @@ function extractQuestionsFromCmsItem(item: any): InterviewQuestionItem[] {
       let answerExplanation = '';
       let thinkPrompt = 'Consider architectural tradeoffs, data structures, and edge cases.';
       const commonMistakes: string[] = [];
-      const relatedConcepts: string[] = [item.categoryName || 'Engineering', 'Architecture'];
+      const relatedConcepts: string[] = [];
+      const relatedCourses: RelatedCourseLink[] = [];
       
       let mode = 'explanation';
       for (let i = 1; i < lines.length; i++) {
@@ -106,11 +111,48 @@ function extractQuestionsFromCmsItem(item: any): InterviewQuestionItem[] {
           thinkPrompt = line.replace(/^(think prompt:|hint:)/i, '').trim();
         } else if (line.toLowerCase().includes('mistake:') || line.toLowerCase().includes('common mistakes:')) {
           mode = 'mistakes';
+        } else if (line.toLowerCase().includes('related concepts:')) {
+          mode = 'concepts';
+          const conceptsStr = line.replace(/^related concepts:/i, '').trim();
+          if (conceptsStr) {
+            conceptsStr.split(',').forEach(c => {
+              if (c.trim()) relatedConcepts.push(c.trim());
+            });
+          }
+        } else if (line.toLowerCase().includes('related courses:') || line.toLowerCase().includes('related content:')) {
+          mode = 'courses';
+          const coursesStr = line.replace(/^(related courses:|related content:)/i, '').trim();
+          if (coursesStr) {
+            coursesStr.split(',').forEach(c => {
+              const slug = c.trim();
+              if (slug) {
+                const title = slug.replace(/-/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
+                relatedCourses.push({ slug, title });
+              }
+            });
+          }
         } else if (mode === 'mistakes') {
           commonMistakes.push(line.replace(/^[-*•\d.]+\s*/, ''));
+        } else if (mode === 'concepts') {
+          line.split(',').forEach(c => {
+            const clean = c.trim().replace(/^[-*•\d.]+\s*/, '');
+            if (clean) relatedConcepts.push(clean);
+          });
+        } else if (mode === 'courses') {
+          line.split(',').forEach(c => {
+            const slug = c.trim().replace(/^[-*•\d.]+\s*/, '');
+            if (slug) {
+              const title = slug.replace(/-/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
+              relatedCourses.push({ slug, title });
+            }
+          });
         } else {
           answerExplanation += line + '\n';
         }
+      }
+      
+      if (relatedConcepts.length === 0) {
+        relatedConcepts.push(item.categoryName || 'Engineering', 'Architecture');
       }
       
       parsedQuestions.push({
@@ -121,6 +163,7 @@ function extractQuestionsFromCmsItem(item: any): InterviewQuestionItem[] {
         answerExplanation: answerExplanation.trim() || `Key concepts for ${questionText}:\n1. Evaluate system boundaries and data flow.\n2. Ensure zero single points of failure.\n3. Apply caching and database indexing.`,
         commonMistakes: commonMistakes.length > 0 ? commonMistakes : ['Neglecting bottleneck analysis under peak load'],
         relatedConcepts,
+        relatedCourses,
       });
     });
     
@@ -465,6 +508,28 @@ export function InterviewPrepHub() {
                                   {concept}
                                 </Badge>
                               ))}
+                            </div>
+                          )}
+
+                          {activeTrack.questions[currentQuestionIdx].relatedCourses && activeTrack.questions[currentQuestionIdx].relatedCourses.length > 0 && (
+                            <div className="space-y-1.5 pt-2 border-t border-border/40">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-primary flex items-center gap-1">
+                                <BookOpen className="w-3.5 h-3.5" /> Connected Courses & Deep Dives
+                              </span>
+                              <div className="flex flex-wrap gap-2 pt-0.5">
+                                {activeTrack.questions[currentQuestionIdx].relatedCourses.map((rc, idx) => (
+                                  <Button
+                                    key={idx}
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => navigate(`/courses?search=${encodeURIComponent(rc.slug)}`)}
+                                    className="text-xs h-7 rounded-lg bg-card hover:bg-primary/10 border-primary/30 text-primary font-semibold gap-1.5"
+                                  >
+                                    <BookOpen className="w-3 h-3" />
+                                    {rc.title}
+                                  </Button>
+                                ))}
+                              </div>
                             </div>
                           )}
                         </div>

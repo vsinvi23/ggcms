@@ -364,7 +364,7 @@ Evaluating RAG performance requires automated metrics beyond manual spot-checkin
     'PUBLISHED',
     c.id,
     u.id,
-    'art-783d2e076d7749f8b40302df578b2adc',
+    'art-fce72f7ad3e949c5a7760f6699899ca7',
     'rag-architecture-llm-applications',
     NOW(),
     'GUIDE'
@@ -381,7 +381,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-aea633d99270466ead4c221240918dbf',
+    'crs-853c2f4d96954c42895f9f5a377ff742',
     'rag-architecture-llm-applications',
     NOW(),
     'MODULE'
@@ -511,7 +511,7 @@ def calculate_psi(reference: np.ndarray, current: np.ndarray, num_buckets: int =
     'PUBLISHED',
     c.id,
     u.id,
-    'art-9cdf462319ff4012ad28a749d593668a',
+    'art-5c63fe6a14df4505b6c400e16213533d',
     'ml-model-evaluation-metrics',
     NOW(),
     'REFERENCE'
@@ -528,7 +528,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-5683da80b7c7486492d184f9d3914150',
+    'crs-f499b0f9bffd446199ac27c84fe39727',
     'ml-model-evaluation-metrics',
     NOW(),
     'MODULE'
@@ -632,7 +632,7 @@ When Cloud Run services communicate with private backend databases (e.g. Postgre
     'PUBLISHED',
     c.id,
     u.id,
-    'art-4889e25379134756a1795165f5a106d1',
+    'art-84a177939e6e47de8bf3d92e9fb5096c',
     'gcp-cloud-run-deployment-guide',
     NOW(),
     'TUTORIAL'
@@ -649,13 +649,155 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-ec94695a067142ba98ff2754ccd676ac',
+    'crs-1b7adced2b904ceca08bcbc3c6b6e454',
     'gcp-cloud-run-deployment-guide',
     NOW(),
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
 WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'cloud-platforms' OR c.slug = 'cloud-platforms')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
+SELECT 
+    'DevOps, Kubernetes & Cloud Infrastructure Engineering Interview Track',
+    'SME evaluation on zero-downtime deployment strategies, Kubernetes operator patterns, Terraform state locks, and observability topology.',
+    '# DevOps, Kubernetes & Cloud Infrastructure Engineering Interview Track
+
+Welcome to the DevOps, Kubernetes & Cloud Infrastructure evaluation track. This module tests your mastery of container orchestration, GitOps automation, infrastructure as code, and cloud reliability engineering.
+
+---
+
+### Question 1: How do you guarantee zero-downtime rolling updates in Kubernetes with Pod Readiness Probes, PreStop Hooks, and Graceful Termination?
+
+Think Prompt: Analyze `maxSurge`, `maxUnavailable`, SIGTERM propagation, `preStop` sleep delays, and kube-proxy endpoint propagation delay.
+
+Model Answer / Explanation:
+1. Pod Termination Mechanics: When a pod is terminated during a rolling update, Kubernetes simultaneously sends a `SIGTERM` signal to container processes AND removes the pod IP from EndpointSlice objects. However, `kube-proxy` and ingress controllers take up to 10-15 seconds to update iptables/IPVS rules across cluster nodes.
+2. PreStop Lifecycle Hook: Add a `preStop` HTTP or exec hook (`sleep 15`) to delay SIGTERM processing inside the application container, ensuring in-flight requests are served while ingress proxies stop routing new traffic.
+3. Graceful Application Shutdown: Application processes catch `SIGTERM`, stop accepting new connections, finish active HTTP requests within a configurable timeout (e.g., 30s), and shut down cleanly before `terminationGracePeriodSeconds` (45s) expires.
+4. Deployment Configuration: Tune rolling update strategy parameters:
+
+```yaml
+spec:
+  replicas: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  template:
+    spec:
+      terminationGracePeriodSeconds: 45
+      containers:
+      - name: app
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 15"]
+        readinessProbe:
+          httpGet:
+            path: /healthz/ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+```
+
+Common Mistakes:
+- Setting `maxUnavailable: 50%` on low replica deployments, causing capacity degradation during rollouts
+- Immediately terminating container processes on SIGTERM without waiting for service endpoint propagation
+- Aggressive readiness probes that mark initializing pods dead during temporary CPU spikes
+
+Related Concepts: Kubernetes Rolling Update, PreStop Hooks, Readiness Probes, Kube-Proxy, EndpointSlices
+Related Courses: kubernetes-zero-downtime-deployments, terraform-modular-architecture, gcp-cloud-run-deployment-guide
+
+---
+
+### Question 2: How do you manage Terraform state isolation, remote backend locks, and drift detection in multi-environment GitOps pipelines?
+
+Think Prompt: Evaluate S3/GCS remote backends, DynamoDB/GCP state locking, workspace vs directory isolation, and Atlantis/Terraform Cloud automated plan checks.
+
+Model Answer / Explanation:
+1. Directory & State Isolation: Maintain separate Terraform root directories per environment (`environments/prod/`, `environments/staging/`). Avoid workspaces for environment separation due to shared backend state risk.
+2. Remote State & Locking: Configure Cloud Storage (GCS) or AWS S3 backends with native state locking (`lock_table` in DynamoDB or GCS object generation locks) to prevent concurrent execution overwrites.
+3. GitOps PR Validation: Integrate Atlantis or GitHub Actions with Terraform Cloud. On PR creation, automatically execute `terraform plan` and comment the output diff on the PR for peer review.
+4. Automated Drift Detection: Run a daily scheduled pipeline (`terraform plan -detailed-exitcode`) that checks live cloud infrastructure against stored state files and fires PagerDuty/Slack alerts on drift.
+
+Common Mistakes:
+- Storing Terraform state files in local disk or committing `.tfstate` to Git repositories
+- Mixing production and staging resource definitions within a single monolithic state file
+- Applying manual `gcloud` or `aws` CLI changes directly in cloud consoles, bypassing Terraform state
+
+Related Concepts: Terraform Remote Backend, State Locking, GitOps, Infrastructure Drift, Atlantis
+Related Courses: terraform-modular-architecture, gcp-cloud-run-deployment-guide
+
+---
+
+### Question 3: How do you architect high-availability Kubernetes ingress routing, TLS termination, and ingress controller autoscaling?
+
+Think Prompt: Evaluate NGINX Ingress Controller vs Envoy / Gateway API, cert-manager ACME automatic renewal, ExternalDNS, and HPA based on ingress request latency.
+
+Model Answer / Explanation:
+1. Ingress Architecture: Deploy NGINX or Envoy Gateway API controllers as a `DaemonSet` or `Deployment` across multiple Availability Zones with Pod Anti-Affinity rules.
+2. Automated TLS Management: Deploy `cert-manager` with ACME Let''s Encrypt / HashiCorp Vault ClusterIssuer objects. cert-manager automatically completes HTTP-01 or DNS-01 challenges and stores TLS X.509 certificates in Kubernetes TLS secrets.
+3. ExternalDNS Synchronization: Deploy `ExternalDNS` to watch Ingress/Gateway objects and dynamically update AWS Route53 / GCP Cloud DNS A-records without manual DNS configuration.
+4. Autoscaling: Configure Kubernetes Horizontal Pod Autoscaler (HPA) targeting Custom Metrics (e.g. `nginx_ingress_controller_requests_per_second` or p99 latency) via Prometheus Adapter.
+
+Common Mistakes:
+- Running single-replica ingress controllers creating a single point of failure
+- Manual X.509 certificate renewals leading to unexpected production downtime
+- Hardcoding node IP addresses in DNS records instead of using Cloud Load Balancer IPs
+
+Related Concepts: Gateway API, cert-manager, ExternalDNS, Envoy, Horizontal Pod Autoscaler
+Related Courses: kubernetes-zero-downtime-deployments, tls-x509-certificate-management
+
+---
+
+### Question 4: How do you design an enterprise-grade Prometheus & Grafana telemetry infrastructure for multi-cluster Kubernetes monitoring?
+
+Think Prompt: Evaluate Prometheus Operator, Thanos / Cortex long-term storage, ServiceMonitor CRDs, and metric cardinality control.
+
+Model Answer / Explanation:
+1. Cluster Monitoring Deployment: Deploy `kube-prometheus-stack` using Prometheus Operator. Define `ServiceMonitor` and `PodMonitor` Custom Resource Definitions (CRDs) to declaratively declare scrape endpoints.
+2. Long-Term Storage & Deduplication: Deploy Thanos Sidecar containers alongside Prometheus instances. Thanos ships block metrics to Google Cloud Storage (GCS) or S3 object stores and deduplicates metrics across HA Prometheus pairs.
+3. Cardinality Control: Enforce strict metric relabeling rules in Prometheus configs (`metric_relabel_configs`) to drop high-cardinality labels (e.g., `user_id`, `email`, raw request URIs with dynamic IDs).
+4. Alerting Rules: Write Prometheus Alertmanager rules focusing on Golden Signals (Latency p99 > 500ms, HTTP 5xx Error Rate > 1%, Container OOMKilled count > 0).
+
+Common Mistakes:
+- Including unbounded UUIDs or user IDs as Prometheus metric labels, exhausting Prometheus RAM
+- Storing Prometheus TSDB data on ephemeral pod disks without object storage shipping
+- Alerting on transient non-actionable CPU spikes instead of customer-impacting latency or error rates
+
+Related Concepts: Prometheus Operator, Thanos, ServiceMonitor, Metric Cardinality, Alertmanager
+Related Courses: kubernetes-zero-downtime-deployments, gcp-cloud-run-deployment-guide',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'art-114c983774d04685840e949f56760104',
+    'devops-kubernetes-interview-track',
+    NOW(),
+    'INTERVIEW_PREP'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'DevOps, Kubernetes & Cloud Infrastructure Engineering Interview Track',
+    'SME evaluation on zero-downtime deployment strategies, Kubernetes operator patterns, Terraform state locks, and observability topology.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-e49a499800cb47b98deffb4587b00a51',
+    'devops-kubernetes-interview-track',
+    NOW(),
+    'MODULE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
 ON CONFLICT (public_id) DO NOTHING;
 
 
@@ -778,7 +920,7 @@ spec:
     'PUBLISHED',
     c.id,
     u.id,
-    'art-b6002cd5c4a4458e92a2795f6eef56c2',
+    'art-99e1e210e3e548b58eb2541d93f18428',
     'kubernetes-zero-downtime-deployments',
     NOW(),
     'GUIDE'
@@ -795,7 +937,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-2ccab3c8fcb84b0981e3a5578cb5dc7e',
+    'crs-eb6c6386dea142eb8d249f8341b990b6',
     'kubernetes-zero-downtime-deployments',
     NOW(),
     'MODULE'
@@ -917,7 +1059,7 @@ terraform {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-fac2254f020e4594bcda22d813ccdac8',
+    'art-c8cc0e4625254d81ac492e790e82ff16',
     'terraform-modular-architecture',
     NOW(),
     'GUIDE'
@@ -934,7 +1076,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-bcf4fb8e858e4cf2b20fdbfc525b05f9',
+    'crs-1d6f2e06e6954e0b916d7c74d6236181',
     'terraform-modular-architecture',
     NOW(),
     'MODULE'
@@ -1070,7 +1212,7 @@ func SanitizeLLMOutput(rawText string) string {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-597e3257d83642e5aaa865036d3ce16c',
+    'art-7d4606c5efee4b079ae912b7db8c8724',
     'owasp-top-10-llm-security',
     NOW(),
     'GUIDE'
@@ -1087,7 +1229,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-dceec18b99f94607975f17470d1f2a54',
+    'crs-88f7ab924a77474ea33775b8888a5c8e',
     'owasp-top-10-llm-security',
     NOW(),
     'MODULE'
@@ -1243,7 +1385,7 @@ func JWTAuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-ff3757eb51b34699bf0542aed6203b91',
+    'art-e119aa46ba0746edb026a7ee18e45553',
     'oauth2-oidc-implementation-guide',
     NOW(),
     'GUIDE'
@@ -1260,8 +1402,141 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-2179951bab994468811de0d89495f89b',
+    'crs-5cf04def34d54e87972c53421364c730',
     'oauth2-oidc-implementation-guide',
+    NOW(),
+    'MODULE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
+SELECT 
+    'OAuth 2.0, OIDC & Enterprise AppSec Defense Interview Track',
+    'SME evaluation on authorization code flow with PKCE, JWT signature validation vulnerabilities, cross-origin token theft, and OWASP API security top 10.',
+    '# OAuth 2.0, OIDC & Enterprise AppSec Defense Interview Track
+
+Welcome to the OAuth 2.0, OpenID Connect (OIDC) & Application Security Defense evaluation track. This module tests your expertise in enterprise identity architectures, cryptographic token validation, and offensive/defensive security engineering.
+
+---
+
+### Question 1: Why is PKCE (Proof Key for Code Exchange) mandatory for SPA and native clients, and how does it prevent Authorization Code Interception Attacks?
+
+Think Prompt: Contrast standard Authorization Code flow with PKCE (`code_verifier` vs `code_challenge`), S256 hashing, and mitigation of malicious custom URI schemes.
+
+Model Answer / Explanation:
+1. Threat Vector: Public clients (Single Page Apps and Mobile Native Apps) cannot securely hide client secrets. Malicious apps registered on the same OS custom URI scheme (e.g. `myapp://oauth-callback`) can intercept the OAuth authorization code returned from the browser redirect.
+2. PKCE Cryptographic Pair: The client generates a high-entropy random string `code_verifier` (43-128 chars) and computes `code_challenge = BASE64URL-ENCODE(SHA256(code_verifier))`.
+3. Authorization Request: The client sends `code_challenge` and `code_challenge_method=S256` to `/authorize`. The Authorization Server records the challenge alongside the issued authorization code.
+4. Token Exchange Verification: When redeeming the code at `/token`, the client submits `code_verifier`. The server hashes `code_verifier` with SHA256 and verifies it matches `code_challenge`. Even if an attacker intercepted the authorization code, they cannot obtain access tokens without the unhashed `code_verifier`.
+
+Common Mistakes:
+- Using `plain` transformation instead of `S256` for `code_challenge_method`
+- Storing access tokens or code verifiers in unencrypted browser `localStorage`
+- Allowing non-exact match wildcard redirect URIs on authorization servers
+
+Related Concepts: PKCE, Code Verifier, S256, OAuth 2.0, Custom URI Schemes
+Related Courses: oauth2-oidc-implementation-guide, owasp-top-10-llm-security, tls-x509-certificate-management
+
+---
+
+### Question 2: How do you defend against JWT Algorithm Confusion (`alg: none`, RS256 to HS256 downgrade) and Token Side-Jack Attacks?
+
+Think Prompt: Analyze JWT header validation rules, public key distribution via JWKS (JSON Web Key Set), key ID (`kid`) sanitization, and HttpOnly SameSite cookies vs Bearer tokens.
+
+Model Answer / Explanation:
+1. Algorithm Confusion Vulnerability: In RS256, the server verifies tokens using an RSA public key. In HS256, the server uses a symmetric HMAC secret key. If a backend verifier uses the RSA public key string as the HMAC secret key when `alg: HS256` is specified in the header, attackers can sign forged tokens using the public key!
+2. Strict Defense Protocol: Backend JWT validation logic must hardcode allowed signing algorithms (`verifier.WithAllowedAlgs([]string{"RS256", "ES256"})`). Reject tokens with `alg: none` or algorithms mismatched from key types.
+3. JWKS Verification: Download RSA/ECDSA public keys from trusted `/.well-known/jwks.json` endpoints. Cache keys locally by `kid` header, enforcing strict URL whitelisting to prevent SSRF in key fetching.
+4. Storage & Side-Jack Prevention: Store session tokens in `HttpOnly; Secure; SameSite=Strict` cookies instead of JavaScript-accessible local storage to mitigate Cross-Site Scripting (XSS) token exfiltration.
+
+Common Mistakes:
+- Dynamically selecting verification algorithms directly from untrusted JWT headers
+- Trusting `kid` parameters containing SQL injection or directory traversal payloads (`../../dev/null`)
+- Exposing sensitive user PII in unencrypted JWT payloads
+
+Related Concepts: JWKS, Algorithm Confusion, RS256/HS256, HttpOnly Cookies, XSS Protection
+Related Courses: oauth2-oidc-implementation-guide, tls-x509-certificate-management
+
+---
+
+### Question 3: How do you architect Broken Object Level Authorization (BOLA / IDOR) protection across microservice APIs?
+
+Think Prompt: Evaluate Policy Enforcement Points (PEP), Policy Decision Points (PDP), Attribute-Based Access Control (ABAC), and Open Policy Agent (OPA).
+
+Model Answer / Explanation:
+1. Vulnerability Mechanics: BOLA (OWASP API #1) occurs when an endpoint accepts a resource ID (e.g. `GET /api/orders/99482`) without validating whether the authenticated user owns or has explicit permission to access that specific resource.
+2. Architecture: Implement a Policy Enforcement Point (PEP) at the API Gateway / Service mesh level coupled with Policy Decision Points (PDP) using Open Policy Agent (OPA).
+3. Rego Policy Enforcement: Pass identity context (tenant ID, user ID, roles) alongside resource ownership claims to OPA sidecars:
+
+```rego
+package api.authz
+
+default allow = false
+
+allow {
+    input.user.tenant_id == input.resource.tenant_id
+    input.user.id == input.resource.owner_id
+}
+
+allow {
+    input.user.roles[_] == "admin"
+}
+```
+
+4. Database Isolation: Enforce Row Level Security (RLS) in PostgreSQL (`CREATE POLICY tenant_isolation ON orders USING (tenant_id = current_setting(''app.current_tenant''))`) to prevent data leaks even if application code bypasses check logic.
+
+Common Mistakes:
+- Relying exclusively on client-side UI routing checks to hide unauthorized resources
+- Passing raw user IDs in HTTP request bodies without validating against authenticated JWT `sub` claims
+- Neglecting multi-tenant isolation at the database layer
+
+Related Concepts: BOLA, IDOR, OPA / Rego, Attribute-Based Access Control, Row Level Security
+Related Courses: oauth2-oidc-implementation-guide, owasp-top-10-llm-security
+
+---
+
+### Question 4: How do you design secure Token Revocation and Distributed Session Termination across high-concurrency microservices?
+
+Think Prompt: Contrast short-lived JWTs (5-15 mins) with Redis token blacklists, token introspection endpoints (RFC 7662), and back-channel logout (OIDC).
+
+Model Answer / Explanation:
+1. Token Lifecycle Architecture: Issue short-lived stateless JWT access tokens (5-15 minutes TTL) paired with long-lived sliding refresh tokens (7-30 days) stored securely in HTTP-only cookies.
+2. Immediate Revocation Tier: Maintain a Redis Bloom Filter or distributed key-value store containing revoked `jti` (JWT ID) tokens or banned `user_id` timestamps. API gateways query Redis on incoming calls.
+3. RFC 7662 Introspection: For high-security endpoints, query authorization servers via RFC 7662 Token Introspection (`POST /oauth/introspect`) to verify token active status in real time.
+4. OIDC Back-Channel Logout: When a user logs out, the Identity Provider sends signed logout tokens (`logout_token`) directly to registered client back-channel endpoints, invalidating active refresh sessions across all integrated applications simultaneously.
+
+Common Mistakes:
+- Issuing long-lived stateless JWT access tokens (24 hours+) with no revocation mechanism
+- Querying relational databases on every microservice API call, defeating the performance benefits of JWTs
+- Failing to rotate refresh tokens upon usage (Refresh Token Rotation pattern)
+
+Related Concepts: Token Revocation, RFC 7662, OIDC Back-Channel Logout, Redis Bloom Filter, Refresh Token Rotation
+Related Courses: oauth2-oidc-implementation-guide, enterprise-application-security',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'art-cc99915732bd4ee19e10e3f4b147e69d',
+    'oauth2-security-interview-track',
+    NOW(),
+    'INTERVIEW_PREP'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'OAuth 2.0, OIDC & Enterprise AppSec Defense Interview Track',
+    'SME evaluation on authorization code flow with PKCE, JWT signature validation vulnerabilities, cross-origin token theft, and OWASP API security top 10.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-b268bcf1c9604a2bbcfc35314fc75aba',
+    'oauth2-security-interview-track',
     NOW(),
     'MODULE'
 FROM users u 
@@ -1411,7 +1686,7 @@ func main() {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-71dd719aa3654082b471130fcb9a6246',
+    'art-b0d982313fa84893b23530f12e32b106',
     'tls-x509-certificate-management',
     NOW(),
     'GUIDE'
@@ -1428,7 +1703,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-70bd5088b3fa4e1ba3d172c3ddf162da',
+    'crs-7efaec1d3e9f4a0ca2b04197f574a53b',
     'tls-x509-certificate-management',
     NOW(),
     'MODULE'
@@ -1567,7 +1842,7 @@ func PollOutbox(ctx context.Context, db *sql.DB) {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-9d189cbd3c0746f98f3a7216628689ab',
+    'art-5bca62649d394da2a59a68866fec93b0',
     'data-modeling-event-driven-systems',
     NOW(),
     'GUIDE'
@@ -1584,7 +1859,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-8461511f499f457b85ddbaa2494d364b',
+    'crs-6c20595c9dbd4fc5ad79353c348ad054',
     'data-modeling-event-driven-systems',
     NOW(),
     'MODULE'
@@ -1678,7 +1953,7 @@ LIMIT 10;
     'PUBLISHED',
     c.id,
     u.id,
-    'art-835a64bcdf6a4dffa1e5f83cce1c38a9',
+    'art-799707a02a5044358c0a440840193ba1',
     'postgresql-indexing-and-query-tuning',
     NOW(),
     'GUIDE'
@@ -1695,7 +1970,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-93a10e032f1944b98d9e676888a22556',
+    'crs-97a378c22b5443858593230d90485799',
     'postgresql-indexing-and-query-tuning',
     NOW(),
     'MODULE'
@@ -1821,7 +2096,7 @@ func main() {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-fad0217f368847b086af371d5be65cab',
+    'art-d5d0febabc174a508cbbd1703f2af558',
     'grpc-vs-rest-microservices',
     NOW(),
     'GUIDE'
@@ -1838,8 +2113,296 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-d632cd817ce04c218d33bc74d9e34e4b',
+    'crs-f0d83ffb48314f1f95cf2c8ca8dd4979',
     'grpc-vs-rest-microservices',
+    NOW(),
+    'MODULE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
+SELECT 
+    'System Design & Distributed Microservices Interview Track',
+    'SME-level evaluation covering zero-loss write pipelines, distributed tracing, idempotency keys, database sharding, connection pooling, and circuit breaker patterns.',
+    '# System Design & Distributed Microservices Interview Track
+
+Welcome to the Staff/Principal Engineer System Design evaluation track. This module tests your capability to design resilient, fault-tolerant, high-throughput distributed systems.
+
+---
+
+### Question 1: How do you architect a zero-loss write ingestion pipeline handling 500k writes/sec with PostgreSQL and Kafka?
+
+Think Prompt: Evaluate event buffering, Change Data Capture (CDC), outbox patterns, DB connection pooling with PgBouncer, and bulk batch upserts under extreme write saturation.
+
+Model Answer / Explanation:
+1. Architectural Topology: Implement the Transactional Outbox Pattern to eliminate dual-write inconsistencies. When API gateways receive write requests, API service workers commit business domain data and an outbox record within the same PostgreSQL local ACID transaction.
+2. Change Data Capture & Streaming: Deploy Debezium CDC connectors listening directly to PostgreSQL Write-Ahead Logs (WAL). Debezium streams outbox mutations asynchronously into partitioned Apache Kafka topics partitioned by entity ID (e.g. `user_id` or `tenant_id`).
+3. Bulk Consumption & Connection Pooling: Downstream sink consumer workers read Kafka batches and execute high-throughput bulk upserts (`INSERT INTO target_table ... ON CONFLICT DO UPDATE`) via PgBouncer transaction-level connection poolers.
+4. Resiliency & Backpressure: Deploy Token Bucket rate limiters at the NGINX/Envoy API Gateway layer. If PostgreSQL primary experience write latency spikes, Kafka buffers incoming writes on NVMe disks for up to 7 days without data loss.
+
+Common Mistakes:
+- Performing synchronous HTTP dual-writes to both PostgreSQL and Kafka in API request handlers
+- Omitting fencing tokens when acquiring distributed locks during cluster failover
+- Neglecting database connection starvation on PostgreSQL primary nodes during heavy write spikes
+
+Related Concepts: Transactional Outbox, Debezium CDC, Kafka Partitioning, PgBouncer, Bulk Upsert
+Related Courses: mastering-go-microservices-course, grpc-vs-rest-microservices, postgresql-indexing-and-query-tuning
+
+---
+
+### Question 2: How do you guarantee exact-once execution and distributed idempotency across asynchronous microservices?
+
+Think Prompt: Analyze SHA-256 idempotency keys, Redis TTL locks, optimistic concurrency control, and saga orchestration vs choreography.
+
+Model Answer / Explanation:
+1. Client Idempotency Key Injection: Require HTTP clients to submit a unique `X-Idempotency-Key` header (UUIDv4 or SHA-256 hash of request payload) on non-idempotent operations (POST/PUT).
+2. Distributed Lock & State Storage: On receiving a request, the API gateway attempts an atomic `SET key lock_value NX PX 5000` in Redis. If the key exists with a completed result, the gateway immediately returns the cached response with a `200 OK` header.
+3. Transactional Execution: If the key is new, processing proceeds. Upon successful completion, the service writes the execution payload and status code to Redis with a configurable TTL (e.g., 24 hours) and commits the DB transaction.
+4. Saga Orchestration: For multi-service workflows, deploy Temporal.io or an internal Saga Orchestrator that records state transitions in an append-only event store and executes compensating transactions upon downstream service failure.
+
+Common Mistakes:
+- Relying on client-provided non-unique timestamps as idempotency keys
+- Releasing Redis locks before the database transaction has successfully committed
+- Missing Dead Letter Queue (DLQ) processing for unrecoverable poison pill messages
+
+Related Concepts: Idempotency Keys, Redis Distributed Locks, Saga Pattern, Dead Letter Queue, Temporal
+Related Courses: mastering-go-microservices-course, domain-driven-design-principles
+
+---
+
+### Question 3: How do you design a multi-region distributed cache invalidation strategy with sub-10ms global reads?
+
+Think Prompt: Evaluate cache-aside vs write-through, Redis Cluster cross-region replication, invalidation pub/sub over NATS JetStream, and stale-while-revalidate edge headers.
+
+Model Answer / Explanation:
+1. Multi-Region Read Tier: Deploy local Redis read-replicas or Cloudflare Workers KV near edge entry points. Read queries hit local cache instances, yielding p99 latency < 5ms.
+2. Invalidation Events: When primary database records are updated in the primary write region, a Change Data Capture (CDC) worker emits invalidation messages (`tombstone:entity:123`) to a NATS JetStream global message fabric.
+3. Edge Invalidation Workers: Lightweight edge subscriber processes receive tombstone events and evict or refresh local Redis keys within < 200ms globally.
+4. Cache Headers: Serve public API assets with `Cache-Control: public, max-age=60, stale-while-revalidate=300` headers to allow browsers and edge CDNs to serve stale content while asynchronously fetching updated payloads.
+
+Common Mistakes:
+- Flushing entire cache namespaces on single entity updates
+- Creating infinite invalidation loops across multi-region bidirectional synchronization setups
+- Omitting explicit Time-To-Live (TTL) values on cached Redis keys
+
+Related Concepts: Cache Invalidation, Redis Read Replicas, NATS JetStream, Stale-While-Revalidate, Edge Computing
+Related Courses: postgresql-indexing-and-query-tuning, gcp-cloud-run-deployment-guide
+
+---
+
+### Question 4: How do you prevent cascading failures and thread starvation during upstream service outage scenarios?
+
+Think Prompt: Evaluate circuit breakers, bulkhead isolation, adaptive token bucket rate limiting, and exponential backoff with full jitter.
+
+Model Answer / Explanation:
+1. Circuit Breakers: Wrap upstream gRPC/HTTP calls in a Circuit Breaker (e.g. Resilience4j or Go `gobreaker`). If error rates exceed 50% over a 10-second rolling window, transition to `OPEN` state and return fast fallbacks (`503 Service Unavailable`) without attempting network requests.
+2. Bulkhead Isolation: Segregate worker thread pools and connection channels by upstream service. A failure in an analytics reporting service cannot exhaust connection pools used by critical payment processing endpoints.
+3. Adaptive Rate Limiting: Monitor CPU saturation and HTTP latency p99. If latency exceeds SLA thresholds, dynamically reduce API Gateway rate limits using token bucket algorithms.
+4. Retry Policy with Jitter: Exponential backoff equation `sleep = min(cap, base * 2^attempt) + rand(0, jitter)` prevents thundering herd spikes against recovering upstream services.
+
+Common Mistakes:
+- Executing linear retries without randomized jitter, creating severe thundering herd retry storms
+- Maintaining unbounded request queues that consume memory and cause worker thread starvation
+- Omitting fallback mechanisms when circuit breakers trip open
+
+Related Concepts: Circuit Breakers, Bulkhead Pattern, Thundering Herd, Exponential Backoff, Token Bucket
+Related Courses: go-concurrency-patterns, grpc-vs-rest-microservices',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'art-aad65cf7d6f14189a2d0b30ab1811931',
+    'system-design-interview-track',
+    NOW(),
+    'INTERVIEW_PREP'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'System Design & Distributed Microservices Interview Track',
+    'SME-level evaluation covering zero-loss write pipelines, distributed tracing, idempotency keys, database sharding, connection pooling, and circuit breaker patterns.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-bafc8c4e972247ed91e6207e1c161f1b',
+    'system-design-interview-track',
+    NOW(),
+    'MODULE'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
+SELECT 
+    'Go Concurrency & High-Throughput Systems Interview Track',
+    'Advanced SME interview evaluation on Goroutine lifecycle management, channel select patterns, atomic memory operations, context propagation, and memory leak prevention.',
+    '# Go Concurrency & High-Throughput Systems Interview Track
+
+Welcome to the Go Concurrency & High-Throughput Systems evaluation track. This module tests your mastery of Go primitives, race detection, memory management, and concurrent pipeline design.
+
+---
+
+### Question 1: How do you implement a bounded worker pool in Go that guarantees zero Goroutine leaks and graceful shutdown on SIGTERM?
+
+Think Prompt: Consider unbuffered vs buffered channels, sync.WaitGroup, context cancellation propagation, and closing channel semantics.
+
+Model Answer / Explanation:
+1. Pool Architecture: Construct a worker pool with a fixed number of worker Goroutines reading from a job queue channel (`chan Job`).
+2. Graceful Shutdown Flow: Catch OS signals (`os.Interrupt`, `syscall.SIGTERM`) via `signal.NotifyContext`. Upon signal receipt, close the `jobs` channel to signal workers that no further incoming work will arrive.
+3. WaitGroup Synchronization: Pass a `*sync.WaitGroup` to every worker. Workers call `defer wg.Done()` and range over the jobs channel (`for job := range jobs`). Once the channel is drained, workers exit cleanly.
+4. Clean Exit Verification: Call `wg.Wait()` on main thread before exiting application to ensure all in-flight asynchronous operations finish execution.
+
+```go
+type WorkerPool struct {
+    jobs    chan Job
+    wg      sync.WaitGroup
+    ctx     context.Context
+    cancel  context.CancelFunc
+}
+
+func NewWorkerPool(workers int, buffer int) *WorkerPool {
+    ctx, cancel := context.WithCancel(context.Background())
+    wp := &WorkerPool{
+        jobs:   make(chan Job, buffer),
+        ctx:    ctx,
+        cancel: cancel,
+    }
+    for i := 0; i < workers; i++ {
+        wp.wg.Add(1)
+        go wp.worker(i)
+    }
+    return wp
+}
+
+func (wp *WorkerPool) worker(id int) {
+    defer wp.wg.Done()
+    for {
+        select {
+        case <-wp.ctx.Done():
+            return
+        case job, ok := <-wp.jobs:
+            if !ok {
+                return
+            }
+            job.Execute(wp.ctx)
+        }
+    }
+}
+```
+
+Common Mistakes:
+- Closing the jobs channel from the consumer worker side instead of the single producer side (causes panic on send to closed channel)
+- Omitting `sync.WaitGroup` tracking, resulting in prematurely terminated Goroutines on main thread exit
+- Forgetting to invoke `cancel()` in `defer` statements when creating child contexts
+
+Related Concepts: Goroutines, Worker Pools, sync.WaitGroup, Context Cancellation, Channel Closing Semantics
+Related Courses: go-concurrency-patterns, mastering-go-microservices-course
+
+---
+
+### Question 2: What is the difference between mutex lock contention, atomic operations, and channel message passing under high CPU core count?
+
+Think Prompt: Evaluate CPU cache line bouncing, false sharing, sync/atomic primitives, and CSP (Communicating Sequential Processes) principles.
+
+Model Answer / Explanation:
+1. Mutex Contention (`sync.Mutex`): Under high parallel thread counts (>32 cores), heavy mutex locking causes CPU cache line bouncing and OS thread context switching overhead (futex syscalls). Suitable for multi-field struct mutations and critical section guard logic.
+2. Atomic Operations (`sync/atomic`): Uses CPU hardware primitives (`LOCK CMPXCHG` on x86, `LDREX/STREX` on ARM) to perform lock-free operations in nanoseconds. Ideal for counters, flag bitmasks, and pointer swaps (`atomic.Pointer[T]`), but prone to false sharing if variables share a 64-byte cache line.
+3. Channel Message Passing (`chan T`): Implements CSP semantics. Channels manage internode synchronization and memory ownership transfer using internal mutex locks (`hchan.lock`). Higher allocation and lock overhead than raw atomics, but eliminates data races by design.
+
+Common Mistakes:
+- Using unbuffered channels for high-frequency internal counter increments, causing extreme channel lock contention
+- Mutating shared data structures after sending pointers over channels without explicit ownership transfer
+- Ignoring false sharing when packing multiple `atomic.Uint64` fields into contiguous memory structs
+
+Related Concepts: sync/atomic, Mutex Contention, CSP Pattern, False Sharing, Cache Coherence
+Related Courses: go-concurrency-patterns
+
+---
+
+### Question 3: How do you design a non-blocking priority queue in Go handling 100k events/sec with dynamic cancellation?
+
+Think Prompt: Evaluate container/heap with RCU (Read-Copy-Update), select statements with context done channels, and atomic slice operations.
+
+Model Answer / Explanation:
+1. Heap Data Structure: Implement `heap.Interface` on an internal slice protected by a `sync.RWMutex` or lock-free ring buffer.
+2. Non-Blocking Ingestion: Use `select` blocks with `default:` branches to drop or push events to fallback storage when queues exceed max capacity.
+3. Event Dispatcher Loop: A dedicated event loop picks highest-priority tasks, checking context cancellation before dispatch:
+
+```go
+func (pq *PriorityQueue) ProcessNext(ctx context.Context) error {
+    select {
+    case <-ctx.Done():
+        return ctx.Err()
+    default:
+        pq.mu.Lock()
+        if pq.Len() == 0 {
+            pq.mu.Unlock()
+            return nil
+        }
+        item := heap.Pop(&pq.items).(*Item)
+        pq.mu.Unlock()
+        return item.Handler(ctx)
+    }
+}
+```
+
+Common Mistakes:
+- Priority inversion caused by coarse-grained locks held during long-running item execution handlers
+- Allocating memory inside hot event loops instead of recycling buffer objects via `sync.Pool`
+- Missing channel drain operations during queue tear-down
+
+Related Concepts: Lock-Free Queues, Priority Queue, container/heap, sync.Pool, Memory Allocation
+Related Courses: go-concurrency-patterns, postgresql-indexing-and-query-tuning
+
+---
+
+### Question 4: How do you detect, debug, and eliminate Goroutine leaks and memory allocations in high-throughput Go microservices?
+
+Think Prompt: Evaluate pprof heap/goroutine profiles, trace tool, Go race detector (`-race`), and Escape Analysis (`-gcflags="-m"`).
+
+Model Answer / Explanation:
+1. Diagnostic Telemetry: Mount `net/http/pprof` endpoints (`/debug/pprof/goroutine`, `/debug/pprof/heap`). Fetch stack traces using `go tool pprof http://localhost:8080/debug/pprof/goroutine`.
+2. Escape Analysis: Compile Go services with `go build -gcflags="-m"` to identify variables escaping to heap memory. Replace pointer returns with value receivers or static stack allocations in hot paths.
+3. Race Detection: Run CI test suites with `go test -race ./...` to detect unsynchronized concurrent memory access across Goroutines.
+4. Object Reuse: Use `sync.Pool` to allocate reusable byte buffers (`[]byte`) for JSON/gRPC serialization, reducing Garbage Collection pause times.
+
+Common Mistakes:
+- Running binaries built with `-race` flag in production environments (causes 2x-10x memory and CPU performance degradation)
+- Returning pointers to short-lived local variables in tight loops, causing unexpected heap escapes
+- Forgetting to drain `time.Ticker` or `time.After` channels, leaking underlying timer runtime structures
+
+Related Concepts: pprof, Escape Analysis, sync.Pool, Race Detector, Garbage Collection
+Related Courses: go-concurrency-patterns, grpc-vs-rest-microservices',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'art-d02ac03028524724bb6b7ac18f7d4130',
+    'go-concurrency-interview-track',
+    NOW(),
+    'INTERVIEW_PREP'
+FROM users u 
+CROSS JOIN categories c 
+WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT (public_id) DO NOTHING;
+
+
+INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
+SELECT 
+    'Go Concurrency & High-Throughput Systems Interview Track',
+    'Advanced SME interview evaluation on Goroutine lifecycle management, channel select patterns, atomic memory operations, context propagation, and memory leak prevention.',
+    'PUBLISHED',
+    c.id,
+    u.id,
+    'crs-08e199327a804fbf9c725a1054bc2d7d',
+    'go-concurrency-interview-track',
     NOW(),
     'MODULE'
 FROM users u 
@@ -2024,7 +2587,7 @@ func FanIn(ctx context.Context, channels ...<-chan Result) <-chan Result {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-eac3037882154274a54260d6fd3cf439',
+    'art-eb3e1b85431b435497df2fc71870f0ac',
     'go-concurrency-patterns',
     NOW(),
     'GUIDE'
@@ -2041,7 +2604,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-cbd2507af4064068aa4798bda58eecae',
+    'crs-3c3e3f9b5ef74334888a699b8226591d',
     'go-concurrency-patterns',
     NOW(),
     'MODULE'
@@ -2184,7 +2747,7 @@ type ArticleRepository interface {
     'PUBLISHED',
     c.id,
     u.id,
-    'art-6d856283edb0429fae5b60f3556bf9eb',
+    'art-53ab509d4018419fa089a24e812cab8b',
     'domain-driven-design-principles',
     NOW(),
     'GUIDE'
@@ -2201,7 +2764,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-e1141606bc474c66bcc381bd50c3dbf9',
+    'crs-1b53970887be4f77ac760c86d752f917',
     'domain-driven-design-principles',
     NOW(),
     'MODULE'
@@ -2220,7 +2783,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-84f1fd5208ed44869051945f3ebe3cf6',
+    'crs-312a72a99a4a4078871888ce5f8fa2b3',
     'production-rag-and-llm-engineering',
     NOW(),
     'TRACK'
@@ -2237,7 +2800,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-b3c7fd70a1cc4d979fdcc076dde0f8e8',
+    'crs-f58fc4eebc88449c94f934bfd9461017',
     'enterprise-application-security',
     NOW(),
     'TRACK'
@@ -2254,7 +2817,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-95a0b22d4ac94f8fb5d46f6005a49d79',
+    'crs-01fae50650a84843bc773f72de9368bf',
     'mastering-go-microservices-course',
     NOW(),
     'TRACK'
@@ -2271,7 +2834,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-55e57c66f72f43b6ac362d3c612d57d1',
+    'crs-b93c6d603e724bb7b4c9674742125a2e',
     'ml-model-evaluation-metrics',
     NOW(),
     'TRACK'
@@ -2288,7 +2851,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-28ddeaa9b74447f5b6a98e3d6e2ce279',
+    'crs-ba5eaef5d3b74ec9b198d62fbd40663d',
     'rag-architecture-llm-applications',
     NOW(),
     'TRACK'
@@ -2305,7 +2868,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-b43d8a460c034bc78540390218a4e197',
+    'crs-ab65bda704af4bbeb2a7485c86b62993',
     'cloud-native-kubernetes-masterclass',
     NOW(),
     'TRACK'
@@ -2322,7 +2885,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-7c38db8b528043e0b29da1b456504295',
+    'crs-0799288d948a4c0e8b0015694acaffbc',
     'gcp-cloud-run-deployment-guide',
     NOW(),
     'TRACK'
@@ -2339,7 +2902,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-27b9e9f66a474830b65eea17f40635a2',
+    'crs-424aaf1bd1d24e9892233b79124c58f0',
     'terraform-modular-architecture',
     NOW(),
     'TRACK'
@@ -2356,7 +2919,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-7c783f5e0d6e484abfbe4c169ac4a790',
+    'crs-bf2f8b4cd80041d38860f8abca79df25',
     'oauth2-oidc-implementation-guide',
     NOW(),
     'TRACK'
@@ -2373,7 +2936,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-9048c3d258f24f569837b0e276e6169e',
+    'crs-f328cbd638b64be886310e6aa5dfe9d1',
     'owasp-top-10-llm-security',
     NOW(),
     'TRACK'
@@ -2390,7 +2953,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-b074f37b8fc24adbba422b363f5815b0',
+    'crs-fdd2cecdfe564e86bad8b3676c6209d7',
     'tls-x509-certificate-management',
     NOW(),
     'TRACK'
@@ -2407,7 +2970,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-ff8e8d2844994f049e1a8d6c4392028f',
+    'crs-97fd7d668b4c4089ad21556ace60a5c8',
     'postgresql-and-data-architecture',
     NOW(),
     'TRACK'
@@ -2424,7 +2987,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-dc4946aa5ba84a03bf113b7601910c67',
+    'crs-fc84d003f2234e08a694528a530d2166',
     'postgresql-indexing-and-query-tuning',
     NOW(),
     'TRACK'
@@ -2441,7 +3004,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-168e405fa506412a8e6dad36d470b4a1',
+    'crs-e7e85c02fb15453fb1d565919a2dc1d7',
     'domain-driven-design-principles',
     NOW(),
     'TRACK'
@@ -2458,7 +3021,7 @@ SELECT
     'PUBLISHED',
     c.id,
     u.id,
-    'crs-fa348e8bf89146fd8904213dbfff8275',
+    'crs-1f7eeaa37e5144e58131c9208c7fef52',
     'go-concurrency-patterns',
     NOW(),
     'TRACK'
