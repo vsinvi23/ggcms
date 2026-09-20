@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Loader2,
   Upload,
@@ -31,6 +32,7 @@ import {
   RotateCcw,
   Sparkles,
   Layers,
+  ShieldCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
@@ -291,6 +293,7 @@ async function parseFileClientSide(file: File, categories: { id: number; slug: s
           else if (key === 'type') type = val.toUpperCase();
           else if (key === 'category' || key === 'categoryslug') categorySlug = val;
           else if (key === 'articletype') articleType = val;
+          else if (key === 'status' || key === 'state') status = val.toUpperCase();
           else if (key === 'tags') {
             tags = val
               .replace(/^\[|\]$/g, '')
@@ -333,6 +336,9 @@ async function parseFileClientSide(file: File, categories: { id: number; slug: s
 }
 
 export default function BulkImport() {
+  const { isMasterAdmin, isAdmin } = useAuth();
+  const canDirectPublish = isMasterAdmin || isAdmin;
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [items, setItems] = useState<ImportPreviewItem[]>([]);
@@ -344,6 +350,7 @@ export default function BulkImport() {
   const [pasteFormat, setPasteFormat] = useState('md');
   const [previewModalItem, setPreviewModalItem] = useState<ImportPreviewItem | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [globalTargetStatus, setGlobalTargetStatus] = useState<'DRAFT' | 'PUBLISHED'>('DRAFT');
 
   // Saved for Later items (persisted in localStorage)
   const [savedItems, setSavedItems] = useState<ImportPreviewItem[]>(() => {
@@ -755,6 +762,14 @@ export default function BulkImport() {
       })),
     }));
 
+  const handleBatchStatusChange = (newStatus: 'DRAFT' | 'PUBLISHED') => {
+    setGlobalTargetStatus(newStatus);
+    setItems((prev) =>
+      prev.map((it, i) => (selected.has(i) || selected.size === 0 ? { ...it, status: newStatus } : it))
+    );
+    toast.info(`Target import state updated to ${newStatus}`);
+  };
+
   const handleConfirm = () => {
     const toImport = items
       .filter((_, i) => selected.has(i))
@@ -766,6 +781,7 @@ export default function BulkImport() {
         categoryId: it.categoryId,
         articleType: it.articleType,
         courseType: it.courseType,
+        status: canDirectPublish ? (it.status || globalTargetStatus) : 'DRAFT',
         sections: it.type === 'COURSE' ? convertSections(it.sections ?? [], it.bodyFormat) : [],
       }));
 
@@ -774,11 +790,14 @@ export default function BulkImport() {
       return;
     }
 
+    const hasPublished = toImport.some((it) => it.status === 'PUBLISHED');
+
     confirm.mutate(toImport, {
       onSuccess: (res) => {
         setConfirmed(true);
         if (res.failed === 0) {
-          toast.success(`${res.created} item${res.created !== 1 ? 's' : ''} imported as DRAFT`);
+          const statusDesc = hasPublished ? 'imported and published live!' : 'imported as DRAFT';
+          toast.success(`${res.created} item${res.created !== 1 ? 's' : ''} ${statusDesc}`);
           // Remove imported items from the preview list
           setItems((prev) => prev.filter((_, i) => !selected.has(i)));
           setSelected(new Set());
@@ -1086,6 +1105,20 @@ COURSE,My Course,frontend,,STANDARD,`}
                     </Button>
                   </>
                 )}
+                {canDirectPublish && items.length > 0 && (
+                  <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 px-2.5 py-1 rounded-md text-xs font-medium">
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span>Target State:</span>
+                    <select
+                      value={globalTargetStatus}
+                      onChange={(e) => handleBatchStatusChange(e.target.value as 'DRAFT' | 'PUBLISHED')}
+                      className="bg-transparent font-semibold cursor-pointer border-none focus:outline-none text-xs"
+                    >
+                      <option value="DRAFT" className="bg-background text-foreground">DRAFT (Review Workflow)</option>
+                      <option value="PUBLISHED" className="bg-background text-foreground">PUBLISHED (Direct Live)</option>
+                    </select>
+                  </div>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
@@ -1098,10 +1131,16 @@ COURSE,My Course,frontend,,STANDARD,`}
                   size="sm"
                   onClick={handleConfirm}
                   disabled={selectedCount === 0 || confirm.isPending}
-                  className="text-xs h-8"
+                  className={`text-xs h-8 gap-1.5 ${
+                    canDirectPublish && items.some((it, i) => selected.has(i) && (it.status || globalTargetStatus) === 'PUBLISHED')
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      : ''
+                  }`}
                 >
                   {confirm.isPending ? (
                     <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Importing…</>
+                  ) : canDirectPublish && items.some((it, i) => selected.has(i) && (it.status || globalTargetStatus) === 'PUBLISHED') ? (
+                    <><Sparkles className="w-3.5 h-3.5" /> Direct Publish & Import ({selectedCount})</>
                   ) : (
                     `Import ${selectedCount} as Draft`
                   )}
@@ -1123,7 +1162,8 @@ COURSE,My Course,frontend,,STANDARD,`}
                     <TableHead className="w-24">Type</TableHead>
                     <TableHead className="w-44">Category</TableHead>
                     <TableHead className="w-24">File</TableHead>
-                    <TableHead className="w-20">Status</TableHead>
+                    <TableHead className="w-32">Import State</TableHead>
+                    <TableHead className="w-16">Valid</TableHead>
                     <TableHead className="w-36 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1179,6 +1219,24 @@ COURSE,My Course,frontend,,STANDARD,`}
                           </span>
                         </TableCell>
                         <TableCell>
+                          {canDirectPublish ? (
+                            <select
+                              value={item.status || globalTargetStatus}
+                              onChange={(e) => updateItem(idx, { status: e.target.value })}
+                              className={`h-7 w-28 rounded-md border text-[11px] px-1.5 py-0 font-medium shadow-sm transition-colors ${
+                                (item.status || globalTargetStatus) === 'PUBLISHED'
+                                  ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300'
+                                  : 'border-input bg-background text-foreground'
+                              }`}
+                            >
+                              <option value="DRAFT">Draft</option>
+                              <option value="PUBLISHED">Direct Publish</option>
+                            </select>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px]">Draft</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           {item.valid ? (
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
                           ) : (
@@ -1219,12 +1277,13 @@ COURSE,My Course,frontend,,STANDARD,`}
                       </TableRow>
                       {expanded.has(idx) && (
                         <TableRow>
-                          <TableCell colSpan={8} className="p-0">
+                          <TableCell colSpan={9} className="p-0">
                             <ImportReviewRow
                               item={item}
                               onChange={(patch) => updateItem(idx, patch)}
                               onDelete={() => discardItem(idx)}
                               onSaveForLater={() => saveItemForLater(idx)}
+                              canDirectPublish={canDirectPublish}
                             />
                           </TableCell>
                         </TableRow>
