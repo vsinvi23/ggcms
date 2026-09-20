@@ -41,7 +41,7 @@ interface TocEntry {
   level: 2 | 3;
 }
 
-const MIN_HEADINGS_FOR_TOC = 3;
+const MIN_HEADINGS_FOR_TOC = 2;
 
 function ArticleSkeleton() {
   return (
@@ -177,33 +177,44 @@ export default function PublicArticleView() {
   }, [article, pendingRevision, diffViewMode, isAdmin, isMasterAdmin, publishedBodyText, draftBodyText, activeBody]);
 
   useEffect(() => {
-    const container = articleBodyRef.current;
-    if (!container) {
-      setTocEntries([]);
-      return;
-    }
-    const headings = Array.from(container.querySelectorAll<HTMLElement>('h2, h3'));
-    const seen = new Map<string, number>();
-    const entries: TocEntry[] = headings.map((heading) => {
-      const text = heading.textContent?.trim() || '';
-      let id = slugify(text);
-      const count = seen.get(id) ?? 0;
-      seen.set(id, count + 1);
-      if (count > 0) id = `${id}-${count}`;
-      heading.id = id;
-      return { id, text, level: heading.tagName === 'H3' ? 3 : 2 };
-    });
-    setTocEntries(entries);
-    if (entries.length > 0) {
-      setActiveHeadingId(entries[0].id);
-    }
-  }, [bodyHtml]);
+    let frameId: number;
+
+    const extractHeadings = () => {
+      const container = articleBodyRef.current;
+      if (!container) {
+        setTocEntries([]);
+        return;
+      }
+      const headings = Array.from(container.querySelectorAll<HTMLElement>('h1, h2, h3'));
+      const seen = new Map<string, number>();
+      const entries: TocEntry[] = headings.map((heading) => {
+        const text = heading.textContent?.trim() || '';
+        let id = heading.id || slugify(text) || `section-${Math.random().toString(36).substring(2, 7)}`;
+        const count = seen.get(id) ?? 0;
+        seen.set(id, count + 1);
+        if (count > 0) id = `${id}-${count}`;
+        heading.id = id;
+        return { id, text, level: heading.tagName === 'H3' ? 3 : 2 };
+      });
+
+      setTocEntries(entries);
+      if (entries.length > 0) {
+        setActiveHeadingId((prev) => (prev && entries.some((e) => e.id === prev) ? prev : entries[0].id));
+      }
+    };
+
+    // Defer querySelectorAll to next frame to ensure React innerHTML has mounted
+    frameId = requestAnimationFrame(extractHeadings);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [displayBodyHtml, bodyHtml]);
 
   // Dynamically update active right-rail TOC heading on scroll
   useEffect(() => {
     if (tocEntries.length === 0) return;
 
-    // Ensure default active heading starts at the first item
     setActiveHeadingId((prev) => (prev && tocEntries.some((e) => e.id === prev) ? prev : tocEntries[0].id));
 
     let ticking = false;
@@ -224,19 +235,19 @@ export default function PublicArticleView() {
           const viewportHeight = window.innerHeight;
           const scrollHeight = document.documentElement.scrollHeight;
 
-          // Find the last heading whose top position is <= 120px
+          // Find the last heading whose top position is <= 140px (sticky nav offset)
           let activeId = tocEntries[0].id;
           for (const heading of headingElements) {
             const rect = heading.getBoundingClientRect();
-            if (rect.top <= 120) {
+            if (rect.top <= 140) {
               activeId = heading.id;
             } else {
               break;
             }
           }
 
-          // Only highlight last heading if page is truly scrollable and user reached near bottom
-          if (scrollHeight > viewportHeight + 100 && scrollPosition + viewportHeight >= scrollHeight - 40) {
+          // Highlight last heading if near bottom of page
+          if (scrollHeight > viewportHeight + 100 && scrollPosition + viewportHeight >= scrollHeight - 50) {
             activeId = tocEntries[tocEntries.length - 1].id;
           }
 
