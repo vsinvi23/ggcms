@@ -20,8 +20,8 @@ export const useCmsList = (params?: CmsQueryParams) => {
   return useQuery({
     queryKey: cmsKeys.list(params),
     queryFn: () => cmsService.getAll(params),
-    // Don't cache stale search results
-    staleTime: params?.search ? 0 : 60_000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 
@@ -33,6 +33,8 @@ export const useCmsById = (id: number, enabled = true, type: CmsType = 'ARTICLE'
     queryKey: [...cmsKeys.detail(id), type],
     queryFn: () => cmsService.getById(id, type),
     enabled: enabled && id > 0,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 
@@ -45,6 +47,8 @@ export const useCmsBySlug = (slug: string | undefined, enabled = true, type: Cms
     queryKey: slug ? cmsKeys.bySlug(slug, type) : cmsKeys.all,
     queryFn: () => cmsService.getBySlug(slug!, type),
     enabled: enabled && !!slug,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 

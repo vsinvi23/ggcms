@@ -16,6 +16,8 @@ export const usePublicCmsList = (params?: PublicCmsQueryParams) => {
   return useQuery({
     queryKey: publicCmsKeys.list(params),
     queryFn: () => publicCmsService.getAll(params),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 
@@ -29,6 +31,8 @@ export const usePublicCmsById = (id: string | number, enabled = true, preview = 
     queryKey: [...publicCmsKeys.detail(id), { preview, type }],
     queryFn: () => publicCmsService.getById(id, type, preview),
     enabled: enabled && hasId,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 
@@ -41,6 +45,8 @@ export const usePublicCmsBody = (id: string | number, enabled = true, preview = 
     queryKey: [...publicCmsKeys.body(id), { preview, type }],
     queryFn: () => publicCmsService.getBody(id, type, preview),
     enabled: enabled && hasId,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 
@@ -52,6 +58,8 @@ export const usePublicArticlesByCategory = (slug: string, params?: { page?: numb
     queryKey: [...publicCmsKeys.all, 'articles', 'category', slug, params] as const,
     queryFn: () => publicCmsService.getArticlesByCategory(slug, params),
     enabled: !!slug,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 
@@ -63,6 +71,8 @@ export const usePublicCoursesByCategory = (slug: string, params?: { page?: numbe
     queryKey: [...publicCmsKeys.all, 'courses', 'category', slug, params] as const,
     queryFn: () => publicCmsService.getCoursesByCategory(slug, params),
     enabled: !!slug,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 

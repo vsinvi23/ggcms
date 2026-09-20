@@ -32,6 +32,15 @@ func SeedAdmin(db *gorm.DB, cfg *config.AdminConfig) {
 
 	ctx := context.Background()
 
+	// ── Ensure default system groups exist ────────────────────────────────
+	defaultGroups := []string{"Admin", "Editor", "Viewer", "Moderator", "Reviewer", "Publisher"}
+	for _, gName := range defaultGroups {
+		db.WithContext(ctx).Exec(
+			"INSERT INTO groups (name, created_at, updated_at) VALUES (?, NOW(), NOW()) ON CONFLICT (name) DO NOTHING",
+			gName,
+		)
+	}
+
 	// ── Ensure Admin group exists ───────────────────────────────────────────
 	group := &entity.Group{}
 	err := db.WithContext(ctx).Where("name = ?", adminGroupName).First(group).Error
@@ -79,56 +88,29 @@ func SeedAdmin(db *gorm.DB, cfg *config.AdminConfig) {
 		)
 	}
 
-	// ── Ensure admin user is in Admin group ─────────────────────────────────
-	var count int64
-	db.WithContext(ctx).Table("user_groups").
-		Where("user_id = ? AND group_id = ?", user.ID, group.ID).
-		Count(&count)
-
-	if count == 0 {
-		if err = db.WithContext(ctx).Exec(
-			"INSERT INTO user_groups (user_id, group_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
-			user.ID, group.ID,
-		).Error; err != nil {
-			logger.Error("bootstrap: failed to assign admin to Admin group", zap.Error(err))
-			return
-		}
-		logger.Info("bootstrap: admin user assigned to Admin group")
-	}
-
-	// Ensure no group is left without at least one member — add admin to any empty group
-	var emptyGroupIDs []uint
-	db.WithContext(ctx).Raw(`
-		SELECT g.id FROM groups g
-		LEFT JOIN user_groups ug ON ug.group_id = g.id
-		WHERE g.deleted_at IS NULL
-		GROUP BY g.id HAVING COUNT(ug.user_id) = 0
-	`).Pluck("id", &emptyGroupIDs)
-
-	for _, gid := range emptyGroupIDs {
+	// ── Ensure master admin user belongs to ALL groups ──────────────────────
+	var allGroupIDs []uint
+	db.WithContext(ctx).Model(&entity.Group{}).Where("deleted_at IS NULL").Pluck("id", &allGroupIDs)
+	for _, gid := range allGroupIDs {
 		db.WithContext(ctx).Exec(
 			"INSERT INTO user_groups (user_id, group_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
 			user.ID, gid,
 		)
-		logger.Info("bootstrap: added admin to empty group", zap.Uint("groupID", gid))
 	}
+	logger.Info("bootstrap: master admin assigned to all groups", zap.Int("totalGroups", len(allGroupIDs)))
 
-	// ── Seed "geek" virtual root category + link Admin group ───────────────
+	// ── Seed "geek" virtual root category & default category reviewer/publisher groups
 	seedGeekCategory(ctx, db, group)
 
 	// ── Seed secondary admin (geekadmin@geekgully.com) ──────────────────────
 	seedSecondaryAdmin(ctx, db, cfg, group)
 }
 
-// seedGeekCategory ensures the "geek" virtual root category exists and that the
-// Admin group is linked to it as a reviewer group.
-// Being assigned to "geek" transitively covers every category in the tree, giving
-// the master admin effective reviewer access over all content.
+// seedGeekCategory ensures the "geek" virtual root category exists and that
+// Reviewer & Publisher groups are linked to all categories in category_reviewer_groups.
 func seedGeekCategory(ctx context.Context, db *gorm.DB, adminGroup *entity.Group) {
 	const geekSlug = "geek"
 
-	// Ensure the category row exists (migration 020 also creates it, but this
-	// guard handles test environments where migrations may run in a different order).
 	if err := db.WithContext(ctx).Exec(`
 		INSERT INTO categories (name, slug, parent_id, is_virtual, created_at, updated_at)
 		VALUES ('geek', ?, NULL, TRUE, NOW(), NOW())
@@ -151,19 +133,25 @@ func seedGeekCategory(ctx context.Context, db *gorm.DB, adminGroup *entity.Group
 		UPDATE categories SET parent_id = ?, updated_at = NOW()
 		WHERE parent_id IS NULL AND id != ? AND is_virtual = FALSE`, geekID, geekID)
 
-	// Link Admin group to geek as a reviewer group.
+	// Link Admin, Reviewer, and Publisher groups to ALL categories (including geek virtual root)
 	if err := db.WithContext(ctx).Exec(`
 		INSERT INTO category_reviewer_groups (category_id, group_id)
-		VALUES (?, ?) ON CONFLICT DO NOTHING`, geekID, adminGroup.ID,
+		SELECT c.id, g.id
+		FROM categories c
+		CROSS JOIN groups g
+		WHERE g.name IN ('Admin', 'Reviewer', 'Publisher', 'Moderator', 'Editor')
+		  AND c.deleted_at IS NULL
+		  AND g.deleted_at IS NULL
+		ON CONFLICT DO NOTHING`,
 	).Error; err != nil {
-		logger.Error("bootstrap: failed to link Admin group to geek category", zap.Error(err))
+		logger.Error("bootstrap: failed to link Reviewer/Publisher groups to categories", zap.Error(err))
 		return
 	}
-	logger.Info("bootstrap: geek virtual root category seeded and Admin group linked")
+	logger.Info("bootstrap: geek virtual root category seeded and default Reviewer/Publisher groups linked to all categories")
 }
 
-// seedSecondaryAdmin seeds an additional admin user from GEEK_ADMIN_* env vars.
-// It is idempotent and skipped when GEEK_ADMIN_PASSWORD is empty.
+// seedSecondaryAdmin seeds an additional admin user from GEEK_ADMIN_* env vars
+// and assigns them to ALL groups by default.
 func seedSecondaryAdmin(ctx context.Context, db *gorm.DB, cfg *config.AdminConfig, adminGroup *entity.Group) {
 	if cfg.GeekAdminPassword == "" || cfg.GeekAdminEmail == "" {
 		return
@@ -193,19 +181,14 @@ func seedSecondaryAdmin(ctx context.Context, db *gorm.DB, cfg *config.AdminConfi
 		return
 	}
 
-	// Ensure membership in Admin group
-	var count int64
-	db.WithContext(ctx).Table("user_groups").
-		Where("user_id = ? AND group_id = ?", user.ID, adminGroup.ID).
-		Count(&count)
-	if count == 0 {
-		if err = db.WithContext(ctx).Exec(
+	// Ensure membership in ALL groups
+	var allGroupIDs []uint
+	db.WithContext(ctx).Model(&entity.Group{}).Where("deleted_at IS NULL").Pluck("id", &allGroupIDs)
+	for _, gid := range allGroupIDs {
+		db.WithContext(ctx).Exec(
 			"INSERT INTO user_groups (user_id, group_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
-			user.ID, adminGroup.ID,
-		).Error; err != nil {
-			logger.Error("bootstrap: failed to assign geek admin to Admin group", zap.Error(err))
-			return
-		}
-		logger.Info("bootstrap: geek admin assigned to Admin group", zap.String("email", cfg.GeekAdminEmail))
+			user.ID, gid,
+		)
 	}
+	logger.Info("bootstrap: secondary geek admin assigned to all groups", zap.String("email", cfg.GeekAdminEmail))
 }

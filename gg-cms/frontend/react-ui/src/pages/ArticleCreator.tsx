@@ -115,15 +115,18 @@ export default function ArticleCreator() {
     existingCms.reviewerId === user.id &&
     existingCms.status === 'REVIEW';
 
-  const isUnclaimedReview = isViewMode && existingCms?.status === 'REVIEW' && !existingCms?.reviewerId;
+  const hasReviewPermission = isAdmin || userGroups.some(g => g.permissions?.articles?.review === true || (g.permissions as any)?.all === true);
+  const isUnclaimedReview = isViewMode && existingCms?.status === 'REVIEW' && !existingCms?.reviewerId && hasReviewPermission;
+  const isUnclaimedReviewNoPermission = isViewMode && existingCms?.status === 'REVIEW' && !existingCms?.reviewerId && !hasReviewPermission;
   const isOtherReviewerClaimed = isViewMode && existingCms?.status === 'REVIEW' && !!existingCms?.reviewerId && existingCms.reviewerId !== user?.id;
 
   // APPROVED state — only the assigned publisher (reviewerId === current user) with publish permission can publish
   const isApprovedState = existingCms?.status === 'APPROVED';
-  const hasPublishPermission = isAdmin || userGroups.some(g => g.permissions?.articles?.publish === true);
+  const hasPublishPermission = isAdmin || userGroups.some(g => g.permissions?.articles?.publish === true || (g.permissions as any)?.all === true);
   const isAssignedPublisher = isApprovedState && !!user && existingCms?.reviewerId === user.id;
   const canPublish = isViewMode && isApprovedState && hasPublishPermission && isAssignedPublisher;
-  const isUnclaimedApproved = isViewMode && isApprovedState && !existingCms?.reviewerId;
+  const isUnclaimedApproved = isViewMode && isApprovedState && !existingCms?.reviewerId && hasPublishPermission;
+  const isUnclaimedApprovedNoPermission = isViewMode && isApprovedState && !existingCms?.reviewerId && !hasPublishPermission;
   const isOtherPublisherClaimed = isViewMode && isApprovedState && !!existingCms?.reviewerId && existingCms?.reviewerId !== user?.id;
 
   // Rendered HTML for view mode (handles JSON blocks + legacy HTML)
@@ -633,6 +636,22 @@ export default function ArticleCreator() {
                 </Card>
               )}
 
+              {isUnclaimedReviewNoPermission && (
+                <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-950/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200 text-sm font-bold">
+                      <AlertCircle className="w-4 h-4 text-amber-600" />
+                      Awaiting Reviewer Assignment
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      This article is in <strong>REVIEW</strong> status. Your user account does not belong to a Reviewer group with article review permissions, so review actions cannot be claimed by your role.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Claim for Publishing — APPROVED phase, no publisher assigned yet */}
               {isUnclaimedApproved && (
                 <Card className="border-purple-200 bg-purple-50/30 dark:bg-purple-950/10">
@@ -648,6 +667,22 @@ export default function ArticleCreator() {
                       {isReviewActing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
                       Assign to Me
                     </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {isUnclaimedApprovedNoPermission && (
+                <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-950/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200 text-sm font-bold">
+                      <AlertCircle className="w-4 h-4 text-amber-600" />
+                      Awaiting Publisher Assignment
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      This article is <strong>APPROVED</strong>. Your user account does not belong to a Publisher group with article publish permissions.
+                    </p>
                   </CardContent>
                 </Card>
               )}

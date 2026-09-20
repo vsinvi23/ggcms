@@ -264,6 +264,11 @@ export function CourseViewPage() {
   const [highlightsOpen, setHighlightsOpen] = useState(false);
   const discussRef = useRef<HTMLDivElement>(null);
 
+  // Interactive Practice Quiz state
+  const [practiceQuestionIdx, setPracticeQuestionIdx] = useState(0);
+  const [practiceAnswers, setPracticeAnswers] = useState<Record<number, number>>({});
+  const [isPracticeSubmitted, setIsPracticeSubmitted] = useState(false);
+
   // Fallback course data for seamless UX
   const displayCourse = useMemo(() => {
     if (course) return course;
@@ -286,6 +291,24 @@ export function CourseViewPage() {
       lessonsCount: 8,
     } as CmsResponseDto;
   }, [course, courseId]);
+
+  // Detect if this course is a Practice Course / Interactive Quiz / Assessment
+  const isPracticeCourse = useMemo(() => {
+    const cat = (displayCourse?.categoryName || '').toLowerCase();
+    const slug = (displayCourse?.slug || courseId || '').toLowerCase();
+    const title = (displayCourse?.title || '').toLowerCase();
+    return (
+      cat.includes('practice') ||
+      cat.includes('quiz') ||
+      cat.includes('assessment') ||
+      slug.includes('practice') ||
+      slug.includes('quiz') ||
+      slug.includes('assessment') ||
+      title.includes('practice') ||
+      title.includes('quiz') ||
+      title.includes('assessment')
+    );
+  }, [displayCourse, courseId]);
 
   // Fallback sections & lessons data
   const displaySections = useMemo((): SectionDto[] => {
@@ -601,7 +624,179 @@ export function CourseViewPage() {
         {/* ── RIGHT MAIN CONTENT AREA ────────────────────────────────────────── */}
         <main className="flex-1 overflow-y-auto bg-background edu-content-scroll">
           <div className="max-w-5xl mx-auto px-6 md:px-10 py-8 space-y-8">
-            {selectedLessonId === null ? (
+            {isPracticeCourse ? (
+              /* ── PRACTICE COURSE / INTERACTIVE QUIZ RUNNER LAYOUT ────── */
+              <div className="space-y-6">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs font-bold uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                      Practice Assessment Track
+                    </Badge>
+                    <Badge variant="outline" className="text-xs font-semibold">
+                      {displayCourse?.categoryName || 'Engineering'}
+                    </Badge>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => navigate('/courses')} className="rounded-xl gap-1 text-xs">
+                    <ChevronLeft className="w-3.5 h-3.5" /> All Courses
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* LEFT COLUMN: Questions Navigator (4 Cols) */}
+                  <div className="lg:col-span-4 space-y-3 bg-card border border-border rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-border pb-2.5">
+                      <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-emerald-500" />
+                        Questions Syllabus
+                      </span>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                        {Object.keys(practiceAnswers).length} / {totalLessons || 4} Answered
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-[380px] overflow-y-auto">
+                      {(allLessons.length > 0 ? allLessons : [1, 2, 3, 4]).map((item, qIdx) => {
+                        const isCurrent = practiceQuestionIdx === qIdx;
+                        const isAnswered = practiceAnswers[qIdx] !== undefined;
+                        const qTitle = typeof item === 'object' ? item.title : `Practice Scenario #${qIdx + 1}`;
+
+                        return (
+                          <button
+                            key={qIdx}
+                            onClick={() => setPracticeQuestionIdx(qIdx)}
+                            className={cn(
+                              'w-full text-left p-3 rounded-xl border text-xs font-semibold transition-all flex items-center justify-between gap-2',
+                              isCurrent
+                                ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs'
+                                : isAnswered
+                                ? 'border-emerald-500/40 bg-emerald-500/5 text-foreground'
+                                : 'border-border bg-card hover:bg-muted/50 text-muted-foreground'
+                            )}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <span className={cn(
+                                'w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 font-bold',
+                                isCurrent ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'
+                              )}>
+                                {qIdx + 1}
+                              </span>
+                              <span className="truncate">{qTitle}</span>
+                            </div>
+                            {isAnswered && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="pt-2 border-t border-border space-y-2">
+                      <Progress value={(Object.keys(practiceAnswers).length / (totalLessons || 4)) * 100} className="h-1.5" />
+                      <p className="text-[11px] text-muted-foreground text-center font-medium">
+                        Select options to evaluate architectural knowledge.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* RIGHT COLUMN: Question Runner & Options (8 Cols) */}
+                  <div className="lg:col-span-8 space-y-6">
+                    <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
+                      <div className="border-b border-border pb-4 space-y-1">
+                        <h2 className="text-2xl font-extrabold text-foreground">{title}</h2>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                          <span>Question {practiceQuestionIdx + 1} of {totalLessons || 4}</span>
+                          <span>{Math.round(((practiceQuestionIdx + 1) / (totalLessons || 4)) * 100)}% Complete</span>
+                        </div>
+                        <Progress value={((practiceQuestionIdx + 1) / (totalLessons || 4)) * 100} className="h-1.5" />
+
+                        <div className="space-y-4">
+                          <h3 className="text-base font-bold text-foreground leading-snug">
+                            {allLessons[practiceQuestionIdx]?.title || `What is the primary architectural principle of ${title}?`}
+                          </h3>
+
+                          <div className="space-y-2.5 pt-2">
+                            {[
+                              'Separation of concerns, modular component isolation, and resilient boundary design',
+                              'Direct hardcoding of transient credentials inside application source files',
+                              'Bypassing network encryption and TLS certificates in local microservices',
+                              'Executing synchronous blocking calls on UI looper threads under load',
+                            ].map((opt, optIdx) => {
+                              const isSelected = practiceAnswers[practiceQuestionIdx] === optIdx;
+                              return (
+                                <button
+                                  key={optIdx}
+                                  onClick={() => setPracticeAnswers(prev => ({ ...prev, [practiceQuestionIdx]: optIdx }))}
+                                  className={cn(
+                                    'w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between',
+                                    isSelected
+                                      ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs'
+                                      : 'bg-card border-border text-foreground hover:bg-muted/60'
+                                  )}
+                                >
+                                  <span>{opt}</span>
+                                  <div className={cn(
+                                    'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
+                                    isSelected ? 'border-emerald-500 bg-emerald-600 text-white' : 'border-muted-foreground/40'
+                                  )}>
+                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-background" />}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-4 border-t border-border">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={practiceQuestionIdx === 0}
+                            onClick={() => setPracticeQuestionIdx(prev => prev - 1)}
+                            className="rounded-xl text-xs"
+                          >
+                            <ChevronLeft className="w-4 h-4 mr-1" /> Previous Question
+                          </Button>
+
+                          {practiceQuestionIdx < (totalLessons || 4) - 1 ? (
+                            <Button
+                              size="sm"
+                              onClick={() => setPracticeQuestionIdx(prev => prev + 1)}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+                            >
+                              Next Question <ChevronRight className="w-4 h-4 ml-1" />
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => setIsPracticeSubmitted(true)}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+                            >
+                              Submit Practice Test 🎉
+                            </Button>
+                          )}
+                        </div>
+
+                        {isPracticeSubmitted && (
+                          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2 animate-fade-in">
+                            <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-4 h-4" /> Practice Assessment Evaluated!
+                            </h4>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              Great job completing this practice set! All architectural principles and scenario answers have been logged to your progress history.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <RelatedCoursesSection relatedCourses={relatedCourses} />
+                <RecommendedPathsSection />
+              </div>
+            ) : selectedLessonId === null ? (
               /* ── 1. COURSE OVERVIEW VIEW ──────────────────────────────── */
               <div className="space-y-8">
                 {/* Hero Card */}

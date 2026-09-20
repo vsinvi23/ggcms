@@ -91,19 +91,22 @@ export default function CourseCreator() {
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
 
   // Derived review state
+  const hasReviewPermission = isAdmin || userGroups.some(g => g.permissions?.courses?.review === true || (g.permissions as any)?.all === true);
   const isCurrentUserReviewer =
     !!user && !!existingCms?.reviewerId &&
     existingCms.reviewerId === user.id &&
     existingCms.status === 'REVIEW';
 
-  const isUnclaimedReview = isViewMode && existingCms?.status === 'REVIEW' && !existingCms?.reviewerId;
+  const isUnclaimedReview = isViewMode && existingCms?.status === 'REVIEW' && !existingCms?.reviewerId && hasReviewPermission;
+  const isUnclaimedReviewNoPermission = isViewMode && existingCms?.status === 'REVIEW' && !existingCms?.reviewerId && !hasReviewPermission;
   const isOtherReviewerClaimed = isViewMode && existingCms?.status === 'REVIEW' && !!existingCms?.reviewerId && existingCms.reviewerId !== user?.id;
 
   const isApprovedState = existingCms?.status === 'APPROVED';
-  const hasPublishPermission = isAdmin || userGroups.some(g => g.permissions?.courses?.publish === true);
+  const hasPublishPermission = isAdmin || userGroups.some(g => g.permissions?.courses?.publish === true || (g.permissions as any)?.all === true);
   const isAssignedPublisher = isApprovedState && !!user && existingCms?.reviewerId === user.id;
   const canPublish = isViewMode && isApprovedState && hasPublishPermission && isAssignedPublisher;
-  const isUnclaimedApproved = isViewMode && isApprovedState && !existingCms?.reviewerId;
+  const isUnclaimedApproved = isViewMode && isApprovedState && !existingCms?.reviewerId && hasPublishPermission;
+  const isUnclaimedApprovedNoPermission = isViewMode && isApprovedState && !existingCms?.reviewerId && !hasPublishPermission;
   const isOtherPublisherClaimed = isViewMode && isApprovedState && !!existingCms?.reviewerId && existingCms?.reviewerId !== user?.id;
 
   const bodyHtml = isViewMode ? parseBodyToHtml(existingBody || '') : '';
@@ -586,6 +589,22 @@ export default function CourseCreator() {
                     </Card>
                   )}
 
+                  {isUnclaimedReviewNoPermission && (
+                    <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-950/20">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200 text-sm font-bold">
+                          <AlertCircle className="w-4 h-4 text-amber-600" />
+                          Awaiting Reviewer Assignment
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          This course is in <strong>REVIEW</strong> status. Your user account does not belong to a Reviewer group with course review permissions, so review actions cannot be claimed by your role.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+
                   {/* Claim for Publishing — APPROVED phase, no publisher assigned yet */}
                   {isUnclaimedApproved && (
                     <Card className="border-purple-200 bg-purple-50/30 dark:bg-purple-950/10">
@@ -601,6 +620,22 @@ export default function CourseCreator() {
                           {isReviewActing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
                           Assign to Me
                         </Button>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {isUnclaimedApprovedNoPermission && (
+                    <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-950/20">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200 text-sm font-bold">
+                          <AlertCircle className="w-4 h-4 text-amber-600" />
+                          Awaiting Publisher Assignment
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          This course is <strong>APPROVED</strong>. Your user account does not belong to a Publisher group with course publish permissions.
+                        </p>
                       </CardContent>
                     </Card>
                   )}
