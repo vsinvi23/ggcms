@@ -1,15 +1,15 @@
 {
   "system_version": "1.3.0",
-  "build_timestamp": "2026-09-20T12:23:48Z",
-  "git_commit": "d4bc63d",
+  "build_timestamp": "2026-09-20T12:35:21Z",
+  "git_commit": "69a69dc",
   "components": {
     "ui": {
-      "version": "1.3.0",
+      "version": "1.3.1",
       "package": "gg-cms/frontend/react-ui",
       "description": "GG-CMS React SPA Frontend"
     },
     "backend": {
-      "version": "1.3.0",
+      "version": "1.3.1",
       "package": "gg-cms/backend/go-cms",
       "description": "GG-CMS Go Backend API Service"
     },

@@ -1,9 +1,19 @@
 {
   "system_name": "AI Content Factory Production Release Registry",
   "environment": "prod",
-  "current_version": "1.0.2",
-  "last_build_at": "2026-09-12T06:41:41Z",
+  "current_version": "1.0.3",
+  "last_build_at": "2026-09-20T12:35:50Z",
   "releases": [
+    {
+      "version": "1.0.3",
+      "built_at": "2026-09-20T12:35:50Z",
+      "branch": "release",
+      "commit": "69a69dc",
+      "components": {
+        "frontend": "1.0.8",
+        "backend": "1.0.8"
+      }
+    },
     {
       "version": "1.0.2",
       "built_at": "2026-09-12T06:41:41Z",

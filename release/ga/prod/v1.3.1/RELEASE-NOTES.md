@@ -1,15 +1,15 @@
-# GG-CMS Release Archive — v1.3.0 (prod)
+# GG-CMS Release Archive — v1.3.1 (prod)
 
 - **Target Environment**: prod
-- **Release Version**: v1.3.0
-- **Build Timestamp**: 2026-09-20T12:35:21Z
+- **Release Version**: v1.3.1
+- **Build Timestamp**: 2026-09-20T12:36:32Z
 - **Git Commit**: 69a69dc
 
 ## Component Version Matrix
 - **React UI**: v1.3.1
 - **Go Backend**: v1.3.1
-- **DB Migrations**: v1.3.0
-- **AI Content Factory**: v1.3.0
+- **DB Migrations**: v1.3.1
+- **AI Content Factory**: v1.3.1
 
 ## Deployment Contract & Security Signature
 - **API Contract Version**: v1
