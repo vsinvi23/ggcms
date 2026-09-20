@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { extractSlugFromPath, slugify } from '@/lib/slug';
@@ -66,33 +66,26 @@ function ArticleSkeleton() {
 }
 
 import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
+import { InlinePageEditor } from '@/components/editor/InlinePageEditor';
+import { ContentDiffOverlay, DiffViewMode, computeWordDiff } from '@/components/engagement/ContentDiffOverlay';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUpdateCms, useSubmitCmsForReview } from '@/api/hooks/useCms';
 
 // Helper for saving article revision
 export default function PublicArticleView() {
   const { '*': wildcardPath } = useParams();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
+  const { user, isAdmin, isMasterAdmin, canQuickEditPublic } = useAuth();
+  
   const [isViewingPending, setIsViewingPending] = useState(false);
   const [pendingRevision, setPendingRevision] = useState<any>(null);
-  
-  const handleSaveArticleRevision = async (data: { title: string; description: string; body: string; submitForReview: boolean }) => {
-    // Save draft revision or submit for review
-    const newRev = {
-      id: Date.now(),
-      parentContentId: article?.id || 1,
-      contentType: 'ARTICLE',
-      versionNumber: (article as any)?.versionNumber ? (article as any).versionNumber + 1 : 2,
-      status: data.submitForReview ? 'REVIEW' : 'DRAFT',
-      requestedBy: 1,
-      title: data.title,
-      description: data.description,
-      body: data.body,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setPendingRevision(newRev);
-    setIsViewingPending(true);
-  };
+  const [isInlineEditing, setIsInlineEditing] = useState(false);
+  const [diffViewMode, setDiffViewMode] = useState<DiffViewMode>('diff');
+
+  const updateCms = useUpdateCms();
+  const submitForReview = useSubmitCmsForReview();
+
   // Wildcard captures "slug" or "category/slug" — always use the last segment
   const articleId = extractSlugFromPath(wildcardPath);
   const discussRef = useRef<HTMLDivElement>(null);
@@ -104,6 +97,45 @@ export default function PublicArticleView() {
 
   const { data: article, isLoading: loadingArticle, error } = usePublicCmsById(articleId, true, isPreview);
   const { data: bodyHtml, isLoading: loadingBody } = usePublicCmsBody(articleId, !!article, isPreview);
+
+  const handleSaveArticleRevision = async (data: { title: string; description: string; body: string; submitForReview: boolean }) => {
+    if (article?.id) {
+      await updateCms.mutateAsync({
+        id: article.id,
+        data: {
+          type: 'ARTICLE',
+          title: data.title,
+          description: data.description,
+          body: data.body,
+          status: data.submitForReview ? 'REVIEW' : 'DRAFT',
+        },
+      });
+
+      if (data.submitForReview) {
+        await submitForReview.mutateAsync({
+          id: article.id,
+          type: 'ARTICLE',
+        });
+      }
+    }
+
+    const newRev = {
+      id: Date.now(),
+      parentContentId: article?.id || 1,
+      contentType: 'ARTICLE',
+      versionNumber: (article as any)?.version ? (article as any).version + 1 : 2,
+      status: data.submitForReview ? 'REVIEW' : 'DRAFT',
+      requestedBy: user?.id || 1,
+      title: data.title,
+      description: data.description,
+      body: data.body,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setPendingRevision(newRev);
+    setIsViewingPending(true);
+    setDiffViewMode('diff');
+  };
 
   const { data: topics = [] } = useContentTopics(article?.id ?? null, 'ARTICLE');
   const primaryTopicId = topics[0]?.id ?? null;
@@ -269,8 +301,40 @@ export default function PublicArticleView() {
     </ul>
   );
 
+  const activeTitle = pendingRevision && (diffViewMode === 'draft' || diffViewMode === 'diff') 
+    ? pendingRevision.title 
+    : article.title || 'Untitled Article';
+  const activeDescription = pendingRevision && (diffViewMode === 'draft' || diffViewMode === 'diff')
+    ? pendingRevision.description
+    : article.description || '';
+  const activeBody = pendingRevision && (diffViewMode === 'draft' || diffViewMode === 'diff')
+    ? pendingRevision.body
+    : bodyHtml || '';
+
+  const publishedBodyText = (article as any).publishedBody || bodyHtml || '';
+  const draftBodyText = pendingRevision?.body || bodyHtml || '';
+
+  const displayBodyHtml = useMemo(() => {
+    if ((article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin)) {
+      return computeWordDiff(publishedBodyText, draftBodyText);
+    }
+    return parseBodyToHtml(activeBody);
+  }, [article.hasPendingDraft, pendingRevision, diffViewMode, isAdmin, isMasterAdmin, publishedBodyText, draftBodyText, activeBody]);
+
   return (
     <PublicLayout>
+      {/* ── Confluence-style Inline Page Editor Header (Super Admin) ───────── */}
+      <InlinePageEditor
+        contentType="article"
+        contentId={article.id}
+        initialTitle={article.title || ''}
+        initialDescription={article.description || ''}
+        initialBody={bodyHtml || ''}
+        isEditing={isInlineEditing}
+        onClose={() => setIsInlineEditing(false)}
+        onSave={handleSaveArticleRevision}
+      />
+
       <PublicQuickEditBar
         contentType="article"
         contentId={article.id}
@@ -280,9 +344,31 @@ export default function PublicArticleView() {
         pendingRevision={pendingRevision}
         isViewingPending={isViewingPending}
         onToggleView={setIsViewingPending}
+        onStartInlineEdit={() => setIsInlineEditing(true)}
         onSaveRevision={handleSaveArticleRevision}
       />
-      <div className="max-w-6xl mx-auto pt-4">
+
+      <div className="max-w-6xl mx-auto pt-4 px-4 sm:px-6">
+        {/* ── Privileged Admin Visual Diff Banner Overlay ─────────────────── */}
+        {(article.hasPendingDraft || pendingRevision) && (isAdmin || isMasterAdmin) && (
+          <ContentDiffOverlay
+            publishedTitle={(article as any).publishedTitle || article.title}
+            draftTitle={pendingRevision?.title || article.title}
+            publishedDescription={(article as any).publishedDescription || article.description}
+            draftDescription={pendingRevision?.description || article.description}
+            publishedBody={publishedBodyText}
+            draftBody={draftBodyText}
+            status={pendingRevision?.status || article.status || 'DRAFT'}
+            hasPendingDraft={article.hasPendingDraft || !!pendingRevision}
+            version={(article as any).version || 2}
+            publishedVersion={(article as any).publishedVersion || 1}
+            viewMode={diffViewMode}
+            onViewModeChange={setDiffViewMode}
+            onStartInlineEdit={() => setIsInlineEditing(true)}
+            canEdit={canQuickEditPublic}
+          />
+        )}
+
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-primary transition-colors">Home</Link>
@@ -306,13 +392,27 @@ export default function PublicArticleView() {
                 )}
               </div>
 
-              <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight tracking-tight">
-                {article.title || 'Untitled Article'}
+              <h1 
+                className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight tracking-tight"
+                dangerouslySetInnerHTML={
+                  (article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin) && (article as any).publishedTitle
+                    ? { __html: computeWordDiff((article as any).publishedTitle, activeTitle) }
+                    : undefined
+                }
+              >
+                {!((article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin) && (article as any).publishedTitle) && activeTitle}
               </h1>
 
-              {article.description && (
-                <p className="text-xl text-muted-foreground mb-6 leading-relaxed">
-                  {article.description}
+              {activeDescription && (
+                <p 
+                  className="text-xl text-muted-foreground mb-6 leading-relaxed"
+                  dangerouslySetInnerHTML={
+                    (article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin) && (article as any).publishedDescription
+                      ? { __html: computeWordDiff((article as any).publishedDescription, activeDescription) }
+                      : undefined
+                  }
+                >
+                  {!((article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin) && (article as any).publishedDescription) && activeDescription}
                 </p>
               )}
 
@@ -442,7 +542,7 @@ export default function PublicArticleView() {
                   <div
                     ref={articleBodyRef}
                     className="educative-article-reader article-content text-foreground leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(parseBodyToHtml(bodyHtml)) }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(displayBodyHtml) }}
                   />
                 </HighlightOverlay>
               ) : (

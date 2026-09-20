@@ -8,7 +8,11 @@ import {
   savePracticeAttempt, 
   clearPracticeAttempt, 
   markArticleAsRead, 
-  getArticleReadState 
+  markArticleAsReferred,
+  getArticleReadState,
+  markCourseAsReferred,
+  updateCourseProgress,
+  getCourseProgressState
 } from '@/lib/contentStateStore';
 
 // Mock components & hooks
@@ -78,16 +82,44 @@ describe('contentStateStore', () => {
     expect(getPracticeAttempt('101')).toBeNull();
   });
 
-  it('marks article as read and retrieves read state', () => {
+  it('marks article as referred and read correctly', () => {
     expect(getArticleReadState(55)).toBeNull();
 
-    markArticleAsRead(55, true);
-    const state = getArticleReadState(55);
-    expect(state).not.toBeNull();
-    expect(state?.isRead).toBe(true);
+    markArticleAsReferred(55);
+    const referredState = getArticleReadState(55);
+    expect(referredState?.status).toBe('REFERRED');
+    expect(referredState?.isReferred).toBe(true);
+    expect(referredState?.isRead).toBe(false);
 
-    markArticleAsRead(55, false);
-    expect(getArticleReadState(55)?.isRead).toBe(false);
+    markArticleAsRead(55, true);
+    const readState = getArticleReadState(55);
+    expect(readState?.status).toBe('READ');
+    expect(readState?.isRead).toBe(true);
+
+    // markArticleAsReferred should not downgrade a READ article
+    markArticleAsReferred(55);
+    expect(getArticleReadState(55)?.status).toBe('READ');
+  });
+
+  it('handles course referred status and completes ONLY when all lessons finished', () => {
+    expect(getCourseProgressState(200)).toBeNull();
+
+    markCourseAsReferred(200);
+    const initial = getCourseProgressState(200);
+    expect(initial?.status).toBe('REFERRED');
+    expect(initial?.isCompleted).toBe(false);
+
+    // Partial lessons completed -> REFERRED (In Progress)
+    const partial = updateCourseProgress(200, [1, 2], 4);
+    expect(partial.status).toBe('REFERRED');
+    expect(partial.progress).toBe(50);
+    expect(partial.isCompleted).toBe(false);
+
+    // All lessons completed -> COMPLETED (100%)
+    const full = updateCourseProgress(200, [1, 2, 3, 4], 4);
+    expect(full.status).toBe('COMPLETED');
+    expect(full.progress).toBe(100);
+    expect(full.isCompleted).toBe(true);
   });
 });
 

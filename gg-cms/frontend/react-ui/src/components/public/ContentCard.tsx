@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, BookOpen, Play, CheckCircle2 } from 'lucide-react';
+import { Clock, BookOpen, Play, CheckCircle2, Eye, Award } from 'lucide-react';
 import { CmsResponseDto } from '@/api/types';
 import { cn } from '@/lib/utils';
 import { buildArticleUrl, buildCourseUrl } from '@/lib/slug';
-import { getArticleReadState, getPracticeAttempt } from '@/lib/contentStateStore';
+import { getArticleReadState, getPracticeAttempt, getCourseProgressState } from '@/lib/contentStateStore';
 
 interface ContentCardProps {
   item: CmsResponseDto;
@@ -20,6 +20,7 @@ export function ContentCard({ item, className }: ContentCardProps) {
   const linkPath = isArticle ? buildArticleUrl(item) : buildCourseUrl(item);
 
   const articleRead = isArticle ? getArticleReadState(item.id) : null;
+  const courseProgress = isCourse ? getCourseProgressState(item.id) : null;
   const practiceAttempt = getPracticeAttempt(item.id) || (item.slug ? getPracticeAttempt(item.slug) : null);
 
   return (
@@ -53,11 +54,25 @@ export function ContentCard({ item, className }: ContentCardProps) {
               )}
             </Badge>
 
-            {articleRead?.isRead && (
+            {articleRead?.status === 'READ' || articleRead?.isRead ? (
               <Badge className="bg-emerald-500 text-white font-bold text-[10px] shadow-sm flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" /> Read
               </Badge>
-            )}
+            ) : articleRead?.status === 'REFERRED' || articleRead?.isReferred ? (
+              <Badge variant="outline" className="bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-blue-400 font-bold text-[10px] shadow-sm flex items-center gap-1">
+                <Eye className="w-3 h-3" /> Referred
+              </Badge>
+            ) : null}
+
+            {courseProgress?.isCompleted ? (
+              <Badge className="bg-emerald-500 text-white font-bold text-[10px] shadow-sm flex items-center gap-1">
+                <Award className="w-3 h-3" /> Completed (100%)
+              </Badge>
+            ) : courseProgress?.isReferred ? (
+              <Badge variant="outline" className="bg-blue-500/10 border-blue-500/40 text-blue-600 dark:text-blue-400 font-bold text-[10px] shadow-sm flex items-center gap-1">
+                <Clock className="w-3 h-3" /> Referred ({courseProgress.progress}%)
+              </Badge>
+            ) : null}
 
             {practiceAttempt?.isSubmitted && (
               <Badge className="bg-emerald-500 text-white font-bold text-[10px] shadow-sm flex items-center gap-1">

@@ -109,8 +109,8 @@ export function PracticeHub() {
 
   const dbQuizzes = useMemo((): Quiz[] => {
     if (combinedCmsItems.length === 0) return [];
-    return combinedCmsItems.map(item => ({
-      id: String(item.id),
+    return combinedCmsItems.map((item, idx) => ({
+      id: `${item.type.toLowerCase()}-${item.id}-${idx}`,
       slug: item.slug || String(item.id),
       title: item.title.includes('Assessment') || item.title.includes('Quiz') ? item.title : `${item.title} Assessment`,
       description: item.description || `Test key concepts and practice hands-on scenarios for ${item.title}.`,

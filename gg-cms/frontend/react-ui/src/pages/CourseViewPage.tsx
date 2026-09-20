@@ -228,6 +228,9 @@ const RecommendedPathsSection = () => {
 };
 
 import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
+import { InlinePageEditor } from '@/components/editor/InlinePageEditor';
+import { ContentDiffOverlay, DiffViewMode } from '@/components/engagement/ContentDiffOverlay';
+import { useUpdateCms, useSubmitCmsForReview } from '@/api/hooks/useCms';
 
 // ─── Main CourseViewPage Component ────────────────────────────────────────────
 export function CourseViewPage() {
@@ -236,18 +239,43 @@ export function CourseViewPage() {
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
   const courseId = extractSlugFromPath(wildcardPath);
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isAdmin, isMasterAdmin, canQuickEditPublic } = useAuth();
   const [isViewingPending, setIsViewingPending] = useState(false);
   const [pendingRevision, setPendingRevision] = useState<any>(null);
+  const [isInlineEditing, setIsInlineEditing] = useState(false);
+  const [diffViewMode, setDiffViewMode] = useState<DiffViewMode>('diff');
+
+  const updateCms = useUpdateCms();
+  const submitForReview = useSubmitCmsForReview();
 
   const handleSaveCourseRevision = async (data: { title: string; description: string; body: string; submitForReview: boolean }) => {
+    if (numericCourseId) {
+      await updateCms.mutateAsync({
+        id: numericCourseId,
+        data: {
+          type: 'COURSE',
+          title: data.title,
+          description: data.description,
+          body: data.body,
+          status: data.submitForReview ? 'REVIEW' : 'DRAFT',
+        },
+      });
+
+      if (data.submitForReview) {
+        await submitForReview.mutateAsync({
+          id: numericCourseId,
+          type: 'COURSE',
+        });
+      }
+    }
+
     const newRev = {
       id: Date.now(),
       parentContentId: numericCourseId || 1,
       contentType: 'COURSE',
-      versionNumber: (displayCourse as any)?.versionNumber ? (displayCourse as any).versionNumber + 1 : 2,
+      versionNumber: (displayCourse as any)?.version ? (displayCourse as any).version + 1 : 2,
       status: data.submitForReview ? 'REVIEW' : 'DRAFT',
-      requestedBy: 1,
+      requestedBy: user?.id || 1,
       title: data.title,
       description: data.description,
       body: data.body,
@@ -256,6 +284,7 @@ export function CourseViewPage() {
     };
     setPendingRevision(newRev);
     setIsViewingPending(true);
+    setDiffViewMode('diff');
   };
 
   const { data: course, isLoading: courseLoading } = usePublicCmsById(
@@ -621,6 +650,17 @@ export function CourseViewPage() {
 
   return (
     <PublicLayout>
+      <InlinePageEditor
+        contentType="course"
+        contentId={numericCourseId || 1}
+        initialTitle={title}
+        initialDescription={description}
+        initialBody={displayCourse?.body || ''}
+        isEditing={isInlineEditing}
+        onClose={() => setIsInlineEditing(false)}
+        onSave={handleSaveCourseRevision}
+      />
+
       <PublicQuickEditBar
         contentType="course"
         contentId={numericCourseId || 1}
@@ -630,8 +670,31 @@ export function CourseViewPage() {
         pendingRevision={pendingRevision}
         isViewingPending={isViewingPending}
         onToggleView={setIsViewingPending}
+        onStartInlineEdit={() => setIsInlineEditing(true)}
         onSaveRevision={handleSaveCourseRevision}
       />
+
+      {((displayCourse as any)?.hasPendingDraft || pendingRevision) && (isAdmin || isMasterAdmin) && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <ContentDiffOverlay
+            publishedTitle={(displayCourse as any)?.publishedTitle || title}
+            draftTitle={pendingRevision?.title || title}
+            publishedDescription={(displayCourse as any)?.publishedDescription || description}
+            draftDescription={pendingRevision?.description || description}
+            publishedBody={(displayCourse as any)?.publishedBody || displayCourse?.body || ''}
+            draftBody={pendingRevision?.body || displayCourse?.body || ''}
+            status={pendingRevision?.status || displayCourse?.status || 'DRAFT'}
+            hasPendingDraft={(displayCourse as any)?.hasPendingDraft || !!pendingRevision}
+            version={(displayCourse as any)?.version || 2}
+            publishedVersion={(displayCourse as any)?.publishedVersion || 1}
+            viewMode={diffViewMode}
+            onViewModeChange={setDiffViewMode}
+            onStartInlineEdit={() => setIsInlineEditing(true)}
+            canEdit={canQuickEditPublic}
+          />
+        </div>
+      )}
+
       {/*
         Full viewport container with Left Navigation Sidebar + Right Content View
       */}

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	lessonsvc "github.com/serenya/go-cms/internal/application/lesson"
 	sectionsvc "github.com/serenya/go-cms/internal/application/section"
 	"github.com/serenya/go-cms/internal/domain/entity"
@@ -318,6 +319,10 @@ func TestImportPreview_CategoryResolutionAndValidation(t *testing.T) {
 type trackingCMSService struct {
 	stubCMSService
 	publishedIDs []uint
+}
+
+func (s *trackingCMSService) Create(_ context.Context, _ cmssvc.CreateRequest) (interface{}, error) {
+	return &entity.Article{ID: 1}, nil
 }
 
 func (s *trackingCMSService) Publish(_ context.Context, id uint, _ entity.CMSType, _ *uint) error {

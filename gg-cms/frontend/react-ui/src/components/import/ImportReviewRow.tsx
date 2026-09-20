@@ -18,9 +18,10 @@ interface ImportReviewRowProps {
   onChange: (patch: Partial<ImportPreviewItem>) => void;
   onDelete?: () => void;
   onSaveForLater?: () => void;
+  canDirectPublish?: boolean;
 }
 
-export function ImportReviewRow({ item, onChange, onDelete, onSaveForLater }: ImportReviewRowProps) {
+export function ImportReviewRow({ item, onChange, onDelete, onSaveForLater, canDirectPublish }: ImportReviewRowProps) {
   const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview');
   const [blocks, setBlocks] = useState<ContentBlock[]>(() =>
     parseBodyToBlocks(item.body || '', item.bodyFormat as 'json' | 'html' | 'markdown')
@@ -60,6 +61,11 @@ export function ImportReviewRow({ item, onChange, onDelete, onSaveForLater }: Im
           {item.bodyFormat && (
             <Badge variant="secondary" className="text-xs font-mono uppercase">
               {item.bodyFormat}
+            </Badge>
+          )}
+          {canDirectPublish && (
+            <Badge variant={item.status === 'PUBLISHED' ? 'default' : 'outline'} className={`text-xs gap-1 ${item.status === 'PUBLISHED' ? 'bg-green-600 text-white hover:bg-green-700' : ''}`}>
+              Target: {item.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT'}
             </Badge>
           )}
           {onSaveForLater && (
@@ -120,7 +126,7 @@ export function ImportReviewRow({ item, onChange, onDelete, onSaveForLater }: Im
       {/* Edit Form Tab */}
       {activeTab === 'edit' && (
         <div className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">Title</label>
               <Input
@@ -147,6 +153,24 @@ export function ImportReviewRow({ item, onChange, onDelete, onSaveForLater }: Im
                 className="min-h-9"
               />
             </div>
+            {canDirectPublish ? (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Target Import State</label>
+                <select
+                  value={item.status || 'DRAFT'}
+                  onChange={(e) => onChange({ status: e.target.value })}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="DRAFT">DRAFT (Import as Draft)</option>
+                  <option value="PUBLISHED">PUBLISHED (Direct Live Publish)</option>
+                </select>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Target State</label>
+                <Input value="DRAFT" disabled className="h-9 text-xs bg-muted/50" />
+              </div>
+            )}
           </div>
 
           <div className="space-y-1">

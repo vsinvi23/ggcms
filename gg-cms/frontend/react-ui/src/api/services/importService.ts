@@ -26,6 +26,7 @@ export interface ImportPreviewItem {
   categoryId?: number;
   articleType: string;
   courseType: string;
+  status?: string;
   tags: string[];
   sections: ImportSectionItem[];
   valid: boolean;
@@ -47,6 +48,7 @@ export interface ImportConfirmItem {
   categoryId?: number;
   articleType: string;
   courseType: string;
+  status?: string;
   sections: ImportSectionItem[];
 }
 

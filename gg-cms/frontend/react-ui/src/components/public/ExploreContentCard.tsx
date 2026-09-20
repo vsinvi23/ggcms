@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Loader2, LayoutList } from 'lucide-react';
+import { BookOpen, Loader2, LayoutList, Award, Clock, CheckCircle2 } from 'lucide-react';
 import { CmsResponseDto } from '@/api/types';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +11,7 @@ import { useSectionsByCourse } from '@/api/hooks/useSections';
 import { toast } from 'sonner';
 import { buildCourseUrl } from '@/lib/slug';
 import { toUserMessage } from '@/lib/errors';
+import { getCourseProgressState } from '@/lib/contentStateStore';
 
 interface ExploreContentCardProps {
   item: CmsResponseDto;
@@ -40,6 +41,8 @@ export function ExploreContentCard({ item, className }: ExploreContentCardProps)
   const { isAuthenticated } = useAuth();
   const enroll = useEnroll();
   const { data: enrollment } = useMyEnrollment(item.id, isAuthenticated);
+
+  const courseState = getCourseProgressState(item.id);
 
   // Fetch sections (chapters) for this course — public endpoint, no auth needed
   const { data: sections = [] } = useSectionsByCourse(item.id, true);
@@ -108,16 +111,28 @@ export function ExploreContentCard({ item, className }: ExploreContentCardProps)
                   {item.title || 'Untitled'}
                 </h3>
               </div>
-              <Button
-                size="sm"
-                variant={enrollment ? 'outline' : 'default'}
-                className="h-6 text-[11px] px-2 py-0 flex-shrink-0 mt-0.5"
-                onClick={handleEnroll}
-                disabled={enroll.isPending || !!enrollment}
-              >
-                {enroll.isPending && <Loader2 className="w-2.5 h-2.5 mr-1 animate-spin" />}
-                {enrollment ? 'Enrolled' : 'Enroll'}
-              </Button>
+              <div className="flex items-center gap-1 shrink-0">
+                {courseState?.isCompleted ? (
+                  <Badge className="h-5 text-[10px] px-1.5 bg-emerald-500 text-white font-bold">
+                    <Award className="w-2.5 h-2.5 mr-0.5" /> 100%
+                  </Badge>
+                ) : courseState?.isReferred ? (
+                  <Badge variant="outline" className="h-5 text-[10px] px-1.5 border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 font-bold">
+                    <Clock className="w-2.5 h-2.5 mr-0.5" /> {courseState.progress}%
+                  </Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant={enrollment ? 'outline' : 'default'}
+                    className="h-6 text-[11px] px-2 py-0 flex-shrink-0 mt-0.5"
+                    onClick={handleEnroll}
+                    disabled={enroll.isPending || !!enrollment}
+                  >
+                    {enroll.isPending && <Loader2 className="w-2.5 h-2.5 mr-1 animate-spin" />}
+                    {enrollment ? 'Enrolled' : 'Enroll'}
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Row 2: curriculum chapters or description */}
