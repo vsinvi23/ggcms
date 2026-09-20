@@ -534,8 +534,35 @@ function ApiContentList({
 
   const filteredItems = useMemo(() => {
     let result = allItems;
-    if (selectedCategoryIds.length > 0)
-      result = result.filter(item => item.categoryId !== null && selectedCategoryIds.includes(item.categoryId!));
+    if (selectedCategoryIds.length > 0) {
+      const expandedIds = new Set<number>();
+      selectedCategoryIds.forEach(id => {
+        expandedIds.add(id);
+        const findAndAdd = (cats: typeof categories) => {
+          if (!cats) return;
+          for (const c of cats) {
+            if (c.id === id) {
+              const addChildren = (node: typeof c) => {
+                if (node.children) {
+                  node.children.forEach(ch => {
+                    expandedIds.add(ch.id);
+                    addChildren(ch);
+                  });
+                }
+              };
+              addChildren(c);
+            } else if (c.children) {
+              findAndAdd(c.children);
+            }
+          }
+        };
+        findAndAdd(categories);
+      });
+      result = result.filter(item => item.categoryId !== null && item.categoryId !== undefined && expandedIds.has(item.categoryId));
+    } else if (activeDomainId !== undefined) {
+      const domainCatIds = new Set(flatCategories.map(c => c.id));
+      result = result.filter(item => item.categoryId !== null && item.categoryId !== undefined ? domainCatIds.has(item.categoryId) : true);
+    }
     if (selectedTypes.length > 0)
       result = result.filter(item => {
         const t = isArticle ? item.articleType : item.courseType;

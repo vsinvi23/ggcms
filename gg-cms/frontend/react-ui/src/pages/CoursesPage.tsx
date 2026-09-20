@@ -45,21 +45,26 @@ export function CoursesPage() {
 
   const backendCourses = useMemo(() => {
     if (!publicCmsData?.items || publicCmsData.items.length === 0) return [];
-    return publicCmsData.items.map(item => ({
-      id: String(item.id),
-      slug: item.slug || buildCourseUrl(item),
-      title: item.title,
-      description: item.description || '',
-      level: (item.level as any) || 'Intermediate',
-      modulesCount: item.sectionsCount || 8,
-      lessonsCount: item.lessonsCount || 24,
-      durationText: item.durationMinutes ? `${Math.floor(item.durationMinutes/60)}h ${item.durationMinutes%60}m` : '4h 30m',
-      category: item.categoryName || 'Engineering',
-      technology: item.tags?.[0] || 'Go',
-      learningStyle: 'Hands-on',
-      skills: item.tags || ['Go', 'REST', 'Backend'],
-      progress: 0,
-    }));
+    return publicCmsData.items.map(item => {
+      const dur = item.durationMinutes && item.durationMinutes > 0
+        ? (Math.floor(item.durationMinutes / 60) > 0 ? `${Math.floor(item.durationMinutes / 60)}h ${item.durationMinutes % 60}m` : `${item.durationMinutes}m`)
+        : (item.blockCount && item.blockCount > 0 ? `${item.blockCount * 5}m` : 'Self-paced');
+      return {
+        id: String(item.id),
+        slug: item.slug || buildCourseUrl(item),
+        title: item.title,
+        description: item.description || '',
+        level: (item.level as any) || 'Intermediate',
+        modulesCount: item.sectionsCount ?? 0,
+        lessonsCount: item.lessonsCount ?? 0,
+        durationText: dur,
+        category: item.categoryName || 'Engineering',
+        technology: item.tags?.[0] || 'Go',
+        learningStyle: 'Hands-on',
+        skills: item.tags || ['Go', 'REST', 'Backend'],
+        progress: 0,
+      };
+    });
   }, [publicCmsData]);
 
   const allCourses = useMemo(() => {
@@ -67,7 +72,9 @@ export function CoursesPage() {
   }, [backendCourses]);
 
   const categories = useMemo(() => {
-    const fetchedNames = (backendCategories ?? []).map(c => c.name).filter(Boolean);
+    const flattenNames = (cats: any[]): string[] =>
+      cats.flatMap(c => [c.name, ...flattenNames(c.children ?? [])]);
+    const fetchedNames = flattenNames(backendCategories ?? []).filter(Boolean);
     if (fetchedNames.length > 0) {
       return ['All', ...Array.from(new Set(fetchedNames))];
     }
@@ -98,12 +105,15 @@ export function CoursesPage() {
         course.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesLevel = selectedLevel === 'All' || course.level === selectedLevel;
-      const matchesCategory = selectedCategory === 'All' || course.category === selectedCategory;
+      let matchesCategory = selectedCategory === 'All' || course.category.toLowerCase().includes(selectedCategory.toLowerCase());
+      if (!matchesCategory && selectedCategory.toLowerCase().includes('software')) {
+        matchesCategory = course.category.toLowerCase().includes('backend') || course.category.toLowerCase().includes('design') || course.category.toLowerCase().includes('programming');
+      }
       const matchesStyle = selectedStyle === 'All' || course.learningStyle === selectedStyle;
 
       return matchesSearch && matchesLevel && matchesCategory && matchesStyle;
     });
-  }, [searchQuery, selectedLevel, selectedCategory, selectedStyle]);
+  }, [searchQuery, selectedLevel, selectedCategory, selectedStyle, allCourses]);
 
   const hasActiveFilters = selectedLevel !== 'All' || selectedCategory !== 'All' || selectedStyle !== 'All' || searchQuery !== '';
 

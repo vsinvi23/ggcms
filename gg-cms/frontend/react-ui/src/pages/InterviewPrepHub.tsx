@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useCategories } from '@/api/hooks/useCategories';
 import { cn } from '@/lib/utils';
+import { QuestionNavigator } from '@/components/shared/QuestionNavigator';
 
 export interface InterviewQuestionItem {
   id: string;
@@ -354,59 +355,16 @@ export function InterviewPrepHub() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               
               {/* LEFT COLUMN: Question Module Selector (3 Cols) */}
-              <div className="lg:col-span-3 space-y-3 bg-card border border-border rounded-2xl p-4 shadow-2xs">
-                <div className="flex items-center justify-between border-b border-border pb-2.5">
-                  <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Target className="w-4 h-4 text-primary" />
-                    Interview Questions
-                  </span>
-                  <span className="text-xs font-bold text-primary">
-                    {activeTrack.questions.length} Questions
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  {activeTrack.questions.map((q, qIdx) => {
-                    const isCurrent = currentQuestionIdx === qIdx;
-                    const isRevealed = !!revealedAnswers[q.id];
-
-                    return (
-                      <button
-                        key={q.id || qIdx}
-                        onClick={() => setCurrentQuestionIdx(qIdx)}
-                        className={cn(
-                          'w-full text-left p-3 rounded-xl border text-xs font-semibold transition-all flex items-center justify-between gap-2',
-                          isCurrent
-                            ? 'border-primary bg-primary/10 text-primary shadow-2xs font-bold'
-                            : isRevealed
-                            ? 'border-emerald-500/40 bg-emerald-500/5 text-foreground'
-                            : 'border-border bg-card hover:bg-muted/50 text-muted-foreground'
-                        )}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <span className={cn(
-                            'w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 font-bold',
-                            isCurrent ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                          )}>
-                            Q{q.questionNumber || qIdx + 1}
-                          </span>
-                          <span className="truncate">Question {qIdx + 1}</span>
-                        </div>
-
-                        {isRevealed && (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="pt-2 border-t border-border">
-                  <Progress value={((currentQuestionIdx + 1) / (activeTrack.questions.length || 1)) * 100} className="h-1.5" />
-                  <p className="text-[11px] text-muted-foreground mt-1.5 text-center font-medium">
-                    Question {currentQuestionIdx + 1} of {activeTrack.questions.length}
-                  </p>
-                </div>
+              <div className="lg:col-span-3">
+                <QuestionNavigator
+                  totalQuestions={activeTrack.questions.length}
+                  currentIndex={currentQuestionIdx}
+                  attemptedMap={revealedAnswers}
+                  onSelectQuestion={(idx) => setCurrentQuestionIdx(idx)}
+                  questions={activeTrack.questions}
+                  title="Interview Questions"
+                  isAttemptedFn={(_, q) => !!(q?.id && (revealedAnswers[q.id] || userNotes[q.id]))}
+                />
               </div>
 
               {/* CENTER COLUMN: Main Question & Interactive Solution Runner (6 Cols) */}

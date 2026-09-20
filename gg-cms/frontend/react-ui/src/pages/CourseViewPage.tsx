@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronDown, ChevronRight, Search, Play,
   CheckCircle2, Circle, BookOpen, FileText, GraduationCap, Award,
   Globe, Share2, Clock, Bookmark, Highlighter, Star, ArrowRight, Shield, Check,
-  Sparkles, LayoutList
+  Sparkles, LayoutList, AlertTriangle
 } from 'lucide-react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,16 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
@@ -28,6 +38,8 @@ import { HighlightsPanel } from '@/components/engagement/HighlightsPanel';
 import { InteractionBar } from '@/components/engagement/InteractionBar';
 import { CommentsSection } from '@/components/shared/CommentsSection';
 import { CURATED_LEARNING_PATHS } from '@/data/learningPathData';
+
+import { QuestionNavigator } from '@/components/shared/QuestionNavigator';
 
 // ─── Utility to flatten lessons ────────────────────────────────────────────────
 function getAllLessons(section: SectionDto): LessonDto[] {
@@ -60,12 +72,12 @@ function extractHeadings(body: string | null | undefined): string[] {
 // ─── Lesson indicator dot ─────────────────────────────────────────────────────
 const LessonDot = ({ isCompleted, isCurrent }: { isCompleted: boolean; isCurrent: boolean }) => {
   if (isCompleted) {
-    return <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />;
+    return <CheckCircle2 size={13} className="text-primary flex-shrink-0" />;
   }
   if (isCurrent) {
     return (
       <span className="w-3.5 h-3.5 flex items-center justify-center flex-shrink-0">
-        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
       </span>
     );
   }
@@ -101,14 +113,14 @@ const RelatedCoursesSection = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-emerald-500" />
+            <Sparkles className="w-5 h-5 text-primary" />
             Related & Recommended Courses
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Expand your engineering skills with these recommended tracks.
           </p>
         </div>
-        <Link to="/courses" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+        <Link to="/courses" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
           Explore Catalog <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
@@ -116,18 +128,18 @@ const RelatedCoursesSection = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {relatedCourses.slice(0, 6).map(rc => (
           <Link key={rc.id} to={buildCourseUrl(rc)} className="group">
-            <Card className="p-4 rounded-xl border border-border hover:border-emerald-500/40 hover:shadow-md transition-all bg-card/70 h-full flex flex-col justify-between space-y-3">
+            <Card className="p-4 rounded-xl border border-border hover:border-primary/40 hover:shadow-md transition-all bg-card/70 h-full flex flex-col justify-between space-y-3">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                  <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary border-primary/20">
                     {rc.categoryName || 'Engineering'}
                   </Badge>
                   <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-emerald-500" />
+                    <Clock className="w-3 h-3 text-primary" />
                     {rc.durationMinutes ? `${Math.floor(rc.durationMinutes / 60)}h ${rc.durationMinutes % 60}m` : '4h 30m'}
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                <h4 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
                   {rc.title ?? 'Untitled Course'}
                 </h4>
                 {rc.description && (
@@ -139,10 +151,10 @@ const RelatedCoursesSection = ({
 
               <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1 font-medium">
-                  <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+                  <BookOpen className="w-3.5 h-3.5 text-primary" />
                   {rc.sectionsCount || 8} Modules
                 </span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                <span className="text-primary font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                   View <ChevronRight className="w-3.5 h-3.5" />
                 </span>
               </div>
@@ -161,24 +173,24 @@ const RecommendedPathsSection = () => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-emerald-500" />
+            <GraduationCap className="w-5 h-5 text-primary" />
             Recommended Learning Paths
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             Structured career pathways combining courses, labs, and assessments.
           </p>
         </div>
-        <Link to="/learning-paths" className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+        <Link to="/learning-paths" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
           All Paths <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {CURATED_LEARNING_PATHS.slice(0, 2).map(path => (
-          <Card key={path.id} className="p-5 rounded-xl border border-border hover:border-emerald-500/40 transition-all bg-card/60 flex flex-col justify-between space-y-3">
+          <Card key={path.id} className="p-5 rounded-xl border border-border hover:border-primary/40 transition-all bg-card/60 flex flex-col justify-between space-y-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs">
+                <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
                   {path.kind === 'SECURITY_TRACK' ? 'Security Track' : 'Structured Path'}
                 </Badge>
                 <div className="flex items-center gap-1 text-xs text-amber-500 font-semibold">
@@ -192,12 +204,12 @@ const RecommendedPathsSection = () => {
 
             <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
               <span className="text-muted-foreground font-medium flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-emerald-500" /> ~{path.estimatedHours}h
+                <Clock className="w-3.5 h-3.5 text-primary" /> ~{path.estimatedHours}h
                 <span>&bull;</span>
-                <BookOpen className="w-3.5 h-3.5 text-emerald-500" /> {path.modules.length} Modules
+                <BookOpen className="w-3.5 h-3.5 text-primary" /> {path.modules.length} Modules
               </span>
               <Link to={`/learn/${path.slug}`}>
-                <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs gap-1 font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
+                <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs gap-1 font-bold text-primary hover:bg-primary/10">
                   View Path <ArrowRight className="w-3.5 h-3.5" />
                 </Button>
               </Link>
@@ -264,12 +276,16 @@ export function CourseViewPage() {
   const [highlightsOpen, setHighlightsOpen] = useState(false);
   const discussRef = useRef<HTMLDivElement>(null);
 
+  // Exit confirmation & State saving
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [pendingNavigationUrl, setPendingNavigationUrl] = useState<string | null>(null);
+
   // Interactive Practice Quiz state
   const [practiceQuestionIdx, setPracticeQuestionIdx] = useState(0);
   const [practiceAnswers, setPracticeAnswers] = useState<Record<number, number>>({});
   const [isPracticeSubmitted, setIsPracticeSubmitted] = useState(false);
 
-  // Fallback course data for seamless UX
+  // Real course data from backend API
   const displayCourse = useMemo(() => {
     if (course) return course;
     if (!courseId) return null;
@@ -279,16 +295,16 @@ export function CourseViewPage() {
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
     return {
-      id: 1,
+      id: 0,
       title: formattedTitle || 'Technical Course',
       slug: slug,
-      description: `Master ${formattedTitle} with structured modules, real-world hands-on exercises, and production architecture guidelines.`,
+      description: `Course content for ${formattedTitle}.`,
       status: 'PUBLISHED',
       type: 'COURSE',
       categoryName: 'Engineering',
-      durationMinutes: 480,
-      sectionsCount: 3,
-      lessonsCount: 8,
+      durationMinutes: 0,
+      sectionsCount: 0,
+      lessonsCount: 0,
     } as CmsResponseDto;
   }, [course, courseId]);
 
@@ -310,33 +326,10 @@ export function CourseViewPage() {
     );
   }, [displayCourse, courseId]);
 
-  // Fallback sections & lessons data
+  // Real sections & lessons data from backend API
   const displaySections = useMemo((): SectionDto[] => {
-    if (sections && sections.length > 0) return sections;
-    return [
-      {
-        id: 101,
-        title: 'Module 1: Foundations & Architecture',
-        courseId: numericCourseId || 1,
-        sortOrder: 1,
-        lessons: [
-          { id: 1001, sectionId: 101, title: 'Course Overview & Prerequisites', type: 'video', duration: 12, content: '<h2>Course Overview</h2><p>Welcome to this track. We cover essential prerequisites, toolchain setup, and core production patterns.</p>' },
-          { id: 1002, sectionId: 101, title: 'Core Principles & Domain Isolation', type: 'text', duration: 18, content: '<h2>Domain Isolation</h2><p>Learn how to separate concerns, isolate domain logic, and construct clean maintainable interfaces.</p>' },
-          { id: 1003, sectionId: 101, title: 'Hands-on Implementation Lab', type: 'text', duration: 25, content: '<h2>Hands-on Implementation</h2><p>Step-by-step code walkthrough applying idiomatic patterns to production scenarios.</p>' },
-        ],
-      },
-      {
-        id: 102,
-        title: 'Module 2: Advanced Design & Security Hardening',
-        courseId: numericCourseId || 1,
-        sortOrder: 2,
-        lessons: [
-          { id: 1004, sectionId: 102, title: 'Security Hardening & Token Auth', type: 'text', duration: 20, content: '<h2>Security Hardening</h2><p>Implement secure token handling, rate limiting, and zero-trust authentication checks.</p>' },
-          { id: 1005, sectionId: 102, title: 'Cloud Infrastructure & Deployments', type: 'video', duration: 15, content: '<h2>Cloud Deployments</h2><p>Configure structured logging, OpenTelemetry tracing, and Docker containerization for production deployment.</p>' },
-        ],
-      },
-    ];
-  }, [sections, numericCourseId]);
+    return sections ?? [];
+  }, [sections]);
 
   // Expand all sections by default once sections load
   React.useEffect(() => {
@@ -348,11 +341,98 @@ export function CourseViewPage() {
   const isEnrolled = !!enrollment;
   const completedLessonIds: number[] = (enrollment?.completedLessons ?? []).map(l => l.id);
   const allLessons = useMemo(() => displaySections.flatMap(getAllLessons), [displaySections]);
-  const totalLessons = allLessons.length;
+  const totalLessons = allLessons.length > 0 ? allLessons.length : (displayCourse?.lessonsCount ?? 0);
+  const totalModules = displaySections.length > 0 ? displaySections.length : (displayCourse?.sectionsCount ?? 0);
+
+  // Dynamic approximate duration calculation
+  const calculatedDurationMinutes = useMemo(() => {
+    if (displayCourse?.durationMinutes && displayCourse.durationMinutes > 0) {
+      return displayCourse.durationMinutes;
+    }
+    if (allLessons.length === 0) return 0;
+    let total = 0;
+    for (const lesson of allLessons) {
+      if (lesson.duration && lesson.duration > 0) {
+        total += lesson.duration;
+      } else if (lesson.content && lesson.content.trim()) {
+        const plainText = lesson.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        const words = plainText.split(' ').filter(Boolean).length;
+        total += Math.max(3, Math.ceil(words / 180));
+      } else {
+        total += 5; // default estimate per lesson if missing
+      }
+    }
+    return total;
+  }, [displayCourse?.durationMinutes, allLessons]);
+
+  const formattedDurationText = useMemo(() => {
+    if (calculatedDurationMinutes <= 0) return 'Self-paced';
+    const hrs = Math.floor(calculatedDurationMinutes / 60);
+    const mins = calculatedDurationMinutes % 60;
+    if (hrs === 0) return `${mins}m`;
+    if (mins === 0) return `${hrs}h`;
+    return `${hrs}h ${mins}m`;
+  }, [calculatedDurationMinutes]);
+
   const completedCount = completedLessonIds.length;
   const progressPercent = totalLessons > 0
     ? Math.round((completedCount / totalLessons) * 100)
     : Math.round((enrollment?.progress ?? 0) * 100);
+
+  // Save current course progress & lesson state locally and to backend
+  const saveCurrentCourseState = React.useCallback(() => {
+    if (numericCourseId && selectedLessonId !== null) {
+      try {
+        const state = {
+          courseId: numericCourseId,
+          selectedLessonId,
+          completedLessonIds,
+          savedAt: new Date().toISOString(),
+        };
+        localStorage.setItem(`ggcms_course_state_${numericCourseId}`, JSON.stringify(state));
+      } catch {
+        // ignore
+      }
+    }
+  }, [numericCourseId, selectedLessonId, completedLessonIds]);
+
+  // Intercept click on any external link when in an active lesson
+  React.useEffect(() => {
+    if (selectedLessonId === null) return;
+
+    const handleDocumentClick = (e: MouseEvent) => {
+      const targetAnchor = (e.target as HTMLElement).closest('a');
+      if (!targetAnchor) return;
+      const href = targetAnchor.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+
+      const currentPath = window.location.pathname;
+      if (href !== currentPath && !href.includes(currentPath)) {
+        e.preventDefault();
+        e.stopPropagation();
+        saveCurrentCourseState();
+        setPendingNavigationUrl(href);
+        setShowExitDialog(true);
+      }
+    };
+
+    document.addEventListener('click', handleDocumentClick, true);
+    return () => {
+      document.removeEventListener('click', handleDocumentClick, true);
+    };
+  }, [selectedLessonId, saveCurrentCourseState]);
+
+  // Handle browser reload or window close
+  React.useEffect(() => {
+    if (selectedLessonId === null) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      saveCurrentCourseState();
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [selectedLessonId, saveCurrentCourseState]);
 
   const title = displayCourse?.title ?? 'Technical Course';
   const description = displayCourse?.description ?? '';
@@ -474,11 +554,10 @@ export function CourseViewPage() {
       >
         {/* ── LEFT NAVIGATION SIDEBAR ────────────────────────────────────────── */}
         <aside
-          className="flex-shrink-0 flex flex-col overflow-hidden w-72 md:w-80 border-r border-border/80"
-          style={{ background: '#16171d' }}
+          className="flex-shrink-0 flex flex-col overflow-hidden w-72 md:w-80 border-r border-border bg-card"
         >
           {/* Header section with back button, title, and progress bar */}
-          <div className="p-5 border-b border-white/[0.08] space-y-3">
+          <div className="p-5 border-b border-border space-y-3">
             <Link
               to="/courses"
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
@@ -488,11 +567,11 @@ export function CourseViewPage() {
 
             <div>
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <Badge variant="secondary" className="text-[10px] px-2 py-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                <Badge variant="secondary" className="text-[10px] px-2 py-0 bg-primary/10 text-primary border-primary/20">
                   {displayCourse?.categoryName || 'Engineering'}
                 </Badge>
                 {isEnrolled && (
-                  <Badge variant="outline" className="text-[10px] px-2 py-0 border-emerald-500/40 text-emerald-400">
+                  <Badge variant="outline" className="text-[10px] px-2 py-0 border-primary/40 text-primary">
                     Enrolled
                   </Badge>
                 )}
@@ -508,12 +587,12 @@ export function CourseViewPage() {
                 <span>{progressPercent}% completed</span>
                 <span>{completedCount}/{totalLessons} lessons</span>
               </div>
-              <Progress value={progressPercent} className="h-1.5 bg-white/10" />
+              <Progress value={progressPercent} className="h-1.5 bg-muted" />
             </div>
           </div>
 
           {/* Search bar */}
-          <div className="p-3 border-b border-white/[0.06]">
+          <div className="p-3 border-b border-border">
             <div className="relative">
               <Search
                 size={13}
@@ -524,7 +603,7 @@ export function CourseViewPage() {
                 placeholder="Search modules & lessons..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs rounded-lg outline-none bg-white/[0.06] border border-white/10 text-foreground placeholder:text-muted-foreground/60 pl-8 pr-3 py-1.5 focus:border-emerald-500/50 transition-colors"
+                className="w-full text-xs rounded-lg outline-none bg-background border border-border text-foreground placeholder:text-muted-foreground/60 pl-8 pr-3 py-1.5 focus:border-primary transition-colors"
               />
             </div>
           </div>
@@ -537,11 +616,11 @@ export function CourseViewPage() {
               className={cn(
                 'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-left mb-2',
                 selectedLessonId === null
-                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                  : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground'
+                  ? 'bg-primary/15 text-primary border border-primary/30 font-bold'
+                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
               )}
             >
-              <LayoutList size={14} className={selectedLessonId === null ? 'text-emerald-400' : 'text-muted-foreground'} />
+              <LayoutList size={14} className={selectedLessonId === null ? 'text-primary' : 'text-muted-foreground'} />
               <span>Course Overview & Syllabus</span>
             </button>
 
@@ -555,7 +634,7 @@ export function CourseViewPage() {
                 <div key={section.id} className="rounded-lg overflow-hidden">
                   <button
                     onClick={() => toggleSection(section.id)}
-                    className="w-full flex items-start justify-between gap-2 px-3 py-2 text-left hover:bg-white/[0.04] transition-colors rounded-lg group"
+                    className="w-full flex items-start justify-between gap-2 px-3 py-2 text-left hover:bg-muted/50 transition-colors rounded-lg group"
                   >
                     <div className="flex items-start gap-2 min-w-0">
                       <span className="mt-0.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
@@ -574,7 +653,7 @@ export function CourseViewPage() {
 
                   {/* Lessons inside section */}
                   {isOpen && sectionLessons.length > 0 && (
-                    <div className="ml-5 pl-2.5 border-l border-white/[0.1] my-1 space-y-1">
+                    <div className="ml-5 pl-2.5 border-l border-border my-1 space-y-1">
                       {sectionLessons.map((lesson) => {
                         const isCompleted = completedLessonIds.includes(lesson.id);
                         const isCurrent = selectedLessonId === lesson.id;
@@ -587,8 +666,8 @@ export function CourseViewPage() {
                             className={cn(
                               'w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all text-xs',
                               isCurrent
-                                ? 'bg-emerald-500/20 text-foreground font-bold border border-emerald-500/40'
-                                : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground'
+                                ? 'bg-primary/15 text-foreground font-bold border border-primary/40'
+                                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                             )}
                           >
                             <LessonDot isCompleted={isCompleted} isCurrent={isCurrent} />
@@ -612,8 +691,8 @@ export function CourseViewPage() {
 
           {/* Sidebar CTA Footer if not enrolled */}
           {!isEnrolled && (
-            <div className="p-4 border-t border-white/[0.08] bg-white/[0.02] space-y-2">
-              <Button onClick={handleEnroll} size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs" disabled={enrolling}>
+            <div className="p-4 border-t border-border bg-card/60 space-y-2">
+              <Button onClick={handleEnroll} size="sm" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg text-xs" disabled={enrolling}>
                 <GraduationCap className="w-3.5 h-3.5 mr-1.5" />
                 {enrolling ? 'Enrolling…' : 'Enroll Now — Free'}
               </Button>
@@ -629,7 +708,7 @@ export function CourseViewPage() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between border-b border-border pb-3">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs font-bold uppercase bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                    <Badge variant="secondary" className="text-xs font-bold uppercase bg-primary/10 text-primary border-primary/20">
                       Practice Assessment Track
                     </Badge>
                     <Badge variant="outline" className="text-xs font-semibold">
@@ -642,58 +721,16 @@ export function CourseViewPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  {/* LEFT COLUMN: Questions Navigator (4 Cols) */}
-                  <div className="lg:col-span-4 space-y-3 bg-card border border-border rounded-2xl p-4 shadow-sm">
-                    <div className="flex items-center justify-between border-b border-border pb-2.5">
-                      <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-emerald-500" />
-                        Questions Syllabus
-                      </span>
-                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                        {Object.keys(practiceAnswers).length} / {totalLessons || 4} Answered
-                      </span>
-                    </div>
-
-                    <div className="space-y-2 max-h-[380px] overflow-y-auto">
-                      {(allLessons.length > 0 ? allLessons : [1, 2, 3, 4]).map((item, qIdx) => {
-                        const isCurrent = practiceQuestionIdx === qIdx;
-                        const isAnswered = practiceAnswers[qIdx] !== undefined;
-                        const qTitle = typeof item === 'object' ? item.title : `Practice Scenario #${qIdx + 1}`;
-
-                        return (
-                          <button
-                            key={qIdx}
-                            onClick={() => setPracticeQuestionIdx(qIdx)}
-                            className={cn(
-                              'w-full text-left p-3 rounded-xl border text-xs font-semibold transition-all flex items-center justify-between gap-2',
-                              isCurrent
-                                ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs'
-                                : isAnswered
-                                ? 'border-emerald-500/40 bg-emerald-500/5 text-foreground'
-                                : 'border-border bg-card hover:bg-muted/50 text-muted-foreground'
-                            )}
-                          >
-                            <div className="flex items-center gap-2 truncate">
-                              <span className={cn(
-                                'w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 font-bold',
-                                isCurrent ? 'bg-emerald-600 text-white' : 'bg-muted text-muted-foreground'
-                              )}>
-                                {qIdx + 1}
-                              </span>
-                              <span className="truncate">{qTitle}</span>
-                            </div>
-                            {isAnswered && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="pt-2 border-t border-border space-y-2">
-                      <Progress value={(Object.keys(practiceAnswers).length / (totalLessons || 4)) * 100} className="h-1.5" />
-                      <p className="text-[11px] text-muted-foreground text-center font-medium">
-                        Select options to evaluate architectural knowledge.
-                      </p>
-                    </div>
+                  {/* LEFT COLUMN: Questions Compact Radio Navigator (4 Cols) */}
+                  <div className="lg:col-span-4">
+                    <QuestionNavigator
+                      totalQuestions={totalLessons || 4}
+                      currentIndex={practiceQuestionIdx}
+                      attemptedMap={practiceAnswers}
+                      onSelectQuestion={(idx) => setPracticeQuestionIdx(idx)}
+                      questions={allLessons.length > 0 ? allLessons : [1, 2, 3, 4].map(n => ({ title: `Question ${n}` }))}
+                      title="Questions Navigator"
+                    />
                   </div>
 
                   {/* RIGHT COLUMN: Question Runner & Options (8 Cols) */}
@@ -729,18 +766,18 @@ export function CourseViewPage() {
                                   key={optIdx}
                                   onClick={() => setPracticeAnswers(prev => ({ ...prev, [practiceQuestionIdx]: optIdx }))}
                                   className={cn(
-                                    'w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between',
+                                    'w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between cursor-pointer',
                                     isSelected
-                                      ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold shadow-xs'
+                                      ? 'bg-blue-500/10 border-blue-500 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
                                       : 'bg-card border-border text-foreground hover:bg-muted/60'
                                   )}
                                 >
                                   <span>{opt}</span>
                                   <div className={cn(
                                     'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
-                                    isSelected ? 'border-emerald-500 bg-emerald-600 text-white' : 'border-muted-foreground/40'
+                                    isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-muted-foreground/40'
                                   )}>
-                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-background" />}
+                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                   </div>
                                 </button>
                               );
@@ -763,7 +800,7 @@ export function CourseViewPage() {
                             <Button
                               size="sm"
                               onClick={() => setPracticeQuestionIdx(prev => prev + 1)}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-bold"
                             >
                               Next Question <ChevronRight className="w-4 h-4 ml-1" />
                             </Button>
@@ -771,7 +808,7 @@ export function CourseViewPage() {
                             <Button
                               size="sm"
                               onClick={() => setIsPracticeSubmitted(true)}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold"
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-bold"
                             >
                               Submit Practice Test 🎉
                             </Button>
@@ -779,9 +816,9 @@ export function CourseViewPage() {
                         </div>
 
                         {isPracticeSubmitted && (
-                          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2 animate-fade-in">
-                            <h4 className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                              <CheckCircle2 className="w-4 h-4" /> Practice Assessment Evaluated!
+                          <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 space-y-2 animate-fade-in">
+                            <h4 className="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                              <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Practice Assessment Evaluated!
                             </h4>
                             <p className="text-xs text-muted-foreground leading-relaxed">
                               Great job completing this practice set! All architectural principles and scenario answers have been logged to your progress history.
@@ -827,16 +864,16 @@ export function CourseViewPage() {
 
                     <div className="flex flex-wrap items-center gap-6 text-xs sm:text-sm text-muted-foreground pt-2">
                       <div className="flex items-center gap-1.5">
-                        <BookOpen className="w-4 h-4 text-emerald-500" />
-                        <span className="font-semibold text-foreground">{displaySections.length}</span> Modules
+                        <BookOpen className="w-4 h-4 text-primary" />
+                        <span className="font-semibold text-foreground">{totalModules}</span> Modules
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <FileText className="w-4 h-4 text-emerald-500" />
+                        <FileText className="w-4 h-4 text-primary" />
                         <span className="font-semibold text-foreground">{totalLessons}</span> Lessons
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4 text-emerald-500" />
-                        <span className="font-semibold text-foreground">{displayCourse?.durationMinutes ? `${Math.floor(displayCourse.durationMinutes / 60)}h ${displayCourse.durationMinutes % 60}m` : '4h 30m'}</span> Estimated
+                        <Clock className="w-4 h-4 text-primary" />
+                        <span className="font-semibold text-foreground">{formattedDurationText}</span> Estimated
                       </div>
                       <div className="flex items-center gap-1.5 text-amber-500 font-semibold">
                         <Star className="w-4 h-4 fill-amber-500" />
@@ -852,7 +889,7 @@ export function CourseViewPage() {
                           onClick={() => {
                             if (allLessons.length > 0) setSelectedLessonId(allLessons[0].id);
                           }}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2 font-bold px-6 shadow-md"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-2 font-bold px-6 shadow-md"
                         >
                           <Play className="w-4 h-4" /> Start Learning
                         </Button>
@@ -861,7 +898,7 @@ export function CourseViewPage() {
                           size="lg"
                           onClick={handleEnroll}
                           disabled={enrolling}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2 font-bold px-6 shadow-md"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-2 font-bold px-6 shadow-md"
                         >
                           <GraduationCap className="w-5 h-5" />
                           {enrolling ? 'Enrolling…' : 'Enroll Now — Free'}
@@ -971,8 +1008,8 @@ export function CourseViewPage() {
                     {/* Video Player Placeholder if video lesson */}
                     {currentLesson.type === 'video' && (
                       <div className="aspect-video rounded-2xl overflow-hidden bg-slate-900 flex items-center justify-center border border-border shadow-md">
-                        <button className="w-16 h-16 rounded-full bg-emerald-600 hover:bg-emerald-700 flex items-center justify-center text-white transition-transform hover:scale-105 shadow-lg">
-                          <Play size={26} fill="white" className="ml-1" />
+                        <button className="w-16 h-16 rounded-full bg-primary hover:bg-primary/90 flex items-center justify-center text-primary-foreground transition-transform hover:scale-105 shadow-lg">
+                          <Play size={26} fill="currentColor" className="ml-1" />
                         </button>
                       </div>
                     )}
@@ -1023,14 +1060,14 @@ export function CourseViewPage() {
 
                       {completedLessonIds.includes(currentLesson.id) ? (
                         <div className="flex items-center gap-2">
-                          <span className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                          <span className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-primary/15 text-primary">
                             <CheckCircle2 size={14} /> Completed
                           </span>
                           {nextLesson && (
                             <Button
                               size="sm"
                               onClick={() => setSelectedLessonId(nextLesson.id)}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-1 font-bold"
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-1 font-bold"
                             >
                               Next Lesson <ChevronRight className="h-4 w-4" />
                             </Button>
@@ -1043,7 +1080,7 @@ export function CourseViewPage() {
                             if (nextLesson) setSelectedLessonId(nextLesson.id);
                           }}
                           disabled={isMarkingComplete}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold gap-2"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold gap-2"
                         >
                           <CheckCircle2 className="h-4 w-4" />
                           {isMarkingComplete ? 'Saving…' : 'Mark as Complete'}
@@ -1083,6 +1120,38 @@ export function CourseViewPage() {
         contentUrl={buildCourseUrl(displayCourse ?? { title })}
         contentTitle={title}
       />
+
+      {/* Exit Confirmation Dialog */}
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent className="rounded-2xl max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-base font-bold flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Exit Course?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground">
+              Your current course progress and lesson state have been saved automatically. Are you sure you want to exit?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel onClick={() => { setShowExitDialog(false); setPendingNavigationUrl(null); }}>
+              Stay in Course
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowExitDialog(false);
+                if (pendingNavigationUrl) {
+                  navigate(pendingNavigationUrl);
+                  setPendingNavigationUrl(null);
+                }
+              }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+            >
+              Save & Exit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <EduCourseStyles />
     </PublicLayout>

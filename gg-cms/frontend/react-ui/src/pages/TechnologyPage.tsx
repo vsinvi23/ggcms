@@ -46,17 +46,28 @@ const TechnologyPage = () => {
   const { data: topicsData } = useTopics();
   const { data: tagsData = [] } = useTags();
 
+  // Flatten all categories recursively for deep slug matching
+  const flatCategories = useMemo(() => {
+    if (!categories) return [];
+    const flatten = (cats: any[]): any[] =>
+      cats.flatMap(c => [c, ...flatten(c.children ?? [])]);
+    return flatten(categories);
+  }, [categories]);
+
   // Match category by slug, ID, or normalized name slug
   const category = useMemo(() => {
     if (!slug) return null;
     const q = slug.toLowerCase();
+    const normalize = (s: string) => s.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
-    const found = (categories ?? []).find(
+    const found = flatCategories.find(
       (c) =>
         c.slug?.toLowerCase() === q ||
         c.id.toString() === q ||
-        c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === q ||
-        c.name.toLowerCase() === q
+        normalize(c.name) === normalize(q) ||
+        normalize(c.name) === q ||
+        c.name.toLowerCase() === q.replace(/-/g, ' ') ||
+        (q.includes('backend') && c.slug === 'backend-apis')
     );
     if (found) return found;
 
@@ -68,6 +79,8 @@ const TechnologyPage = () => {
       'pki-cryptography': 'PKI & Cryptography',
       'pki': 'PKI & Cryptography',
       'software-engineering': 'Software Engineering',
+      'backend-apis': 'Backend & APIs',
+      'backend': 'Backend & APIs',
       'cloud-infrastructure': 'Cloud Infrastructure',
       'cloud': 'Cloud Infrastructure',
       'cybersecurity': 'Cybersecurity',
@@ -83,7 +96,33 @@ const TechnologyPage = () => {
       slug: q,
       description: `In-depth technical articles, tutorials, guides, and engineering architectures for ${name}.`,
     };
-  }, [categories, slug]);
+  }, [flatCategories, slug]);
+
+  // Collect target category ID and all descendant category IDs (e.g. Software Engineering includes Backend & APIs)
+  const targetCategoryIds = useMemo(() => {
+    if (!category || category.id === 999) return [];
+    const ids: number[] = [category.id];
+    const findNodeAndCollect = (cats: any[]) => {
+      for (const c of cats) {
+        if (c.id === category.id) {
+          const collect = (node: any) => {
+            if (node.children && Array.isArray(node.children)) {
+              for (const child of node.children) {
+                ids.push(child.id);
+                collect(child);
+              }
+            }
+          };
+          collect(c);
+          return true;
+        }
+        if (c.children && findNodeAndCollect(c.children)) return true;
+      }
+      return false;
+    };
+    findNodeAndCollect(categories ?? []);
+    return ids;
+  }, [category, categories]);
 
   // Fetch articles and courses for this category from live CMS API
   const { data: articlesData, isLoading: articlesLoading } = usePublicCmsList({ type: 'ARTICLE', size: 100 });
@@ -92,24 +131,38 @@ const TechnologyPage = () => {
   const allArticles: CmsResponseDto[] = useMemo(() => articlesData?.items ?? [], [articlesData]);
   const allCourses: CmsResponseDto[] = useMemo(() => coursesData?.items ?? [], [coursesData]);
 
-  // Items belonging to this category
+  // Items belonging to this category or its subcategories
   const categoryArticles = useMemo(() => {
     if (!category) return [];
+    const catNameLower = category.name.toLowerCase();
+    const slugLower = slug?.toLowerCase() ?? '';
     return allArticles.filter(item => {
-      if (category.id !== 999 && item.categoryId === category.id) return true;
+      if (item.categoryId !== null && item.categoryId !== undefined && targetCategoryIds.includes(item.categoryId)) {
+        return true;
+      }
       const text = `${item.categoryName ?? ''} ${item.title ?? ''} ${item.description ?? ''}`.toLowerCase();
-      return text.includes(category.name.toLowerCase()) || (slug && text.includes(slug.toLowerCase()));
+      if (text.includes(catNameLower) || (slugLower && text.includes(slugLower))) return true;
+      if (slugLower.includes('backend') && (text.includes('backend') || text.includes('api'))) return true;
+      if (slugLower.includes('software-engineering') && (text.includes('backend') || text.includes('programming') || text.includes('software'))) return true;
+      return false;
     });
-  }, [allArticles, category, slug]);
+  }, [allArticles, category, targetCategoryIds, slug]);
 
   const categoryCourses = useMemo(() => {
     if (!category) return [];
+    const catNameLower = category.name.toLowerCase();
+    const slugLower = slug?.toLowerCase() ?? '';
     return allCourses.filter(item => {
-      if (category.id !== 999 && item.categoryId === category.id) return true;
+      if (item.categoryId !== null && item.categoryId !== undefined && targetCategoryIds.includes(item.categoryId)) {
+        return true;
+      }
       const text = `${item.categoryName ?? ''} ${item.title ?? ''} ${item.description ?? ''}`.toLowerCase();
-      return text.includes(category.name.toLowerCase()) || (slug && text.includes(slug.toLowerCase()));
+      if (text.includes(catNameLower) || (slugLower && text.includes(slugLower))) return true;
+      if (slugLower.includes('backend') && (text.includes('backend') || text.includes('api'))) return true;
+      if (slugLower.includes('software-engineering') && (text.includes('backend') || text.includes('programming') || text.includes('software'))) return true;
+      return false;
     });
-  }, [allCourses, category, slug]);
+  }, [allCourses, category, targetCategoryIds, slug]);
 
   // Relevant tags for this category
   const categoryTags = useMemo(() => {
