@@ -1,7 +1,7 @@
 {
   "system_version": "1.1.5",
-  "build_timestamp": "2026-09-19T16:00:49Z",
-  "git_commit": "94f59b5",
+  "build_timestamp": "2026-09-20T02:55:03Z",
+  "git_commit": "17bda1f",
   "components": {
     "ui": {
       "version": "1.1.21",
@@ -14,7 +14,7 @@
       "description": "GG-CMS Go Backend API Service"
     },
     "db": {
-      "version": "1.1.10",
+      "version": "1.1.11",
       "package": "gg-cms/backend/go-cms/migrations",
       "description": "PostgreSQL & MongoDB Schemas"
     },

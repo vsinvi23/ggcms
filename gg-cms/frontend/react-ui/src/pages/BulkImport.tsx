@@ -163,9 +163,9 @@ ARTICLE,Docker Multi-Stage Build Best Practices,Optimize Docker image sizes for 
   },
 };
 
-async function parseFileClientSide(file: File, categories: { id: number; slug: string; name: string }[]): Promise<ImportPreviewItem[]> {
+async function parseFileClientSide(file: File, categories: { id: number; slug: string; name: string }[] = []): Promise<ImportPreviewItem[]> {
   const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
-  const defaultCatId = categories.length > 0 ? categories[0].id : undefined;
+  const defaultCatId = categories && categories.length > 0 ? categories[0].id : undefined;
 
   // Client-side ZIP unpacking fallback
   if (ext === '.zip') {
@@ -214,6 +214,49 @@ async function parseFileClientSide(file: File, categories: { id: number; slug: s
         sections: Array.isArray(it.sections) ? it.sections : [],
         valid: true,
       }));
+    } catch {
+      // Fallback to text parsing
+    }
+  }
+
+  if (ext === '.csv') {
+    try {
+      const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (lines.length >= 2) {
+        const header = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/^["']|["']$/g, ''));
+        const getVal = (row: string[], keys: string[]): string => {
+          for (const k of keys) {
+            const idx = header.indexOf(k);
+            if (idx !== -1 && idx < row.length) {
+              return row[idx].trim().replace(/^["']|["']$/g, '');
+            }
+          }
+          return '';
+        };
+        const csvItems: ImportPreviewItem[] = [];
+        for (let i = 1; i < lines.length; i++) {
+          const row = lines[i].split(',').map((cell) => cell.trim());
+          const t = (getVal(row, ['type']) || 'ARTICLE').toUpperCase();
+          const titleVal = getVal(row, ['title']) || `Row ${i}`;
+          csvItems.push({
+            fileName: file.name,
+            index: i - 1,
+            type: t,
+            title: titleVal,
+            description: getVal(row, ['description']),
+            body: getVal(row, ['body']),
+            bodyFormat: 'csv-flat',
+            categorySlug: getVal(row, ['categoryslug', 'category']) || 'backend',
+            categoryId: defaultCatId,
+            articleType: getVal(row, ['articletype', 'article_type']) || 'guide',
+            courseType: getVal(row, ['coursetype', 'course_type']) || 'full_course',
+            tags: getVal(row, ['tags']).split(';').map((t) => t.trim()).filter(Boolean),
+            sections: [],
+            valid: true,
+          });
+        }
+        if (csvItems.length > 0) return csvItems;
+      }
     } catch {
       // Fallback to text parsing
     }
@@ -300,6 +343,7 @@ export default function BulkImport() {
   const [pasteText, setPasteText] = useState('');
   const [pasteFormat, setPasteFormat] = useState('md');
   const [previewModalItem, setPreviewModalItem] = useState<ImportPreviewItem | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
 
   // Saved for Later items (persisted in localStorage)
   const [savedItems, setSavedItems] = useState<ImportPreviewItem[]>(() => {
@@ -355,48 +399,58 @@ export default function BulkImport() {
 
   const preview = useImportPreview();
   const confirm = useImportConfirm();
+  const isLoadingPreview = preview.isPending || isExtracting;
 
   const runPreview = (files: File[]) => {
-    if (files.length === 0) return;
+    if (files.length === 0) {
+      setIsExtracting(false);
+      return;
+    }
     setConfirmed(false);
     preview.mutate(files, {
       onSuccess: (res) => {
-        const processedItems = res.items.map((it) => {
-          let categoryId = it.categoryId;
-          let valid = it.valid;
-          let error = it.error;
+        setIsExtracting(false);
+        const rawItems = (res as any)?.items ?? (res as any)?.data?.items ?? (Array.isArray(res) ? res : []);
+        const processedItems = Array.isArray(rawItems)
+          ? rawItems.map((it: any) => {
+              let categoryId = it.categoryId;
+              let valid = it.valid ?? true;
+              let error = it.error;
 
-          if (!categoryId && it.categorySlug) {
-            const slugLower = it.categorySlug.toLowerCase().trim();
-            const matched = flatCategories.find(
-              (c) =>
-                c.slug.toLowerCase() === slugLower ||
-                c.name.toLowerCase() === slugLower ||
-                c.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === slugLower.replace(/[^a-z0-9]/g, '')
-            );
-            if (matched) {
-              categoryId = matched.id;
-            } else if (flatCategories.length > 0) {
-              // Default to first category if categorySlug not matched
-              categoryId = flatCategories[0].id;
-            }
-          } else if (!categoryId && flatCategories.length > 0) {
-            categoryId = flatCategories[0].id;
-          }
+              if (!categoryId && it.categorySlug) {
+                const slugLower = it.categorySlug.toLowerCase().trim();
+                const matched = flatCategories.find(
+                  (c) =>
+                    c.slug.toLowerCase() === slugLower ||
+                    c.name.toLowerCase() === slugLower ||
+                    c.slug.toLowerCase().replace(/[^a-z0-9]/g, '') === slugLower.replace(/[^a-z0-9]/g, '')
+                );
+                if (matched) {
+                  categoryId = matched.id;
+                } else if (flatCategories.length > 0) {
+                  categoryId = flatCategories[0].id;
+                }
+              } else if (!categoryId && flatCategories.length > 0) {
+                categoryId = flatCategories[0].id;
+              }
 
-          // Any document with a title and body or sections is valid for import
-          if (it.title && (it.body || (it.sections && it.sections.length > 0))) {
-            valid = true;
-            error = undefined;
-          }
+              if (it.title && (it.body || (it.sections && it.sections.length > 0))) {
+                valid = true;
+                error = undefined;
+              }
 
-          return { ...it, categoryId, valid, error };
-        });
+              return { ...it, categoryId, valid, error };
+            })
+          : [];
 
         setItems(processedItems);
         setSelected(new Set(processedItems.flatMap((it, i) => (it.valid ? [i] : []))));
         setExpanded(new Set());
-        toast.success(`Loaded ${processedItems.length} document${processedItems.length !== 1 ? 's' : ''} for preview`);
+        if (processedItems.length > 0) {
+          toast.success(`Loaded ${processedItems.length} document${processedItems.length !== 1 ? 's' : ''} for preview`);
+        } else {
+          toast.warning('No importable items found in uploaded content');
+        }
       },
       onError: async () => {
         try {
@@ -411,8 +465,10 @@ export default function BulkImport() {
             toast.success(`Client parsed ${flatItems.length} item${flatItems.length !== 1 ? 's' : ''}`);
             return;
           }
-        } catch {
-          // fall through
+        } catch (e) {
+          console.error('Client parse fallback error:', e);
+        } finally {
+          setIsExtracting(false);
         }
         toast.error('Failed to parse content');
       },
@@ -422,6 +478,7 @@ export default function BulkImport() {
   // Handles dropped or selected files, unpacking any .zip archives on the client
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    setIsExtracting(true);
     const fileArray = Array.from(files);
     const zipFiles = fileArray.filter((f) => f.name.toLowerCase().endsWith('.zip'));
     const nonZipFiles = fileArray.filter((f) => !f.name.toLowerCase().endsWith('.zip'));
@@ -524,6 +581,8 @@ export default function BulkImport() {
     const allFiles = [...nonZipFiles, ...extractedFiles];
     if (allFiles.length > 0) {
       runPreview(allFiles);
+    } else {
+      setIsExtracting(false);
     }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -815,7 +874,7 @@ export default function BulkImport() {
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => handleFiles(e.target.files)}
               />
-              {preview.isPending ? (
+              {isLoadingPreview ? (
                 <div className="flex items-center justify-center gap-2 text-muted-foreground">
                   <Loader2 className="h-5 w-5 animate-spin" />
                   <span>Unpacking and parsing uploaded files…</span>
@@ -852,8 +911,8 @@ export default function BulkImport() {
                 rows={12}
                 className="font-mono text-xs"
               />
-              <Button onClick={handlePastePreview} disabled={preview.isPending}>
-                {preview.isPending ? (
+              <Button onClick={handlePastePreview} disabled={isLoadingPreview}>
+                {isLoadingPreview ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Parsing…</>
                 ) : (
                   'Preview'
@@ -864,7 +923,7 @@ export default function BulkImport() {
         </Tabs>
 
         {/* Format guide */}
-        {items.length === 0 && !preview.isPending && (
+        {items.length === 0 && !isLoadingPreview && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card className="flex flex-col justify-between">
               <div>

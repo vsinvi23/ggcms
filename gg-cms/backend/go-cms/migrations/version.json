@@ -1,8 +1,8 @@
 {
   "name": "db-migrations",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "description": "PostgreSQL Schema Migrations",
-  "last_migration": "039_seed_taxonomy_filter_enums.sql",
-  "updated_at": "2026-09-19T16:01:05Z",
-  "db_schema_hash": "sha256:9ebf355960a2955491d683660e53b3863cfa6bd04e3c5808850c85e96245023f"
+  "last_migration": "040_seed_subcategories_and_tags.sql",
+  "updated_at": "2026-09-20T02:55:03Z",
+  "db_schema_hash": "sha256:54e6148c6fc2667b03c04e43c5573d1afba6e3d81003de4ece8ba5d24cbd2001"
 }
