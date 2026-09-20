@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { Search, BookOpen, Clock, Layers, Filter, CheckCircle2, ChevronRight, X } from 'lucide-react';
+import { Search, BookOpen, Clock, Layers, Filter, ChevronRight, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { useCategories } from '@/api/hooks/useCategories';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useContentTypes } from '@/api/hooks/useContentTypes';
 import { buildCourseUrl } from '@/lib/slug';
+import { OverflowFilterGroup } from '@/components/courses/OverflowFilterGroup';
 import {
   Select,
   SelectContent,
@@ -39,8 +40,9 @@ export function CoursesPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('All');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedStyle, setSelectedStyle] = useState<string>('All');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   // Live backend categories API hook
   const { data: backendCategories } = useCategories();
@@ -83,9 +85,9 @@ export function CoursesPage() {
       cats.flatMap(c => [c.name, ...flattenNames(c.children ?? [])]);
     const fetchedNames = flattenNames(backendCategories ?? []).filter(Boolean);
     if (fetchedNames.length > 0) {
-      return ['All', ...Array.from(new Set(fetchedNames))];
+      return Array.from(new Set(fetchedNames));
     }
-    return ['All', 'Technology', 'Cloud', 'Security', 'Engineering'];
+    return ['Technology', 'Cloud', 'Security', 'Engineering', 'Architecture', 'DevOps'];
   }, [backendCategories]);
 
   const levels = useMemo(() => {
@@ -99,10 +101,39 @@ export function CoursesPage() {
   const styles = useMemo(() => {
     const fetched = (backendStyles ?? []).map(s => s.label).filter(Boolean);
     if (fetched.length > 0) {
-      return ['All', ...Array.from(new Set(fetched))];
+      return Array.from(new Set(fetched));
     }
-    return ['All', 'Theory', 'Hands-on', 'Project based'];
+    return ['Theory', 'Hands-on', 'Project based', 'Scenario', 'Interactive'];
   }, [backendStyles]);
+
+  const availableSkills = useMemo(() => {
+    const skillSet = new Set<string>();
+    allCourses.forEach(c => (c.skills || []).forEach(s => skillSet.add(s)));
+    if (skillSet.size > 0) return Array.from(skillSet);
+    return ['Go', 'REST', 'Backend', 'Kubernetes', 'Docker', 'PostgreSQL', 'Microservices', 'Security', 'React', 'gRPC'];
+  }, [allCourses]);
+
+  const toggleCategory = (catName: string) => {
+    if (!catName || catName === 'All') {
+      setSelectedCategories([]);
+      return;
+    }
+    setSelectedCategories(prev =>
+      prev.includes(catName) ? prev.filter(c => c !== catName) : [...prev, catName]
+    );
+  };
+
+  const toggleStyle = (styleName: string) => {
+    setSelectedStyles(prev =>
+      prev.includes(styleName) ? prev.filter(s => s !== styleName) : [...prev, styleName]
+    );
+  };
+
+  const toggleSkill = (skillName: string) => {
+    setSelectedSkills(prev =>
+      prev.includes(skillName) ? prev.filter(s => s !== skillName) : [...prev, skillName]
+    );
+  };
 
   const filteredCourses = useMemo(() => {
     return allCourses.filter(course => {
@@ -112,22 +143,28 @@ export function CoursesPage() {
         course.skills.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesLevel = selectedLevel === 'All' || course.level === selectedLevel;
-      let matchesCategory = selectedCategory === 'All' || course.category.toLowerCase().includes(selectedCategory.toLowerCase());
-      if (!matchesCategory && selectedCategory.toLowerCase().includes('software')) {
-        matchesCategory = course.category.toLowerCase().includes('backend') || course.category.toLowerCase().includes('design') || course.category.toLowerCase().includes('programming');
-      }
-      const matchesStyle = selectedStyle === 'All' || course.learningStyle === selectedStyle;
 
-      return matchesSearch && matchesLevel && matchesCategory && matchesStyle;
+      const matchesCategory = selectedCategories.length === 0 || selectedCategories.some(cat =>
+        course.category.toLowerCase().includes(cat.toLowerCase())
+      );
+
+      const matchesStyle = selectedStyles.length === 0 || selectedStyles.includes(course.learningStyle);
+
+      const matchesSkill = selectedSkills.length === 0 || selectedSkills.some(sk =>
+        course.skills.some(cs => cs.toLowerCase() === sk.toLowerCase())
+      );
+
+      return matchesSearch && matchesLevel && matchesCategory && matchesStyle && matchesSkill;
     });
-  }, [searchQuery, selectedLevel, selectedCategory, selectedStyle, allCourses]);
+  }, [searchQuery, selectedLevel, selectedCategories, selectedStyles, selectedSkills, allCourses]);
 
-  const hasActiveFilters = selectedLevel !== 'All' || selectedCategory !== 'All' || selectedStyle !== 'All' || searchQuery !== '';
+  const hasActiveFilters = selectedLevel !== 'All' || selectedCategories.length > 0 || selectedStyles.length > 0 || selectedSkills.length > 0 || searchQuery !== '';
 
   const resetFilters = () => {
     setSelectedLevel('All');
-    setSelectedCategory('All');
-    setSelectedStyle('All');
+    setSelectedCategories([]);
+    setSelectedStyles([]);
+    setSelectedSkills([]);
     setSearchQuery('');
   };
 
@@ -150,10 +187,10 @@ export function CoursesPage() {
               </div>
             </div>
 
-            {/* Centered Search Bar */}
+            {/* Centered Search Bar with Pixel-Perfect Alignment */}
             <div className="relative w-full max-w-md sm:w-1/2 flex justify-center">
               <div className="relative w-full">
-                <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   type="text"
                   placeholder="Search courses or skills..."
@@ -162,7 +199,10 @@ export function CoursesPage() {
                   className="pl-9 pr-8 h-9 text-xs rounded-xl bg-background border-border shadow-2xs w-full"
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground">
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-full"
+                  >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
@@ -178,7 +218,7 @@ export function CoursesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             
-            {/* Left-Aligned Compact Filter Panel (Single-Page View Fit) */}
+            {/* Left-Aligned Compact Filter Panel */}
             <div className="md:col-span-1 space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
@@ -187,24 +227,43 @@ export function CoursesPage() {
                 </span>
                 {hasActiveFilters && (
                   <button onClick={resetFilters} className="text-[11px] text-primary hover:underline font-semibold">
-                    Reset
+                    Reset All
                   </button>
                 )}
               </div>
 
-              {/* Category Filter Dropdown */}
+              {/* Multi-Category Filter Section */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
                   Category
                 </label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                
+                {/* Active Category Badges with Cross (×) */}
+                {selectedCategories.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pb-1">
+                    {selectedCategories.map((cat) => (
+                      <Badge
+                        key={cat}
+                        variant="default"
+                        className="text-[11px] font-semibold bg-primary text-primary-foreground flex items-center gap-1 px-2 py-0.5 rounded-lg"
+                      >
+                        <span>{cat}</span>
+                        <button type="button" onClick={() => toggleCategory(cat)} className="hover:opacity-80 ml-0.5">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                <Select value="" onValueChange={toggleCategory}>
                   <SelectTrigger className="w-full h-8 text-xs bg-background border-border rounded-xl">
-                    <SelectValue placeholder="Select Category" />
+                    <SelectValue placeholder="Add Category Filter..." />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
                     {categories.map((cat) => (
                       <SelectItem key={cat} value={cat} className="text-xs">
-                        {cat}
+                        {cat} {selectedCategories.includes(cat) ? '✓' : ''}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -230,24 +289,25 @@ export function CoursesPage() {
                 </Select>
               </div>
 
-              {/* Learning Style Filter Dropdown */}
-              <div className="space-y-1.5 pt-2 border-t border-border/50">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
-                  Learning Format
-                </label>
-                <Select value={selectedStyle} onValueChange={setSelectedStyle}>
-                  <SelectTrigger className="w-full h-8 text-xs bg-background border-border rounded-xl">
-                    <SelectValue placeholder="Select Format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {styles.map((st) => (
-                      <SelectItem key={st} value={st} className="text-xs">
-                        {st}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Dynamic Skills Filter (Inline Chips + Overflow Dropdown) */}
+              <OverflowFilterGroup
+                label="Skills"
+                items={availableSkills}
+                selectedItems={selectedSkills}
+                onToggleItem={toggleSkill}
+                onRemoveItem={toggleSkill}
+                maxInlineCount={6}
+              />
+
+              {/* Dynamic Learning Format Filter (Inline Chips + Overflow Dropdown) */}
+              <OverflowFilterGroup
+                label="Learning Format"
+                items={styles}
+                selectedItems={selectedStyles}
+                onToggleItem={toggleStyle}
+                onRemoveItem={toggleStyle}
+                maxInlineCount={5}
+              />
             </div>
 
             {/* Right Column — Content Cards Grid immediately visible */}

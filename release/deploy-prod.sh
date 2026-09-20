@@ -253,8 +253,8 @@ if [[ "$DB_DELTA" == "true" ]]; then
 
   VM_NAME="gg-cms-db"
   if gcloud compute instances describe "$VM_NAME" --zone="$ZONE" --project="$PROJECT_ID" >/dev/null 2>&1; then
-    gcloud compute scp --recurse "$LATEST_DIR/db/migrations" "$VM_NAME:/opt/gg-cms/" --zone="$ZONE" --project="$PROJECT_ID" --tunnel-through-iap
-    gcloud compute ssh "$VM_NAME" --zone="$ZONE" --project="$PROJECT_ID" --tunnel-through-iap --command "sudo chown -R 70:70 /opt/gg-cms/certs/postgres && sudo chmod 600 /opt/gg-cms/certs/postgres/server.key && sudo docker restart gg-cms-postgres-prod" || true
+    gcloud compute scp --recurse "$LATEST_DIR/db/migrations" "$VM_NAME:/opt/gg-cms/" --zone="$ZONE" --project="$PROJECT_ID"
+    gcloud compute ssh "$VM_NAME" --zone="$ZONE" --project="$PROJECT_ID" --command "sudo chown -R 70:70 /opt/gg-cms/certs/postgres && sudo chmod 600 /opt/gg-cms/certs/postgres/server.key && sudo docker restart gg-cms-postgres-prod" || true
     echo "✅ DB Migration snapshot uploaded and Postgres verified on DB VM ($VM_NAME)."
     DEPLOYED_DELTAS+=("db@v$T_DB")
   else

@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import {
   FolderTree, Tag as TagIcon, Settings2, Route, Target, Users,
-  Layers, ListFilter, BookOpen, ShieldCheck,
+  Layers, ListFilter, BookOpen, ShieldCheck, ShieldAlert,
 } from 'lucide-react';
 import { CategoriesTab } from '@/components/configuration/CategoriesTab';
 import { TagsTab } from '@/components/configuration/TagsTab';
@@ -12,6 +12,7 @@ import { ContentTypesTab } from '@/components/configuration/ContentTypesTab';
 import { LearningPathsTab } from '@/components/configuration/LearningPathsTab';
 import { InterviewPathsTab } from '@/components/configuration/InterviewPathsTab';
 import { ReviewerGroupsTab } from '@/components/configuration/ReviewerGroupsTab';
+import { ErrorAuditLogsTab } from '@/components/configuration/ErrorAuditLogsTab';
 import { cn } from '@/lib/utils';
 
 export default function ConfigurationPage() {
@@ -182,6 +183,18 @@ export default function ConfigurationPage() {
                   >
                     <Users className="w-3.5 h-3.5" /> Reviewer Groups
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('error-logs')}
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border',
+                      activeTab === 'error-logs'
+                        ? 'bg-destructive text-destructive-foreground border-destructive shadow-xs'
+                        : 'bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground border-transparent',
+                    )}
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5 text-destructive" /> Error Audit Logs
+                  </button>
                 </div>
               </div>
             </div>
@@ -205,6 +218,9 @@ export default function ConfigurationPage() {
               </TabsTrigger>
               <TabsTrigger value="reviewer-groups" className="gap-2 rounded-lg text-xs font-semibold">
                 <Users className="w-4 h-4" /> Reviewer Groups
+              </TabsTrigger>
+              <TabsTrigger value="error-logs" className="gap-2 rounded-lg text-xs font-semibold text-destructive">
+                <ShieldAlert className="w-4 h-4" /> Error Audit Logs
               </TabsTrigger>
             </TabsList>
           )}
@@ -232,6 +248,10 @@ export default function ConfigurationPage() {
 
           <TabsContent value="reviewer-groups" className="mt-0 focus-visible:outline-none">
             <ReviewerGroupsTab />
+          </TabsContent>
+
+          <TabsContent value="error-logs" className="mt-0 focus-visible:outline-none">
+            <ErrorAuditLogsTab />
           </TabsContent>
         </Tabs>
       </div>

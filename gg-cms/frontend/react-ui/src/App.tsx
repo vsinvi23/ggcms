@@ -54,6 +54,8 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const BulkImport = lazy(() => import('./pages/BulkImport'));
 const FactoryPage = lazy(() => import('./pages/FactoryPage'));
 
+import { logClientError } from '@/lib/errorLogStore';
+
 interface AppErrorBoundaryState {
   hasError: boolean;
   error?: Error | null;
@@ -68,32 +70,37 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, AppErrorBounda
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('AppErrorBoundary caught an unhandled error:', error, errorInfo);
+    logClientError(error, errorInfo?.componentStack);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen items-center justify-center p-8 text-center bg-background text-foreground">
-          <div className="max-w-xl w-full p-6 bg-card border border-border rounded-xl shadow-lg text-left">
-            <h2 className="text-xl font-bold mb-2 text-destructive">Something went wrong</h2>
-            <p className="text-sm text-muted-foreground mb-4 font-mono bg-muted/50 p-2 rounded border border-border/50">
-              {this.state.error?.message || 'An unexpected runtime error occurred.'}
+        <div className="flex min-h-screen items-center justify-center p-6 text-center bg-background text-foreground">
+          <div className="max-w-md w-full p-6 bg-card border border-border rounded-2xl shadow-xl text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto text-xl font-bold">
+              !
+            </div>
+            <h2 className="text-2xl font-bold text-foreground tracking-tight">Something went wrong</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              An unexpected application error occurred while loading this page. Our team has automatically logged the details to the system audit log.
             </p>
-            {this.state.error?.stack && (
-              <pre className="text-xs bg-muted p-3 rounded-lg overflow-auto max-h-48 mb-4 font-mono text-muted-foreground border border-border/50">
-                {this.state.error.stack}
-              </pre>
-            )}
-            <div className="flex gap-3 justify-end">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
               <button
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-all shadow-sm"
                 onClick={() => {
                   this.setState({ hasError: false, error: null });
                   window.location.reload();
                 }}
               >
-                Reload page
+                Reload Page
               </button>
+              <a
+                href="/"
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-xl text-sm font-semibold hover:bg-secondary/80 transition-all"
+              >
+                Go to Home
+              </a>
             </div>
           </div>
         </div>

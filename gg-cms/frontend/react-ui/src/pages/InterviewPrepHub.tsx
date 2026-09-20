@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { Search, Briefcase, Eye, EyeOff, AlertCircle, BookOpen, Filter, CheckCircle2, X, ChevronDown, Clock, Layers, PlayCircle, ArrowRight, Shield, Award, ArrowLeft, Target, RefreshCw, HelpCircle, PenTool } from 'lucide-react';
+import { Search, Briefcase, Eye, EyeOff, AlertCircle, BookOpen, Filter, CheckCircle2, X, ChevronDown, Clock, Layers, PlayCircle, ArrowRight, Shield, Award, ArrowLeft, Target, RefreshCw, HelpCircle, PenTool, Save } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,9 @@ import { usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useCategories } from '@/api/hooks/useCategories';
 import { cn } from '@/lib/utils';
 import { QuestionNavigator } from '@/components/shared/QuestionNavigator';
+import { getQuestionAttempt, saveQuestionAttempt } from '@/lib/interviewAttemptStore';
+import { UnsavedChangesModal } from '@/components/interview/UnsavedChangesModal';
+import { toast } from 'sonner';
 
 export interface InterviewQuestionItem {
   id: string;
@@ -193,6 +196,9 @@ export function InterviewPrepHub() {
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [revealedAnswers, setRevealedAnswers] = useState<Record<string, boolean>>({});
   const [userNotes, setUserNotes] = useState<Record<string, string>>({});
+  const [isDirty, setIsDirty] = useState(false);
+  const [unsavedModalOpen, setUnsavedModalOpen] = useState(false);
+  const [pendingTargetIdx, setPendingTargetIdx] = useState<number | null>(null);
   const [expandedCourses, setExpandedCourses] = useState<Record<string, boolean>>({
     'ic-1': true,
   });
@@ -236,6 +242,7 @@ export function InterviewPrepHub() {
     setActiveTrack(track);
     setCurrentQuestionIdx(0);
     setRevealedAnswers({});
+    setIsDirty(false);
   };
 
   useEffect(() => {
@@ -261,6 +268,18 @@ export function InterviewPrepHub() {
     }
   }, [trackSlug, allInterviewCourses]);
 
+  // Restore saved attempt draft on current question load
+  useEffect(() => {
+    if (activeTrack && activeTrack.questions[currentQuestionIdx]) {
+      const currentQ = activeTrack.questions[currentQuestionIdx];
+      const savedAttempt = getQuestionAttempt(activeTrack.slug, currentQ.id);
+      if (savedAttempt?.attemptedText && !userNotes[currentQ.id]) {
+        setUserNotes(prev => ({ ...prev, [currentQ.id]: savedAttempt.attemptedText }));
+      }
+      setIsDirty(false);
+    }
+  }, [activeTrack, currentQuestionIdx]);
+
   const toggleCourseExpand = (id: string) => {
     setExpandedCourses(prev => ({ ...prev, [id]: !prev[id] }));
   };
@@ -271,6 +290,45 @@ export function InterviewPrepHub() {
 
   const handleNotesChange = (qId: string, text: string) => {
     setUserNotes(prev => ({ ...prev, [qId]: text }));
+    setIsDirty(true);
+  };
+
+  const handleSaveDraft = () => {
+    if (activeTrack && activeTrack.questions[currentQuestionIdx]) {
+      const currentQ = activeTrack.questions[currentQuestionIdx];
+      const text = userNotes[currentQ.id] || '';
+      saveQuestionAttempt(activeTrack.slug, currentQ.id, text);
+      setIsDirty(false);
+      toast.success('Answer attempt draft saved!');
+    }
+  };
+
+  const navigateToQuestion = (targetIdx: number) => {
+    if (targetIdx === currentQuestionIdx) return;
+    if (isDirty) {
+      setPendingTargetIdx(targetIdx);
+      setUnsavedModalOpen(true);
+    } else {
+      setCurrentQuestionIdx(targetIdx);
+    }
+  };
+
+  const handleModalSaveAndProceed = () => {
+    handleSaveDraft();
+    setUnsavedModalOpen(false);
+    if (pendingTargetIdx !== null) {
+      setCurrentQuestionIdx(pendingTargetIdx);
+      setPendingTargetIdx(null);
+    }
+  };
+
+  const handleModalDiscardAndProceed = () => {
+    setIsDirty(false);
+    setUnsavedModalOpen(false);
+    if (pendingTargetIdx !== null) {
+      setCurrentQuestionIdx(pendingTargetIdx);
+      setPendingTargetIdx(null);
+    }
   };
 
   const filteredCourses = useMemo(() => {
@@ -360,7 +418,7 @@ export function InterviewPrepHub() {
                   totalQuestions={activeTrack.questions.length}
                   currentIndex={currentQuestionIdx}
                   attemptedMap={revealedAnswers}
-                  onSelectQuestion={(idx) => setCurrentQuestionIdx(idx)}
+                  onSelectQuestion={(idx) => navigateToQuestion(idx)}
                   questions={activeTrack.questions}
                   title="Interview Questions"
                   isAttemptedFn={(_, q) => !!(q?.id && (revealedAnswers[q.id] || userNotes[q.id]))}
@@ -400,12 +458,24 @@ export function InterviewPrepHub() {
                         </p>
                       </div>
 
-                      {/* Candidate Scratchpad */}
+                      {/* Candidate Scratchpad with Save Action */}
                       <div className="space-y-2 pt-1">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                          <PenTool className="w-3.5 h-3.5 text-primary" />
-                          Self-Practice Draft Notes
-                        </label>
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                            <PenTool className="w-3.5 h-3.5 text-primary" />
+                            Self-Practice Draft Notes
+                          </label>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleSaveDraft}
+                            disabled={!isDirty}
+                            className="h-7 px-2.5 text-xs font-bold rounded-xl gap-1"
+                          >
+                            <Save className="w-3 h-3 text-primary" />
+                            <span>Save Draft</span>
+                          </Button>
+                        </div>
                         <textarea
                           placeholder="Draft your architectural approach, key components, and trade-offs before revealing the solution..."
                           value={userNotes[activeTrack.questions[currentQuestionIdx].id] || ''}
@@ -499,7 +569,7 @@ export function InterviewPrepHub() {
                           variant="outline"
                           size="sm"
                           disabled={currentQuestionIdx === 0}
-                          onClick={() => setCurrentQuestionIdx(prev => prev - 1)}
+                          onClick={() => navigateToQuestion(currentQuestionIdx - 1)}
                           className="rounded-xl text-xs"
                         >
                           Previous Question
@@ -508,7 +578,7 @@ export function InterviewPrepHub() {
                         <Button
                           size="sm"
                           disabled={currentQuestionIdx === activeTrack.questions.length - 1}
-                          onClick={() => setCurrentQuestionIdx(prev => prev + 1)}
+                          onClick={() => navigateToQuestion(currentQuestionIdx + 1)}
                           className="rounded-xl text-xs font-bold"
                         >
                           Next Question <ArrowRight className="w-3.5 h-3.5 ml-1" />
@@ -517,6 +587,17 @@ export function InterviewPrepHub() {
                     </div>
                   )}
                 </div>
+
+                <UnsavedChangesModal
+                  open={unsavedModalOpen}
+                  onOpenChange={setUnsavedModalOpen}
+                  onSaveAndProceed={handleModalSaveAndProceed}
+                  onDiscardAndProceed={handleModalDiscardAndProceed}
+                  onCancel={() => {
+                    setUnsavedModalOpen(false);
+                    setPendingTargetIdx(null);
+                  }}
+                />
               </div>
 
               {/* RIGHTMOST COLUMN: Related Interview Tracks & Practice Sets (3 Cols) */}

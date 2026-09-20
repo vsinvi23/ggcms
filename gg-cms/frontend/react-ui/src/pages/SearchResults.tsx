@@ -117,56 +117,85 @@ function LoadingGrid() {
 
 // ─── Category searchable dropdown ─────────────────────────────────────────────
 
-function CategoryDropdown({
+function CategorySelect({
   categories,
-  selectedId,
-  onSelect,
+  selectedIds,
+  onToggle,
+  onClear,
 }: {
   categories: { id: number; name: string }[];
-  selectedId: number | null;
-  onSelect: (id: number | null) => void;
+  selectedIds: number[];
+  onToggle: (id: number) => void;
+  onClear: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const selected = categories.find(c => c.id === selectedId);
+  const selectedCats = categories.filter(c => selectedIds.includes(c.id));
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between h-9 text-sm font-normal px-3"
-        >
-          <span className="truncate text-left">{selected ? selected.name : 'All Categories'}</span>
-          <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 text-muted-foreground" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-56 p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search category…" className="h-9" />
-          <CommandList className="max-h-52 overflow-y-auto p-1">
-            <CommandEmpty>No category found.</CommandEmpty>
-            <CommandGroup>
-              <CommandItem value="__all__" onSelect={() => { onSelect(null); setOpen(false); }}>
-                <Check className={cn('mr-2 h-4 w-4', selectedId === null ? 'opacity-100' : 'opacity-0')} />
-                All Categories
-              </CommandItem>
-              {categories.map(cat => (
-                <CommandItem
-                  key={cat.id}
-                  value={cat.name}
-                  onSelect={() => { onSelect(selectedId === cat.id ? null : cat.id); setOpen(false); }}
-                >
-                  <Check className={cn('mr-2 h-4 w-4', selectedId === cat.id ? 'opacity-100' : 'opacity-0')} />
-                  {cat.name}
+    <div className="space-y-2">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between h-9 text-sm font-normal px-3"
+          >
+            <span className="truncate text-left">
+              {selectedIds.length === 0
+                ? 'All Categories'
+                : `${selectedIds.length} category${selectedIds.length > 1 ? 'ies' : ''} selected`}
+            </span>
+            <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 text-muted-foreground" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-56 p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Search category…" className="h-9" />
+            <CommandList className="max-h-52 overflow-y-auto p-1">
+              <CommandEmpty>No category found.</CommandEmpty>
+              <CommandGroup>
+                <CommandItem value="__all__" onSelect={() => { onClear(); setOpen(false); }}>
+                  <Check className={cn('mr-2 h-4 w-4', selectedIds.length === 0 ? 'opacity-100' : 'opacity-0')} />
+                  All Categories
                 </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+                {categories.map(cat => (
+                  <CommandItem key={cat.id} value={cat.name} onSelect={() => onToggle(cat.id)}>
+                    <div className={cn(
+                      'mr-2 h-4 w-4 rounded border flex items-center justify-center shrink-0',
+                      selectedIds.includes(cat.id)
+                        ? 'bg-primary border-primary text-primary-foreground'
+                        : 'border-muted-foreground/40',
+                    )}>
+                      {selectedIds.includes(cat.id) && <Check className="h-2.5 w-2.5" />}
+                    </div>
+                    {cat.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {selectedCats.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selectedCats.map(cat => (
+            <span key={cat.id} className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full font-medium">
+              {cat.name}
+              <button onClick={() => onToggle(cat.id)} aria-label={`Remove ${cat.name}`}>
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+          {selectedCats.length > 1 && (
+            <button onClick={onClear} className="text-xs text-muted-foreground hover:text-foreground underline self-center">
+              Clear
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -259,7 +288,7 @@ const SearchResults = () => {
   const [searchInput, setSearchInput] = useState(query);
 
   const [contentFilter, setContentFilter] = useState<'all' | 'courses' | 'articles'>('all');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'az'>('newest');
@@ -286,8 +315,8 @@ const SearchResults = () => {
   const applyFilters = (items: CmsResponseDto[], kind: 'course' | 'article'): CmsResponseDto[] => {
     let out = items;
     // Text search is handled server-side; only apply local filters here.
-    if (selectedCategoryId !== null) {
-      out = out.filter((item) => item.categoryId === selectedCategoryId);
+    if (selectedCategoryIds.length > 0) {
+      out = out.filter((item) => item.categoryId && selectedCategoryIds.includes(item.categoryId));
     }
     if (selectedTypes.length > 0) {
       out = out.filter((item) => {
@@ -313,17 +342,17 @@ const SearchResults = () => {
   const filteredCourses = useMemo(
     () => applyFilters(allCourses, 'course'),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allCourses, query, selectedCategoryId, selectedTypes, selectedTagIds, allTags, sortBy]
+    [allCourses, query, selectedCategoryIds, selectedTypes, selectedTagIds, allTags, sortBy]
   );
   const filteredArticles = useMemo(
     () => applyFilters(allArticles, 'article'),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allArticles, query, selectedCategoryId, selectedTypes, selectedTagIds, allTags, sortBy]
+    [allArticles, query, selectedCategoryIds, selectedTypes, selectedTagIds, allTags, sortBy]
   );
 
   const totalResults = filteredCourses.length + filteredArticles.length;
   const activeFilterCount =
-    (selectedCategoryId !== null ? 1 : 0) + selectedTypes.length + (selectedTagIds.length > 0 ? 1 : 0) + (sortBy !== 'newest' ? 1 : 0);
+    selectedCategoryIds.length + selectedTypes.length + (selectedTagIds.length > 0 ? 1 : 0) + (sortBy !== 'newest' ? 1 : 0);
 
   const typeOptions =
     contentFilter === 'courses'
@@ -332,13 +361,15 @@ const SearchResults = () => {
       ? ARTICLE_TYPE_OPTIONS
       : [];
 
+  const toggleCategory = (id: number) =>
+    setSelectedCategoryIds(prev => (prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]));
   const toggleType = (val: string) =>
     setSelectedTypes((prev) => (prev.includes(val) ? prev.filter((t) => t !== val) : [...prev, val]));
   const toggleTag = (id: number) =>
     setSelectedTagIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const clearAllFilters = () => {
-    setSelectedCategoryId(null);
+    setSelectedCategoryIds([]);
     setSelectedTypes([]);
     setSelectedTagIds([]);
     setSortBy('newest');
@@ -379,9 +410,9 @@ const SearchResults = () => {
         <div className="border-b border-border bg-card px-6 py-4">
           <form onSubmit={handleSearch}>
             <div className="flex gap-3 items-center">
-              {/* Search input */}
+              {/* Search input with Aligned Icons */}
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder="Search courses, articles, tutorials..."
                   className="pl-12 h-11 text-base rounded-lg border-muted focus:border-primary"
@@ -581,10 +612,11 @@ const SearchResults = () => {
               {/* Category */}
               {categories.length > 0 && (
                 <SidebarSection title="Category">
-                  <CategoryDropdown
+                  <CategorySelect
                     categories={categories}
-                    selectedId={selectedCategoryId}
-                    onSelect={setSelectedCategoryId}
+                    selectedIds={selectedCategoryIds}
+                    onToggle={toggleCategory}
+                    onClear={() => setSelectedCategoryIds([])}
                   />
                 </SidebarSection>
               )}

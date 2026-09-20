@@ -28,6 +28,7 @@ import {
 import { InteractionBar } from '@/components/engagement/InteractionBar';
 import { HighlightOverlay } from '@/components/engagement/HighlightOverlay';
 import { HighlightsPanel } from '@/components/engagement/HighlightsPanel';
+import { CommentsSection } from '@/components/shared/CommentsSection';
 import { TopicChip } from '@/components/public/TopicChip';
 import { ContentCard } from '@/components/public/ContentCard';
 import { cn } from '@/lib/utils';
@@ -145,6 +146,36 @@ export default function PublicArticleView() {
   const categoryFallbackSlug = noTopics && article?.categoryName ? slugify(article.categoryName) : '';
   const { data: categoryFallback } = usePublicArticlesByCategory(categoryFallbackSlug, { size: 4 });
 
+  const [articleState, setArticleState] = useState<ArticleReadState | null>(null);
+
+  useEffect(() => {
+    if (article?.id) {
+      setArticleState(getArticleReadState(article.id));
+    }
+  }, [article?.id]);
+
+  const handleToggleRead = () => {
+    if (article?.id) {
+      const updated = markArticleAsRead(article.id);
+      setArticleState(updated);
+      toast.success(updated.isRead ? 'Marked as read' : 'Updated read status');
+    }
+  };
+
+  const publishedBodyText = (article as any)?.publishedBody || bodyHtml || '';
+  const draftBodyText = pendingRevision?.body || bodyHtml || '';
+  const activeBody = pendingRevision && (diffViewMode === 'draft' || diffViewMode === 'diff')
+    ? pendingRevision.body
+    : bodyHtml || '';
+
+  const displayBodyHtml = useMemo(() => {
+    if (!article) return '';
+    if ((article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin)) {
+      return computeWordDiff(publishedBodyText, draftBodyText);
+    }
+    return parseBodyToHtml(activeBody);
+  }, [article, pendingRevision, diffViewMode, isAdmin, isMasterAdmin, publishedBodyText, draftBodyText, activeBody]);
+
   useEffect(() => {
     const container = articleBodyRef.current;
     if (!container) {
@@ -193,11 +224,11 @@ export default function PublicArticleView() {
           const viewportHeight = window.innerHeight;
           const scrollHeight = document.documentElement.scrollHeight;
 
-          // Find the last heading whose top position is <= 160px
+          // Find the last heading whose top position is <= 120px
           let activeId = tocEntries[0].id;
           for (const heading of headingElements) {
             const rect = heading.getBoundingClientRect();
-            if (rect.top <= 160) {
+            if (rect.top <= 120) {
               activeId = heading.id;
             } else {
               break;
@@ -205,7 +236,7 @@ export default function PublicArticleView() {
           }
 
           // Only highlight last heading if page is truly scrollable and user reached near bottom
-          if (scrollHeight > viewportHeight + 150 && scrollPosition + viewportHeight >= scrollHeight - 30) {
+          if (scrollHeight > viewportHeight + 100 && scrollPosition + viewportHeight >= scrollHeight - 40) {
             activeId = tocEntries[tocEntries.length - 1].id;
           }
 
@@ -273,9 +304,14 @@ export default function PublicArticleView() {
 
   const handleTocClick = (id: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setActiveHeadingId(id);
-    setMobileTocOpen(false);
+    const element = document.getElementById(id);
+    if (element) {
+      const yOffset = -90; // Header clearance offset
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+      setActiveHeadingId(id);
+      setMobileTocOpen(false);
+    }
   };
 
   const renderTocList = () => (
@@ -307,19 +343,6 @@ export default function PublicArticleView() {
   const activeDescription = pendingRevision && (diffViewMode === 'draft' || diffViewMode === 'diff')
     ? pendingRevision.description
     : article.description || '';
-  const activeBody = pendingRevision && (diffViewMode === 'draft' || diffViewMode === 'diff')
-    ? pendingRevision.body
-    : bodyHtml || '';
-
-  const publishedBodyText = (article as any).publishedBody || bodyHtml || '';
-  const draftBodyText = pendingRevision?.body || bodyHtml || '';
-
-  const displayBodyHtml = useMemo(() => {
-    if ((article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin)) {
-      return computeWordDiff(publishedBodyText, draftBodyText);
-    }
-    return parseBodyToHtml(activeBody);
-  }, [article.hasPendingDraft, pendingRevision, diffViewMode, isAdmin, isMasterAdmin, publishedBodyText, draftBodyText, activeBody]);
 
   return (
     <PublicLayout>
@@ -668,7 +691,11 @@ export default function PublicArticleView() {
             </div>
 
             {/* Discuss / Comments section anchor */}
-            <div ref={discussRef} className="mt-8" />
+            <div ref={discussRef} className="mt-8 pt-6 border-t border-border">
+              {article?.id && (
+                <CommentsSection contentType="article" contentId={article.id} />
+              )}
+            </div>
           </article>
 
           {/* Desktop right-rail table of contents */}

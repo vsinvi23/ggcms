@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, BookOpen, FileText, Hash, Folder, ArrowRight } from 'lucide-react';
+import { Search, BookOpen, FileText, Hash, Folder, ArrowRight, X, Clock } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -18,9 +18,38 @@ interface GlobalSearchModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const RECENT_SEARCHES_KEY = 'gg_recent_searches';
+
 export function GlobalSearchModal({ open, onOpenChange }: GlobalSearchModalProps) {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+      if (stored) setRecentSearches(JSON.parse(stored));
+    } catch {
+      setRecentSearches(['Golang', 'PostgreSQL', 'Microservices']);
+    }
+  }, []);
+
+  const saveRecentSearch = (term: string) => {
+    if (!term.trim()) return;
+    const clean = term.trim();
+    const updated = [clean, ...recentSearches.filter(s => s.toLowerCase() !== clean.toLowerCase())].slice(0, 5);
+    setRecentSearches(updated);
+    try {
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRecentClick = (term: string) => {
+    setQuery(term);
+    saveRecentSearch(term);
+  };
 
   // Live real backend API hooks (no mock data)
   const { data: cmsData, isLoading: loadingCms } = usePublicCmsList({ size: 100 });
@@ -63,6 +92,7 @@ export function GlobalSearchModal({ open, onOpenChange }: GlobalSearchModalProps
   }, [allCategories, searchQuery]);
 
   const handleSelectContent = (item: CmsResponseDto) => {
+    saveRecentSearch(item.title);
     const isArticle = item.type === 'ARTICLE' || !!item.articleType;
     const url = isArticle ? buildArticleUrl(item) : buildCourseUrl(item);
     onOpenChange(false);
@@ -71,12 +101,15 @@ export function GlobalSearchModal({ open, onOpenChange }: GlobalSearchModalProps
   };
 
   const handleSelectTopic = (slug: string) => {
+    saveRecentSearch(slug);
     onOpenChange(false);
     setQuery('');
     navigate(`/explore/articles?topic=${encodeURIComponent(slug)}`);
   };
 
   const handleSelectCategory = (id: number) => {
+    const cat = allCategories.find(c => c.id === id);
+    if (cat?.name) saveRecentSearch(cat.name);
     onOpenChange(false);
     setQuery('');
     navigate(`/explore/articles?category=${id}`);
@@ -85,6 +118,7 @@ export function GlobalSearchModal({ open, onOpenChange }: GlobalSearchModalProps
   const handleViewAllResults = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
+      saveRecentSearch(query.trim());
       onOpenChange(false);
       navigate(`/search?q=${encodeURIComponent(query.trim())}`);
       setQuery('');
@@ -94,26 +128,56 @@ export function GlobalSearchModal({ open, onOpenChange }: GlobalSearchModalProps
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 max-w-2xl overflow-hidden rounded-2xl border border-border shadow-2xl bg-card">
-        {/* Search Input Bar */}
-        <form onSubmit={handleViewAllResults} className="border-b border-border px-4 py-3 flex items-center gap-3">
-          <Search className="w-5 h-5 text-muted-foreground shrink-0 ml-1" />
+        {/* Search Input Bar with Pixel-Perfect Symmetric Centering */}
+        <form onSubmit={handleViewAllResults} className="relative border-b border-border px-4 py-3 flex items-center gap-3">
+          <Search className="w-5 h-5 text-muted-foreground shrink-0 ml-1 pointer-events-none" />
           <Input
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search courses, articles, topics, categories..."
-            className="border-0 focus-visible:ring-0 text-base h-9 bg-transparent p-0 flex-1 placeholder:text-muted-foreground/60"
+            className="border-0 focus-visible:ring-0 text-base h-9 bg-transparent p-0 flex-1 placeholder:text-muted-foreground/60 pr-12"
             autoFocus
           />
-          {query && (
+          {query ? (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/80 transition-colors"
+              title="Clear search input"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          ) : (
             <Badge
               variant="secondary"
-              className="text-xs cursor-pointer hover:bg-muted font-normal"
+              className="text-xs cursor-pointer hover:bg-muted font-normal shrink-0"
               onClick={handleViewAllResults}
             >
-              Press Enter to see all
+              Press Enter
             </Badge>
           )}
         </form>
+
+        {/* Recent Searches Row when search box is empty or focused */}
+        {recentSearches.length > 0 && !query && (
+          <div className="px-4 py-2 border-b border-border/40 bg-muted/20 flex items-center gap-2 overflow-x-auto">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground flex items-center gap-1 shrink-0">
+              <Clock className="w-3 h-3 text-primary" /> Recent:
+            </span>
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              {recentSearches.map((term) => (
+                <button
+                  key={term}
+                  type="button"
+                  onClick={() => handleRecentClick(term)}
+                  className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-background border border-border hover:border-primary hover:text-primary transition-colors whitespace-nowrap"
+                >
+                  {term}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Results Container - Strictly bounded to 380px max height */}
         <div className="max-h-[380px] overflow-y-auto p-3 space-y-4 divide-y divide-border/40">

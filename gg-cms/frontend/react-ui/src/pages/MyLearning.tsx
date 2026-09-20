@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { HomePersonalizationWidget } from '@/components/personalization/HomePersonalizationWidget';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -21,6 +21,9 @@ import {
   Trash2,
   ExternalLink,
   Highlighter,
+  Plus,
+  Layers,
+  Target,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useMyEnrollments } from '@/api/hooks/useEnrollments';
@@ -28,6 +31,8 @@ import { useCmsList } from '@/api/hooks/useCms';
 import { useAuth } from '@/contexts/AuthContext';
 import { EnrollmentDto, CmsResponseDto } from '@/api/types';
 import { useMyNotes, useDeleteNote, useMyFavourites, useToggleFavourite, useMyHighlights, useDeleteHighlight } from '@/api/hooks/useEngagement';
+import { getLearningGroups, deleteLearningGroup, LearningGroup } from '@/lib/learningGroupStore';
+import { CreateLearningGroupModal } from '@/components/learning/CreateLearningGroupModal';
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
 
@@ -450,7 +455,6 @@ function Highlights() {
   return (
     <div className="space-y-3">
       {highlights.map((hl) => {
-        // Use stored slug for deep link; fall back to numeric ID for legacy highlights
         const linkPath = hl.contentType === 'course'
           ? hl.contentSlug ? `/course/${hl.contentSlug}` : `/course/${hl.contentId}`
           : hl.contentSlug ? `/article/${hl.contentSlug}` : `/article/${hl.contentId}`;
@@ -478,7 +482,6 @@ function Highlights() {
 function HighlightCard({
   id,
   contentType,
-  contentId,
   contentTitle,
   text,
   note,
@@ -496,7 +499,7 @@ function HighlightCard({
   createdAt: string;
   linkPath: string;
 }) {
-  const { mutate: deleteHighlight, isPending } = useDeleteHighlight(contentType, contentId);
+  const { mutate: deleteHighlight, isPending } = useDeleteHighlight(contentType, 0);
 
   return (
     <Card className="hover:shadow-sm transition-shadow">
@@ -549,7 +552,7 @@ function HighlightCard({
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ── Main Page with Parallel Learning Workspaces ────────────────────────────────
 
 const MyLearning = () => {
   const { user } = useAuth();
@@ -557,6 +560,23 @@ const MyLearning = () => {
   const { data: enrollments = [] } = useMyEnrollments();
   const { data: articlesData } = useCmsList({ type: 'ARTICLE', size: 50 });
   const { data: favouritesData } = useMyFavourites();
+
+  const [learningGroups, setLearningGroups] = useState<LearningGroup[]>([]);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+
+  const refreshGroups = () => {
+    setLearningGroups(getLearningGroups());
+  };
+
+  useEffect(() => {
+    refreshGroups();
+  }, []);
+
+  const handleDeleteGroup = (id: string) => {
+    deleteLearningGroup(id);
+    toast.success('Learning group removed');
+    refreshGroups();
+  };
 
   const inProgress = enrollments.filter((e: EnrollmentDto) => e.status === 'active');
   const completedCourses = enrollments.filter((e: EnrollmentDto) => e.status === 'completed').length;
@@ -586,9 +606,9 @@ const MyLearning = () => {
       bg: 'bg-amber-500/10',
     },
     {
-      label: 'My Articles',
-      value: totalArticles,
-      icon: FileText,
+      label: 'Learning Groups',
+      value: learningGroups.length,
+      icon: Layers,
       color: 'text-purple-500',
       bg: 'bg-purple-500/10',
     },
@@ -597,15 +617,28 @@ const MyLearning = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">My Learning</h1>
-          <p className="text-muted-foreground mt-1">
-            Welcome back, {user?.name ?? 'Learner'}! Track your progress and continue learning.
-          </p>
+        {/* Header with Create Group Action */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+              My Learning & Workspaces
+            </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Welcome back, {user?.name ?? 'Learner'}! Track progress, manage custom learning groups, and achieve target objectives.
+            </p>
+          </div>
+
+          <Button
+            size="sm"
+            onClick={() => setCreateModalOpen(true)}
+            className="rounded-xl text-xs font-extrabold bg-primary text-primary-foreground gap-1.5 shrink-0 shadow-xs"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Learning Group</span>
+          </Button>
         </div>
 
-        {/* Stats */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {stats.map((s) => {
             const Icon = s.icon;
@@ -616,8 +649,8 @@ const MyLearning = () => {
                     <Icon className={`w-5 h-5 ${s.color}`} />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">{s.label}</p>
-                    <p className="text-2xl font-bold">{s.value}</p>
+                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                    <p className="text-xl font-bold">{s.value}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -628,9 +661,12 @@ const MyLearning = () => {
         {/* Continue Learning */}
         {inProgress.length > 0 && (
           <div>
-            <h2 className="text-lg font-semibold mb-3">Continue Learning</h2>
+            <h2 className="text-base font-bold mb-3 flex items-center gap-2">
+              <PlayCircle className="w-4.5 h-4.5 text-primary" />
+              Continue Learning
+            </h2>
             <div className="space-y-3">
-              {inProgress.slice(0, 4).map((e: EnrollmentDto) => {
+              {inProgress.slice(0, 3).map((e: EnrollmentDto) => {
                 const title = e.course?.title || `Course #${e.course?.id ?? '?'}`;
                 const progress = Math.round(e.progress ?? 0);
                 return (
@@ -641,11 +677,11 @@ const MyLearning = () => {
                   >
                     <CardContent className="p-4 flex items-center gap-4">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate mb-1.5">{title}</p>
+                        <p className="font-semibold text-xs truncate mb-1.5">{title}</p>
                         <Progress value={progress} className="h-1.5" />
                       </div>
-                      <span className="text-xs text-muted-foreground shrink-0">{progress}%</span>
-                      <Button size="sm" variant="outline" className="shrink-0">Continue</Button>
+                      <span className="text-xs font-bold text-primary shrink-0">{progress}%</span>
+                      <Button size="sm" variant="outline" className="shrink-0 text-xs font-bold rounded-xl h-8">Continue</Button>
                     </CardContent>
                   </Card>
                 );
@@ -654,67 +690,177 @@ const MyLearning = () => {
           </div>
         )}
 
-        {/* Personalised Recommendations */}
-        <div>
-          <h2 className="text-lg font-semibold mb-3">Recommended for You</h2>
-          <HomePersonalizationWidget
-            onItemClick={(item) =>
-              navigate(item.contentType === 'course' ? `/course/${item.publicId}` : `/article/${item.publicId}`)
-            }
-          />
-        </div>
+        {/* Dynamic Parallel Workspaces Tabs */}
+        <Tabs defaultValue="overview" className="w-full space-y-4">
+          <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1.5 rounded-2xl overflow-x-auto">
+            <TabsTrigger value="overview" className="rounded-xl text-xs font-bold gap-1.5 px-3 py-1.5">
+              <BookOpen className="w-3.5 h-3.5 text-primary" />
+              Global Overview
+            </TabsTrigger>
+            
+            {learningGroups.map(group => (
+              <TabsTrigger
+                key={group.id}
+                value={group.id}
+                className="rounded-xl text-xs font-bold gap-1.5 px-3 py-1.5"
+              >
+                <Layers className="w-3.5 h-3.5 text-purple-500" />
+                {group.title}
+              </TabsTrigger>
+            ))}
 
-        {/* Tabs */}
-        <Tabs defaultValue="courses">
-          <TabsList>
-            <TabsTrigger value="courses" className="gap-2">
-              <BookOpen className="w-4 h-4" />
-              Enrolled Courses
-              {enrollments.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                  {enrollments.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="articles" className="gap-2">
-              <FileText className="w-4 h-4" />
-              My Articles
-              {totalArticles > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                  {totalArticles}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="notes" className="gap-2">
-              <StickyNote className="w-4 h-4" />
-              Notes
-            </TabsTrigger>
-            <TabsTrigger value="saved" className="gap-2">
-              <Star className="w-4 h-4" />
-              Saved
-            </TabsTrigger>
-            <TabsTrigger value="highlights" className="gap-2">
-              <Highlighter className="w-4 h-4" />
-              Highlights
-            </TabsTrigger>
+            <button
+              type="button"
+              onClick={() => setCreateModalOpen(true)}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold text-primary hover:bg-primary/10 flex items-center gap-1 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" /> + Add Personalised Tab
+            </button>
           </TabsList>
 
-          <TabsContent value="courses" className="mt-4">
-            <EnrolledCourses />
+          {/* Global Overview Tab */}
+          <TabsContent value="overview" className="space-y-6 pt-2">
+            
+            {/* Prompt User to Create Personalized Tabs if none exist */}
+            {learningGroups.length === 0 && (
+              <Card className="border border-primary/30 bg-primary/5 rounded-2xl p-5 space-y-3 shadow-xs">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px] font-extrabold text-primary border-primary/30">
+                        Personalized Workspaces
+                      </Badge>
+                      <span className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                        <Target className="w-3.5 h-3.5 text-emerald-500" /> Tailored to your target profile & goals
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-extrabold text-foreground">Create Your First Personalized Learning Tab</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Organize your learning by creating custom workspace tabs based on target roles (e.g. <em>Golang Interview</em>, <em>Security Engineer</em>) or category combos.
+                    </p>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    onClick={() => setCreateModalOpen(true)}
+                    className="rounded-xl text-xs font-extrabold bg-primary text-primary-foreground gap-1.5 shrink-0 shadow-xs"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create Personalized Tab</span>
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            <div>
+              <h2 className="text-base font-bold mb-3">Recommended for You</h2>
+              <HomePersonalizationWidget
+                onItemClick={(item) =>
+                  navigate(item.contentType === 'course' ? `/course/${item.publicId}` : `/article/${item.publicId}`)
+                }
+              />
+            </div>
+
+            <Tabs defaultValue="courses">
+              <TabsList>
+                <TabsTrigger value="courses" className="gap-2">
+                  <BookOpen className="w-4 h-4" />
+                  Enrolled Courses ({enrollments.length})
+                </TabsTrigger>
+                <TabsTrigger value="articles" className="gap-2">
+                  <FileText className="w-4 h-4" />
+                  My Articles ({totalArticles})
+                </TabsTrigger>
+                <TabsTrigger value="notes" className="gap-2">
+                  <StickyNote className="w-4 h-4" />
+                  Notes
+                </TabsTrigger>
+                <TabsTrigger value="saved" className="gap-2">
+                  <Star className="w-4 h-4" />
+                  Saved
+                </TabsTrigger>
+                <TabsTrigger value="highlights" className="gap-2">
+                  <Highlighter className="w-4 h-4" />
+                  Highlights
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="courses" className="mt-4">
+                <EnrolledCourses />
+              </TabsContent>
+              <TabsContent value="articles" className="mt-4">
+                <MyArticles />
+              </TabsContent>
+              <TabsContent value="notes" className="mt-4">
+                <Notes />
+              </TabsContent>
+              <TabsContent value="saved" className="mt-4">
+                <Favourites />
+              </TabsContent>
+              <TabsContent value="highlights" className="mt-4">
+                <Highlights />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
-          <TabsContent value="articles" className="mt-4">
-            <MyArticles />
-          </TabsContent>
-          <TabsContent value="notes" className="mt-4">
-            <Notes />
-          </TabsContent>
-          <TabsContent value="saved" className="mt-4">
-            <Favourites />
-          </TabsContent>
-          <TabsContent value="highlights" className="mt-4">
-            <Highlights />
-          </TabsContent>
+
+          {/* Individual Learning Group Workspaces */}
+          {learningGroups.map(group => (
+            <TabsContent key={group.id} value={group.id} className="space-y-6 pt-2">
+              <Card className="border border-border/80 rounded-2xl p-5 bg-card/60 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="default" className="text-[10px] font-extrabold bg-primary text-primary-foreground">
+                        Learning Group
+                      </Badge>
+                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <Target className="w-3.5 h-3.5" /> Objective: {group.targetObjective}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-extrabold text-foreground">{group.title}</h3>
+                    <p className="text-xs text-muted-foreground">{group.description}</p>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteGroup(group.id)}
+                    className="text-destructive hover:bg-destructive/10 text-xs font-bold rounded-xl h-8 gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Remove Group
+                  </Button>
+                </div>
+
+                {/* Combos & Categories */}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider self-center">Categories:</span>
+                  {group.categories.map(c => (
+                    <Badge key={c} variant="outline" className="text-[10px] font-semibold">{c}</Badge>
+                  ))}
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider self-center ml-2">Skills:</span>
+                  {group.skills.map(s => (
+                    <Badge key={s} variant="secondary" className="text-[10px] font-bold">{s}</Badge>
+                  ))}
+                </div>
+
+                {/* Content & Notes for this Group */}
+                <div className="pt-3 border-t border-border space-y-4">
+                  <h4 className="text-sm font-extrabold text-foreground flex items-center gap-1.5">
+                    <StickyNote className="w-4 h-4 text-amber-500" />
+                    Workspace Notes & Track Progress
+                  </h4>
+                  <Notes />
+                </div>
+              </Card>
+            </TabsContent>
+          ))}
         </Tabs>
+
+        <CreateLearningGroupModal
+          open={createModalOpen}
+          onOpenChange={setCreateModalOpen}
+          onGroupCreated={refreshGroups}
+        />
       </div>
     </DashboardLayout>
   );

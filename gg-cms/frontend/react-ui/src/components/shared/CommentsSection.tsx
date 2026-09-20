@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { MessageSquare, Reply } from 'lucide-react';
+import { MessageSquare, Reply, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
-import { useReviewComments, useCreateComment } from '@/api/hooks/useReviewComments';
+import { useReviewComments, useCreateComment, useDeleteComment } from '@/api/hooks/useReviewComments';
 import { ReviewCommentDto, ReviewCommentContentType } from '@/api/types';
 
 interface FlatComment {
@@ -32,10 +32,12 @@ const CommentItem = ({
   comment,
   isReply = false,
   onReply,
+  onDelete,
 }: {
   comment: FlatComment;
   isReply?: boolean;
   onReply?: (parentId: string, content: string) => void;
+  onDelete?: (id: string) => void;
 }) => {
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -66,11 +68,24 @@ const CommentItem = ({
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className={`font-semibold text-foreground ${isReply ? 'text-sm' : ''}`}>
-            {comment.authorName}
-          </span>
-          <span className="text-xs text-muted-foreground">{formatTs(comment.timestamp)}</span>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <span className={`font-semibold text-foreground ${isReply ? 'text-sm' : ''}`}>
+              {comment.authorName}
+            </span>
+            <span className="text-xs text-muted-foreground">{formatTs(comment.timestamp)}</span>
+          </div>
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+              onClick={() => onDelete(comment.id)}
+              title="Delete comment"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
         <p className={`text-muted-foreground ${isReply ? 'text-sm' : ''} leading-relaxed break-words`}>
           {comment.content}
@@ -127,6 +142,7 @@ export function CommentsSection({ contentType, contentId }: CommentsSectionProps
   const comments = (rawComments as ReviewCommentDto[]).map(adaptComment);
 
   const { mutateAsync: createComment, isPending } = useCreateComment();
+  const { mutateAsync: deleteComment } = useDeleteComment();
 
   const handlePost = async () => {
     if (!newComment.trim()) return;
@@ -145,6 +161,15 @@ export function CommentsSection({ contentType, contentId }: CommentsSectionProps
       toast.success('Reply posted');
     } catch (err) {
       toast.error(toUserMessage(err, 'Failed to post reply'));
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteComment({ id, contentType, contentId: String(contentId) });
+      toast.success('Comment deleted');
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Failed to delete comment'));
     }
   };
 
@@ -181,11 +206,11 @@ export function CommentsSection({ contentType, contentId }: CommentsSectionProps
         <div className="space-y-6">
           {comments.map((comment) => (
             <div key={comment.id} className="border-b border-border pb-6 last:border-0">
-              <CommentItem comment={comment} onReply={handleReply} />
+              <CommentItem comment={comment} onReply={handleReply} onDelete={handleDelete} />
               {comment.replies.length > 0 && (
                 <div className="mt-3 space-y-3 border-l-2 border-primary/20 pl-4 ml-5">
                   {comment.replies.map((reply) => (
-                    <CommentItem key={reply.id} comment={reply} isReply />
+                    <CommentItem key={reply.id} comment={reply} isReply onDelete={handleDelete} />
                   ))}
                 </div>
               )}
