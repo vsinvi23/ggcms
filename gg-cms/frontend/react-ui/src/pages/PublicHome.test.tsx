@@ -47,10 +47,18 @@ vi.mock('@/api/hooks/useTags', () => ({
 }));
 
 vi.mock('@/api/hooks/usePublicCms', () => ({
-  usePublicCmsList: () => ({
-    data: { items: [{ id: 'a1', title: 'Getting Started with Go', type: 'ARTICLE', blockCount: 3 }] },
-    isLoading: false,
-  }),
+  usePublicCmsList: (params?: { type?: string }) => {
+    if (params?.type === 'COURSE') {
+      return {
+        data: { items: [{ id: 'c1', title: 'Advanced Go Microservices', type: 'COURSE', level: 'Advanced' }] },
+        isLoading: false,
+      };
+    }
+    return {
+      data: { items: [{ id: 'a1', title: 'Getting Started with Go', type: 'ARTICLE', durationMinutes: 5 }] },
+      isLoading: false,
+    };
+  },
   usePublicLearningPaths: () => ({
     data: [{ id: 'lp1', title: 'Fullstack Go & React Developer', description: 'Master fullstack' }],
   }),
@@ -74,8 +82,20 @@ describe('PublicHome Page', () => {
     expect(screen.getByText('Learn a Technology')).toBeInTheDocument();
   });
 
-  it('renders Explore Technologies section', () => {
+  it('renders Explore Technologies section with dynamic categories', () => {
     renderPage();
     expect(screen.getByText('Explore Technologies')).toBeInTheDocument();
+    expect(screen.getByText('Backend Engineering')).toBeInTheDocument();
+  });
+
+  it('renders dynamic learning paths', () => {
+    renderPage();
+    expect(screen.getByText('Fullstack Go & React Developer')).toBeInTheDocument();
+  });
+
+  it('renders dynamic practice quiz derived from published content', () => {
+    renderPage();
+    expect(screen.getByText('Getting Started with Go Practice')).toBeInTheDocument();
   });
 });
+

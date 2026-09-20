@@ -22,6 +22,7 @@ HISTORY_FILE="$LATEST_DIR/deployment-history.json"
 
 CHECK_ONLY=false
 FORCE_DEPLOY=false
+INCLUDE_CONTENT_FACTORY=false
 TARGET_COMPONENTS=()
 BUMP_TYPE=""
 
@@ -32,6 +33,7 @@ usage() {
   echo "  --check, --status              Check deltas between live and local versions without deploying"
   echo "  --force, -f                    Force deployment of all components regardless of version match"
   echo "  --component <ui|backend|db|cf> Deploy specified component(s)"
+  echo "  --include-content-factory      Enable AI Content Factory deployment (excluded by default)"
   echo "  --bump <patch|minor|major>     Bump versions before deployment"
   echo "  --project <id>                 GCP Project ID (default: ggcms-free-tier-vivek)"
   echo "  --region <region>              GCP Region (default: us-central1)"
@@ -47,6 +49,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --force|-f)
       FORCE_DEPLOY=true
+      shift
+      ;;
+    --include-content-factory)
+      INCLUDE_CONTENT_FACTORY=true
       shift
       ;;
     --component)
@@ -269,12 +275,14 @@ if [[ "$BACKEND_DELTA" == "true" || "$UI_DELTA" == "true" ]]; then
 fi
 
 # --- Deploy Content Factory Delta ---
-if [[ "$CF_DELTA" == "true" ]]; then
+if [[ "$CF_DELTA" == "true" && "$INCLUDE_CONTENT_FACTORY" == "true" ]]; then
   echo "------------------------------------------------------------"
   echo "🚀 [GATE 7/9] Deploying AI Content Factory (v$T_CF)..."
   echo "------------------------------------------------------------"
   bash release/gcp/production/deploy-content-factory.sh
   DEPLOYED_DELTAS+=("content-factory@v$T_CF")
+else
+  echo "ℹ️ Content Factory deployment excluded (use --include-content-factory to enable)."
 fi
 
 # --- Step 4: Record Deployment History & Publish Backup Manifest (Gate Step 8 & 9) ---

@@ -40,3 +40,7 @@ When building, testing, or deploying changes in this repository:
 6. **Mandatory Codebase Knowledge Graph (codebase-memory-mcp) Protocol**:
    - **Search & Discovery**: ALL code searching, symbol discovery, function tracing, and architectural exploration MUST go through `codebase-memory-mcp` tools FIRST (`search_graph`, `trace_path`, `get_code_snippet`, `query_graph`, `get_architecture`). Fall back to grep/glob only for string literals, error logs, config values, or non-code files.
    - **Mandatory Re-indexing**: For ANY code change made in the codebase, re-indexing the knowledge graph via `codebase-memory-mcp cli index_repository '{"repo_path":"/Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms","mode":"moderate"}'` is a MANDATORY default step before completing the task.
+
+7. **Content Factory Release Exclusion Protocol**:
+   - AI Content Factory builds and deployments are EXCLUDED by default from all standard GG-CMS system releases and deployment pipelines (`deploy-prod.sh`, `deploy-test.sh`).
+   - DO NOT build, deploy, or trigger Cloud Build for Content Factory in upcoming release iterations unless explicitly requested by the user or enabled via `--include-content-factory`.

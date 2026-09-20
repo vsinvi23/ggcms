@@ -38,25 +38,17 @@ export function PublicHome() {
 
   const courses = useMemo(() => publicCoursesData?.items || [], [publicCoursesData]);
   const articles = useMemo(() => publicArticlesData?.items || [], [publicArticlesData]);
+  const learningPaths = useMemo(() => learningPathsData || [], [learningPathsData]);
 
   const categoriesList = useMemo(() => {
     if (backendCategories && backendCategories.length > 0) {
       return backendCategories.map(c => ({
         name: c.name,
         slug: c.slug || c.name.toLowerCase().replace(/\s+/g, '-'),
-        count: c.contentCount || 5,
+        count: c.contentCount || 0,
       }));
     }
-    return [
-      { name: 'Go', slug: 'go', count: 12 },
-      { name: 'Java', slug: 'java', count: 8 },
-      { name: 'Python', slug: 'python', count: 15 },
-      { name: 'JavaScript', slug: 'javascript', count: 18 },
-      { name: 'Kubernetes', slug: 'kubernetes', count: 10 },
-      { name: 'Docker', slug: 'docker', count: 9 },
-      { name: 'AWS', slug: 'aws', count: 11 },
-      { name: 'PostgreSQL', slug: 'postgresql', count: 8 },
-    ];
+    return [];
   }, [backendCategories]);
 
   // Dynamically filter content for Quick Learning section based on time
@@ -70,6 +62,26 @@ export function PublicHome() {
       return combined.filter(item => (item.durationMinutes || 25) > 20).slice(0, 3);
     }
   }, [articles, courses, activeTimeFilter]);
+
+  // Derive practice quizzes dynamically from published courses & articles
+  const dynamicQuizzes = useMemo(() => {
+    const combined = [...courses, ...articles];
+    const seen = new Set<string>();
+    const uniqueItems = combined.filter(item => {
+      const key = `${item.type}-${item.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    if (uniqueItems.length === 0) return [];
+    return uniqueItems.slice(0, 4).map((item, idx) => ({
+      id: `${item.type.toLowerCase()}-${item.id}-${idx}`,
+      slug: item.slug || String(item.id),
+      title: item.title.includes('Assessment') || item.title.includes('Quiz') ? item.title : `${item.title} Practice`,
+      category: item.categoryName || 'Engineering',
+      durationMinutes: item.durationMinutes || 10,
+    }));
+  }, [courses, articles]);
 
   return (
     <PublicLayout hideSearch>
@@ -272,7 +284,7 @@ export function PublicHome() {
           )}
         </section>
 
-        {/* Section 4 — Explore Technologies */}
+        {/* Section 4 — Explore Technologies (Dynamic) */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -284,88 +296,72 @@ export function PublicHome() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {categoriesList.map(tech => (
-              <button
-                key={tech.slug}
-                onClick={() => navigate(`/technology/${tech.slug}`)}
-                className="p-3.5 rounded-2xl bg-card border border-border hover:border-primary/50 text-left transition-all hover:shadow-sm group"
-              >
-                <h4 className="font-extrabold text-xs text-foreground group-hover:text-primary transition-colors truncate">{tech.name}</h4>
-                <span className="text-[10px] text-muted-foreground font-medium">{tech.count} topics</span>
-              </button>
-            ))}
-          </div>
+          {categoriesList.length === 0 ? (
+            <div className="p-8 text-center bg-card border border-border rounded-2xl text-xs text-muted-foreground">
+              No technology categories found yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {categoriesList.map(tech => (
+                <button
+                  key={tech.slug}
+                  onClick={() => navigate(`/technology/${tech.slug}`)}
+                  className="p-3.5 rounded-2xl bg-card border border-border hover:border-primary/50 text-left transition-all hover:shadow-sm group"
+                >
+                  <h4 className="font-extrabold text-xs text-foreground group-hover:text-primary transition-colors truncate">{tech.name}</h4>
+                  <span className="text-[10px] text-muted-foreground font-medium">
+                    {tech.count > 0 ? `${tech.count} topics` : 'Explore'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </section>
 
-        {/* Section 5 — Learn by Goal Cards */}
+        {/* Section 5 — Learn by Goal / Learning Paths (Dynamic) */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-          <div>
-            <h2 className="text-2xl font-extrabold tracking-tight">What are you trying to achieve?</h2>
-            <p className="text-xs text-muted-foreground">Choose a career goal and follow structured, end-to-end guidance.</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-extrabold tracking-tight">What are you trying to achieve?</h2>
+              <p className="text-xs text-muted-foreground">Choose a learning path and follow structured, end-to-end guidance.</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/learning-paths')} className="text-xs font-bold text-primary">
+              View all paths →
+            </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md space-y-4">
-              <div className="space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                  <Server className="w-4 h-4" />
-                </div>
-                <h3 className="text-base font-extrabold">Become a Backend Engineer</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Learn programming, APIs, databases, distributed systems, and production engineering.
-                </p>
-              </div>
-              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold rounded-xl">
-                Explore path →
-              </Button>
+          {learningPaths.length === 0 ? (
+            <div className="p-8 text-center bg-card border border-border rounded-2xl text-xs text-muted-foreground">
+              No published learning paths found yet. Check out courses and articles!
             </div>
-
-            <div className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md space-y-4">
-              <div className="space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
-                  <Cloud className="w-4 h-4" />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {learningPaths.map((path: any, idx: number) => (
+                <div
+                  key={`${path.id}-${idx}`}
+                  className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md space-y-4"
+                >
+                  <div className="space-y-2">
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                      <GraduationCap className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-base font-extrabold line-clamp-1">{path.title}</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                      {path.description || 'Follow structured guidance to master key technology skills.'}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => navigate(path.slug ? `/learning-paths#${path.slug}` : '/learning-paths')}
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs font-bold rounded-xl"
+                  >
+                    Explore path →
+                  </Button>
                 </div>
-                <h3 className="text-base font-extrabold">Become a Cloud Engineer</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  AWS/GCP/Azure, networking, containers, Kubernetes, and infrastructure.
-                </p>
-              </div>
-              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold rounded-xl">
-                Explore path →
-              </Button>
+              ))}
             </div>
-
-            <div className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md space-y-4">
-              <div className="space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                  <Shield className="w-4 h-4" />
-                </div>
-                <h3 className="text-base font-extrabold">Become a Security Engineer</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Identity, OAuth, OIDC, PKI, application security, and cloud security.
-                </p>
-              </div>
-              <Button onClick={() => navigate('/learning-paths')} variant="outline" size="sm" className="w-full text-xs font-bold rounded-xl">
-                Explore path →
-              </Button>
-            </div>
-
-            <div className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md space-y-4">
-              <div className="space-y-2">
-                <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
-                  <Briefcase className="w-4 h-4" />
-                </div>
-                <h3 className="text-base font-extrabold">Prepare for Interviews</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Coding, system design, backend, cloud, and security interview questions.
-                </p>
-              </div>
-              <Button onClick={() => navigate('/interview-prep')} variant="outline" size="sm" className="w-full text-xs font-bold rounded-xl">
-                Start preparation →
-              </Button>
-            </div>
-          </div>
+          )}
         </section>
 
         {/* Section 6 — Quick Learning by Available Time (Dynamic) */}
@@ -425,23 +421,18 @@ export function PublicHome() {
                   </button>
                 ))
               ) : (
-                <>
-                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-xs transition-all">
-                    ⚡ HTTP Status Codes Cheat Sheet (5 min)
+                <div className="col-span-full p-6 text-center bg-muted/20 border border-dashed border-border rounded-2xl text-xs text-muted-foreground">
+                  No published content matching {activeTimeFilter} mins available yet.{' '}
+                  <button onClick={() => navigate('/explore')} className="text-primary font-bold hover:underline">
+                    Explore all resources
                   </button>
-                  <button onClick={() => navigate('/explore')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-xs transition-all">
-                    ⚡ Git & Docker Commands Cheat Sheet (5 min)
-                  </button>
-                  <button onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-muted/40 border border-border hover:border-primary text-left font-bold text-xs transition-all">
-                    ⚡ Quick Practice Assessment (5 min)
-                  </button>
-                </>
+                </div>
               )}
             </div>
           </div>
         </section>
 
-        {/* Section 7 — Practice Preview */}
+        {/* Section 7 — Practice Preview (Dynamic) */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -453,28 +444,25 @@ export function PublicHome() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <div onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
-              <Badge variant="secondary" className="text-[10px]">Quick Quiz</Badge>
-              <h4 className="font-extrabold text-sm">OAuth & OIDC</h4>
-              <p className="text-xs text-muted-foreground">4 questions · 10 min</p>
+          {dynamicQuizzes.length === 0 ? (
+            <div className="p-8 text-center bg-card border border-border rounded-2xl text-xs text-muted-foreground">
+              No practice quizzes found yet. Published articles and courses will appear here as practice sets.
             </div>
-            <div onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
-              <Badge variant="secondary" className="text-[10px]">Fundamentals</Badge>
-              <h4 className="font-extrabold text-sm">Backend Fundamentals</h4>
-              <p className="text-xs text-muted-foreground">4 questions · 10 min</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {dynamicQuizzes.map((quiz) => (
+                <div
+                  key={quiz.id}
+                  onClick={() => navigate(quiz.slug ? `/practice/${quiz.slug}` : '/practice')}
+                  className="p-4 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2 group"
+                >
+                  <Badge variant="secondary" className="text-[10px]">{quiz.category}</Badge>
+                  <h4 className="font-extrabold text-sm group-hover:text-primary transition-colors line-clamp-1">{quiz.title}</h4>
+                  <p className="text-xs text-muted-foreground">4 questions &bull; {quiz.durationMinutes} min</p>
+                </div>
+              ))}
             </div>
-            <div onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
-              <Badge variant="secondary" className="text-[10px]">Advanced</Badge>
-              <h4 className="font-extrabold text-sm">System Design</h4>
-              <p className="text-xs text-muted-foreground">4 questions · 10 min</p>
-            </div>
-            <div onClick={() => navigate('/practice')} className="p-4 rounded-2xl bg-card border border-border hover:border-primary/50 transition-all cursor-pointer space-y-2">
-              <Badge variant="secondary" className="text-[10px]">DevOps</Badge>
-              <h4 className="font-extrabold text-sm">Kubernetes Networking</h4>
-              <p className="text-xs text-muted-foreground">4 questions · 10 min</p>
-            </div>
-          </div>
+          )}
         </section>
 
       </div>
