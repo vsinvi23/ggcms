@@ -68,13 +68,13 @@ describe('TechnologyPage (Category Detail Article Catalog)', () => {
   it('renders clean category header, search bar, and article grid', () => {
     renderTechnologyPage();
     expect(screen.getAllByText('Identity & Access')[0]).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/Search articles & resources in Identity & Access/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Search articles, topics or #tags in Identity & Access/i)).toBeInTheDocument();
     expect(screen.getByText('OAuth 2.0 In Depth Guide')).toBeInTheDocument();
   });
 
-  it('renders filter tags bar and content type filter buttons', () => {
+  it('renders search input with tag suggestion capabilities and content type filter buttons', () => {
     renderTechnologyPage();
-    expect(screen.getByText('#OAuth')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Search articles, topics or #tags in Identity & Access/i)).toBeInTheDocument();
     expect(screen.getByText('All (1)')).toBeInTheDocument();
     expect(screen.getByText('Articles (1)')).toBeInTheDocument();
   });

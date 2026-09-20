@@ -100,6 +100,9 @@ export function EducativeArticleReader({
   useEffect(() => {
     if (tocEntries.length === 0) return;
 
+    // Default active heading to first item on mount
+    setActiveHeadingId((prev) => (prev && tocEntries.some((e) => e.id === prev) ? prev : tocEntries[0].id));
+
     let ticking = false;
 
     const handleScroll = () => {
@@ -114,27 +117,29 @@ export function EducativeArticleReader({
             return;
           }
 
-          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-          const viewportHeight = window.innerHeight;
-          const scrollHeight = document.documentElement.scrollHeight;
+          const container = contentRef.current?.closest('.overflow-y-auto');
+          const scrollPosition = container
+            ? container.scrollTop
+            : (window.scrollY || document.documentElement.scrollTop);
+          const viewportHeight = container ? container.clientHeight : window.innerHeight;
+          const scrollHeight = container ? container.scrollHeight : document.documentElement.scrollHeight;
 
-          // If near bottom of page, highlight last heading
-          if (scrollPosition + viewportHeight >= scrollHeight - 60) {
-            setActiveHeadingId(tocEntries[tocEntries.length - 1].id);
-            ticking = false;
-            return;
-          }
-
-          // Find the last heading whose top position is <= 140px
+          // Find the last heading whose top position is <= 160px
           let activeId = tocEntries[0].id;
           for (const heading of headingElements) {
             const rect = heading.getBoundingClientRect();
-            if (rect.top <= 140) {
+            if (rect.top <= 160) {
               activeId = heading.id;
             } else {
               break;
             }
           }
+
+          // Highlight last heading if page is scrollable and user reached near bottom
+          if (scrollHeight > viewportHeight + 150 && scrollPosition + viewportHeight >= scrollHeight - 30) {
+            activeId = tocEntries[tocEntries.length - 1].id;
+          }
+
           setActiveHeadingId(activeId);
           ticking = false;
         });

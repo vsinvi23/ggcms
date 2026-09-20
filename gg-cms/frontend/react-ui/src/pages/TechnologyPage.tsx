@@ -239,13 +239,13 @@ const TechnologyPage = () => {
 
         {/* Search Bar & Type Filter Toolbar */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          {/* Integrated Search Input */}
+          {/* Integrated Search Input with Tag Autocomplete Suggestions */}
           <div className="relative flex-1 max-w-xl">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder={`Search articles & resources in ${category?.name ?? 'category'}...`}
+              placeholder={`Search articles, topics or #tags in ${category?.name ?? 'category'}...`}
               className="pl-10 pr-9 h-10 rounded-xl bg-card border-border shadow-xs text-sm focus:border-primary"
             />
             {searchQuery && (
@@ -256,9 +256,53 @@ const TechnologyPage = () => {
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
+
+            {/* Tag Typeahead Suggestions Dropdown on Typing */}
+            {searchQuery.trim().length > 0 && (() => {
+              const qClean = searchQuery.trim().replace(/^#/, '').toLowerCase();
+              const matchingTags = categoryTags.filter(t => t.name.toLowerCase().includes(qClean));
+              if (matchingTags.length === 0) return null;
+
+              return (
+                <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-popover text-popover-foreground border border-border rounded-xl shadow-lg p-2 max-h-48 overflow-y-auto">
+                  <div className="text-[11px] font-semibold text-muted-foreground px-2 py-1 flex items-center gap-1.5">
+                    <Tag className="w-3 h-3 text-primary" />
+                    Matching Tag Suggestions:
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 p-1">
+                    {matchingTags.map(tag => (
+                      <button
+                        key={tag.id}
+                        onClick={() => {
+                          setSelectedTag(tag.name);
+                          setSearchQuery('');
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer flex items-center gap-1"
+                      >
+                        #{tag.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            {/* Active Tag Filter Chip if tag filter selected */}
+            {selectedTag && (
+              <Badge className="h-9 px-3 rounded-xl bg-primary text-primary-foreground font-semibold text-xs flex items-center gap-1.5 shadow-xs">
+                <Tag className="w-3 h-3" /> #{selectedTag}
+                <button
+                  onClick={() => setSelectedTag(null)}
+                  className="hover:opacity-80 transition-opacity ml-1"
+                  title="Clear tag filter"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </Badge>
+            )}
+
             {/* Content Type Filter Buttons */}
             <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/60 border border-border">
               {(
@@ -296,51 +340,6 @@ const TechnologyPage = () => {
             </Select>
           </div>
         </div>
-
-        {/* Interactive Tag Chips Bar */}
-        {categoryTags.length > 0 && (
-          <div className="flex items-center gap-2 flex-wrap bg-card rounded-xl border border-border p-3">
-            <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1 shrink-0 mr-1">
-              <Tag className="w-3.5 h-3.5 text-primary" /> Filter Tags:
-            </span>
-            <button
-              onClick={() => setSelectedTag(null)}
-              className={cn(
-                'px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer',
-                selectedTag === null
-                  ? 'bg-primary text-primary-foreground font-semibold'
-                  : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
-              )}
-            >
-              All Tags
-            </button>
-            {categoryTags.map(tag => {
-              const isActive = selectedTag === tag.name;
-              return (
-                <button
-                  key={tag.id}
-                  onClick={() => setSelectedTag(isActive ? null : tag.name)}
-                  className={cn(
-                    'px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer',
-                    isActive
-                      ? 'bg-primary text-primary-foreground font-semibold'
-                      : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
-                  )}
-                >
-                  #{tag.name}
-                </button>
-              );
-            })}
-            {selectedTag && (
-              <button
-                onClick={() => setSelectedTag(null)}
-                className="text-xs text-primary hover:underline ml-auto font-medium flex items-center gap-1"
-              >
-                Clear tag <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
-        )}
 
         {/* Main Article & Resource Grid Listing */}
         <main className="space-y-4">

@@ -147,6 +147,13 @@ const App = () => (
                 <Route path="/explore/practice" element={<Navigate to="/practice" replace />} />
                 <Route path="/explore/quizzes" element={<Navigate to="/practice" replace />} />
                 <Route path="/explore/:category" element={<ExplorePage />} />
+                
+                {/* Protected Top-Level Create & Edit Routes for Articles and Courses */}
+                <Route path="/courses/create" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/courses/:id/edit" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/articles/create" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
+                <Route path="/articles/:id/edit" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
+
                 <Route path="/articles" element={<ExplorePage />} />
                 <Route path="/article/*" element={<PublicArticleView />} />
                 <Route path="/course/*" element={<CourseViewPage />} />
