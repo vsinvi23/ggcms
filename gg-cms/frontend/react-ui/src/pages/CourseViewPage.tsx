@@ -40,6 +40,7 @@ import { CommentsSection } from '@/components/shared/CommentsSection';
 import { CURATED_LEARNING_PATHS } from '@/data/learningPathData';
 
 import { QuestionNavigator } from '@/components/shared/QuestionNavigator';
+import { ModuleLessonNavigator } from '@/components/shared/ModuleLessonNavigator';
 
 // ─── Utility to flatten lessons ────────────────────────────────────────────────
 function getAllLessons(section: SectionDto): LessonDto[] {
@@ -339,7 +340,21 @@ export function CourseViewPage() {
   }, [displaySections]);
 
   const isEnrolled = !!enrollment;
-  const completedLessonIds: number[] = (enrollment?.completedLessons ?? []).map(l => l.id);
+
+  // Local completed lessons state stored in localStorage for persistent offline/guest progress
+  const [localCompletedIds, setLocalCompletedIds] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem(`ggcms_completed_lessons_${numericCourseId || 0}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const completedLessonIds: number[] = useMemo(() => {
+    const fromApi = (enrollment?.completedLessons ?? []).map(l => l.id);
+    return Array.from(new Set([...fromApi, ...localCompletedIds]));
+  }, [enrollment, localCompletedIds]);
   const allLessons = useMemo(() => displaySections.flatMap(getAllLessons), [displaySections]);
   const totalLessons = allLessons.length > 0 ? allLessons.length : (displayCourse?.lessonsCount ?? 0);
   const totalModules = displaySections.length > 0 ? displaySections.length : (displayCourse?.sectionsCount ?? 0);
@@ -503,22 +518,34 @@ export function CourseViewPage() {
   };
 
   const handleMarkComplete = async (lId: number) => {
-    if (!enrollment) {
-      toast.info('Please enroll to track lesson progress.');
-      return;
-    }
-    const newCompleted = completedLessonIds.includes(lId)
+    const updated = completedLessonIds.includes(lId)
       ? completedLessonIds
       : [...completedLessonIds, lId];
-    const newProgress = totalLessons > 0 ? newCompleted.length / totalLessons : 0;
-    await updateProgress({
-      enrollmentId: enrollment.id,
-      data: {
-        completedLessonId: lId,
-        progress: newProgress,
-        status: newProgress >= 1 ? 'completed' : 'active',
-      },
-    });
+
+    setLocalCompletedIds(updated);
+    try {
+      localStorage.setItem(`ggcms_completed_lessons_${numericCourseId || 0}`, JSON.stringify(updated));
+    } catch (e) {
+      console.warn('Could not save progress to localStorage:', e);
+    }
+
+    const newProgress = totalLessons > 0 ? updated.length / totalLessons : 0;
+    if (enrollment) {
+      try {
+        await updateProgress({
+          enrollmentId: enrollment.id,
+          data: {
+            completedLessonId: lId,
+            progress: newProgress,
+            status: newProgress >= 1 ? 'completed' : 'active',
+          },
+        });
+      } catch (err) {
+        // Fallback saved in localStorage
+      }
+    }
+
+    toast.success('Lesson progress saved!');
     if (newProgress >= 1) {
       toast.success('Congratulations! Course completed! 🎓');
     }
@@ -548,293 +575,148 @@ export function CourseViewPage() {
       {/*
         Full viewport container with Left Navigation Sidebar + Right Content View
       */}
-      <div
-        className="-m-4 flex overflow-hidden bg-background"
-        style={{ height: 'calc(100vh - 3.5rem)' }}
-      >
-        {/* ── LEFT NAVIGATION SIDEBAR ────────────────────────────────────────── */}
-        <aside
-          className="flex-shrink-0 flex flex-col overflow-hidden w-72 md:w-80 border-r border-border bg-card"
-        >
-          {/* Header section with back button, title, and progress bar */}
-          <div className="p-5 border-b border-border space-y-3">
-            <Link
-              to="/courses"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ChevronLeft size={14} /> Back to Courses
-            </Link>
-
-            <div>
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <Badge variant="secondary" className="text-[10px] px-2 py-0 bg-primary/10 text-primary border-primary/20">
-                  {displayCourse?.categoryName || 'Engineering'}
+      <div className="min-h-screen bg-background text-foreground pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+          {/* Top Header Bar */}
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs font-bold uppercase bg-primary/10 text-primary border-primary/20">
+                {displayCourse?.categoryName || 'Engineering'}
+              </Badge>
+              {isPracticeCourse && (
+                <Badge variant="outline" className="text-xs font-semibold">
+                  Practice Assessment Track
                 </Badge>
-                {isEnrolled && (
-                  <Badge variant="outline" className="text-[10px] px-2 py-0 border-primary/40 text-primary">
-                    Enrolled
-                  </Badge>
-                )}
-              </div>
-              <h1 className="text-sm font-bold text-foreground line-clamp-2 leading-snug">
-                {title}
-              </h1>
-            </div>
-
-            {/* Course Progress */}
-            <div className="space-y-1.5 pt-1">
-              <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-                <span>{progressPercent}% completed</span>
-                <span>{completedCount}/{totalLessons} lessons</span>
-              </div>
-              <Progress value={progressPercent} className="h-1.5 bg-muted" />
-            </div>
-          </div>
-
-          {/* Search bar */}
-          <div className="p-3 border-b border-border">
-            <div className="relative">
-              <Search
-                size={13}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-              />
-              <input
-                type="text"
-                placeholder="Search modules & lessons..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs rounded-lg outline-none bg-background border border-border text-foreground placeholder:text-muted-foreground/60 pl-8 pr-3 py-1.5 focus:border-primary transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* Overview button & Section list */}
-          <div className="flex-1 overflow-y-auto edu-sidebar-scroll p-3 space-y-1">
-            {/* Main Overview option */}
-            <button
-              onClick={() => setSelectedLessonId(null)}
-              className={cn(
-                'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-left mb-2',
-                selectedLessonId === null
-                  ? 'bg-primary/15 text-primary border border-primary/30 font-bold'
-                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
               )}
-            >
-              <LayoutList size={14} className={selectedLessonId === null ? 'text-primary' : 'text-muted-foreground'} />
-              <span>Course Overview & Syllabus</span>
-            </button>
-
-            {/* Section + Lesson Tree */}
-            {filteredSections.map((section) => {
-              const isOpen = searchQuery.trim() !== '' || expandedSections.includes(section.id);
-              const sectionLessons = section.lessons ?? [];
-              const sectionDone = sectionLessons.filter(l => completedLessonIds.includes(l.id)).length;
-
-              return (
-                <div key={section.id} className="rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleSection(section.id)}
-                    className="w-full flex items-start justify-between gap-2 px-3 py-2 text-left hover:bg-muted/50 transition-colors rounded-lg group"
-                  >
-                    <div className="flex items-start gap-2 min-w-0">
-                      <span className="mt-0.5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
-                        {isOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                      </span>
-                      <div className="min-w-0">
-                        <span className="text-xs font-bold text-foreground leading-snug line-clamp-1">
-                          {section.title}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-medium block mt-0.5">
-                          {sectionDone}/{sectionLessons.length} done
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Lessons inside section */}
-                  {isOpen && sectionLessons.length > 0 && (
-                    <div className="ml-5 pl-2.5 border-l border-border my-1 space-y-1">
-                      {sectionLessons.map((lesson) => {
-                        const isCompleted = completedLessonIds.includes(lesson.id);
-                        const isCurrent = selectedLessonId === lesson.id;
-                        const TypeIcon = lesson.type === 'video' ? Play : FileText;
-
-                        return (
-                          <button
-                            key={lesson.id}
-                            onClick={() => setSelectedLessonId(lesson.id)}
-                            className={cn(
-                              'w-full text-left flex items-center gap-2 px-2.5 py-1.5 rounded-md transition-all text-xs',
-                              isCurrent
-                                ? 'bg-primary/15 text-foreground font-bold border border-primary/40'
-                                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                            )}
-                          >
-                            <LessonDot isCompleted={isCompleted} isCurrent={isCurrent} />
-                            <span className="flex-1 truncate">{lesson.title}</span>
-                            <TypeIcon size={12} className="text-muted-foreground/60 shrink-0" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {filteredSections.length === 0 && searchQuery.trim() && (
-              <p className="text-center text-xs py-6 text-muted-foreground">
-                No lessons match &ldquo;{searchQuery}&rdquo;
-              </p>
-            )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/courses')} className="rounded-xl gap-1 text-xs">
+              <ChevronLeft className="w-3.5 h-3.5" /> All Courses
+            </Button>
           </div>
 
-          {/* Sidebar CTA Footer if not enrolled */}
-          {!isEnrolled && (
-            <div className="p-4 border-t border-border bg-card/60 space-y-2">
-              <Button onClick={handleEnroll} size="sm" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg text-xs" disabled={enrolling}>
-                <GraduationCap className="w-3.5 h-3.5 mr-1.5" />
-                {enrolling ? 'Enrolling…' : 'Enroll Now — Free'}
-              </Button>
+          {/* 2-Column Runner Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* LEFT COLUMN: Questions or Modules/Lessons Navigator (4 Cols) */}
+            <div className="lg:col-span-4">
+              {isPracticeCourse ? (
+                <QuestionNavigator
+                  totalQuestions={totalLessons || 4}
+                  currentIndex={practiceQuestionIdx}
+                  attemptedMap={practiceAnswers}
+                  onSelectQuestion={(idx) => setPracticeQuestionIdx(idx)}
+                  questions={allLessons.length > 0 ? allLessons : [1, 2, 3, 4].map(n => ({ title: `Question ${n}` }))}
+                  title="Questions Navigator"
+                />
+              ) : (
+                <ModuleLessonNavigator
+                  sections={displaySections}
+                  selectedLessonId={selectedLessonId}
+                  onSelectLesson={setSelectedLessonId}
+                  completedLessonIds={completedLessonIds}
+                  title="Modules & Lessons"
+                  categoryName={displayCourse?.categoryName}
+                />
+              )}
             </div>
-          )}
-        </aside>
 
-        {/* ── RIGHT MAIN CONTENT AREA ────────────────────────────────────────── */}
-        <main className="flex-1 overflow-y-auto bg-background edu-content-scroll">
-          <div className="max-w-5xl mx-auto px-6 md:px-10 py-8 space-y-8">
-            {isPracticeCourse ? (
-              /* ── PRACTICE COURSE / INTERACTIVE QUIZ RUNNER LAYOUT ────── */
-              <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-border pb-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs font-bold uppercase bg-primary/10 text-primary border-primary/20">
-                      Practice Assessment Track
-                    </Badge>
-                    <Badge variant="outline" className="text-xs font-semibold">
-                      {displayCourse?.categoryName || 'Engineering'}
-                    </Badge>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => navigate('/courses')} className="rounded-xl gap-1 text-xs">
-                    <ChevronLeft className="w-3.5 h-3.5" /> All Courses
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  {/* LEFT COLUMN: Questions Compact Radio Navigator (4 Cols) */}
-                  <div className="lg:col-span-4">
-                    <QuestionNavigator
-                      totalQuestions={totalLessons || 4}
-                      currentIndex={practiceQuestionIdx}
-                      attemptedMap={practiceAnswers}
-                      onSelectQuestion={(idx) => setPracticeQuestionIdx(idx)}
-                      questions={allLessons.length > 0 ? allLessons : [1, 2, 3, 4].map(n => ({ title: `Question ${n}` }))}
-                      title="Questions Navigator"
-                    />
+            {/* RIGHT COLUMN: Content Runner Card (8 Cols) */}
+            <div className="lg:col-span-8 space-y-6">
+              {isPracticeCourse ? (
+                /* ── PRACTICE COURSE RUNNER ────── */
+                <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
+                  <div className="border-b border-border pb-4 space-y-1">
+                    <h2 className="text-2xl font-extrabold text-foreground">{title}</h2>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
                   </div>
 
-                  {/* RIGHT COLUMN: Question Runner & Options (8 Cols) */}
-                  <div className="lg:col-span-8 space-y-6">
-                    <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
-                      <div className="border-b border-border pb-4 space-y-1">
-                        <h2 className="text-2xl font-extrabold text-foreground">{title}</h2>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
-                      </div>
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+                      <span>Question {practiceQuestionIdx + 1} of {totalLessons || 4}</span>
+                      <span>{Math.round(((practiceQuestionIdx + 1) / (totalLessons || 4)) * 100)}% Complete</span>
+                    </div>
+                    <Progress value={((practiceQuestionIdx + 1) / (totalLessons || 4)) * 100} className="h-1.5" />
 
-                      <div className="space-y-6">
-                        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                          <span>Question {practiceQuestionIdx + 1} of {totalLessons || 4}</span>
-                          <span>{Math.round(((practiceQuestionIdx + 1) / (totalLessons || 4)) * 100)}% Complete</span>
-                        </div>
-                        <Progress value={((practiceQuestionIdx + 1) / (totalLessons || 4)) * 100} className="h-1.5" />
+                    <div className="space-y-4">
+                      <h3 className="text-base font-bold text-foreground leading-snug">
+                        {allLessons[practiceQuestionIdx]?.title || `What is the primary architectural principle of ${title}?`}
+                      </h3>
 
-                        <div className="space-y-4">
-                          <h3 className="text-base font-bold text-foreground leading-snug">
-                            {allLessons[practiceQuestionIdx]?.title || `What is the primary architectural principle of ${title}?`}
-                          </h3>
-
-                          <div className="space-y-2.5 pt-2">
-                            {[
-                              'Separation of concerns, modular component isolation, and resilient boundary design',
-                              'Direct hardcoding of transient credentials inside application source files',
-                              'Bypassing network encryption and TLS certificates in local microservices',
-                              'Executing synchronous blocking calls on UI looper threads under load',
-                            ].map((opt, optIdx) => {
-                              const isSelected = practiceAnswers[practiceQuestionIdx] === optIdx;
-                              return (
-                                <button
-                                  key={optIdx}
-                                  onClick={() => setPracticeAnswers(prev => ({ ...prev, [practiceQuestionIdx]: optIdx }))}
-                                  className={cn(
-                                    'w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between cursor-pointer',
-                                    isSelected
-                                      ? 'bg-blue-500/10 border-blue-500 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
-                                      : 'bg-card border-border text-foreground hover:bg-muted/60'
-                                  )}
-                                >
-                                  <span>{opt}</span>
-                                  <div className={cn(
-                                    'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
-                                    isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-muted-foreground/40'
-                                  )}>
-                                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-4 border-t border-border">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={practiceQuestionIdx === 0}
-                            onClick={() => setPracticeQuestionIdx(prev => prev - 1)}
-                            className="rounded-xl text-xs"
-                          >
-                            <ChevronLeft className="w-4 h-4 mr-1" /> Previous Question
-                          </Button>
-
-                          {practiceQuestionIdx < (totalLessons || 4) - 1 ? (
-                            <Button
-                              size="sm"
-                              onClick={() => setPracticeQuestionIdx(prev => prev + 1)}
-                              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-bold"
+                      <div className="space-y-2.5 pt-2">
+                        {[
+                          'Separation of concerns, modular component isolation, and resilient boundary design',
+                          'Direct hardcoding of transient credentials inside application source files',
+                          'Bypassing network encryption and TLS certificates in local microservices',
+                          'Executing synchronous blocking calls on UI looper threads under load',
+                        ].map((opt, optIdx) => {
+                          const isSelected = practiceAnswers[practiceQuestionIdx] === optIdx;
+                          return (
+                            <button
+                              key={optIdx}
+                              onClick={() => setPracticeAnswers(prev => ({ ...prev, [practiceQuestionIdx]: optIdx }))}
+                              className={cn(
+                                'w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between cursor-pointer',
+                                isSelected
+                                  ? 'bg-blue-500/10 border-blue-500 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
+                                  : 'bg-card border-border text-foreground hover:bg-muted/60'
+                              )}
                             >
-                              Next Question <ChevronRight className="w-4 h-4 ml-1" />
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              onClick={() => setIsPracticeSubmitted(true)}
-                              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-bold"
-                            >
-                              Submit Practice Test 🎉
-                            </Button>
-                          )}
-                        </div>
-
-                        {isPracticeSubmitted && (
-                          <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 space-y-2 animate-fade-in">
-                            <h4 className="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
-                              <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Practice Assessment Evaluated!
-                            </h4>
-                            <p className="text-xs text-muted-foreground leading-relaxed">
-                              Great job completing this practice set! All architectural principles and scenario answers have been logged to your progress history.
-                            </p>
-                          </div>
-                        )}
+                              <span>{opt}</span>
+                              <div className={cn(
+                                'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
+                                isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-muted-foreground/40'
+                              )}>
+                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-border">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={practiceQuestionIdx === 0}
+                        onClick={() => setPracticeQuestionIdx(prev => prev - 1)}
+                        className="rounded-xl text-xs"
+                      >
+                        <ChevronLeft className="w-4 h-4 mr-1" /> Previous Question
+                      </Button>
+
+                      {practiceQuestionIdx < (totalLessons || 4) - 1 ? (
+                        <Button
+                          size="sm"
+                          onClick={() => setPracticeQuestionIdx(prev => prev + 1)}
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-bold"
+                        >
+                          Next Question <ChevronRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => setIsPracticeSubmitted(true)}
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-bold"
+                        >
+                          Submit Practice Test 🎉
+                        </Button>
+                      )}
+                    </div>
+
+                    {isPracticeSubmitted && (
+                      <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 space-y-2 animate-fade-in">
+                        <h4 className="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Practice Assessment Evaluated!
+                        </h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Great job completing this practice set! All architectural principles and scenario answers have been logged to your progress history.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                <RelatedCoursesSection relatedCourses={relatedCourses} />
-                <RecommendedPathsSection />
-              </div>
-            ) : selectedLessonId === null ? (
-              /* ── 1. COURSE OVERVIEW VIEW ──────────────────────────────── */
+              ) : selectedLessonId === null ? (
+                /* ── STANDARD COURSE OVERVIEW VIEW ──────────────────────────────── */
               <div className="space-y-8">
                 {/* Hero Card */}
                 <div className="relative rounded-2xl overflow-hidden p-8 border border-border shadow-sm bg-card bg-gradient-to-br from-emerald-950/30 via-card to-card">
@@ -883,27 +765,15 @@ export function CourseViewPage() {
                     </div>
 
                     <div className="flex items-center gap-3 pt-3">
-                      {isEnrolled ? (
-                        <Button
-                          size="lg"
-                          onClick={() => {
-                            if (allLessons.length > 0) setSelectedLessonId(allLessons[0].id);
-                          }}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-2 font-bold px-6 shadow-md"
-                        >
-                          <Play className="w-4 h-4" /> Start Learning
-                        </Button>
-                      ) : (
-                        <Button
-                          size="lg"
-                          onClick={handleEnroll}
-                          disabled={enrolling}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-2 font-bold px-6 shadow-md"
-                        >
-                          <GraduationCap className="w-5 h-5" />
-                          {enrolling ? 'Enrolling…' : 'Enroll Now — Free'}
-                        </Button>
-                      )}
+                      <Button
+                        size="lg"
+                        onClick={() => {
+                          if (allLessons.length > 0) setSelectedLessonId(allLessons[0].id);
+                        }}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-2 font-bold px-6 shadow-md"
+                      >
+                        <Play className="w-4 h-4" /> Start Learning
+                      </Button>
                       <Button
                         variant="outline"
                         size="lg"
@@ -1107,8 +977,9 @@ export function CourseViewPage() {
                 )}
               </div>
             )}
+            </div>
           </div>
-        </main>
+        </div>
       </div>
 
       {/* Highlights slide-over panel */}

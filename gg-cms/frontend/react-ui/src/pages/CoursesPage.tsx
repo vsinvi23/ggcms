@@ -11,6 +11,13 @@ import { useCategories } from '@/api/hooks/useCategories';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useContentTypes } from '@/api/hooks/useContentTypes';
 import { buildCourseUrl } from '@/lib/slug';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface CourseCardData {
   id: string;
@@ -185,64 +192,61 @@ export function CoursesPage() {
                 )}
               </div>
 
-              {/* Category Filter */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Category</label>
-                <div className="flex flex-wrap gap-1">
-                  {categories.map(cat => (
-                    <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                        selectedCategory === cat
-                          ? 'bg-primary text-primary-foreground shadow-2xs'
-                          : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
-                    >
-                      {cat}
-                    </button>
-                  ))}
-                </div>
+              {/* Category Filter Dropdown */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                  Category
+                </label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="w-full h-8 text-xs bg-background border-border rounded-xl">
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {categories.map((cat) => (
+                      <SelectItem key={cat} value={cat} className="text-xs">
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Level Filter */}
-              <div className="space-y-1 pt-1.5 border-t border-border/50">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Level</label>
-                <div className="flex flex-wrap gap-1">
-                  {levels.map(lvl => (
-                    <button
-                      key={lvl}
-                      onClick={() => setSelectedLevel(lvl)}
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                        selectedLevel === lvl
-                          ? 'bg-primary/10 text-primary font-bold border border-primary/30'
-                          : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
-                    >
-                      {lvl}
-                    </button>
-                  ))}
-                </div>
+              {/* Level Filter Dropdown */}
+              <div className="space-y-1.5 pt-2 border-t border-border/50">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                  Skill Level
+                </label>
+                <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                  <SelectTrigger className="w-full h-8 text-xs bg-background border-border rounded-xl">
+                    <SelectValue placeholder="Select Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {levels.map((lvl) => (
+                      <SelectItem key={lvl} value={lvl} className="text-xs">
+                        {lvl}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Learning Style Filter */}
-              <div className="space-y-1 pt-1.5 border-t border-border/50">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Learning Style</label>
-                <div className="flex flex-wrap gap-1">
-                  {styles.map(st => (
-                    <button
-                      key={st}
-                      onClick={() => setSelectedStyle(st)}
-                      className={`px-2 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                        selectedStyle === st
-                          ? 'bg-primary/10 text-primary font-bold border border-primary/30'
-                          : 'bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
-                      }`}
-                    >
-                      {st}
-                    </button>
-                  ))}
-                </div>
+              {/* Learning Style Filter Dropdown */}
+              <div className="space-y-1.5 pt-2 border-t border-border/50">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                  Learning Format
+                </label>
+                <Select value={selectedStyle} onValueChange={setSelectedStyle}>
+                  <SelectTrigger className="w-full h-8 text-xs bg-background border-border rounded-xl">
+                    <SelectValue placeholder="Select Format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {styles.map((st) => (
+                      <SelectItem key={st} value={st} className="text-xs">
+                        {st}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
