@@ -8,7 +8,8 @@ import {
   Calendar, Bookmark, Share2, ChevronLeft,
   MessageSquare,
 } from 'lucide-react';
-import { useCmsById } from '@/api/hooks/useCms';
+import { usePublicCmsById } from '@/api/hooks/usePublicCms';
+import { extractSlugFromPath } from '@/lib/slug';
 import { parseBodyToHtml } from '@/lib/htmlParser';
 import { CommentsSection } from '@/components/shared/CommentsSection';
 
@@ -35,10 +36,11 @@ const ArticleSkeleton = () => (
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const ArticleViewPage = () => {
-  const { id } = useParams<{ id: string }>();
-  const articleId = Number(id);
+  const { id, '*': wildcardPath } = useParams();
+  const rawTarget = id || wildcardPath;
+  const articleId = extractSlugFromPath(rawTarget);
 
-  const { data: article, isLoading: articleLoading, isError: articleError } = useCmsById(
+  const { data: article, isLoading: articleLoading, isError: articleError } = usePublicCmsById(
     articleId,
     !!articleId,
   );

@@ -37,7 +37,7 @@ export function CoursesPage() {
   // Live backend categories API hook
   const { data: backendCategories } = useCategories();
   // Live backend published CMS courses API hook
-  const { data: publicCmsData } = usePublicCmsList({ type: 'COURSE', size: 50 });
+  const { data: publicCmsData, isLoading: loadingCms } = usePublicCmsList({ type: 'COURSE', size: 50 });
   // Live backend levels & learning styles API hooks
   const { data: backendLevels } = useContentTypes('level');
   const { data: backendStyles } = useContentTypes('learning_style');
@@ -237,7 +237,21 @@ export function CoursesPage() {
 
             {/* Right Column — Content Cards Grid immediately visible */}
             <div className="md:col-span-3 space-y-4">
-              {filteredCourses.length === 0 ? (
+              {loadingCms ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="bg-card border border-border rounded-2xl p-4 space-y-3 animate-pulse">
+                      <div className="flex justify-between items-center">
+                        <Skeleton className="h-4 w-20 rounded" />
+                        <Skeleton className="h-4 w-16 rounded" />
+                      </div>
+                      <Skeleton className="h-5 w-3/4 rounded" />
+                      <Skeleton className="h-8 w-full rounded" />
+                      <Skeleton className="h-8 w-full rounded-xl" />
+                    </div>
+                  ))}
+                </div>
+              ) : filteredCourses.length === 0 ? (
                 <div className="text-center py-12 bg-card border border-border rounded-2xl p-6">
                   <BookOpen className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
                   <h3 className="text-base font-bold mb-1">No courses match your criteria</h3>
