@@ -2,8 +2,8 @@
 
 - **Target Environment**: prod
 - **Release Version**: v1.2.3
-- **Build Timestamp**: 2026-09-20T08:07:09Z
-- **Git Commit**: de85c0c
+- **Build Timestamp**: 2026-09-20T11:09:12Z
+- **Git Commit**: 31f4e84
 
 ## Component Version Matrix
 - **React UI**: v1.2.3
@@ -18,6 +18,7 @@
 
 ## Recent Change Log (Git Commits)
 ```
+31f4e84 feat(courses): category course visibility, dynamic duration, compact practice question navigator grid, and GA v1.2.3 release
 de85c0c fix(cms): top-level edit routes, TOC scroll sync, and tag typeahead search
 45e7761 fix(preview): practice course layout preview, auto back page refresh, and default reviewer/publisher groups
 da1a0b0 release(prod): GA v1.2.0 - high-contrast article/course reader styling and auto scroll TOC navigation
@@ -27,5 +28,4 @@ f045559 test: exclude e2e Playwright specs from Vitest unit test runner
 37f8f12 fix(ui): improve loading skeletons and route slug matching across frontend pages
 2881b60 fix(import): resolve loading states, client parsing edge cases, and API response extraction
 c8f4bb4 UI: Ensure publicQuickEdit permission evaluation handles all group permission schemas
-61298af UI: Unify PublicCourseView to use interactive CourseViewPage
 ```
