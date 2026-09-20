@@ -22,6 +22,8 @@ import {
   BookOpen,
   Highlighter,
   List,
+  CheckCircle2,
+  Eye,
 } from 'lucide-react';
 import { InteractionBar } from '@/components/engagement/InteractionBar';
 import { HighlightOverlay } from '@/components/engagement/HighlightOverlay';
@@ -29,6 +31,8 @@ import { HighlightsPanel } from '@/components/engagement/HighlightsPanel';
 import { TopicChip } from '@/components/public/TopicChip';
 import { ContentCard } from '@/components/public/ContentCard';
 import { cn } from '@/lib/utils';
+import { getArticleReadState, markArticleAsRead, markArticleAsReferred, ArticleReadState } from '@/lib/contentStateStore';
+import { toast } from 'sonner';
 
 interface TocEntry {
   id: string;
@@ -335,6 +339,16 @@ export default function PublicArticleView() {
                   <Clock className="w-4 h-4" />
                   5 min read
                 </div>
+
+                {articleState?.status === 'READ' || articleState?.isRead ? (
+                  <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-bold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Read
+                  </Badge>
+                ) : articleState?.status === 'REFERRED' || articleState?.isReferred ? (
+                  <Badge variant="outline" className="border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 font-bold flex items-center gap-1">
+                    <Eye className="w-3.5 h-3.5" /> Referred
+                  </Badge>
+                ) : null}
               </div>
 
               {/* Topic chips */}
@@ -353,12 +367,24 @@ export default function PublicArticleView() {
                   contentId={article.id}
                   discussRef={discussRef as React.RefObject<HTMLElement>}
                 />
-                <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    variant={articleState?.isRead ? 'secondary' : 'outline'}
+                    size="sm"
+                    onClick={handleToggleRead}
+                    className={cn(
+                      'gap-2 font-bold rounded-xl text-xs',
+                      articleState?.isRead ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' : 'text-foreground'
+                    )}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    {articleState?.isRead ? 'Read Completed' : 'Mark as Read'}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setHighlightsPanelOpen(true)}
-                    className="gap-2 text-amber-600 border-amber-300 hover:bg-amber-50 hover:border-amber-400"
+                    className="gap-2 text-amber-600 border-amber-300 hover:bg-amber-50 hover:border-amber-400 rounded-xl text-xs"
                   >
                     <Highlighter className="w-4 h-4" />
                     My Highlights &amp; Notes

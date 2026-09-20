@@ -6,7 +6,7 @@ import {
   ChevronLeft, ChevronDown, ChevronRight, Search, Play, X,
   CheckCircle2, Circle, BookOpen, FileText, GraduationCap, Award,
   Globe, Share2, Clock, Bookmark, Highlighter, Star, ArrowRight, Shield, Check,
-  Sparkles, LayoutList, AlertTriangle
+  Sparkles, LayoutList, AlertTriangle, Layers
 } from 'lucide-react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,14 @@ import { CURATED_LEARNING_PATHS } from '@/data/learningPathData';
 
 import { QuestionNavigator } from '@/components/shared/QuestionNavigator';
 import { ModuleLessonNavigator } from '@/components/shared/ModuleLessonNavigator';
+import { 
+  getPracticeAttempt, 
+  savePracticeAttempt, 
+  clearPracticeAttempt,
+  markCourseAsReferred,
+  updateCourseProgress,
+  getCourseProgressState
+} from '@/lib/contentStateStore';
 
 // ─── Utility to flatten lessons ────────────────────────────────────────────────
 function getAllLessons(section: SectionDto): LessonDto[] {
@@ -283,6 +291,40 @@ export function CourseViewPage() {
   const [practiceAnswers, setPracticeAnswers] = useState<Record<number, number>>({});
   const [isPracticeSubmitted, setIsPracticeSubmitted] = useState(false);
 
+  React.useEffect(() => {
+    if (courseId) {
+      const saved = getPracticeAttempt(courseId);
+      if (saved) {
+        setPracticeAnswers(saved.selectedAnswers || {});
+        setIsPracticeSubmitted(!!saved.isSubmitted);
+      }
+    }
+  }, [courseId]);
+
+  const handlePracticeSubmit = () => {
+    setIsPracticeSubmitted(true);
+    if (courseId) {
+      savePracticeAttempt({
+        quizId: String(courseId),
+        selectedAnswers: practiceAnswers,
+        isSubmitted: true,
+        score: 100,
+        totalQuestions: 4,
+        correctCount: 4,
+        submittedAt: new Date().toISOString(),
+      });
+    }
+  };
+
+  const handlePracticeRetake = () => {
+    if (courseId) {
+      clearPracticeAttempt(courseId);
+    }
+    setPracticeAnswers({});
+    setIsPracticeSubmitted(false);
+    setPracticeQuestionIdx(0);
+  };
+
   // Real course data from backend API
   const displayCourse = useMemo(() => {
     if (course) return course;
@@ -355,6 +397,22 @@ export function CourseViewPage() {
   const allLessons = useMemo(() => displaySections.flatMap(getAllLessons), [displaySections]);
   const totalLessons = allLessons.length > 0 ? allLessons.length : (displayCourse?.lessonsCount ?? 0);
   const totalModules = displaySections.length > 0 ? displaySections.length : (displayCourse?.sectionsCount ?? 0);
+
+  // Automatically mark course as referred when opened, and update course progress
+  React.useEffect(() => {
+    const id = numericCourseId || courseId;
+    if (id) {
+      markCourseAsReferred(id);
+      if (totalLessons > 0) {
+        updateCourseProgress(id, completedLessonIds, totalLessons);
+      }
+    }
+  }, [numericCourseId, courseId, completedLessonIds, totalLessons]);
+
+  const courseState = useMemo(() => {
+    const id = numericCourseId || courseId;
+    return id ? getCourseProgressState(id) : null;
+  }, [numericCourseId, courseId, completedLessonIds, totalLessons]);
 
   // Dynamic approximate duration calculation
   const calculatedDurationMinutes = useMemo(() => {
@@ -721,7 +779,7 @@ export function CourseViewPage() {
                       ) : (
                         <Button
                           size="sm"
-                          onClick={() => setIsPracticeSubmitted(true)}
+                          onClick={handlePracticeSubmit}
                           className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-bold"
                         >
                           Submit Practice Test 🎉
@@ -730,12 +788,21 @@ export function CourseViewPage() {
                     </div>
 
                     {isPracticeSubmitted && (
-                      <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 space-y-2 animate-fade-in">
-                        <h4 className="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
-                          <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Practice Assessment Evaluated!
-                        </h4>
+                      <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 space-y-3 animate-fade-in">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Practice Assessment Evaluated!
+                          </h4>
+                          <Button
+                            size="sm"
+                            onClick={handlePracticeRetake}
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold rounded-xl"
+                          >
+                            Retake Practice Test
+                          </Button>
+                        </div>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Great job completing this practice set! All architectural principles and scenario answers have been logged to your progress history.
+                          Great job completing this practice set! All architectural principles and scenario answers have been saved to your progress history.
                         </p>
                       </div>
                     )}
@@ -753,11 +820,19 @@ export function CourseViewPage() {
                         Course Overview
                       </Badge>
                       <Badge variant="outline" className="text-xs">{displayCourse?.categoryName || 'Engineering'}</Badge>
-                      {isEnrolled && (
+                      {courseState?.isCompleted ? (
+                        <Badge className="bg-emerald-500 text-white font-bold text-xs border-none">
+                          <Award className="w-3.5 h-3.5 mr-1" /> Course Completed (100%)
+                        </Badge>
+                      ) : courseState?.isReferred ? (
+                        <Badge variant="outline" className="border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 font-bold text-xs">
+                          <Clock className="w-3.5 h-3.5 mr-1" /> Referred ({courseState.progress}%)
+                        </Badge>
+                      ) : isEnrolled ? (
                         <Badge className="bg-emerald-500 text-white border-none text-xs">
                           <CheckCircle2 className="w-3 h-3 mr-1" /> Enrolled
                         </Badge>
-                      )}
+                      ) : null}
                     </div>
 
                     <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
@@ -821,6 +896,112 @@ export function CourseViewPage() {
                           <span className="text-muted-foreground font-medium">{heading}</span>
                         </div>
                       ))}
+                    </div>
+                  </Card>
+                )}
+
+                {/* Course Modules & Detailed Curriculum Coverage */}
+                {displaySections.length > 0 && (
+                  <Card className="p-6 rounded-3xl border border-border bg-card space-y-6 shadow-xs">
+                    <div className="flex items-center justify-between border-b border-border pb-4 flex-wrap gap-2">
+                      <div>
+                        <h2 className="text-xl font-extrabold text-foreground flex items-center gap-2">
+                          <Layers className="w-5 h-5 text-blue-500" />
+                          Course Curriculum & Module Coverage
+                        </h2>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {totalModules} {totalModules === 1 ? 'Module' : 'Modules'} • {totalLessons} {totalLessons === 1 ? 'Lesson' : 'Lessons'} • Click any module or lesson to jump directly into learning
+                        </p>
+                      </div>
+                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                        {completedCount} / {totalLessons} Completed
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {displaySections.map((section, sIdx) => {
+                        const sectionLessons = getAllLessons(section);
+                        const sectionCompletedCount = sectionLessons.filter(l => completedLessonIds.includes(l.id)).length;
+                        return (
+                          <div key={section.id || sIdx} className="rounded-2xl border border-border/80 overflow-hidden bg-card/60">
+                            {/* Module Header */}
+                            <div
+                              onClick={() => {
+                                if (sectionLessons.length > 0) setSelectedLessonId(sectionLessons[0].id);
+                              }}
+                              className="p-4 bg-muted/30 flex items-start justify-between gap-4 cursor-pointer hover:bg-muted/60 transition-colors"
+                            >
+                              <div className="space-y-1 min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant="outline" className="text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30">
+                                    Module {String(sIdx + 1).padStart(2, '0')}
+                                  </Badge>
+                                  <h3 className="text-sm font-bold text-foreground line-clamp-2 leading-snug">
+                                    {section.title || `Module ${sIdx + 1}`}
+                                  </h3>
+                                </div>
+                                {section.description && (
+                                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                                    {section.description}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-xs font-semibold text-muted-foreground bg-background px-2.5 py-1 rounded-full border border-border">
+                                  {sectionCompletedCount}/{sectionLessons.length} Done
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Module Lessons List */}
+                            {sectionLessons.length > 0 && (
+                              <div className="divide-y divide-border/40 bg-background/40">
+                                {sectionLessons.map((lesson, lIdx) => {
+                                  const isCompleted = completedLessonIds.includes(lesson.id);
+                                  const TypeIcon = lesson.type === 'video' ? Play : FileText;
+                                  return (
+                                    <button
+                                      key={lesson.id || lIdx}
+                                      onClick={() => setSelectedLessonId(lesson.id)}
+                                      className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-blue-500/5 transition-colors group cursor-pointer"
+                                    >
+                                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                                        <div className={cn(
+                                          'w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors',
+                                          isCompleted
+                                            ? 'border-blue-600 bg-blue-600 text-white dark:bg-blue-500 dark:border-blue-500'
+                                            : 'border-muted-foreground/40 bg-background'
+                                        )}>
+                                          {isCompleted && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                        </div>
+
+                                        <div className="space-y-0.5 min-w-0 flex-1">
+                                          <p className="text-xs font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                                            {lesson.title}
+                                          </p>
+                                          {lesson.summary && (
+                                            <p className="text-[11px] text-muted-foreground line-clamp-2">
+                                              {lesson.summary}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center gap-2 shrink-0 text-muted-foreground">
+                                        <TypeIcon className="w-3.5 h-3.5" />
+                                        <span className="text-[11px] font-medium hidden sm:inline">
+                                          {lesson.duration ? `${lesson.duration}m` : '5m'}
+                                        </span>
+                                        <ChevronRight className="w-4 h-4 text-muted-foreground/60 group-hover:translate-x-0.5 transition-transform" />
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </Card>
                 )}

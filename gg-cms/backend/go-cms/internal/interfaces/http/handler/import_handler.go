@@ -137,6 +137,7 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 				CategoryID:   categoryID,
 				ArticleType:  p.ArticleType,
 				CourseType:   p.CourseType,
+				Status:       p.Status,
 				Tags:         p.Tags,
 				Sections:     mapParsedSections(p.Sections),
 				Valid:        itemValid,
@@ -174,6 +175,7 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 	}
 
 	userID := middleware.GetUserID(c)
+	isAdminUser := isSuperOrAdmin(c)
 	results := make([]dto.ImportConfirmResult, 0, len(req.Items))
 
 	for _, item := range req.Items {
@@ -191,8 +193,9 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 			courseType = &item.CourseType
 		}
 
+		cmsType := entity.CMSType(item.Type)
 		result, err := h.cmsService.Create(c.Request.Context(), cmssvc.CreateRequest{
-			Type:        entity.CMSType(item.Type),
+			Type:        cmsType,
 			Title:       item.Title,
 			Description: desc,
 			Body:        body,
@@ -211,11 +214,11 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 		}
 
 		taskType := entity.TaskTypeArticle
-		if entity.CMSType(item.Type) == entity.CMSTypeCourse {
+		if cmsType == entity.CMSTypeCourse {
 			taskType = entity.TaskTypeCourse
 		}
 		var contentID uint
-		if entity.CMSType(item.Type) == entity.CMSTypeCourse {
+		if cmsType == entity.CMSTypeCourse {
 			if course, ok := result.(*entity.Course); ok {
 				contentID = course.ID
 			}
@@ -224,14 +227,26 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 				contentID = article.ID
 			}
 		}
+
+		shouldPublish := isAdminUser && strings.EqualFold(strings.TrimSpace(item.Status), string(entity.CMSStatusPublished))
+
 		if contentID != 0 {
-			if err := h.taskService.UpsertOwnerTask(c.Request.Context(), contentID, taskType, item.Title, userID, "draft"); err != nil {
-				log.Printf("[import] Confirm: failed to upsert owner task for %s id=%d: %v", item.Type, contentID, err)
+			if shouldPublish {
+				if pubErr := h.cmsService.Publish(c.Request.Context(), contentID, cmsType, &userID); pubErr != nil {
+					log.Printf("[import] Confirm: failed to publish content id=%d: %v", contentID, pubErr)
+				}
+				if err := h.taskService.UpsertPublishedTask(c.Request.Context(), contentID, taskType, item.Title, userID); err != nil {
+					log.Printf("[import] Confirm: failed to upsert published task for %s id=%d: %v", item.Type, contentID, err)
+				}
+			} else {
+				if err := h.taskService.UpsertOwnerTask(c.Request.Context(), contentID, taskType, item.Title, userID, "draft"); err != nil {
+					log.Printf("[import] Confirm: failed to upsert owner task for %s id=%d: %v", item.Type, contentID, err)
+				}
 			}
 		}
 
 		var structureWarning string
-		if entity.CMSType(item.Type) == entity.CMSTypeCourse && contentID != 0 && len(item.Sections) > 0 {
+		if cmsType == entity.CMSTypeCourse && contentID != 0 && len(item.Sections) > 0 {
 			if err := h.createCourseStructure(c.Request.Context(), contentID, item.Sections); err != nil {
 				structureWarning = fmt.Sprintf("course created but structure import failed: %v", err)
 				log.Printf("[import] Confirm: %s (course id=%d)", structureWarning, contentID)
@@ -239,10 +254,16 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 		}
 
 		auditAction := "article.created"
-		if entity.CMSType(item.Type) == entity.CMSTypeCourse {
+		if cmsType == entity.CMSTypeCourse {
 			auditAction = "course.created"
 		}
-		middleware.LogAudit(c, auditAction, item.Type, fmt.Sprint(contentID), item.Title, map[string]interface{}{"source": "bulk_import"})
+		if shouldPublish {
+			auditAction = "article.published"
+			if cmsType == entity.CMSTypeCourse {
+				auditAction = "course.published"
+			}
+		}
+		middleware.LogAudit(c, auditAction, item.Type, fmt.Sprint(contentID), item.Title, map[string]interface{}{"source": "bulk_import", "published_direct": shouldPublish})
 
 		results = append(results, dto.ImportConfirmResult{
 			Title:   item.Title,
@@ -323,4 +344,16 @@ func mapParsedSections(sections []importer.ParsedSection) []dto.ImportSectionIte
 		out[i] = dto.ImportSectionItem{Title: sec.Title, Order: sec.Order, Lessons: lessons}
 	}
 	return out
+}
+
+func isSuperOrAdmin(c *gin.Context) bool {
+	if middleware.IsAdmin(c) {
+		return true
+	}
+	roleVal, _ := c.Get("role")
+	if r, ok := roleVal.(string); ok {
+		rLower := strings.ToLower(r)
+		return rLower == "admin" || rLower == "superadmin" || rLower == "super_admin" || rLower == "super-admin" || rLower == "masteradmin" || rLower == "master_admin"
+	}
+	return false
 }

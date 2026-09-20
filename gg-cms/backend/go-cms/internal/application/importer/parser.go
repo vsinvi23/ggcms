@@ -22,6 +22,7 @@ type ParsedItem struct {
 	CategorySlug string
 	ArticleType  string
 	CourseType   string
+	Status       string
 	Tags         []string
 	Sections     []ParsedSection
 	Valid        bool
@@ -211,6 +212,8 @@ func parseFrontmatter(fm string, item *ParsedItem) {
 			item.ArticleType = val
 		case "courseType", "course_type":
 			item.CourseType = val
+		case "status", "state":
+			item.Status = strings.ToUpper(val)
 		case "tags":
 			val = strings.Trim(val, "[]")
 			for _, t := range strings.Split(val, ",") {
@@ -231,6 +234,7 @@ type jsonImportItem struct {
 	CategorySlug string             `json:"categorySlug"`
 	ArticleType  string             `json:"articleType"`
 	CourseType   string             `json:"courseType"`
+	Status       string             `json:"status"`
 	Tags         []string           `json:"tags"`
 	Sections     []jsonSectionItem  `json:"sections"`
 }
@@ -286,8 +290,9 @@ func jsonToItem(filename string, ji jsonImportItem) ParsedItem {
 		CategorySlug: ji.CategorySlug,
 		ArticleType:  ji.ArticleType,
 		CourseType:   ji.CourseType,
+		Status:       strings.ToUpper(ji.Status),
 		Tags:         ji.Tags,
-		Valid:         true,
+		Valid:        true,
 	}
 	if t == "COURSE" && len(ji.Sections) > 0 {
 		item.Sections = make([]ParsedSection, len(ji.Sections))
@@ -361,7 +366,8 @@ func parseCSV(filename string, content []byte) []ParsedItem {
 			CategorySlug: get(row, "categoryslug", "category"),
 			ArticleType:  get(row, "articletype", "article_type"),
 			CourseType:   get(row, "coursetype", "course_type"),
-			Valid:         true,
+			Status:       strings.ToUpper(get(row, "status", "state")),
+			Valid:        true,
 		}
 		// Tags are semicolon-separated inside CSV cells
 		if tags := get(row, "tags"); tags != "" {

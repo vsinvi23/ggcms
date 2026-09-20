@@ -11,6 +11,13 @@ import { usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useCategories } from '@/api/hooks/useCategories';
 import { cn } from '@/lib/utils';
 import { QuestionNavigator } from '@/components/shared/QuestionNavigator';
+import { 
+  getPracticeAttempts, 
+  getPracticeAttempt, 
+  savePracticeAttempt, 
+  clearPracticeAttempt, 
+  PracticeAttempt 
+} from '@/lib/contentStateStore';
 
 
 
@@ -88,6 +95,11 @@ export function PracticeHub() {
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [attempts, setAttempts] = useState<Record<string, PracticeAttempt>>(() => getPracticeAttempts());
+
+  const refreshAttempts = () => {
+    setAttempts(getPracticeAttempts());
+  };
 
   const combinedCmsItems = useMemo(() => {
     const articles = publicArticles?.items || [];
@@ -123,11 +135,31 @@ export function PracticeHub() {
     return ['All', 'Quizzes', 'Tests', 'Coding', 'Hands-on Labs', 'Challenges'];
   }, [backendCategories]);
 
-  const startQuiz = (quiz: Quiz) => {
+  const startQuiz = (quiz: Quiz, forceRetake: boolean = false) => {
     setActiveQuiz(quiz);
     setCurrentQuestionIdx(0);
-    setSelectedAnswers({});
-    setIsSubmitted(false);
+
+    if (forceRetake) {
+      clearPracticeAttempt(quiz.id);
+      if (quiz.slug) clearPracticeAttempt(quiz.slug);
+      refreshAttempts();
+      setSelectedAnswers({});
+      setIsSubmitted(false);
+      return;
+    }
+
+    const saved = getPracticeAttempt(quiz.id) || (quiz.slug ? getPracticeAttempt(quiz.slug) : null);
+    if (saved) {
+      setSelectedAnswers(saved.selectedAnswers || {});
+      setIsSubmitted(!!saved.isSubmitted);
+    } else {
+      setSelectedAnswers({});
+      setIsSubmitted(false);
+    }
+  };
+
+  const handleRetake = (quiz: Quiz) => {
+    startQuiz(quiz, true);
   };
 
   useEffect(() => {
@@ -168,6 +200,32 @@ export function PracticeHub() {
       }
     });
     return Math.round((correct / activeQuiz.questions.length) * 100);
+  };
+
+  const handleSubmit = () => {
+    if (!activeQuiz) return;
+    setIsSubmitted(true);
+    let correct = 0;
+    activeQuiz.questions.forEach((q, i) => {
+      if (selectedAnswers[i] === q.correctOptionIndex) {
+        correct++;
+      }
+    });
+    const score = Math.round((correct / activeQuiz.questions.length) * 100);
+    const newAttempt: PracticeAttempt = {
+      quizId: activeQuiz.id,
+      selectedAnswers,
+      isSubmitted: true,
+      score,
+      totalQuestions: activeQuiz.questions.length,
+      correctCount: correct,
+      submittedAt: new Date().toISOString(),
+    };
+    savePracticeAttempt(newAttempt);
+    if (activeQuiz.slug && activeQuiz.slug !== activeQuiz.id) {
+      savePracticeAttempt({ ...newAttempt, quizId: activeQuiz.slug });
+    }
+    refreshAttempts();
   };
 
   return (
@@ -323,7 +381,7 @@ export function PracticeHub() {
                           <Button
                             size="sm"
                             disabled={Object.keys(selectedAnswers).length < activeQuiz.questions.length}
-                            onClick={() => setIsSubmitted(true)}
+                            onClick={handleSubmit}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs"
                           >
                             Submit Test
@@ -363,10 +421,10 @@ export function PracticeHub() {
                       </div>
 
                       <div className="flex flex-wrap gap-2 pt-2 justify-center">
-                        <Button variant="outline" size="sm" onClick={() => startQuiz(activeQuiz)} className="rounded-xl text-xs">
-                          <RefreshCw className="w-3.5 h-3.5 mr-1" /> Try Again
+                        <Button size="sm" onClick={() => handleRetake(activeQuiz)} className="rounded-xl text-xs font-bold bg-primary text-primary-foreground gap-1.5">
+                          <RefreshCw className="w-3.5 h-3.5" /> Retake Test
                         </Button>
-                        <Button size="sm" onClick={() => { setActiveQuiz(null); navigate('/explore'); }} className="rounded-xl text-xs">
+                        <Button variant="outline" size="sm" onClick={() => { setActiveQuiz(null); navigate('/explore'); }} className="rounded-xl text-xs">
                           <BookOpen className="w-3.5 h-3.5 mr-1" /> Practice Weak Areas
                         </Button>
                       </div>
@@ -388,21 +446,30 @@ export function PracticeHub() {
                   </div>
 
                   <div className="space-y-3">
-                    {allQuizzes.filter(q => q.id !== activeQuiz.id).map(q => (
-                      <div key={q.id} className="p-3 rounded-xl border border-border hover:border-primary/40 transition-all bg-card/60 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Badge variant="secondary" className="text-[10px] font-bold">{q.domainSlug.toUpperCase()}</Badge>
-                          <span className="text-[10px] text-muted-foreground capitalize font-semibold">{q.difficulty}</span>
+                    {allQuizzes.filter(q => q.id !== activeQuiz.id).map(q => {
+                      const itemAttempt = attempts[q.id] || (q.slug ? attempts[q.slug] : null);
+                      return (
+                        <div key={q.id} className="p-3 rounded-xl border border-border hover:border-primary/40 transition-all bg-card/60 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Badge variant="secondary" className="text-[10px] font-bold">{q.domainSlug.toUpperCase()}</Badge>
+                            {itemAttempt?.isSubmitted ? (
+                              <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] font-bold">
+                                Score: {itemAttempt.score}%
+                              </Badge>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground capitalize font-semibold">{q.difficulty}</span>
+                            )}
+                          </div>
+                          <h4 className="text-xs font-bold text-foreground line-clamp-1">{q.title}</h4>
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1">
+                            <span>{q.questionsCount} Questions &bull; {q.estimatedMinutes}m</span>
+                            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] font-bold text-primary" onClick={() => startQuiz(q)}>
+                              Switch <ArrowRight className="w-3 h-3 ml-0.5" />
+                            </Button>
+                          </div>
                         </div>
-                        <h4 className="text-xs font-bold text-foreground line-clamp-1">{q.title}</h4>
-                        <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1">
-                          <span>{q.questionsCount} Questions &bull; {q.estimatedMinutes}m</span>
-                          <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] font-bold text-primary" onClick={() => startQuiz(q)}>
-                            Switch <ArrowRight className="w-3 h-3 ml-0.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -480,52 +547,80 @@ export function PracticeHub() {
 
                 {/* Quizzes Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {allQuizzes.map(quiz => (
-                    <div
-                      key={quiz.id}
-                      className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md group"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Badge variant="secondary" className="text-[10px] font-bold">
-                            {quiz.domainSlug.toUpperCase()}
-                          </Badge>
-                          <span className="text-[11px] font-semibold text-muted-foreground capitalize">
-                            {quiz.difficulty}
-                          </span>
+                  {allQuizzes.map(quiz => {
+                    const itemAttempt = attempts[quiz.id] || (quiz.slug ? attempts[quiz.slug] : null);
+                    return (
+                      <div
+                        key={quiz.id}
+                        className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md group"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Badge variant="secondary" className="text-[10px] font-bold">
+                              {quiz.domainSlug.toUpperCase()}
+                            </Badge>
+                            {itemAttempt?.isSubmitted ? (
+                              <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] font-bold flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> Score: {itemAttempt.score}%
+                              </Badge>
+                            ) : (
+                              <span className="text-[11px] font-semibold text-muted-foreground capitalize">
+                                {quiz.difficulty}
+                              </span>
+                            )}
+                          </div>
+
+                          <h3 className="text-base font-extrabold text-foreground group-hover:text-primary transition-colors">
+                            {quiz.title}
+                          </h3>
+
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                            {quiz.description}
+                          </p>
+
+                          <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium pt-1">
+                            <span className="flex items-center gap-1">
+                              <HelpCircle className="w-3.5 h-3.5 text-primary" />
+                              {quiz.questionsCount} questions
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-primary" />
+                              {quiz.estimatedMinutes} mins
+                            </span>
+                          </div>
                         </div>
 
-                        <h3 className="text-base font-extrabold text-foreground group-hover:text-primary transition-colors">
-                          {quiz.title}
-                        </h3>
-
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                          {quiz.description}
-                        </p>
-
-                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium pt-1">
-                          <span className="flex items-center gap-1">
-                            <HelpCircle className="w-3.5 h-3.5 text-primary" />
-                            {quiz.questionsCount} questions
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-primary" />
-                            {quiz.estimatedMinutes} mins
-                          </span>
+                        <div className="pt-4 border-t border-border/60 mt-4 flex items-center gap-2">
+                          {itemAttempt?.isSubmitted ? (
+                            <>
+                              <Button
+                                onClick={() => startQuiz(quiz)}
+                                variant="outline"
+                                className="flex-1 justify-center font-bold rounded-xl text-xs h-9"
+                              >
+                                <span>View Score</span>
+                              </Button>
+                              <Button
+                                onClick={() => handleRetake(quiz)}
+                                className="flex-1 justify-center font-bold rounded-xl text-xs h-9 bg-primary text-primary-foreground gap-1.5"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5" />
+                                <span>Retake Test</span>
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              onClick={() => startQuiz(quiz)}
+                              className="w-full justify-between font-bold rounded-xl text-xs h-9 bg-primary text-primary-foreground"
+                            >
+                              <span>{Object.keys(itemAttempt?.selectedAnswers || {}).length > 0 ? 'Continue Practice Test' : 'Start Practice Test'}</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
-
-                      <div className="pt-4 border-t border-border/60 mt-4">
-                        <Button
-                          onClick={() => startQuiz(quiz)}
-                          className="w-full justify-between font-bold rounded-xl text-xs h-9 bg-primary text-primary-foreground"
-                        >
-                          <span>Start Practice Test</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

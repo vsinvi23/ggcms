@@ -24,6 +24,7 @@ interface PublicQuickEditBarProps {
   pendingRevision?: ContentRevisionDto | null;
   isViewingPending?: boolean;
   onToggleView?: (showPending: boolean) => void;
+  onStartInlineEdit?: () => void;
   onSaveRevision: (data: {
     title: string;
     description: string;
@@ -41,6 +42,7 @@ export function PublicQuickEditBar({
   pendingRevision,
   isViewingPending = false,
   onToggleView,
+  onStartInlineEdit,
   onSaveRevision,
 }: PublicQuickEditBarProps) {
   const { user, canQuickEditPublic, isMasterAdmin } = useAuth();
@@ -119,13 +121,24 @@ export function PublicQuickEditBar({
             </Button>
           )}
 
+          {onStartInlineEdit && (
+            <Button
+              size="sm"
+              onClick={onStartInlineEdit}
+              className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold gap-1 shadow-sm rounded-lg"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Inline Canvas Edit
+            </Button>
+          )}
+
           <Button
             size="sm"
+            variant="outline"
             onClick={handleOpenDrawer}
-            className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold gap-1 shadow-sm rounded-lg"
+            className="h-7 text-xs border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 font-medium gap-1 shadow-sm rounded-lg"
           >
-            <Pencil className="w-3.5 h-3.5" />
-            Edit Content
+            Side Drawer Edit
           </Button>
         </div>
       </div>

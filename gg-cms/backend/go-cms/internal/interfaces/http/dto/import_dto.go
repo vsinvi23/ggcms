@@ -26,10 +26,11 @@ type ImportPreviewItem struct {
 	CategoryID   *uint               `json:"categoryId,omitempty"`
 	ArticleType  string              `json:"articleType"`
 	CourseType   string              `json:"courseType"`
+	Status       string              `json:"status,omitempty"`
 	Tags         []string            `json:"tags"`
 	Sections     []ImportSectionItem `json:"sections,omitempty"`
-	Valid         bool     `json:"valid"`
-	Error         string   `json:"error,omitempty"`
+	Valid        bool                `json:"valid"`
+	Error        string              `json:"error,omitempty"`
 }
 
 type ImportPreviewResponse struct {
@@ -47,6 +48,7 @@ type ImportConfirmItem struct {
 	CategoryID  *uint               `json:"categoryId,omitempty"`
 	ArticleType string              `json:"articleType"`
 	CourseType  string              `json:"courseType"`
+	Status      string              `json:"status,omitempty"`
 	Sections    []ImportSectionItem `json:"sections,omitempty"`
 }
 

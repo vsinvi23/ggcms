@@ -24,7 +24,8 @@ export function PublicCourseCard({ course, enrollment, className }: PublicCourse
 
   const isEnrolled  = !!enrollment;
   const progress    = isEnrolled ? Math.round((enrollment!.progress ?? 0) * 100) : 0;
-  const lessonCount = course.blockCount ?? 0;
+  const lessonCount = course.lessonsCount ?? course.blockCount ?? 0;
+  const moduleCount = course.sectionsCount ?? (lessonCount > 0 ? Math.ceil(lessonCount / 3) : 0);
   const courseUrl   = buildCourseUrl(course);
   const detailUrl   = courseUrl;
   const learnUrl    = `${courseUrl}?learn=true`;
@@ -115,6 +116,17 @@ export function PublicCourseCard({ course, enrollment, className }: PublicCourse
         {/* ── Footer: stats ───────────────────────────────────────────── */}
         <div className="px-4 py-3 flex items-center gap-4 border-t border-border bg-muted/20">
 
+          {/* Modules count */}
+          {moduleCount > 0 && (
+            <div className="flex flex-col items-center min-w-0">
+              <span className="text-sm font-bold text-primary leading-none">{moduleCount}</span>
+              <span className="text-[10px] text-muted-foreground mt-0.5">Modules</span>
+            </div>
+          )}
+
+          {/* Divider */}
+          {moduleCount > 0 && lessonCount > 0 && <div className="w-px h-6 bg-border flex-shrink-0" />}
+
           {/* Lessons count */}
           {lessonCount > 0 && (
             <div className="flex flex-col items-center min-w-0">
@@ -124,7 +136,7 @@ export function PublicCourseCard({ course, enrollment, className }: PublicCourse
           )}
 
           {/* Divider */}
-          {lessonCount > 0 && <div className="w-px h-6 bg-border flex-shrink-0" />}
+          {(moduleCount > 0 || lessonCount > 0) && <div className="w-px h-6 bg-border flex-shrink-0" />}
 
           {/* Progress */}
           <div className="flex flex-col items-center min-w-0">

@@ -315,3 +315,69 @@ func TestImportPreview_CategoryResolutionAndValidation(t *testing.T) {
 	}
 }
 
+type trackingCMSService struct {
+	stubCMSService
+	publishedIDs []uint
+}
+
+func (s *trackingCMSService) Publish(_ context.Context, id uint, _ entity.CMSType, _ *uint) error {
+	s.publishedIDs = append(s.publishedIDs, id)
+	return nil
+}
+
+func TestImportConfirm_DirectPublish(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Admin user with PUBLISHED status triggers publish", func(t *testing.T) {
+		svc := &trackingCMSService{}
+		h := handler.NewImportHandler(svc, &stubTaskService{}, &stubSectionService{}, &stubLessonService{})
+		r := gin.New()
+		r.POST("/api/import/confirm", authMiddleware(42, "admin"), h.Confirm)
+
+		reqPayload := dto.ImportConfirmRequest{
+			Items: []dto.ImportConfirmItem{
+				{
+					Type:   "ARTICLE",
+					Title:  "Direct Published Article",
+					Body:   "Body content",
+					Status: "PUBLISHED",
+				},
+			},
+		}
+
+		w := doRequest(r, http.MethodPost, "/api/import/confirm", reqPayload)
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+		if len(svc.publishedIDs) != 1 {
+			t.Errorf("expected 1 published call for admin, got %d", len(svc.publishedIDs))
+		}
+	})
+
+	t.Run("Non-admin user requesting PUBLISHED status falls back to DRAFT", func(t *testing.T) {
+		svc := &trackingCMSService{}
+		h := handler.NewImportHandler(svc, &stubTaskService{}, &stubSectionService{}, &stubLessonService{})
+		r := gin.New()
+		r.POST("/api/import/confirm", authMiddleware(42, "editor"), h.Confirm)
+
+		reqPayload := dto.ImportConfirmRequest{
+			Items: []dto.ImportConfirmItem{
+				{
+					Type:   "ARTICLE",
+					Title:  "Editor Attempted Publish Article",
+					Body:   "Body content",
+					Status: "PUBLISHED",
+				},
+			},
+		}
+
+		w := doRequest(r, http.MethodPost, "/api/import/confirm", reqPayload)
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+		if len(svc.publishedIDs) != 0 {
+			t.Errorf("expected 0 published calls for non-admin user, got %d", len(svc.publishedIDs))
+		}
+	})
+}
+

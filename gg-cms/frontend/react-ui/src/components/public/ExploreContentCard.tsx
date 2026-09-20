@@ -152,15 +152,19 @@ export function ExploreContentCard({ item, className }: ExploreContentCardProps)
 
             {/* Row 3: meta footer */}
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-auto pt-0.5">
-              {sections.length > 0 ? (
-                <Badge variant="secondary" className="text-[10px] h-4 px-1.5 py-0 font-normal">
-                  {sections.length} {sections.length === 1 ? 'chapter' : 'chapters'}
-                </Badge>
-              ) : blockCount > 0 ? (
-                <Badge variant="secondary" className="text-[10px] h-4 px-1.5 py-0 font-normal">
-                  {blockCount} lessons
-                </Badge>
-              ) : null}
+              {(() => {
+                const modCount = sections.length > 0 ? sections.length : (item.sectionsCount ?? 0);
+                const realLessons = sections.reduce((acc, s) => acc + (s.lessons?.length ?? 0), 0);
+                const lesCount = realLessons > 0 ? realLessons : (item.lessonsCount ?? item.blockCount ?? 0);
+                if (modCount <= 0 && lesCount <= 0) return null;
+                return (
+                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5 py-0 font-normal">
+                    {modCount > 0 ? `${modCount} ${modCount === 1 ? 'module' : 'modules'}` : ''}
+                    {modCount > 0 && lesCount > 0 ? ' • ' : ''}
+                    {lesCount > 0 ? `${lesCount} ${lesCount === 1 ? 'lesson' : 'lessons'}` : ''}
+                  </Badge>
+                );
+              })()}
               <span className="ml-auto">
                 {item.publishedAt
                   ? new Date(item.publishedAt).toLocaleDateString()
