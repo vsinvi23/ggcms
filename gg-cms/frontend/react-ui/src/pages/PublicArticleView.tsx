@@ -96,6 +96,7 @@ export default function PublicArticleView() {
   const [highlightsPanelOpen, setHighlightsPanelOpen] = useState(false);
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [tocEntries, setTocEntries] = useState<TocEntry[]>([]);
+  const [activeHeadingId, setActiveHeadingId] = useState<string>('');
 
   const { data: article, isLoading: loadingArticle, error } = usePublicCmsById(articleId, true, isPreview);
   const { data: bodyHtml, isLoading: loadingBody } = usePublicCmsBody(articleId, !!article, isPreview);
@@ -126,7 +127,62 @@ export default function PublicArticleView() {
       return { id, text, level: heading.tagName === 'H3' ? 3 : 2 };
     });
     setTocEntries(entries);
+    if (entries.length > 0) {
+      setActiveHeadingId(entries[0].id);
+    }
   }, [bodyHtml]);
+
+  // Dynamically update active right-rail TOC heading on scroll
+  useEffect(() => {
+    if (tocEntries.length === 0) return;
+
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const headingElements = tocEntries
+            .map((entry) => document.getElementById(entry.id))
+            .filter((el): el is HTMLElement => el !== null);
+
+          if (headingElements.length === 0) {
+            ticking = false;
+            return;
+          }
+
+          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+          const viewportHeight = window.innerHeight;
+          const scrollHeight = document.documentElement.scrollHeight;
+
+          if (scrollPosition + viewportHeight >= scrollHeight - 60) {
+            setActiveHeadingId(tocEntries[tocEntries.length - 1].id);
+            ticking = false;
+            return;
+          }
+
+          let activeId = tocEntries[0].id;
+          for (const heading of headingElements) {
+            const rect = heading.getBoundingClientRect();
+            if (rect.top <= 140) {
+              activeId = heading.id;
+            } else {
+              break;
+            }
+          }
+          setActiveHeadingId(activeId);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [tocEntries]);
 
   if (loadingArticle) {
     return (
@@ -178,22 +234,30 @@ export default function PublicArticleView() {
   const handleTocClick = (id: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setActiveHeadingId(id);
     setMobileTocOpen(false);
   };
 
   const renderTocList = () => (
-    <ul className="space-y-2 text-sm">
-      {tocEntries.map((entry) => (
-        <li key={entry.id} className={entry.level === 3 ? 'pl-4' : ''}>
-          <a
-            href={`#${entry.id}`}
-            onClick={handleTocClick(entry.id)}
-            className="block truncate text-muted-foreground hover:text-primary transition-colors"
-          >
-            {entry.text}
-          </a>
-        </li>
-      ))}
+    <ul className="space-y-1.5 text-xs">
+      {tocEntries.map((entry) => {
+        const isActive = activeHeadingId === entry.id;
+        return (
+          <li key={entry.id} className={entry.level === 3 ? 'pl-3' : ''}>
+            <a
+              href={`#${entry.id}`}
+              onClick={handleTocClick(entry.id)}
+              className={`block truncate py-1 px-2 rounded-md transition-all ${
+                isActive
+                  ? 'bg-primary/10 text-primary font-bold border-l-2 border-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+              }`}
+            >
+              {entry.text}
+            </a>
+          </li>
+        );
+      })}
     </ul>
   );
 
@@ -510,11 +574,15 @@ export default function PublicArticleView() {
         .article-content ol { list-style-type: decimal; margin-bottom: 1rem; padding-left: 1.75rem; }
         .article-content li { margin-bottom: 0.35rem; line-height: 1.7; }
         .article-content li > p { margin-bottom: 0; }
-        .article-content blockquote { border-left: 4px solid hsl(var(--primary)); padding: 0.5rem 1rem; margin: 1.5rem 0; background: hsl(var(--muted)/0.4); border-radius: 0 0.25rem 0.25rem 0; }
-        .article-content blockquote p { color: hsl(var(--muted-foreground)); font-style: italic; margin-bottom: 0; }
-        .article-content pre { background: hsl(var(--muted)); padding: 1.25rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1.25rem; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; line-height: 1.6; white-space: pre; }
-        .article-content code { font-family: 'Courier New', Courier, monospace; background: hsl(var(--muted)); padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; }
-        .article-content pre code { background: none; padding: 0; font-size: inherit; white-space: pre; }
+        .article-content blockquote { border-left: 4px solid #2563eb; padding: 0.85rem 1.25rem; margin: 1.5rem 0; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; border-radius: 0 0.375rem 0.375rem 0; }
+        .article-content blockquote p { color: #0f172a; font-style: normal; font-weight: 500; margin-bottom: 0; }
+        .dark .article-content blockquote { background: #0f172a; border-color: #334155; border-left-color: #3b82f6; }
+        .dark .article-content blockquote p { color: #f8fafc; }
+        .article-content pre { background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1; padding: 1.25rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1.25rem; font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9em; line-height: 1.6; white-space: pre; }
+        .dark .article-content pre { background: #0f172a; color: #f8fafc; border-color: #334155; }
+        .article-content code { font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; font-weight: 500; }
+        .dark .article-content code { background: #1e293b; color: #f8fafc; border-color: #334155; }
+        .article-content pre code { background: none; color: inherit; padding: 0; font-size: inherit; white-space: pre; border: none; }
         .article-content figure { margin: 1.5rem 0; text-align: center; }
         .article-content figure img { margin: 0 auto; }
         .article-content figcaption { font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-top: 0.5rem; }

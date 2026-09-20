@@ -921,23 +921,34 @@ const EduCourseStyles = () => (
     .edu-lesson-content a  { color: #10b981; text-decoration: underline; }
     .edu-lesson-content a:hover { text-decoration: none; }
     .edu-lesson-content pre {
-      background: #181920; color: #e2e8f0;
+      background: #f8fafc; color: #0f172a;
       padding: 1.1rem 1.25rem; border-radius: 0.75rem;
       overflow-x: auto; margin-bottom: 1.25rem;
-      font-family: monospace; font-size: 0.875em; line-height: 1.6;
-      border: 1px solid rgba(255,255,255,0.08);
+      font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.875em; line-height: 1.6;
+      border: 1px solid #cbd5e1;
+    }
+    .dark .edu-lesson-content pre {
+      background: #0f172a; color: #f8fafc; border-color: #334155;
     }
     .edu-lesson-content code {
-      font-family: monospace;
-      background: hsl(var(--muted)); color: hsl(var(--foreground));
-      padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em;
+      font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0;
+      padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; font-weight: 500;
     }
-    .edu-lesson-content pre code { background: none; padding: 0; color: inherit; }
+    .dark .edu-lesson-content code {
+      background: #1e293b; color: #f8fafc; border-color: #334155;
+    }
+    .edu-lesson-content pre code { background: none; padding: 0; color: inherit; border: none; }
     .edu-lesson-content blockquote {
-      border-left: 3px solid #10b981; padding: 0.5rem 1rem;
-      margin: 1.25rem 0; background: hsl(var(--accent)/0.4);
-      border-radius: 0 0.5rem 0.5rem 0;
+      border-left: 4px solid #2563eb; padding: 0.85rem 1.25rem;
+      margin: 1.25rem 0; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb;
+      border-radius: 0 0.5rem 0.5rem 0; color: #0f172a;
     }
+    .dark .edu-lesson-content blockquote {
+      background: #0f172a; border-color: #334155; border-left-color: #3b82f6; color: #f8fafc;
+    }
+    .edu-lesson-content blockquote p { color: #0f172a; font-style: normal; font-weight: 500; margin-bottom: 0; }
+    .dark .edu-lesson-content blockquote p { color: #f8fafc; }
     .edu-lesson-content img { max-width: 100%; border-radius: 0.75rem; margin: 1.25rem 0; }
     .edu-lesson-content hr { margin: 1.75rem 0; border: none; border-top: 1px solid hsl(var(--border)); }
     .edu-lesson-content strong { font-weight: 600; }

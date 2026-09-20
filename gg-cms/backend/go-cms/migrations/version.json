@@ -1,8 +1,8 @@
 {
   "name": "db-migrations",
-  "version": "1.1.12",
+  "version": "1.2.0",
   "description": "PostgreSQL Schema Migrations",
   "last_migration": "040_seed_subcategories_and_tags.sql",
-  "updated_at": "2026-09-20T03:12:51Z",
+  "updated_at": "2026-09-20T03:32:03Z",
   "db_schema_hash": "sha256:54e6148c6fc2667b03c04e43c5573d1afba6e3d81003de4ece8ba5d24cbd2001"
 }

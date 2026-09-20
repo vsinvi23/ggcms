@@ -189,17 +189,20 @@ const ArticleStyles = () => (
     .article-content ol { list-style-type: decimal; margin-bottom: 1rem; padding-left: 1.75rem; }
     .article-content li { margin-bottom: 0.35rem; line-height: 1.7; }
     .article-content li > p { margin-bottom: 0; }
-    .article-content blockquote { border-left: 4px solid hsl(var(--primary)); padding: 0.5rem 1rem; margin: 1.5rem 0; background: hsl(var(--muted)/0.4); border-radius: 0 0.25rem 0.25rem 0; }
-    .article-content blockquote p { color: hsl(var(--muted-foreground)); font-style: italic; margin-bottom: 0; }
-    .article-content pre { background: hsl(var(--muted)); padding: 1.25rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1.25rem; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; line-height: 1.6; white-space: pre; }
-    .article-content .code-block { margin-bottom: 1.25rem; border-radius: 0.5rem; overflow: hidden; border: 1px solid hsl(var(--border)); }
+    .article-content blockquote { border-left: 4px solid #2563eb; padding: 0.85rem 1.25rem; margin: 1.5rem 0; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; border-radius: 0 0.375rem 0.375rem 0; }
+    .article-content blockquote p { color: #0f172a; font-style: normal; font-weight: 500; margin-bottom: 0; }
+    .article-content pre { background: #f8fafc; color: #0f172a; border: 1px solid #cbd5e1; padding: 1.25rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1.25rem; font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9em; line-height: 1.6; white-space: pre; }
+    .article-content .code-block { margin-bottom: 1.25rem; border-radius: 0.5rem; overflow: hidden; border: 1px solid #cbd5e1; }
     .article-content .code-block pre { margin-bottom: 0; border-radius: 0; padding: 1.25rem; }
-    .article-content .code-block-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.35rem 1rem; background: hsl(220 14% 86%); border-bottom: 1px solid hsl(var(--border)); font-size: 0.78rem; font-family: 'Courier New', Courier, monospace; }
-    .dark .article-content .code-block-header { background: hsl(240 10% 20%); }
-    .article-content .code-lang { font-weight: 700; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.06em; }
-    .article-content .code-filename { color: hsl(var(--muted-foreground)); font-style: italic; }
-    .article-content code { font-family: 'Courier New', Courier, monospace; background: hsl(var(--muted)); padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; }
-    .article-content pre code { background: none; padding: 0; font-size: inherit; white-space: pre; }
+    .article-content .code-block-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.35rem 1rem; background: #e2e8f0; border-bottom: 1px solid #cbd5e1; font-size: 0.78rem; font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace; color: #0f172a; }
+    .dark .article-content .code-block-header { background: #1e293b; color: #f8fafc; border-bottom-color: #334155; }
+    .article-content .code-lang { font-weight: 700; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.06em; color: #0f172a; }
+    .dark .article-content .code-lang { color: #f8fafc; }
+    .article-content .code-filename { color: #475569; font-style: italic; }
+    .dark .article-content .code-filename { color: #94a3b8; }
+    .article-content code { font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; background: #f1f5f9; color: #0f172a; border: 1px solid #e2e8f0; padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; font-weight: 500; }
+    .dark .article-content code { background: #1e293b; color: #f8fafc; border-color: #334155; }
+    .article-content pre code { background: none; color: inherit; padding: 0; font-size: inherit; white-space: pre; border: none; }
     .article-content figure { margin: 1.5rem 0; text-align: center; }
     .article-content figure img { margin: 0 auto; }
     .article-content figcaption { font-size: 0.875rem; color: hsl(var(--muted-foreground)); margin-top: 0.5rem; }

@@ -250,49 +250,111 @@
 .educative-article-reader pre,
 .educative-article-reader code,
 .article-content pre,
-.article-content code {
-  font-family: 'Space Mono', 'Courier New', Courier, monospace;
+.article-content code,
+.edu-lesson-content pre,
+.edu-lesson-content code,
+.code-block pre,
+.code-block code {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 }
 
-.educative-article-reader pre {
-  background-color: #0d1117;
-  color: #e6edf3;
+.educative-article-reader pre,
+.article-content pre,
+.edu-lesson-content pre,
+.code-block pre {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
   padding: 1.25rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   overflow-x: auto;
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
   line-height: 1.65;
 }
 
-.educative-article-reader code {
-  background-color: hsl(var(--muted));
-  color: hsl(var(--foreground));
+.educative-article-reader code,
+.article-content code,
+.edu-lesson-content code {
+  background-color: #f1f5f9;
+  color: #0f172a;
   padding: 0.2rem 0.45rem;
   border-radius: 0.25rem;
+  border: 1px solid #e2e8f0;
   font-size: 0.875em;
+  font-weight: 500;
 }
 
-.educative-article-reader pre code {
+.educative-article-reader pre code,
+.article-content pre code,
+.edu-lesson-content pre code,
+.code-block pre code {
   background: transparent;
-  color: inherit;
+  color: #0f172a;
   padding: 0;
+  border: none;
+  font-size: inherit;
 }
 
-.educative-article-reader blockquote {
-  border-left: 4px solid hsl(var(--primary));
+.educative-article-reader blockquote,
+.article-content blockquote,
+.edu-lesson-content blockquote {
+  border-left: 4px solid #2563eb;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
   padding: 0.85rem 1.25rem;
   margin: 1.5rem 0;
-  background: hsl(var(--primary) / 0.05);
   border-radius: 0 0.375rem 0.375rem 0;
 }
 
-.educative-article-reader blockquote p {
-  color: hsl(var(--muted-foreground));
+.educative-article-reader blockquote p,
+.article-content blockquote p,
+.edu-lesson-content blockquote p {
+  color: #0f172a;
   font-style: normal;
   font-weight: 500;
   margin-bottom: 0;
+}
+
+.dark .educative-article-reader pre,
+.dark .article-content pre,
+.dark .edu-lesson-content pre,
+.dark .code-block pre {
+  background-color: #0f172a;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+.dark .educative-article-reader code,
+.dark .article-content code,
+.dark .edu-lesson-content code {
+  background-color: #1e293b;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+.dark .educative-article-reader pre code,
+.dark .article-content pre code,
+.dark .edu-lesson-content pre code,
+.dark .code-block pre code {
+  color: #f8fafc;
+  background: transparent;
+}
+
+.dark .educative-article-reader blockquote,
+.dark .article-content blockquote,
+.dark .edu-lesson-content blockquote {
+  background-color: #0f172a;
+  border-color: #334155;
+  border-left-color: #3b82f6;
+}
+
+.dark .educative-article-reader blockquote p,
+.dark .article-content blockquote p,
+.dark .edu-lesson-content blockquote p {
+  color: #f8fafc;
 }
 
 /* Educative Table Styling */

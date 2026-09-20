@@ -98,32 +98,63 @@ export function EducativeArticleReader({
 
   // Dynamically update active heading as user scrolls through the document
   useEffect(() => {
-    if (!contentRef.current || tocEntries.length === 0) return;
+    if (tocEntries.length === 0) return;
 
-    const headingElements = tocEntries
-      .map((entry) => document.getElementById(entry.id))
-      .filter((el): el is HTMLElement => el !== null);
+    let ticking = false;
 
-    if (headingElements.length === 0) return;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const headingElements = tocEntries
+            .map((entry) => document.getElementById(entry.id))
+            .filter((el): el is HTMLElement => el !== null);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleEntries = entries.filter((e) => e.isIntersecting);
-        if (visibleEntries.length > 0) {
-          setActiveHeadingId(visibleEntries[0].target.id);
-        }
-      },
-      {
-        rootMargin: '-60px 0px -55% 0px',
-        threshold: 0.1,
+          if (headingElements.length === 0) {
+            ticking = false;
+            return;
+          }
+
+          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+          const viewportHeight = window.innerHeight;
+          const scrollHeight = document.documentElement.scrollHeight;
+
+          // If near bottom of page, highlight last heading
+          if (scrollPosition + viewportHeight >= scrollHeight - 60) {
+            setActiveHeadingId(tocEntries[tocEntries.length - 1].id);
+            ticking = false;
+            return;
+          }
+
+          // Find the last heading whose top position is <= 140px
+          let activeId = tocEntries[0].id;
+          for (const heading of headingElements) {
+            const rect = heading.getBoundingClientRect();
+            if (rect.top <= 140) {
+              activeId = heading.id;
+            } else {
+              break;
+            }
+          }
+          setActiveHeadingId(activeId);
+          ticking = false;
+        });
+        ticking = true;
       }
-    );
+    };
 
-    headingElements.forEach((el) => observer.observe(el));
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    const container = contentRef.current?.closest('.overflow-y-auto');
+    if (container) {
+      container.addEventListener('scroll', handleScroll, { passive: true });
+    }
 
     return () => {
-      headingElements.forEach((el) => observer.unobserve(el));
-      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
     };
   }, [tocEntries]);
 
