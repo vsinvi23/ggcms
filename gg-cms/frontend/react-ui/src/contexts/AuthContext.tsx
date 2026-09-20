@@ -360,7 +360,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   
   const isAdmin = isAdminRole(user?.role) || groupNames.some(g => adminGroupNames.includes(g));
   const isMasterAdmin = (user?.role && masterAdminGroupNames.includes(user.role.toUpperCase())) || groupNames.some(g => masterAdminGroupNames.includes(g));
-  const hasGroupWithQuickEdit = userGroups.some(g => g.permissions?.publicQuickEdit?.enabled === true);
+  const hasGroupWithQuickEdit = userGroups.some(
+    g => g.permissions?.publicQuickEdit?.enabled === true ||
+         (g.permissions?.publicQuickEdit as any)?.edit === true ||
+         (g.permissions as any)?.publicQuickEdit === true
+  );
   const canQuickEditPublic = isMasterAdmin || hasGroupWithQuickEdit;
   
   const hasNoGroups = userGroups.length === 0;
