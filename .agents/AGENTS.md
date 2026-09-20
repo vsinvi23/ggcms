@@ -36,3 +36,7 @@ When building, testing, or deploying changes in this repository:
      - `GEMINI_MODEL_REVIEWER=gemini-3.6-flash`
      - `DATA_DIR=/app/data`
    - **Secret Manager Secrets**: `GEMINI_API_KEY=factory-gemini-api-key:latest`, `FACTORY_SYNC_SECRET=factory-sync-secret:latest`, `JWT_SECRET=gg-cms-jwt-secret:latest`.
+
+6. **Mandatory Codebase Knowledge Graph (codebase-memory-mcp) Protocol**:
+   - **Search & Discovery**: ALL code searching, symbol discovery, function tracing, and architectural exploration MUST go through `codebase-memory-mcp` tools FIRST (`search_graph`, `trace_path`, `get_code_snippet`, `query_graph`, `get_architecture`). Fall back to grep/glob only for string literals, error logs, config values, or non-code files.
+   - **Mandatory Re-indexing**: For ANY code change made in the codebase, re-indexing the knowledge graph via `codebase-memory-mcp cli index_repository '{"repo_path":"/Users/vivek/work/Serenyax/Product/Sandbox/ggcms/gg-cms","mode":"moderate"}'` is a MANDATORY default step before completing the task.
