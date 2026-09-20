@@ -232,8 +232,14 @@ export default function PublicArticleView() {
       if (!ticking) {
         window.requestAnimationFrame(() => {
           const container = articleBodyRef.current;
+          if (!container) {
+            ticking = false;
+            return;
+          }
+
+          const scrollContainer = container.closest('main') || container.closest('.overflow-auto') || document.documentElement;
           const headingElements = tocEntries
-            .map((entry) => (container ? container.querySelector<HTMLElement>(`[id="${CSS.escape(entry.id)}"]`) : document.getElementById(entry.id)))
+            .map((entry) => container.querySelector<HTMLElement>(`[id="${CSS.escape(entry.id)}"]`))
             .filter((el): el is HTMLElement => el !== null);
 
           if (headingElements.length === 0) {
@@ -241,25 +247,26 @@ export default function PublicArticleView() {
             return;
           }
 
-          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-          const viewportHeight = window.innerHeight;
-          const scrollHeight = document.documentElement.scrollHeight;
+          const isElementContainer = scrollContainer instanceof HTMLElement && scrollContainer !== document.documentElement;
+          const scrollTop = isElementContainer ? scrollContainer.scrollTop : (window.scrollY || document.documentElement.scrollTop);
+          const clientHeight = isElementContainer ? scrollContainer.clientHeight : window.innerHeight;
+          const scrollHeight = isElementContainer ? scrollContainer.scrollHeight : document.documentElement.scrollHeight;
 
-          // Find the last heading whose top position is <= 140px (sticky nav offset)
+          // Header clearance offset (nav header is 56px / 14rem)
+          const targetTopLimit = isElementContainer ? scrollContainer.getBoundingClientRect().top + 100 : 140;
+
           let activeId = tocEntries[0].id;
-          const navClearance = 140;
-
           for (const heading of headingElements) {
             const rect = heading.getBoundingClientRect();
-            if (rect.top <= navClearance) {
+            if (rect.top <= targetTopLimit) {
               activeId = heading.id;
             } else {
               break;
             }
           }
 
-          // Highlight last heading if near bottom of page
-          if (scrollHeight > viewportHeight + 100 && scrollPosition + viewportHeight >= scrollHeight - 60) {
+          // Highlight last heading if near bottom of scroll container
+          if (scrollHeight > clientHeight + 100 && scrollTop + clientHeight >= scrollHeight - 60) {
             activeId = tocEntries[tocEntries.length - 1].id;
           }
 
@@ -270,10 +277,15 @@ export default function PublicArticleView() {
       }
     };
 
+    const container = articleBodyRef.current;
+    const scrollTarget = container?.closest('main') || container?.closest('.overflow-auto') || window;
+
     handleScroll();
+    scrollTarget.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
+      scrollTarget.removeEventListener('scroll', handleScroll);
       window.removeEventListener('scroll', handleScroll);
     };
   }, [tocEntries]);
@@ -333,9 +345,18 @@ export default function PublicArticleView() {
       : document.getElementById(id);
 
     if (element) {
-      const yOffset = -100; // Header clearance offset
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+      const scrollContainer = container?.closest('main') || container?.closest('.overflow-auto');
+      if (scrollContainer && scrollContainer instanceof HTMLElement) {
+        const containerRect = scrollContainer.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
+        const yOffset = -24; // Clearance offset below top header inside main container
+        const targetScrollTop = scrollContainer.scrollTop + (elementRect.top - containerRect.top) + yOffset;
+        scrollContainer.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+      } else {
+        const yOffset = -100;
+        const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
       setActiveHeadingId(id);
       setMobileTocOpen(false);
     }
