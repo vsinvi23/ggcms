@@ -7,7 +7,7 @@ describe('sanitizeHtml', () => {
   });
 
   it('keeps allowlisted tags and attributes', () => {
-    expect(sanitizeHtml('<p class="foo">Hello</p>')).toBe('<p class="foo">Hello</p>');
+    expect(sanitizeHtml('<p class="foo" id="bar">Hello</p>')).toBe('<p class="foo" id="bar">Hello</p>');
   });
 
   it('strips script tags', () => {

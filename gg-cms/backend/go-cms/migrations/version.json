@@ -1,8 +1,8 @@
 {
   "name": "db-migrations",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "PostgreSQL Schema Migrations",
   "last_migration": "041_default_groups_and_reviewer_publishers.sql",
-  "updated_at": "2026-09-20T15:54:11Z",
+  "updated_at": "2026-09-20T16:13:44Z",
   "db_schema_hash": "sha256:9ec51d2a48b5eb29e480c3781024eb83eae4f9475903a7a8a3b88147a01e7904"
 }

@@ -9,7 +9,7 @@ const ALLOWED_TAGS = [
 ];
 
 const ALLOWED_ATTR = [
-  'href','src','alt','class','title','target','rel',
+  'id','href','src','alt','class','title','target','rel',
   'width','height','colspan','rowspan',
 ];
 

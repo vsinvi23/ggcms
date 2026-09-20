@@ -185,16 +185,25 @@ export default function PublicArticleView() {
         setTocEntries([]);
         return;
       }
-      const headings = Array.from(container.querySelectorAll<HTMLElement>('h1, h2, h3'));
+      const headings = Array.from(container.querySelectorAll<HTMLElement>('h1, h2, h3, h4'));
       const seen = new Map<string, number>();
-      const entries: TocEntry[] = headings.map((heading) => {
+      const entries: TocEntry[] = [];
+
+      headings.forEach((heading) => {
         const text = heading.textContent?.trim() || '';
+        if (!text) return;
+
         let id = heading.id || slugify(text) || `section-${Math.random().toString(36).substring(2, 7)}`;
         const count = seen.get(id) ?? 0;
         seen.set(id, count + 1);
         if (count > 0) id = `${id}-${count}`;
         heading.id = id;
-        return { id, text, level: heading.tagName === 'H3' ? 3 : 2 };
+
+        entries.push({
+          id,
+          text,
+          level: heading.tagName === 'H3' || heading.tagName === 'H4' ? 3 : 2,
+        });
       });
 
       setTocEntries(entries);
@@ -222,8 +231,9 @@ export default function PublicArticleView() {
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
+          const container = articleBodyRef.current;
           const headingElements = tocEntries
-            .map((entry) => document.getElementById(entry.id))
+            .map((entry) => (container ? container.querySelector<HTMLElement>(`[id="${CSS.escape(entry.id)}"]`) : document.getElementById(entry.id)))
             .filter((el): el is HTMLElement => el !== null);
 
           if (headingElements.length === 0) {
@@ -237,9 +247,11 @@ export default function PublicArticleView() {
 
           // Find the last heading whose top position is <= 140px (sticky nav offset)
           let activeId = tocEntries[0].id;
+          const navClearance = 140;
+
           for (const heading of headingElements) {
             const rect = heading.getBoundingClientRect();
-            if (rect.top <= 140) {
+            if (rect.top <= navClearance) {
               activeId = heading.id;
             } else {
               break;
@@ -247,7 +259,7 @@ export default function PublicArticleView() {
           }
 
           // Highlight last heading if near bottom of page
-          if (scrollHeight > viewportHeight + 100 && scrollPosition + viewportHeight >= scrollHeight - 50) {
+          if (scrollHeight > viewportHeight + 100 && scrollPosition + viewportHeight >= scrollHeight - 60) {
             activeId = tocEntries[tocEntries.length - 1].id;
           }
 
@@ -315,9 +327,13 @@ export default function PublicArticleView() {
 
   const handleTocClick = (id: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    const element = document.getElementById(id);
+    const container = articleBodyRef.current;
+    const element = container
+      ? container.querySelector<HTMLElement>(`[id="${CSS.escape(id)}"]`) || document.getElementById(id)
+      : document.getElementById(id);
+
     if (element) {
-      const yOffset = -90; // Header clearance offset
+      const yOffset = -100; // Header clearance offset
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
       setActiveHeadingId(id);
