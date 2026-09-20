@@ -164,8 +164,6 @@ const LearningPathPage = () => {
       title: apiData.title,
       description: apiData.description,
       estimatedHours: enrichedCourses.length ? Math.ceil(enrichedCourses.reduce((acc, curr) => acc + (curr.durationMinutes || 180), 0) / 60) : 24,
-      rating: 4.9,
-      ratingCount: 240,
       level: 'Intermediate → Advanced',
       skillsGained: enrichedCourses.map(c => `Master ${c.title}`),
       courses: enrichedCourses,
@@ -235,8 +233,6 @@ const LearningPathPage = () => {
 
 
   const estimatedHours = data.estimatedHours || (courses.length ? courses.length * 4 : 24);
-  const rating = data.rating || 4.9;
-  const ratingCount = data.ratingCount || 180;
   const levelText = data.level || 'Intermediate';
 
   return (
@@ -292,11 +288,6 @@ const LearningPathPage = () => {
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span className="font-semibold text-foreground">{estimatedHours}</span> hours estimated
-              </div>
-              <div className="flex items-center gap-1.5 text-amber-500 font-semibold">
-                <Star className="w-4 h-4 fill-amber-500" />
-                <span>{rating}</span>
-                <span className="text-muted-foreground font-normal text-xs">({ratingCount} ratings)</span>
               </div>
             </div>
 
@@ -609,10 +600,6 @@ const LearningPathPage = () => {
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                           {rp.estimatedHours} Hours
-                        </span>
-                        <span className="flex items-center gap-1 text-amber-500 font-semibold">
-                          <Star className="w-3.5 h-3.5 fill-amber-500" />
-                          {rp.rating}
                         </span>
                       </div>
                     </div>

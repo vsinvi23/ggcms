@@ -55,10 +55,15 @@ export const ModuleLessonNavigator: React.FC<ModuleLessonNavigatorProps> = ({
       .map(sec => ({
         ...sec,
         lessons: (sec.lessons ?? []).filter(
-          l => l.title.toLowerCase().includes(query) || sec.title.toLowerCase().includes(query)
+          l =>
+            l.title.toLowerCase().includes(query) ||
+            (l.content && l.content.toLowerCase().includes(query)) ||
+            (l.summary && l.summary.toLowerCase().includes(query)) ||
+            (sec.title && sec.title.toLowerCase().includes(query)) ||
+            (sec.description && sec.description.toLowerCase().includes(query))
         ),
       }))
-      .filter(sec => sec.lessons.length > 0 || sec.title.toLowerCase().includes(query));
+      .filter(sec => sec.lessons.length > 0 || (sec.title && sec.title.toLowerCase().includes(query)));
   }, [sections, searchQuery]);
 
   return (

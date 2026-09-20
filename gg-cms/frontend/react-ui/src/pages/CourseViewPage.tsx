@@ -3,7 +3,7 @@ import { sanitizeHtml } from '@/lib/sanitize';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { extractSlugFromPath, buildCourseUrl } from '@/lib/slug';
 import {
-  ChevronLeft, ChevronDown, ChevronRight, Search, Play,
+  ChevronLeft, ChevronDown, ChevronRight, Search, Play, X,
   CheckCircle2, Circle, BookOpen, FileText, GraduationCap, Award,
   Globe, Share2, Clock, Bookmark, Highlighter, Star, ArrowRight, Shield, Check,
   Sparkles, LayoutList, AlertTriangle
@@ -11,6 +11,7 @@ import {
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card } from '@/components/ui/card';
@@ -194,10 +195,6 @@ const RecommendedPathsSection = () => {
                 <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
                   {path.kind === 'SECURITY_TRACK' ? 'Security Track' : 'Structured Path'}
                 </Badge>
-                <div className="flex items-center gap-1 text-xs text-amber-500 font-semibold">
-                  <Star className="w-3.5 h-3.5 fill-amber-500" />
-                  {path.rating}
-                </div>
               </div>
               <h4 className="text-base font-bold text-foreground line-clamp-1">{path.title}</h4>
               <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{path.description}</p>
@@ -474,15 +471,20 @@ export function CourseViewPage() {
 
   // Filtered sections according to search
   const filteredSections = useMemo(() => {
+    if (!searchQuery.trim()) return displaySections;
+    const q = searchQuery.toLowerCase();
     return displaySections
       .map(section => {
         const sectionLessons = getAllLessons(section);
-        const matched = searchQuery.trim()
-          ? sectionLessons.filter(l => l.title.toLowerCase().includes(searchQuery.toLowerCase()))
-          : sectionLessons;
+        const matched = sectionLessons.filter(l =>
+          l.title.toLowerCase().includes(q) ||
+          (l.content && l.content.toLowerCase().includes(q)) ||
+          (l.summary && l.summary.toLowerCase().includes(q)) ||
+          (section.title && section.title.toLowerCase().includes(q))
+        );
         return { ...section, lessons: matched };
       })
-      .filter(section => !searchQuery.trim() || section.lessons.length > 0);
+      .filter(section => section.lessons.length > 0 || (section.title && section.title.toLowerCase().includes(q)));
   }, [displaySections, searchQuery]);
 
   // Related courses calculation
@@ -577,8 +579,8 @@ export function CourseViewPage() {
       */}
       <div className="min-h-screen bg-background text-foreground pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-          {/* Top Header Bar */}
-          <div className="flex items-center justify-between border-b border-border pb-3">
+          {/* Top Header Bar with Course Search */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b border-border pb-3 gap-3">
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-xs font-bold uppercase bg-primary/10 text-primary border-primary/20">
                 {displayCourse?.categoryName || 'Engineering'}
@@ -589,7 +591,31 @@ export function CourseViewPage() {
                 </Badge>
               )}
             </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/courses')} className="rounded-xl gap-1 text-xs">
+
+            {/* Top Bar Search in Course Content */}
+            <div className="flex items-center gap-2 flex-1 max-w-md">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="text"
+                  placeholder="Search in course content & lessons..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="text-xs rounded-xl pl-9 pr-8 py-1.5 h-9 bg-card border-border shadow-2xs focus-visible:ring-1 focus-visible:ring-blue-500"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <Button variant="ghost" size="sm" onClick={() => navigate('/courses')} className="rounded-xl gap-1 text-xs shrink-0">
               <ChevronLeft className="w-3.5 h-3.5" /> All Courses
             </Button>
           </div>
@@ -757,11 +783,6 @@ export function CourseViewPage() {
                         <Clock className="w-4 h-4 text-primary" />
                         <span className="font-semibold text-foreground">{formattedDurationText}</span> Estimated
                       </div>
-                      <div className="flex items-center gap-1.5 text-amber-500 font-semibold">
-                        <Star className="w-4 h-4 fill-amber-500" />
-                        <span>4.9</span>
-                        <span className="text-muted-foreground font-normal text-xs">(350+ reviews)</span>
-                      </div>
                     </div>
 
                     <div className="flex items-center gap-3 pt-3">
@@ -823,10 +844,10 @@ export function CourseViewPage() {
               </div>
             ) : (
               /* ── 2. INDIVIDUAL LESSON CONTENT VIEW ────────────────────── */
-              <div className="space-y-6">
+              <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
                 {/* Breadcrumbs */}
-                <nav className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
-                  <button onClick={() => setSelectedLessonId(null)} className="hover:text-foreground transition-colors">
+                <nav className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap pb-2 border-b border-border/60">
+                  <button onClick={() => setSelectedLessonId(null)} className="hover:text-foreground transition-colors font-medium">
                     {title}
                   </button>
                   {currentSection && (

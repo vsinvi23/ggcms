@@ -1,9 +1,35 @@
 {
   "system_name": "GG-CMS Production Release Registry",
   "environment": "prod",
-  "current_version": "1.2.4",
-  "last_build_at": "2026-09-20T11:41:43Z",
+  "current_version": "1.2.6",
+  "last_build_at": "2026-09-20T11:54:45Z",
   "releases": [
+    {
+      "version": "1.2.6",
+      "built_at": "2026-09-20T11:54:45Z",
+      "branch": "release",
+      "commit": "7cc69c5",
+      "archive_path": "release/ga/prod/v1.2.6",
+      "components": {
+        "ui": "1.2.6",
+        "backend": "1.2.6",
+        "db": "1.2.6",
+        "content-factory": "1.2.6"
+      }
+    },
+    {
+      "version": "1.2.5",
+      "built_at": "2026-09-20T11:46:09Z",
+      "branch": "release",
+      "commit": "7cc69c5",
+      "archive_path": "release/ga/prod/v1.2.5",
+      "components": {
+        "ui": "1.2.5",
+        "backend": "1.2.5",
+        "db": "1.2.5",
+        "content-factory": "1.2.5"
+      }
+    },
     {
       "version": "1.2.4",
       "built_at": "2026-09-20T11:41:43Z",

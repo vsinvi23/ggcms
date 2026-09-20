@@ -5,8 +5,6 @@ export interface CuratedLearningPath {
   title: string;
   description: string;
   estimatedHours: number;
-  rating: number;
-  ratingCount: number;
   level: 'Beginner' | 'Intermediate' | 'Advanced';
   skillsGained: string[];
   modules: {
@@ -26,8 +24,6 @@ export const CURATED_LEARNING_PATHS: CuratedLearningPath[] = [
     title: 'Full-Stack Software Engineering Track',
     description: 'Master modern frontend development, backend microservices in Go, database modeling in PostgreSQL, and cloud deployments.',
     estimatedHours: 48,
-    rating: 4.9,
-    ratingCount: 420,
     level: 'Intermediate',
     skillsGained: [
       'Build scalable web apps with React & TypeScript',
@@ -49,8 +45,6 @@ export const CURATED_LEARNING_PATHS: CuratedLearningPath[] = [
     title: 'Cybersecurity & Identity Architecture',
     description: 'Deep dive into OAuth 2.0, OpenID Connect (OIDC), PKI & Cryptography, Web Application Pentesting, and Zero Trust access control.',
     estimatedHours: 42,
-    rating: 4.9,
-    ratingCount: 380,
     level: 'Advanced',
     skillsGained: [
       'Implement OAuth 2.0 & OIDC token verification',
@@ -72,8 +66,6 @@ export const CURATED_LEARNING_PATHS: CuratedLearningPath[] = [
     title: 'Cloud Infrastructure & DevOps Mastery',
     description: 'Learn container orchestration with Kubernetes, Cloud Infrastructure on GCP & AWS, CI/CD automation, and Observability.',
     estimatedHours: 52,
-    rating: 4.8,
-    ratingCount: 290,
     level: 'Intermediate',
     skillsGained: [
       'Package microservices into optimized Docker containers',
@@ -95,8 +87,6 @@ export const CURATED_LEARNING_PATHS: CuratedLearningPath[] = [
     title: 'System Design & Technical Interview Mastery',
     description: 'Master high-scale system design, caching strategies, load balancing, database sharding, and crack senior tech interviews.',
     estimatedHours: 36,
-    rating: 4.9,
-    ratingCount: 510,
     level: 'Advanced',
     skillsGained: [
       'Estimate scale, throughput, and storage requirements',
@@ -118,8 +108,6 @@ export const CURATED_LEARNING_PATHS: CuratedLearningPath[] = [
     title: 'AI & Machine Learning Engineering Track',
     description: 'Build and deploy AI applications using Large Language Models (LLMs), Vector Databases, RAG architectures, and AI Agents.',
     estimatedHours: 40,
-    rating: 4.8,
-    ratingCount: 230,
     level: 'Intermediate',
     skillsGained: [
       'Prompt engineering & LLM API integration',
@@ -140,8 +128,6 @@ export const CURATED_LEARNING_PATHS: CuratedLearningPath[] = [
     title: 'API Security & OWASP Top 10 Deep Dive',
     description: 'Identify, exploit, and patch API vulnerabilities based on OWASP API Security Top 10 guidelines.',
     estimatedHours: 30,
-    rating: 4.9,
-    ratingCount: 190,
     level: 'Intermediate',
     skillsGained: [
       'Detect Broken Object Level Authorization (BOLA/IDOR)',
