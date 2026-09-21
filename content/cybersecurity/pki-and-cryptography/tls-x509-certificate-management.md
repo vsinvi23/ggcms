@@ -115,7 +115,7 @@ func main() {
 	caCertPool.AppendCertsFromPEM(caCert)
 
 	tlsConfig := &tls.Config{
-		ClientCerts: caCertPool,
+		ClientCAs: caCertPool,
 		// Enforce strict mutual TLS authentication
 		ClientAuth: tls.RequireAndVerifyClientCert,
 		MinVersion: tls.VersionTLS13,
@@ -139,8 +139,97 @@ func main() {
 
 ---
 
-## 5. Key Takeaways
+## 5. The Scenario: A Site Outage From an Expired Certificate
+
+### Why Manual Renewal Fails Eventually
+
+A team manually renews their TLS certificate once a year using the OpenSSL commands from Section 3. The renewal falls on a Friday before a long weekend; nobody notices it's overdue until Monday, when the API returns `NET::ERR_CERT_DATE_INVALID` to every client and the whole service is down. Manual renewal doesn't fail because anyone was careless — it fails because it depends on a human remembering a date months in advance, and that's exactly the class of failure automation exists to eliminate.
+
+### Automating Renewal with ACME (cert-manager in Kubernetes)
+
+The ACME protocol (used by Let's Encrypt and most modern CAs) lets a client prove domain ownership and receive a signed certificate with zero manual steps — `cert-manager` runs this entire flow inside Kubernetes and reissues certificates automatically well before expiry:
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: api-geekgully-tls
+  namespace: production
+spec:
+  secretName: api-geekgully-tls-secret
+  duration: 2160h      # 90 days — matches Let's Encrypt's short-lived cert policy
+  renewBefore: 720h    # renew 30 days BEFORE expiry, not at the last minute
+  dnsNames:
+    - api.geekgully.com
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+```
+
+```text
+  ACME automated renewal flow (no human in the loop):
+  ────────────────────────────────────────────────────
+  cert-manager watches Certificate resource
+        │
+        │  60 days into a 90-day cert lifetime (renewBefore: 720h / 30 days)
+        ▼
+  cert-manager requests a new cert from Let's Encrypt via ACME
+        │
+        ▼
+  ACME HTTP-01 or DNS-01 challenge proves domain ownership
+        │
+        ▼
+  New certificate issued, stored in api-geekgully-tls-secret
+        │
+        ▼
+  Ingress controller picks up the updated Secret automatically —
+  NO service restart, NO manual OpenSSL commands, NO missed Friday
+```
+
+💡 **Interactive Takeaway**: The `renewBefore: 720h` setting is the direct fix for the Friday-outage scenario — it guarantees renewal happens with a full 30-day safety margin, so even if the ACME challenge fails once and needs a retry, there's ample time before the old certificate actually expires.
+
+---
+
+## 6. Certificate Pinning: A Sharper Tool With Real Tradeoffs
+
+Beyond validating that a certificate chains to a trusted root, some high-security clients (mobile apps, service-to-service calls) pin to a SPECIFIC certificate or public key, rejecting connections even from a certificate signed by a technically-trusted CA if it doesn't match the pinned value:
+
+```go
+// A simplified public key pinning check performed after the standard
+// TLS handshake and chain validation already succeeded.
+func verifyPinnedKey(cert *x509.Certificate, expectedPin string) error {
+	pubKeyDER, err := x509.MarshalPKIXPublicKey(cert.PublicKey)
+	if err != nil {
+		return err
+	}
+	hash := sha256.Sum256(pubKeyDER)
+	actualPin := base64.StdEncoding.EncodeToString(hash[:])
+
+	if actualPin != expectedPin {
+		return fmt.Errorf("certificate pin mismatch: got %s, want %s", actualPin, expectedPin)
+	}
+	return nil
+}
+```
+
+```text
+  Standard TLS validation:          Certificate pinning (additional layer):
+  ───────────────────────           ─────────────────────────────────────
+  "Does this cert chain to          "Does this cert's public key match
+   ANY trusted root CA?"             the SPECIFIC key I already trust?"
+
+  Protects against: untrusted        Protects against: a COMPROMISED CA
+  CAs, expired certs                 issuing a technically-valid but
+                                      fraudulent cert for your domain
+```
+
+**The tradeoff**: pinning is powerful against a compromised-CA attack, but it also means a LEGITIMATE certificate rotation (like the automated ACME renewal above) will break connectivity unless the pin is updated in lockstep with every rotation — this is precisely why pinning is reserved for high-value, tightly-controlled client/server pairs (e.g. a mobile app talking to its own backend) rather than applied broadly, and why most services rely on standard CA-chain validation plus short certificate lifetimes instead.
+
+---
+
+## 7. Key Takeaways
 
 1. **Use TLS 1.3 Exclusively**: Disable legacy TLS 1.0/1.1 protocols and weak RSA cipher suites.
-2. **Automate Certificate Renewal via ACME**: Use Certbot or cert-manager in Kubernetes to automate 90-day certificate rotations before expiration.
-3. **Enforce mTLS for Internal Microservices**: Protect service-to-service communication by requiring client certificate validation.
+2. **Automate Certificate Renewal via ACME**: Use Certbot or cert-manager in Kubernetes to automate 90-day certificate rotations well before expiration (`renewBefore`) — manual renewal reliably fails eventually because it depends on someone remembering a date.
+3. **Enforce mTLS for Internal Microservices**: Protect service-to-service communication by requiring client certificate validation, using `tls.Config.ClientCAs` to supply the trusted CA pool for verifying incoming client certificates.
+4. **Reserve Certificate Pinning for High-Value, Tightly-Coupled Pairs**: It defends against a compromised CA but must be updated in lockstep with every legitimate rotation, making it a poor fit for broad, loosely-coordinated deployments.
