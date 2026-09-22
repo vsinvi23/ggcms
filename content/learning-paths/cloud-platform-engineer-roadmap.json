@@ -1,0 +1,54 @@
+{
+  "pathId": "cloud-platform-engineer-roadmap",
+  "kind": "Platform Engineer",
+  "title": "Cloud & Platform Engineer Roadmap",
+  "description": "A progression from cloud-native and Kubernetes fundamentals through infrastructure-as-code, serverless deployment, AI-native observability, and platform engineering for AI workloads -- for engineers moving from ops-focused Kubernetes/Terraform work into building the internal platforms that serve modern, AI-heavy application teams.",
+  "targetRole": "Cloud & Platform Engineer / Site Reliability Engineer",
+  "estimatedHours": 15,
+  "level": "INTERMEDIATE_TO_ADVANCED",
+  "prerequisites": ["Basic Linux CLI", "Docker Containers Fundamentals"],
+  "sequencedCourses": [
+    {
+      "sequenceOrder": 1,
+      "courseSlug": "cloud-native-kubernetes-fundamentals",
+      "courseTitle": "Cloud-Native & Kubernetes Fundamentals",
+      "categorySlug": "containers-orchestration",
+      "required": true
+    },
+    {
+      "sequenceOrder": 2,
+      "courseSlug": "terraform-modular-architecture",
+      "courseTitle": "Building Production Terraform Infrastructure Modules",
+      "categorySlug": "infrastructure-as-code",
+      "required": true
+    },
+    {
+      "sequenceOrder": 3,
+      "courseSlug": "gcp-cloud-run-deployment-guide",
+      "courseTitle": "Production Deployment of Microservices on GCP Cloud Run",
+      "categorySlug": "cloud-platforms",
+      "required": true
+    },
+    {
+      "sequenceOrder": 4,
+      "courseSlug": "observability-for-ai-native-systems",
+      "courseTitle": "Observability for AI-Native Systems: Tracing, Tokens, and Failures",
+      "categorySlug": "observability-monitoring",
+      "required": true
+    },
+    {
+      "sequenceOrder": 5,
+      "courseSlug": "platform-engineering-for-ai-workloads",
+      "courseTitle": "Platform Engineering for AI Workloads",
+      "categorySlug": "platform-engineering",
+      "required": true
+    }
+  ],
+  "competencies": [
+    "Kubernetes Core Object Model, Networking, and RBAC/Pod Security",
+    "Reusable Terraform Modules with Remote State Locking and CI/CD Plan Checks",
+    "Serverless Container Deployment and Traffic Management on GCP Cloud Run",
+    "AI-Native Observability: Token-Level Cost, Prompt/Response Tracing, and Failure Correlation",
+    "Platform Engineering for AI Workloads: Agent Gateways, GPU Scheduling, and LLM FinOps"
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "pathId": "ai-ml-platform-engineer-roadmap",
+  "kind": "AI/ML Platform Engineer",
+  "title": "AI/ML Platform Engineer Roadmap",
+  "description": "End-to-end roadmap for engineers building and operating the infrastructure behind production AI/ML systems: core ML foundations, LLM and RAG architecture, inference/training infrastructure at scale, platform engineering for AI workloads, observability for AI-native systems, and the evaluation and governance controls that keep models accountable in production.",
+  "targetRole": "AI/ML Platform Engineer",
+  "estimatedHours": 30,
+  "level": "ADVANCED",
+  "prerequisites": ["Python Development", "Linux & Container Fundamentals", "Basic Cloud/Kubernetes Concepts"],
+  "sequencedCourses": [
+    {
+      "sequenceOrder": 1,
+      "courseSlug": "ml-foundations-from-scratch",
+      "courseTitle": "ML Foundations From Scratch",
+      "categorySlug": "machine-learning-foundations",
+      "required": true
+    },
+    {
+      "sequenceOrder": 2,
+      "courseSlug": "llm-rag-fundamentals-track",
+      "courseTitle": "LLM & RAG Fundamentals: Architecture, Retrieval, and Agentic Systems",
+      "categorySlug": "generative-ai",
+      "required": true
+    },
+    {
+      "sequenceOrder": 3,
+      "courseSlug": "rag-architecture-llm-applications",
+      "courseTitle": "Enterprise RAG Architecture: Vector Search & Prompt Engineering",
+      "categorySlug": "generative-ai",
+      "required": true
+    },
+    {
+      "sequenceOrder": 4,
+      "courseSlug": "ai-infrastructure-at-scale",
+      "courseTitle": "AI Infrastructure at Scale: Inference, Clusters, and Training Supercomputing",
+      "categorySlug": "ai-infrastructure",
+      "required": true
+    },
+    {
+      "sequenceOrder": 5,
+      "courseSlug": "platform-engineering-for-ai-workloads",
+      "courseTitle": "Platform Engineering for AI Workloads",
+      "categorySlug": "platform-engineering",
+      "required": true
+    },
+    {
+      "sequenceOrder": 6,
+      "courseSlug": "observability-for-ai-native-systems",
+      "courseTitle": "Observability for AI-Native Systems: Tracing, Tokens, and Failures",
+      "categorySlug": "observability-monitoring",
+      "required": true
+    },
+    {
+      "sequenceOrder": 7,
+      "courseSlug": "ai-evaluation-explained-to-harness",
+      "courseTitle": "AI Evaluation: Explained to Harness",
+      "categorySlug": "ai-evaluation",
+      "required": true
+    },
+    {
+      "sequenceOrder": 8,
+      "courseSlug": "ai-governance-model-accountability",
+      "courseTitle": "AI Governance & Model Accountability",
+      "categorySlug": "ai-governance",
+      "required": false
+    }
+  ],
+  "competencies": [
+    "Core ML Algorithms & Model Training Fundamentals",
+    "Transformer Architecture, Self-Attention & Agentic LLM Systems",
+    "Enterprise RAG Pipelines: Chunking, pgvector, Hybrid BM25 + Dense Search",
+    "Inference Serving, GPU Clustering & Large-Scale Training Infrastructure",
+    "Platform Engineering Patterns for AI Workloads (Golden Paths, Self-Service)",
+    "Observability for AI-Native Systems: Distributed Tracing & Token-Level Telemetry",
+    "LLM/AI System Evaluation: Golden Datasets & Task-Appropriate Metrics",
+    "AI Governance: Model Cards, Approval Gates & Audit Trails"
+  ]
+}

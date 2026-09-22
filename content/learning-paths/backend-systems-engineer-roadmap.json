@@ -1,0 +1,76 @@
+{
+  "pathId": "backend-systems-engineer-roadmap",
+  "kind": "Backend Engineer",
+  "title": "Backend & Systems Engineer Roadmap",
+  "description": "A progression from language-level internals (C, C++, Java memory models and concurrency) through Go-based service concurrency and API design, into distributed-systems architecture and system design — for engineers moving from application-level backend work into deep systems and platform engineering.",
+  "targetRole": "Backend Engineer / Systems Engineer / Senior Software Engineer",
+  "estimatedHours": 34,
+  "level": "ADVANCED",
+  "prerequisites": ["Working proficiency in at least one systems language (C, C++, Go, or Java)", "Basic understanding of REST APIs and networking"],
+  "sequencedCourses": [
+    {
+      "sequenceOrder": 1,
+      "courseSlug": "c-internals-from-scratch",
+      "courseTitle": "C Internals From Scratch",
+      "categorySlug": "programming-languages",
+      "required": true
+    },
+    {
+      "sequenceOrder": 2,
+      "courseSlug": "cpp-internals-from-scratch",
+      "courseTitle": "C++ Internals From Scratch: Memory, Ownership, Concurrency, and the STL",
+      "categorySlug": "programming-languages",
+      "required": true
+    },
+    {
+      "sequenceOrder": 3,
+      "courseSlug": "java-internals-from-scratch",
+      "courseTitle": "Java Internals From Scratch: JVM, Memory, Concurrency, and Production Services",
+      "categorySlug": "programming-languages",
+      "required": true
+    },
+    {
+      "sequenceOrder": 4,
+      "courseSlug": "go-concurrency-patterns",
+      "courseTitle": "Mastering Go Concurrency: Goroutines, Channels, and Select Patterns",
+      "categorySlug": "programming-languages",
+      "required": true
+    },
+    {
+      "sequenceOrder": 5,
+      "courseSlug": "secure-api-design-session-security",
+      "courseTitle": "Secure API Design & Session Security",
+      "categorySlug": "backend-apis",
+      "required": true
+    },
+    {
+      "sequenceOrder": 6,
+      "courseSlug": "mastering-go-microservices-course",
+      "courseTitle": "Mastering Production Go Microservices",
+      "categorySlug": "backend-apis",
+      "required": true
+    },
+    {
+      "sequenceOrder": 7,
+      "courseSlug": "domain-driven-design-principles",
+      "courseTitle": "Domain-Driven Design (DDD) Principles for Microservices",
+      "categorySlug": "software-design",
+      "required": false
+    },
+    {
+      "sequenceOrder": 8,
+      "courseSlug": "distributed-systems-and-system-design-fundamentals",
+      "courseTitle": "Distributed Systems & System Design Fundamentals",
+      "categorySlug": "software-design",
+      "required": true
+    }
+  ],
+  "competencies": [
+    "Language-level internals: memory management, ownership, and concurrency models in C, C++, and Java",
+    "Go concurrency primitives: goroutines, channels, select, and the runtime scheduler",
+    "Secure, production-grade REST/gRPC API design and session security",
+    "Building and deploying resilient Go microservices with Docker and Kubernetes",
+    "Domain-driven design for decomposing microservice boundaries",
+    "Distributed systems fundamentals: consensus, replication, partitioning, and system design tradeoffs"
+  ]
+}

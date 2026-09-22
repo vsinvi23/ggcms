@@ -1,0 +1,77 @@
+{
+  "pathId": "identity-appsec-engineer-roadmap",
+  "kind": "Security Engineer",
+  "title": "Identity & Application Security Engineer Roadmap",
+  "description": "End-to-end engineering path from core security fundamentals through delegated authorization (OAuth 2.0/OIDC/JWT), PKI/TLS, secure API and session design, and enterprise application defense -- capped with emerging LLM-application threat coverage.",
+  "targetRole": "Identity & Application Security Engineer / IAM Engineer",
+  "estimatedHours": 52,
+  "level": "INTERMEDIATE_TO_ADVANCED",
+  "prerequisites": ["Basic HTTP Networking", "Basic Programming (Go or Python)"],
+  "sequencedCourses": [
+    {
+      "sequenceOrder": 1,
+      "courseSlug": "cybersecurity-fundamentals-from-scratch",
+      "courseTitle": "Cybersecurity Fundamentals From Scratch",
+      "categorySlug": "security-fundamentals",
+      "estimatedHours": 8,
+      "required": true
+    },
+    {
+      "sequenceOrder": 2,
+      "courseSlug": "oauth2-oidc-jwt-zero-to-attacks",
+      "courseTitle": "OAuth2, OIDC & JWT: From Zero to Attacks",
+      "categorySlug": "identity-access",
+      "estimatedHours": 10,
+      "required": true
+    },
+    {
+      "sequenceOrder": 3,
+      "courseSlug": "oauth2-oidc-implementation-guide",
+      "courseTitle": "Implementing Secure OAuth 2.0 & OpenID Connect (OIDC) in Go",
+      "categorySlug": "identity-access",
+      "estimatedHours": 6,
+      "required": true
+    },
+    {
+      "sequenceOrder": 4,
+      "courseSlug": "tls-x509-certificate-management",
+      "courseTitle": "TLS 1.3 & X.509 Public Key Infrastructure (PKI) Guide",
+      "categorySlug": "pki-and-cryptography",
+      "estimatedHours": 6,
+      "required": true
+    },
+    {
+      "sequenceOrder": 5,
+      "courseSlug": "secure-api-design-session-security",
+      "courseTitle": "Secure API Design & Session Security",
+      "categorySlug": "backend-apis",
+      "estimatedHours": 6,
+      "required": true
+    },
+    {
+      "sequenceOrder": 6,
+      "courseSlug": "enterprise-application-security",
+      "courseTitle": "Enterprise Application Security Engineering",
+      "categorySlug": "appsec-threats",
+      "estimatedHours": 10,
+      "required": true
+    },
+    {
+      "sequenceOrder": 7,
+      "courseSlug": "owasp-top-10-llm-security",
+      "courseTitle": "OWASP Top 10 for LLM Applications: Defense & Mitigation",
+      "categorySlug": "appsec-and-threats",
+      "estimatedHours": 6,
+      "required": false
+    }
+  ],
+  "competencies": [
+    "Identity & Access Fundamentals (AuthN/AuthZ, IAM, RBAC/ABAC, Zero Trust)",
+    "OAuth 2.0 Authorization Code Flow with PKCE & OIDC Identity Semantics",
+    "JWT Construction, Validation, JWKS Caching & Algorithm-Confusion Defense",
+    "TLS 1.3 Handshake, X.509 Certificate Chains & mTLS Enforcement",
+    "Secure API/Session Design: BOLA/BOPLA, Mass Assignment, CSRF & Session Hijacking Defense",
+    "Enterprise Zero-Trust Architecture & OWASP Web Top 10 Mitigation",
+    "Emerging LLM-Application Threats: Prompt Injection & Dual-LLM Guardrails"
+  ]
+}
