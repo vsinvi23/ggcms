@@ -1,0 +1,130 @@
+# Server-Side Request Forgery (SSRF): Exploiting Cloud Metadata APIs (IMDSv2)
+
+Server-Side Request Forgery (SSRF) is a critical vulnerability that occurs when a web application is manipulated into making unauthorized back-channel HTTP requests on behalf of an attacker. 
+
+In cloud-native environments, SSRF is no longer just a way to probe internal networks; it is a direct gateway to full cloud account takeover. By exploiting SSRF, attackers can target the internal cloud metadata endpoints of AWS, Google Cloud, or Azure to retrieve short-lived IAM credentials, giving them direct access to the host's cloud resources.
+
+---
+
+## The Problem: The Implicit Trust of Server-Initiated Requests
+
+Web applications frequently fetch external resources. Common examples include:
+* Image uploaders that download an image from a user-supplied URL.
+* Web scrapers that extract preview data from a website.
+* Webhooks that notify third-party APIs of in-app events.
+
+A naive implementation of these features accepts a destination URL directly from the user and executes the request using standard HTTP clients (e.g., Python `requests` or Node `axios`) on the server backend.
+
+Because these requests originate from the application server inside the private corporate network, they bypass traditional firewall perimeters. The target server implicitly trusts any request coming from itself, exposing internal-only endpoints to external manipulation.
+
+---
+
+## Attack Vectors: Metadata Extraction and the Fall of IMDSv1
+
+The most high-value target for a cloud-based SSRF attack is the **Instance Metadata Service (IMDS)**, which runs on the non-routable link-local IP address `169.254.169.254`. This endpoint is accessible from any running virtual machine instance and supplies metadata about the instance, including IAM security credentials.
+
+### 1. Exploiting IMDSv1
+In AWS IMDSv1, retrieving the host's IAM security credentials is as simple as making a standard, unauthenticated HTTP `GET` request. 
+
+If an application is vulnerable to SSRF, an attacker can input the link-local IP address instead of a standard URL:
+```http
+POST /fetch-image HTTP/1.1
+Host: vulnerable-app.com
+Content-Type: application/json
+
+{
+    "image_url": "http://169.254.169.254/latest/meta-data/iam/security-credentials/production-web-role"
+}
+```
+
+The vulnerable application server processes the request, connects to the local metadata IP, retrieves the JSON object containing AWS Access Keys, Secret Keys, and Session Tokens, and reflects them back to the attacker in the HTTP response. The attacker can now authenticate directly to the AWS cloud provider as the web server's IAM role.
+
+### 2. The Solution: Transitioning to IMDSv2
+To block simple, one-request credential harvesting, AWS introduced **IMDSv2**. This version replaces the simple request-response mechanism with a **session-oriented** model that requires token validation.
+
+To query IMDSv2, an attacker must execute two sequential steps:
+1. Make an HTTP `PUT` request with a header `X-aws-ec2-metadata-token-ttl-seconds` to request a session token.
+2. Make an HTTP `GET` request with the retrieved token passed in the `X-aws-ec2-metadata-token` header.
+
+```
++------------+               +------------------+               +---------------+
+|  Attacker  |               | Vulnerable App   |               |     IMDSv2    |
+|            |               | (SSRF Gateway)   |               |169.254.169.254|
++-----+------+               +--------+---------+               +-------+-------+
+      |                               |                                 |
+      | 1. POST /fetch-image          |                                 |
+      |    (Attempts simple GET)      |                                 |
+      +------------------------------>|                                 |
+      |                               | 2. GET /latest/meta-data/...    |
+      |                               +-------------------------------->|
+      |                               |                                 |
+      |                               | 3. Returns 401 Unauthorized     |
+      |                               |    (Missing session token!)     |
+      |                               |<--------------------------------+
+      | 4. Blocked / Token Missing    |                                 |
+      |<------------------------------+                                 |
+```
+
+Because most basic SSRF vulnerabilities only allow an attacker to send simple `GET` requests (and do not allow them to customize headers or execute HTTP `PUT` requests), IMDSv2 effectively blocks credential harvesting even if the application suffers from SSRF.
+
+---
+
+## Defenses: Securing App Endpoints and Network Topologies
+
+Protecting against SSRF requires a defense-in-depth approach spanning application code, cloud configurations, and network policies.
+
+### 1. Enforce IMDSv2 and Disable IMDSv1
+In your cloud infrastructure configurations (Terraform, CloudFormation, or AWS CLI), explicitly disable IMDSv1 and require IMDSv2 with a Hop Limit of 1. A Hop Limit of 1 prevents containers running in Kubernetes or Docker from querying the metadata service over bridged network interfaces.
+
+AWS CLI Hardening Command:
+```bash
+aws ec2 modify-instance-metadata-options \
+    --instance-id i-1234567890abcdef0 \
+    --http-tokens required \
+    --http-put-response-hop-limit 1
+```
+
+### 2. Implement Strict URL Whitelisting in Code
+Never perform DNS resolution or HTTP requests on user-supplied URLs without validation. Implement strict whitelisting of allowed domain names and protocols:
+
+```python
+# Secure Python Code Example using URL parsing and whitelisting
+import urllib.parse
+import socket
+import requests
+
+ALLOWED_DOMAINS = ["images.trustedpartner.com", "static.trustedpartner.com"]
+
+def secure_fetch_resource(user_url):
+    parsed_url = urllib.parse.urlparse(user_url)
+    
+    # 1. Enforce HTTPS only (Disallow file://, gopher://, ftp://, http://)
+    if parsed_url.scheme != "https":
+        raise ValueError("Security Violation: Only secure HTTPS links are allowed")
+
+    # 2. Validate Domain Whitelist
+    if parsed_url.hostname not in ALLOWED_DOMAINS:
+        raise ValueError("Security Violation: Domain is not whitelisted")
+
+    # 3. Resolve DNS and block private IP ranges (Localhost, Link-Local, Private Subnets)
+    resolved_ip = socket.gethostbyname(parsed_url.hostname)
+    if is_private_ip(resolved_ip):
+        raise ValueError("Security Violation: Resolved IP belongs to a private network")
+
+    # 4. Safe Fetch
+    return requests.get(user_url, timeout=5)
+
+def is_private_ip(ip):
+    # Check if IP falls within private blocks (e.g., 127.0.0.0/8, 10.0.0.0/8, 169.254.0.0/16, etc.)
+    # In a full implementation, use ipaddress module for rigorous CIDR parsing
+    return ip.startswith("127.") or ip.startswith("169.254.") or ip.startswith("10.") or ip.startswith("192.168.")
+```
+
+---
+
+## Developer Takeaways
+
+* **The perimeter is porous:** Do not rely on server location or private VPC networks for authentication. Any internal API (like IMDS) must require authentication.
+* **Transition to IMDSv2:** Mandate token-backed IMDSv2 across all AWS compute environments, and configure hop limits to prevent containerized network traversal.
+* **Sanitize and Whitelist:** Implement strict HTTPS-only, domain-whitelisted parsing before initiating outgoing network calls.
+* **Validate Post-DNS Resolution:** Always resolve the domain to its IP address first, and verify that the target IP does not map to private, localhost, or link-local (`169.254.169.254`) ranges before making the request.
