@@ -1,5 +1,7 @@
 // API Types based on CMS API Documentation
 
+import type { ContentFormat } from '@/types/content';
+
 // ============================================
 // GENERIC API RESPONSE WRAPPER
 // ============================================
@@ -216,6 +218,7 @@ export interface CmsCreateDto {
   body?: string;
   articleType?: string | null;
   courseType?: string | null;
+  contentFormat?: ContentFormat | null;
   topicIds?: number[];
 }
 
@@ -227,6 +230,7 @@ export interface CmsUpdateDto {
   body?: string;
   articleType?: string | null;
   courseType?: string | null;
+  contentFormat?: ContentFormat | null;
   thumbnailUrl?: string | null;
   topicIds?: number[];
 }
@@ -245,6 +249,7 @@ export interface CmsResponseDto {
   type: CmsType;
   articleType?: string | null;
   courseType?: string | null;
+  contentFormat?: ContentFormat | null;
   blockCount?: number;
   categoryId: number;
   createdBy: number;

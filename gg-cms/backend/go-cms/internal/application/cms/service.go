@@ -29,6 +29,7 @@ type CreateRequest struct {
 	Body                *string
 	ArticleType         *string
 	CourseType          *string
+	ContentFormat       *string
 	CategoryID          *uint
 	CreatedByID         uint
 	ThumbnailURL        *string
@@ -42,6 +43,7 @@ type UpdateRequest struct {
 	Body                *string
 	ArticleType         *string
 	CourseType          *string
+	ContentFormat       *string
 	CategoryID          *uint
 	ThumbnailURL        *string
 	ThumbnailStorageKey *string
@@ -217,11 +219,16 @@ func (s *service) Create(ctx context.Context, req CreateRequest) (interface{}, e
 		if req.CourseType != nil && *req.CourseType != "" {
 			courseType = entity.CourseType(*req.CourseType)
 		}
+		contentFormat := "blocks"
+		if req.ContentFormat != nil && *req.ContentFormat != "" {
+			contentFormat = *req.ContentFormat
+		}
 		course := &entity.Course{
 			Title:               req.Title,
 			Description:         req.Description,
 			Body:                req.Body,
 			CourseType:          courseType,
+			ContentFormat:       contentFormat,
 			Status:              entity.CMSStatusDraft,
 			CategoryID:          req.CategoryID,
 			CreatedByID:         req.CreatedByID,
@@ -240,11 +247,16 @@ func (s *service) Create(ctx context.Context, req CreateRequest) (interface{}, e
 	if req.ArticleType != nil {
 		articleType = *req.ArticleType
 	}
+	articleContentFormat := "blocks"
+	if req.ContentFormat != nil && *req.ContentFormat != "" {
+		articleContentFormat = *req.ContentFormat
+	}
 	article := &entity.Article{
 		Title:               req.Title,
 		Description:         req.Description,
 		Body:                req.Body,
 		ArticleType:         articleType,
+		ContentFormat:       articleContentFormat,
 		Status:              entity.CMSStatusDraft,
 		CategoryID:          req.CategoryID,
 		CreatedByID:         req.CreatedByID,
@@ -325,6 +337,9 @@ func (s *service) Update(ctx context.Context, id uint, cmsType entity.CMSType, r
 		if req.CourseType != nil && *req.CourseType != "" {
 			course.CourseType = entity.CourseType(*req.CourseType)
 		}
+		if req.ContentFormat != nil && *req.ContentFormat != "" {
+			course.ContentFormat = *req.ContentFormat
+		}
 		course.Version++
 		if len(req.Attachments) > 0 {
 			course.Attachments = toAttachmentEntities(req.Attachments, nil, &id)
@@ -399,6 +414,9 @@ func (s *service) Update(ctx context.Context, id uint, cmsType entity.CMSType, r
 	}
 	if req.ArticleType != nil {
 		article.ArticleType = *req.ArticleType
+	}
+	if req.ContentFormat != nil && *req.ContentFormat != "" {
+		article.ContentFormat = *req.ContentFormat
 	}
 	article.Version++
 	if len(req.Attachments) > 0 {

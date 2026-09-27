@@ -6,11 +6,18 @@ const ALLOWED_TAGS = [
   'img','figure','figcaption',
   'table','thead','tbody','tr','th','td',
   'hr','span','div','section','article',
+  // Mermaid SVG output (rendered client-side by the TipTap WYSIWYG editor)
+  'svg','g','path','text','tspan','rect','circle','ellipse','line','polygon','polyline',
+  'marker','defs','foreignObject',
 ];
 
 const ALLOWED_ATTR = [
   'id','href','src','alt','class','title','target','rel',
   'width','height','colspan','rowspan',
+  // Mermaid SVG geometry/presentation attributes
+  'viewBox','xmlns','fill','stroke','stroke-width','d','cx','cy','r','rx','ry','x','y',
+  'x1','y1','x2','y2','points','transform','marker-end','marker-start','text-anchor',
+  'font-family','font-size','dominant-baseline','data-mermaid-source','data-html-embed',
 ];
 
 const SAFE_CLASS_PATTERN = /^[a-zA-Z0-9 -]*$/;

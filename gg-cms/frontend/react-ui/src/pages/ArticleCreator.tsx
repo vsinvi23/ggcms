@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { RichContentEditor } from '@/components/articles/RichContentEditor';
+import { RichTextEditor } from '@/components/articles/RichTextEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,7 +44,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ContentBlock } from '@/types/content';
+import { ContentBlock, ContentFormat } from '@/types/content';
 import {
   useCreateCms,
   useUpdateCms,
@@ -57,6 +58,7 @@ import {
 import { useCategories } from '@/api/hooks/useCategories';
 import { useContentTypes } from '@/api/hooks/useContentTypes';
 import { parseBodyToBlocks, parseBodyToHtml, stripHtmlTags } from '@/lib/htmlParser';
+import { renderTipTapDocToHtml } from '@/lib/tiptapRenderer';
 import { useAllowedCategories } from '@/hooks/useAllowedCategories';
 import { useAuth } from '@/contexts/AuthContext';
 import { TopicMultiSelect } from '@/components/ui/TopicMultiSelect';
@@ -97,6 +99,9 @@ export default function ArticleCreator() {
   const [articleType, setArticleType] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
+  const [contentFormat, setContentFormat] = useState<ContentFormat>('blocks');
+  const [tiptapContent, setTiptapContent] = useState('');
+  const [formatSwitchDialogOpen, setFormatSwitchDialogOpen] = useState(false);
   const [selectedTopicIds, setSelectedTopicIds] = useState<number[]>([]);
   const { data: initialTopics = [] } = useContentTopics(existingCmsId > 0 ? existingCmsId : null, 'ARTICLE');
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
@@ -129,15 +134,34 @@ export default function ArticleCreator() {
   const isUnclaimedApprovedNoPermission = isViewMode && isApprovedState && !existingCms?.reviewerId && !hasPublishPermission;
   const isOtherPublisherClaimed = isViewMode && isApprovedState && !!existingCms?.reviewerId && existingCms?.reviewerId !== user?.id;
 
-  // Rendered HTML for view mode (handles JSON blocks + legacy HTML)
-  const bodyHtml = isViewMode ? parseBodyToHtml(existingBody || '') : '';
+  // Rendered HTML for view mode (handles JSON blocks + legacy HTML; TipTap docs render async below)
+  const [tiptapBodyHtml, setTiptapBodyHtml] = useState('');
+  const [tiptapDiffBaselineHtml, setTiptapDiffBaselineHtml] = useState('');
+  const isTiptapFormat = existingCms?.contentFormat === 'tiptap';
+
+  useEffect(() => {
+    if (isViewMode && isTiptapFormat && existingBody) {
+      renderTipTapDocToHtml(existingBody).then(setTiptapBodyHtml);
+    }
+  }, [isViewMode, isTiptapFormat, existingBody]);
+
+  useEffect(() => {
+    if (isViewMode && isTiptapFormat) {
+      const baseline = existingCms?.reviewBaselineBody ?? existingCms?.publishedBody ?? '';
+      if (baseline) renderTipTapDocToHtml(baseline).then(setTiptapDiffBaselineHtml);
+    }
+  }, [isViewMode, isTiptapFormat, existingCms?.reviewBaselineBody, existingCms?.publishedBody]);
+
+  const bodyHtml = isViewMode
+    ? (isTiptapFormat ? tiptapBodyHtml : parseBodyToHtml(existingBody || ''))
+    : '';
 
   // Diff baseline: use review baseline (from send-back snapshot) if available,
   // else fall back to published snapshot, else no diff available.
   const diffBaselineTitle = existingCms?.reviewBaselineTitle ?? existingCms?.publishedTitle ?? null;
   const diffBaselineDescription = existingCms?.reviewBaselineDescription ?? existingCms?.publishedDescription ?? null;
   const diffBaselineBody = isViewMode
-    ? parseBodyToHtml(existingCms?.reviewBaselineBody ?? existingCms?.publishedBody ?? '')
+    ? (isTiptapFormat ? tiptapDiffBaselineHtml : parseBodyToHtml(existingCms?.reviewBaselineBody ?? existingCms?.publishedBody ?? ''))
     : '';
   const hasDiff = isViewMode && !!(diffBaselineTitle || diffBaselineDescription || diffBaselineBody);
   const hasReviewBaseline = !!(existingCms?.reviewBaselineTitle || existingCms?.reviewBaselineDescription || existingCms?.reviewBaselineBody);
@@ -151,6 +175,7 @@ export default function ArticleCreator() {
       setDescription(existingCms.description || '');
       setArticleType(existingCms.articleType || '');
       setCategoryId(existingCms.categoryId?.toString() || '');
+      setContentFormat((existingCms.contentFormat as ContentFormat) || 'blocks');
       if (existingCms.thumbnailUrl) setThumbnailPreview(existingCms.thumbnailUrl);
       setIsDataLoaded(true);
     }
@@ -163,7 +188,7 @@ export default function ArticleCreator() {
   }, [initialTopics, selectedTopicIds.length]);
 
   useEffect(() => {
-    if (!isViewMode && existingBody && isDataLoaded && contentBlocks.length === 0) {
+    if (!isViewMode && existingBody && isDataLoaded && contentFormat !== 'tiptap' && contentBlocks.length === 0) {
       try {
         const parsedBlocks = parseBodyToBlocks(existingBody);
         if (parsedBlocks.length > 0) setContentBlocks(parsedBlocks);
@@ -171,7 +196,13 @@ export default function ArticleCreator() {
         console.error('Failed to parse body content:', error);
       }
     }
-  }, [existingBody, isDataLoaded, contentBlocks.length, isViewMode]);
+  }, [existingBody, isDataLoaded, contentBlocks.length, isViewMode, contentFormat]);
+
+  useEffect(() => {
+    if (!isViewMode && existingBody && isDataLoaded && contentFormat === 'tiptap' && !tiptapContent) {
+      setTiptapContent(existingBody);
+    }
+  }, [existingBody, isDataLoaded, contentFormat, isViewMode, tiptapContent]);
 
   const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -194,16 +225,20 @@ export default function ArticleCreator() {
         cmsId = existingCmsId;
         await updateCms.mutateAsync({
           id: cmsId,
-          data: { type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined, topicIds: selectedTopicIds },
+          data: { type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined, contentFormat, topicIds: selectedTopicIds },
         });
       } else {
         const created = await createCms.mutateAsync({
-          type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined, topicIds: selectedTopicIds,
+          type: 'ARTICLE', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined, contentFormat, topicIds: selectedTopicIds,
         });
         cmsId = created.id;
         cmsSlug = created.slug;
       }
-      if (contentBlocks.length > 0) await uploadBody.mutateAsync({ id: cmsId, content: JSON.stringify(contentBlocks) });
+      if (contentFormat === 'tiptap') {
+        if (tiptapContent) await uploadBody.mutateAsync({ id: cmsId, content: tiptapContent });
+      } else if (contentBlocks.length > 0) {
+        await uploadBody.mutateAsync({ id: cmsId, content: JSON.stringify(contentBlocks) });
+      }
       if (thumbnailFile) await uploadThumbnail.mutateAsync({ id: cmsId, file: thumbnailFile });
       if (submitForReviewAfter) {
         await submitForReview.mutateAsync({ id: cmsId });
@@ -222,7 +257,7 @@ export default function ArticleCreator() {
   };
 
   const buildUpdateData = () => ({
-    type: 'ARTICLE' as const, categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined,
+    type: 'ARTICLE' as const, categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, articleType: articleType || undefined, contentFormat,
   });
 
   const {
@@ -248,6 +283,8 @@ export default function ArticleCreator() {
     cmsId: existingCmsId,
     userId: user?.id,
     contentBlocks,
+    contentFormat,
+    tiptapContent,
     buildUpdateData,
     onApproveSuccess: () => navigate('/my-tasks'),
     onSaveAndApproveSuccess: () => navigate('/my-tasks'),
@@ -260,7 +297,9 @@ export default function ArticleCreator() {
 
   const enterReviewerEditMode = () => {
     setReviewerEditBaseline({ title, description, bodyHtml });
-    if (contentBlocks.length === 0 && existingBody) {
+    if (contentFormat === 'tiptap') {
+      if (!tiptapContent && existingBody) setTiptapContent(existingBody);
+    } else if (contentBlocks.length === 0 && existingBody) {
       try {
         const blocks = parseBodyToBlocks(existingBody);
         if (blocks.length > 0) setContentBlocks(blocks);
@@ -273,7 +312,9 @@ export default function ArticleCreator() {
 
   const enterPublisherEditMode = () => {
     setPublisherEditBaseline({ title, description, bodyHtml });
-    if (contentBlocks.length === 0 && existingBody) {
+    if (contentFormat === 'tiptap') {
+      if (!tiptapContent && existingBody) setTiptapContent(existingBody);
+    } else if (contentBlocks.length === 0 && existingBody) {
       try {
         const blocks = parseBodyToBlocks(existingBody);
         if (blocks.length > 0) setContentBlocks(blocks);
@@ -513,8 +554,28 @@ export default function ArticleCreator() {
 
               {/* Content */}
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between gap-4">
                   <CardTitle>Content</CardTitle>
+                  {!isViewMode && (
+                    <Tabs
+                      value={contentFormat === 'tiptap' ? 'tiptap' : 'blocks'}
+                      onValueChange={(v) => {
+                        const next = v as 'blocks' | 'tiptap';
+                        if (next === contentFormat) return;
+                        const hasContent = contentFormat === 'tiptap' ? !!tiptapContent : contentBlocks.length > 0;
+                        if (hasContent) {
+                          setFormatSwitchDialogOpen(true);
+                        } else {
+                          setContentFormat(next);
+                        }
+                      }}
+                    >
+                      <TabsList>
+                        <TabsTrigger value="blocks">Blocks</TabsTrigger>
+                        <TabsTrigger value="tiptap">Rich Text (WYSIWYG)</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {isViewMode && !reviewerEditMode && !publisherEditMode ? (
@@ -580,6 +641,8 @@ export default function ArticleCreator() {
                         }
                       </>
                     )
+                  ) : contentFormat === 'tiptap' ? (
+                    <RichTextEditor content={tiptapContent} onChange={setTiptapContent} />
                   ) : (
                     <RichContentEditor blocks={contentBlocks} onChange={setContentBlocks} />
                   )}
@@ -1135,6 +1198,36 @@ export default function ArticleCreator() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => { setSubmitDialogOpen(false); handleSave(true); }}>
               Submit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Switch editor format confirmation dialog */}
+      <AlertDialog open={formatSwitchDialogOpen} onOpenChange={setFormatSwitchDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Switch editor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Switching editors discards the content in the current editor — there is no automatic
+              conversion between Blocks and Rich Text (WYSIWYG) content. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setFormatSwitchDialogOpen(false);
+                if (contentFormat === 'tiptap') {
+                  setContentFormat('blocks');
+                  setTiptapContent('');
+                } else {
+                  setContentFormat('tiptap');
+                  setContentBlocks([]);
+                }
+              }}
+            >
+              Switch and Discard
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

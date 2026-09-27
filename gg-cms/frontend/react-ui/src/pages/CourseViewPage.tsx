@@ -33,6 +33,8 @@ import { useSectionsByCourse } from '@/api/hooks/useSections';
 import { useMyEnrollment, useEnroll, useUpdateProgress } from '@/api/hooks/useEnrollments';
 import { useAuth } from '@/contexts/AuthContext';
 import { parseBodyToHtml } from '@/lib/htmlParser';
+import { renderTipTapDocToHtml } from '@/lib/tiptapRenderer';
+import { hydrateMermaidDiagrams } from '@/lib/renderMermaidDiagrams';
 import { SectionDto, LessonDto, CmsResponseDto } from '@/api/types';
 import { HighlightOverlay } from '@/components/engagement/HighlightOverlay';
 import { HighlightsPanel } from '@/components/engagement/HighlightsPanel';
@@ -54,6 +56,13 @@ import {
 // ─── Utility to flatten lessons ────────────────────────────────────────────────
 function getAllLessons(section: SectionDto): LessonDto[] {
   return section.lessons ?? [];
+}
+
+// Renders a stored body string to HTML synchronously (blocks/legacy HTML only).
+// TipTap-format bodies are rendered asynchronously — see the useEffect near displayCourse.
+function renderCourseBody(body: string | null | undefined, contentFormat?: string | null): string {
+  if (!body || contentFormat === 'tiptap') return '';
+  return parseBodyToHtml(body);
 }
 
 // ─── Extract body headings ────────────────────────────────────────────────────
@@ -310,6 +319,7 @@ export function CourseViewPage() {
   const [bookmarked, setBookmarked] = useState(false);
   const [highlightsOpen, setHighlightsOpen] = useState(false);
   const discussRef = useRef<HTMLDivElement>(null);
+  const courseBodyRef = useRef<HTMLDivElement>(null);
 
   // Exit confirmation & State saving
   const [showExitDialog, setShowExitDialog] = useState(false);
@@ -376,6 +386,20 @@ export function CourseViewPage() {
       lessonsCount: 0,
     } as CmsResponseDto;
   }, [course, courseId]);
+
+  const [tiptapCourseBodyHtml, setTiptapCourseBodyHtml] = useState('');
+
+  React.useEffect(() => {
+    if (displayCourse?.contentFormat === 'tiptap' && displayCourse.body) {
+      renderTipTapDocToHtml(displayCourse.body).then(setTiptapCourseBodyHtml);
+    }
+  }, [displayCourse?.body, displayCourse?.contentFormat]);
+
+  React.useEffect(() => {
+    if (displayCourse?.contentFormat === 'tiptap' && courseBodyRef.current) {
+      hydrateMermaidDiagrams(courseBodyRef.current);
+    }
+  }, [tiptapCourseBodyHtml, displayCourse?.contentFormat]);
 
   // Detect if this course is a Practice Course / Interactive Quiz / Assessment
   const isPracticeCourse = useMemo(() => {
@@ -1075,7 +1099,8 @@ export function CourseViewPage() {
                     <h2 className="text-xl font-bold text-foreground">Course Overview & Syllabus</h2>
                     <div
                       className="edu-lesson-content text-foreground leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(parseBodyToHtml(displayCourse.body)) }}
+                      ref={courseBodyRef}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(displayCourse.contentFormat === 'tiptap' ? tiptapCourseBodyHtml : renderCourseBody(displayCourse.body, displayCourse.contentFormat)) }}
                     />
                   </div>
                 )}

@@ -12,7 +12,7 @@ import {
   useUploadCmsBody,
 } from '@/api/hooks/useCms';
 import { CmsUpdateDto } from '@/api/types';
-import { ContentBlock } from '@/types/content';
+import { ContentBlock, ContentFormat } from '@/types/content';
 import { toUserMessage } from '@/lib/errors';
 
 export interface UseCmsWorkflowActionsOptions {
@@ -20,6 +20,8 @@ export interface UseCmsWorkflowActionsOptions {
   cmsId: number;
   userId?: number;
   contentBlocks: ContentBlock[];
+  contentFormat?: ContentFormat;
+  tiptapContent?: string;
   buildUpdateData: () => CmsUpdateDto;
   onApproveSuccess?: () => void;
   onSaveAndApproveSuccess?: () => void;
@@ -35,6 +37,8 @@ export function useCmsWorkflowActions({
   cmsId,
   userId,
   contentBlocks,
+  contentFormat = 'blocks',
+  tiptapContent,
   buildUpdateData,
   onApproveSuccess,
   onSaveAndApproveSuccess,
@@ -154,7 +158,9 @@ export function useCmsWorkflowActions({
     setIsReviewActing(true);
     try {
       await updateCms.mutateAsync({ id: cmsId, data: buildUpdateData() });
-      if (contentBlocks.length > 0) {
+      if (contentFormat === 'tiptap') {
+        if (tiptapContent) await uploadBody.mutateAsync({ id: cmsId, content: tiptapContent, type: cmsType });
+      } else if (contentBlocks.length > 0) {
         await uploadBody.mutateAsync({ id: cmsId, content: JSON.stringify(contentBlocks), type: cmsType });
       }
       await approveCms({ id: cmsId, type: cmsType, data: undefined });
@@ -167,14 +173,16 @@ export function useCmsWorkflowActions({
     } finally {
       setIsReviewActing(false);
     }
-  }, [cmsId, cmsType, updateCms, uploadBody, approveCms, buildUpdateData, contentBlocks, onSaveAndApproveSuccess]);
+  }, [cmsId, cmsType, updateCms, uploadBody, approveCms, buildUpdateData, contentBlocks, contentFormat, tiptapContent, onSaveAndApproveSuccess]);
 
   const handleSaveAndPublish = useCallback(async () => {
     if (!cmsId) return;
     setIsReviewActing(true);
     try {
       await updateCms.mutateAsync({ id: cmsId, data: buildUpdateData() });
-      if (contentBlocks.length > 0) {
+      if (contentFormat === 'tiptap') {
+        if (tiptapContent) await uploadBody.mutateAsync({ id: cmsId, content: tiptapContent, type: cmsType });
+      } else if (contentBlocks.length > 0) {
         await uploadBody.mutateAsync({ id: cmsId, content: JSON.stringify(contentBlocks), type: cmsType });
       }
       await publishCms({ id: cmsId, type: cmsType, data: undefined });
@@ -185,7 +193,7 @@ export function useCmsWorkflowActions({
     } finally {
       setIsReviewActing(false);
     }
-  }, [cmsId, cmsType, updateCms, uploadBody, publishCms, buildUpdateData, contentBlocks, onSaveAndPublishSuccess]);
+  }, [cmsId, cmsType, updateCms, uploadBody, publishCms, buildUpdateData, contentBlocks, contentFormat, tiptapContent, onSaveAndPublishSuccess]);
 
   return {
     reviewComment,

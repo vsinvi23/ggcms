@@ -74,6 +74,7 @@ const transformPublicItem = (item: Record<string, unknown>, type: 'ARTICLE' | 'C
     // Strip HTML/markdown from description so it shows as clean plain text in cards
     description: stripHtml((item.description as string | undefined) ?? (item.shortDescription as string | undefined) ?? (item.excerpt as string | undefined)),
     body: (item.body as string | null | undefined) ?? (item.content as string | null | undefined) ?? null,
+    contentFormat: (item.contentFormat as CmsResponseDto['contentFormat']) ?? null,
     bodyLocation: null,
     bodyName: null,
     bodyType: null,

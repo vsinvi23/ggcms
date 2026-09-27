@@ -18,6 +18,7 @@ type CMSResponse struct {
 	Body            *string `json:"body,omitempty"`
 	ArticleType     *string `json:"articleType,omitempty"`
 	CourseType      *string `json:"courseType,omitempty"`
+	ContentFormat   string  `json:"contentFormat"`
 	BlockCount      int     `json:"blockCount"`
 	Status          string  `json:"status"`
 	CategoryID      *uint   `json:"categoryId,omitempty"`
@@ -60,6 +61,7 @@ type CreateCMSRequest struct {
 	Body                *string              `json:"body,omitempty"`
 	ArticleType         *string              `json:"articleType,omitempty"`
 	CourseType          *string              `json:"courseType,omitempty"`
+	ContentFormat       *string              `json:"contentFormat,omitempty"`
 	CategoryID          *uint                `json:"categoryId,omitempty"`
 	TopicIDs            []uint               `json:"topicIds,omitempty"`
 	ThumbnailURL        *string              `json:"thumbnailUrl,omitempty"`
@@ -73,6 +75,7 @@ type UpdateCMSRequest struct {
 	Body                *string              `json:"body,omitempty"`
 	ArticleType         *string              `json:"articleType,omitempty"`
 	CourseType          *string              `json:"courseType,omitempty"`
+	ContentFormat       *string              `json:"contentFormat,omitempty"`
 	CategoryID          *uint                `json:"categoryId,omitempty"`
 	TopicIDs            []uint               `json:"topicIds,omitempty"`
 	ThumbnailURL        *string              `json:"thumbnailUrl,omitempty"`

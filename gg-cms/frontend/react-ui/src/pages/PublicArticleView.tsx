@@ -6,6 +6,8 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { usePublicCmsById, usePublicCmsBody, usePublicArticlesByCategory } from '@/api/hooks/usePublicCms';
 import { useContentTopics, useTopicContent } from '@/api/hooks/useTopics';
 import { parseBodyToHtml } from '@/lib/htmlParser';
+import { renderTipTapDocToHtml } from '@/lib/tiptapRenderer';
+import { hydrateMermaidDiagrams } from '@/lib/renderMermaidDiagrams';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -168,13 +170,32 @@ export default function PublicArticleView() {
     ? pendingRevision.body
     : bodyHtml || '';
 
-  const displayBodyHtml = useMemo(() => {
+  const syncDisplayBodyHtml = useMemo(() => {
     if (!article) return '';
     if ((article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin)) {
       return computeWordDiff(publishedBodyText, draftBodyText);
     }
-    return parseBodyToHtml(activeBody);
+    return article.contentFormat === 'tiptap' ? '' : parseBodyToHtml(activeBody);
   }, [article, pendingRevision, diffViewMode, isAdmin, isMasterAdmin, publishedBodyText, draftBodyText, activeBody]);
+
+  const [tiptapDisplayBodyHtml, setTiptapDisplayBodyHtml] = useState('');
+  const isTiptapDiffMode = !!article && (article.hasPendingDraft || !!pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin);
+
+  useEffect(() => {
+    if (article?.contentFormat === 'tiptap' && !isTiptapDiffMode) {
+      renderTipTapDocToHtml(activeBody).then(setTiptapDisplayBodyHtml);
+    }
+  }, [article?.contentFormat, isTiptapDiffMode, activeBody]);
+
+  const displayBodyHtml = article?.contentFormat === 'tiptap' && !isTiptapDiffMode
+    ? tiptapDisplayBodyHtml
+    : syncDisplayBodyHtml;
+
+  useEffect(() => {
+    if (article?.contentFormat === 'tiptap' && articleBodyRef.current) {
+      hydrateMermaidDiagrams(articleBodyRef.current);
+    }
+  }, [displayBodyHtml, article?.contentFormat]);
 
   useEffect(() => {
     let frameId: number;
