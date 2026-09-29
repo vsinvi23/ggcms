@@ -616,8 +616,8 @@ func (h *CMSHandler) ClaimReview(c *gin.Context) {
 	}
 	cmsType := entity.CMSType(c.DefaultQuery("type", "ARTICLE"))
 	userID := middleware.GetUserID(c)
-	if err := h.service.ClaimReview(c.Request.Context(), id, cmsType, userID); err != nil {
-		response.InternalError(c, err.Error())
+	if err := h.service.ClaimReview(c.Request.Context(), id, cmsType, userID, middleware.IsAdmin(c)); err != nil {
+		response.Forbidden(c, err.Error())
 		return
 	}
 	// Create or update the reviewer task so it appears in their task list.

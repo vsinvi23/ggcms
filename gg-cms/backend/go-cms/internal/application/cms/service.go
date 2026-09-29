@@ -65,8 +65,9 @@ type Service interface {
 	SendBack(ctx context.Context, id uint, cmsType entity.CMSType, comment string) error
 	Reject(ctx context.Context, id uint, cmsType entity.CMSType, reviewerID uint, comment string, callerIsAdmin bool) error
 	GetActivity(ctx context.Context, id uint, cmsType entity.CMSType) ([]*entity.WorkflowEvent, error)
-	// ClaimReview assigns the calling user as the reviewer. Fails if another reviewer has already claimed it.
-	ClaimReview(ctx context.Context, id uint, cmsType entity.CMSType, userID uint) error
+	// ClaimReview assigns the calling user as the reviewer. Fails if another reviewer has already claimed it,
+	// or if the caller is not an admin and not a member of the content's category reviewer group.
+	ClaimReview(ctx context.Context, id uint, cmsType entity.CMSType, userID uint, callerIsAdmin bool) error
 	// AssignReviewer lets an admin set a specific reviewer without changing the CMS status.
 	AssignReviewer(ctx context.Context, id uint, cmsType entity.CMSType, assignerID, targetUserID uint) error
 	// ReassignReview releases the current reviewer assignment (sets reviewer_id to nil) and
@@ -461,6 +462,28 @@ func (s *service) Submit(ctx context.Context, id uint, cmsType entity.CMSType, r
 	} else {
 		_ = s.articleRepo.SetReviewer(ctx, id, nil)
 	}
+
+	// A client-supplied reviewerID is only honored if that user is actually a
+	// reviewer for this content's category — otherwise a submitter could nominate
+	// themselves (or anyone) as reviewer, undermining separation of duties. An
+	// invalid nominee falls back to nil (unassigned queue) rather than failing the
+	// submission outright.
+	if reviewerID != nil {
+		var categoryID *uint
+		if cmsType == entity.CMSTypeCourse {
+			if c, err := s.courseRepo.FindByID(ctx, id); err == nil {
+				categoryID = c.CategoryID
+			}
+		} else {
+			if a, err := s.articleRepo.FindByID(ctx, id); err == nil {
+				categoryID = a.CategoryID
+			}
+		}
+		if categoryID == nil || !s.isUserReviewerForCategory(ctx, *reviewerID, *categoryID) {
+			reviewerID = nil
+		}
+	}
+
 	var err error
 	if cmsType == entity.CMSTypeCourse {
 		err = s.courseRepo.UpdateStatus(ctx, id, entity.CMSStatusReview, reviewerID, nil, nil)
@@ -501,13 +524,19 @@ func (s *service) isUserReviewerForCategory(ctx context.Context, userID uint, ca
 func (s *service) Approve(ctx context.Context, id uint, cmsType entity.CMSType, approvedBy *uint, callerIsAdmin bool) error {
 	fromStatus, version, title := s.currentStatusAndVersion(ctx, id, cmsType)
 
+	if fromStatus != string(entity.CMSStatusReview) {
+		return fmt.Errorf("content must be in REVIEW status to be approved (current status: %s)", fromStatus)
+	}
+
 	actorID := uint(0)
 	if approvedBy != nil {
 		actorID = *approvedBy
 	}
 
 	// Enforce reviewer group membership for non-admin callers.
-	// Admins bypass this check entirely.
+	// Admins bypass this check entirely. Content with no category assigned cannot
+	// be approved by a non-admin — there is no reviewer group to check membership
+	// against, so treat "no category" as "no eligible non-admin reviewer".
 	if actorID > 0 && !callerIsAdmin {
 		var categoryID *uint
 		if cmsType == entity.CMSTypeCourse {
@@ -519,7 +548,7 @@ func (s *service) Approve(ctx context.Context, id uint, cmsType entity.CMSType, 
 				categoryID = a.CategoryID
 			}
 		}
-		if categoryID != nil && !s.isUserReviewerForCategory(ctx, actorID, *categoryID) {
+		if categoryID == nil || !s.isUserReviewerForCategory(ctx, actorID, *categoryID) {
 			return fmt.Errorf("user is not a reviewer for this content's category")
 		}
 	}
@@ -627,6 +656,15 @@ func (s *service) Publish(ctx context.Context, id uint, cmsType entity.CMSType, 
 		err = s.articleRepo.UpdateStatus(ctx, id, entity.CMSStatusPublished, publishedBy, nil, &now)
 	}
 	if err == nil {
+		// Clear the reviewer/publisher assignment now that this revision is live — the next
+		// edit cycle must be claimed fresh rather than inheriting a stale assignment.
+		// UpdateStatus above cannot null this out itself (a nil reviewerID pointer means
+		// "leave unchanged", not "clear"), so it must be done explicitly.
+		if cmsType == entity.CMSTypeCourse {
+			_ = s.courseRepo.SetReviewer(ctx, id, nil)
+		} else {
+			_ = s.articleRepo.SetReviewer(ctx, id, nil)
+		}
 		// Clear the old snapshot now that the new revision is live.
 		if hasPendingDraft {
 			if cmsType == entity.CMSTypeCourse {
@@ -701,8 +739,14 @@ func (s *service) SendBack(ctx context.Context, id uint, cmsType entity.CMSType,
 func (s *service) Reject(ctx context.Context, id uint, cmsType entity.CMSType, reviewerID uint, comment string, callerIsAdmin bool) error {
 	fromStatus, version, title := s.currentStatusAndVersion(ctx, id, cmsType)
 
+	if fromStatus != string(entity.CMSStatusReview) {
+		return fmt.Errorf("content must be in REVIEW status to be rejected (current status: %s)", fromStatus)
+	}
+
 	// Enforce reviewer group membership for non-admin callers.
-	// Admins bypass this check entirely.
+	// Admins bypass this check entirely. Content with no category assigned cannot
+	// be rejected by a non-admin — there is no reviewer group to check membership
+	// against, so treat "no category" as "no eligible non-admin reviewer".
 	if reviewerID > 0 && !callerIsAdmin {
 		var categoryID *uint
 		if cmsType == entity.CMSTypeCourse {
@@ -714,7 +758,7 @@ func (s *service) Reject(ctx context.Context, id uint, cmsType entity.CMSType, r
 				categoryID = a.CategoryID
 			}
 		}
-		if categoryID != nil && !s.isUserReviewerForCategory(ctx, reviewerID, *categoryID) {
+		if categoryID == nil || !s.isUserReviewerForCategory(ctx, reviewerID, *categoryID) {
 			return fmt.Errorf("user is not a reviewer for this content's category")
 		}
 	}
@@ -738,7 +782,7 @@ func (s *service) GetActivity(ctx context.Context, id uint, cmsType entity.CMSTy
 	return s.workflowEventRepo.FindByEntity(ctx, string(cmsType), id)
 }
 
-func (s *service) ClaimReview(ctx context.Context, id uint, cmsType entity.CMSType, userID uint) error {
+func (s *service) ClaimReview(ctx context.Context, id uint, cmsType entity.CMSType, userID uint, callerIsAdmin bool) error {
 	if cmsType == entity.CMSTypeCourse {
 		c, err := s.courseRepo.FindByID(ctx, id)
 		if err != nil {
@@ -749,6 +793,11 @@ func (s *service) ClaimReview(ctx context.Context, id uint, cmsType entity.CMSTy
 		}
 		if c.ReviewerID != nil && *c.ReviewerID != userID {
 			return fmt.Errorf("already claimed by another user")
+		}
+		if !callerIsAdmin {
+			if c.CategoryID == nil || !s.isUserReviewerForCategory(ctx, userID, *c.CategoryID) {
+				return fmt.Errorf("user is not a reviewer for this content's category")
+			}
 		}
 		if err := s.courseRepo.UpdateStatus(ctx, id, c.Status, &userID, nil, nil); err != nil {
 			return err
@@ -769,6 +818,11 @@ func (s *service) ClaimReview(ctx context.Context, id uint, cmsType entity.CMSTy
 	}
 	if a.ReviewerID != nil && *a.ReviewerID != userID {
 		return fmt.Errorf("already claimed by another user")
+	}
+	if !callerIsAdmin {
+		if a.CategoryID == nil || !s.isUserReviewerForCategory(ctx, userID, *a.CategoryID) {
+			return fmt.Errorf("user is not a reviewer for this content's category")
+		}
 	}
 	if err := s.articleRepo.UpdateStatus(ctx, id, a.Status, &userID, nil, nil); err != nil {
 		return err

@@ -88,23 +88,10 @@ const LearningPathPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [isViewingPending, setIsViewingPending] = useState(false);
-  const [pendingRevision, setPendingRevision] = useState<any>(null);
 
-  const handleSavePathRevision = async (revData: { title: string; description: string; body: string; submitForReview: boolean }) => {
-    const newRev = {
-      id: Date.now(),
-      parentContentId: pathId || '1',
-      contentType: 'LEARNING_PATH',
-      versionNumber: 2,
-      status: revData.submitForReview ? 'REVIEW' : 'DRAFT',
-      requestedBy: 1,
-      title: revData.title,
-      description: revData.description,
-      body: revData.body,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setPendingRevision(newRev);
+  // NOTE: learning-path quick-edit has no backing update API yet — this only
+  // toggles the local "viewing pending" UI state, it doesn't persist anything.
+  const handleSavePathRevision = async (_revData: { title: string; description: string; body: string; submitForReview: boolean }) => {
     setIsViewingPending(true);
   };
 
@@ -243,7 +230,6 @@ const LearningPathPage = () => {
         currentTitle={data.title || ''}
         currentDescription={data.description || ''}
         currentBody=""
-        pendingRevision={pendingRevision}
         isViewingPending={isViewingPending}
         onToggleView={setIsViewingPending}
         onSaveRevision={handleSavePathRevision}

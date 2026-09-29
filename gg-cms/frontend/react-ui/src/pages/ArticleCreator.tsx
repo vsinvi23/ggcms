@@ -156,6 +156,10 @@ export default function ArticleCreator() {
     ? (isTiptapFormat ? tiptapBodyHtml : parseBodyToHtml(existingBody || ''))
     : '';
 
+  // True while a TipTap body exists but its async HTML render hasn't resolved yet —
+  // entering edit mode before this settles would freeze the diff baseline at ''.
+  const tiptapBodyPending = isViewMode && isTiptapFormat && !!existingBody && !tiptapBodyHtml;
+
   // Diff baseline: use review baseline (from send-back snapshot) if available,
   // else fall back to published snapshot, else no diff available.
   const diffBaselineTitle = existingCms?.reviewBaselineTitle ?? existingCms?.publishedTitle ?? null;
@@ -296,6 +300,7 @@ export default function ArticleCreator() {
   });
 
   const enterReviewerEditMode = () => {
+    if (tiptapBodyPending) return;
     setReviewerEditBaseline({ title, description, bodyHtml });
     if (contentFormat === 'tiptap') {
       if (!tiptapContent && existingBody) setTiptapContent(existingBody);
@@ -311,6 +316,7 @@ export default function ArticleCreator() {
   };
 
   const enterPublisherEditMode = () => {
+    if (tiptapBodyPending) return;
     setPublisherEditBaseline({ title, description, bodyHtml });
     if (contentFormat === 'tiptap') {
       if (!tiptapContent && existingBody) setTiptapContent(existingBody);
@@ -789,9 +795,9 @@ export default function ArticleCreator() {
                       <>
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm text-muted-foreground">Approve, send back with feedback, or make direct corrections.</p>
-                          <Button variant="outline" size="sm" onClick={enterReviewerEditMode} className="flex-shrink-0 gap-1.5">
+                          <Button variant="outline" size="sm" onClick={enterReviewerEditMode} disabled={tiptapBodyPending} className="flex-shrink-0 gap-1.5">
                             <PenLine className="w-3.5 h-3.5" />
-                            Make Corrections
+                            {tiptapBodyPending ? 'Loading content…' : 'Make Corrections'}
                           </Button>
                         </div>
                         <Textarea
@@ -897,9 +903,9 @@ export default function ArticleCreator() {
                           <p className="text-sm text-muted-foreground">
                             This article has been approved and is ready to go live.
                           </p>
-                          <Button variant="outline" size="sm" onClick={enterPublisherEditMode} className="flex-shrink-0 gap-1.5">
+                          <Button variant="outline" size="sm" onClick={enterPublisherEditMode} disabled={tiptapBodyPending} className="flex-shrink-0 gap-1.5">
                             <PenLine className="w-3.5 h-3.5" />
-                            Edit & Publish
+                            {tiptapBodyPending ? 'Loading content…' : 'Edit & Publish'}
                           </Button>
                         </div>
                         <div className="flex flex-wrap gap-2">

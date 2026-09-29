@@ -5,7 +5,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	lessonsvc "github.com/serenya/go-cms/internal/application/lesson"
+	sectionsvc "github.com/serenya/go-cms/internal/application/section"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
 	"github.com/serenya/go-cms/internal/interfaces/http/middleware"
@@ -13,11 +15,42 @@ import (
 )
 
 type LessonHandler struct {
-	service lessonsvc.Service
+	service    lessonsvc.Service
+	sectionSvc sectionsvc.Service
+	cmsSvc     cmssvc.Service
 }
 
-func NewLessonHandler(svc lessonsvc.Service) *LessonHandler {
-	return &LessonHandler{service: svc}
+func NewLessonHandler(svc lessonsvc.Service, sectionSvc sectionsvc.Service, cmsSvc cmssvc.Service) *LessonHandler {
+	return &LessonHandler{service: svc, sectionSvc: sectionSvc, cmsSvc: cmsSvc}
+}
+
+// checkParentCourseOwnership verifies the caller is an admin or owns the course
+// that a lesson's section belongs to (lesson → section → course). Returns false
+// (and writes the HTTP response) if denied.
+func (h *LessonHandler) checkParentCourseOwnership(c *gin.Context, lesson *entity.Lesson) bool {
+	if middleware.IsAdmin(c) {
+		return true
+	}
+	if lesson.SectionID == nil {
+		response.Forbidden(c, "cannot edit a lesson with no parent section")
+		return false
+	}
+	sec, err := h.sectionSvc.GetByID(c.Request.Context(), *lesson.SectionID)
+	if err != nil || sec.CourseID == nil {
+		response.Forbidden(c, "cannot edit this lesson")
+		return false
+	}
+	course, err := h.cmsSvc.GetByID(c.Request.Context(), *sec.CourseID, entity.CMSTypeCourse)
+	if err != nil {
+		response.Forbidden(c, "cannot edit this lesson")
+		return false
+	}
+	_, ownerID := extractCMSTitleAndOwner(course, entity.CMSTypeCourse)
+	if ownerID != middleware.GetUserID(c) {
+		response.Forbidden(c, "cannot edit a lesson belonging to a course you do not own")
+		return false
+	}
+	return true
 }
 
 // GET /api/lessons?filters[section][id][$eq]=sectionId
@@ -82,6 +115,14 @@ func (h *LessonHandler) Update(c *gin.Context) {
 		response.BadRequest(c, "invalid lesson ID")
 		return
 	}
+	existing, fetchErr := h.service.GetByID(c.Request.Context(), id)
+	if fetchErr != nil {
+		response.NotFound(c, "lesson not found")
+		return
+	}
+	if !h.checkParentCourseOwnership(c, existing) {
+		return
+	}
 	var req dto.UpdateLessonRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
@@ -112,6 +153,14 @@ func (h *LessonHandler) Delete(c *gin.Context) {
 	id, err := parseID(c, "id")
 	if err != nil {
 		response.BadRequest(c, "invalid lesson ID")
+		return
+	}
+	existing, fetchErr := h.service.GetByID(c.Request.Context(), id)
+	if fetchErr != nil {
+		response.NotFound(c, "lesson not found")
+		return
+	}
+	if !h.checkParentCourseOwnership(c, existing) {
 		return
 	}
 	if err := h.service.Delete(c.Request.Context(), id); err != nil {

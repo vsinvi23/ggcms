@@ -4,8 +4,9 @@ package cms_test
 //
 // All tests use in-process mocks; no server or database is required.
 // The central security invariant being tested:
-//   - callerIsAdmin=true  → skip reviewer-group check
-//   - categoryID == nil   → skip reviewer-group check (uncategorised content)
+//   - callerIsAdmin=true  → skip reviewer-group check entirely
+//   - categoryID == nil, non-admin caller → BLOCK (no reviewer group exists to
+//     check membership against, so uncategorised content is admin-only)
 //   - categoryID != nil, no reviewer groups configured → block non-admin
 //   - categoryID != nil, user not in a reviewer group  → block non-admin
 //   - categoryID != nil, user IS in a reviewer group   → allow
@@ -229,7 +230,10 @@ func TestApprove_AdminBypasses(t *testing.T) {
 }
 
 // TestApprove_NonAdmin_NoCategoryID verifies that content without a CategoryID
-// can be approved by any authenticated user (no group restriction applies).
+// CANNOT be approved by a non-admin — there is no reviewer group to check
+// membership against, so a missing category must deny non-admin approval rather
+// than silently skip the check (regression test for a privilege-escalation bug
+// where any authenticated user could approve categoryless content).
 func TestApprove_NonAdmin_NoCategoryID(t *testing.T) {
 	svc := newService(
 		&stubArticleRepo{article: articleNoCategory()},
@@ -240,8 +244,25 @@ func TestApprove_NonAdmin_NoCategoryID(t *testing.T) {
 
 	actorID := uint(42)
 	err := svc.Approve(context.Background(), 1, entity.CMSTypeArticle, &actorID, false)
+	if err == nil {
+		t.Error("content without category should NOT be approvable by a non-admin, but Approve succeeded")
+	}
+}
+
+// TestApprove_Admin_NoCategoryID verifies an admin caller can still approve
+// categoryless content (the category/reviewer-group check is bypassed for admins).
+func TestApprove_Admin_NoCategoryID(t *testing.T) {
+	svc := newService(
+		&stubArticleRepo{article: articleNoCategory()},
+		&stubCategoryRepo{},
+		&stubGroupRepo{userGroups: []entity.Group{}},
+		&stubContentReviewRepo{},
+	)
+
+	actorID := uint(42)
+	err := svc.Approve(context.Background(), 1, entity.CMSTypeArticle, &actorID, true)
 	if err != nil {
-		t.Errorf("content without category should be approvable by any user, got: %v", err)
+		t.Errorf("admin should be able to approve categoryless content, got: %v", err)
 	}
 }
 
@@ -356,5 +377,60 @@ func TestReject_NonAdmin_InReviewerGroup(t *testing.T) {
 	err := svc.Reject(context.Background(), 1, entity.CMSTypeArticle, 42, "needs work", false)
 	if err != nil {
 		t.Errorf("user in reviewer group should be allowed to reject, got: %v", err)
+	}
+}
+
+// TestReject_NonAdmin_NoCategoryID verifies content without a CategoryID cannot
+// be rejected by a non-admin (mirrors TestApprove_NonAdmin_NoCategoryID).
+func TestReject_NonAdmin_NoCategoryID(t *testing.T) {
+	svc := newService(
+		&stubArticleRepo{article: articleNoCategory()},
+		&stubCategoryRepo{},
+		&stubGroupRepo{userGroups: []entity.Group{}},
+		&stubContentReviewRepo{},
+	)
+
+	err := svc.Reject(context.Background(), 1, entity.CMSTypeArticle, 42, "needs work", false)
+	if err == nil {
+		t.Error("content without category should NOT be rejectable by a non-admin, but Reject succeeded")
+	}
+}
+
+// ─── Status-transition tests ────────────────────────────────────────────────
+
+// TestApprove_WrongStatus_Blocked verifies Approve refuses to act on content that
+// is not currently in REVIEW status (e.g. already PUBLISHED or still DRAFT).
+func TestApprove_WrongStatus_Blocked(t *testing.T) {
+	published := articleWithCategory()
+	published.Status = entity.CMSStatusPublished
+	svc := newService(
+		&stubArticleRepo{article: published},
+		&stubCategoryRepo{},
+		&stubGroupRepo{},
+		&stubContentReviewRepo{},
+	)
+
+	actorID := uint(42)
+	err := svc.Approve(context.Background(), 1, entity.CMSTypeArticle, &actorID, true)
+	if err == nil {
+		t.Error("expected error: Approve on already-PUBLISHED content should be blocked")
+	}
+}
+
+// TestReject_WrongStatus_Blocked verifies Reject refuses to act on content that
+// is not currently in REVIEW status.
+func TestReject_WrongStatus_Blocked(t *testing.T) {
+	draft := articleWithCategory()
+	draft.Status = entity.CMSStatusDraft
+	svc := newService(
+		&stubArticleRepo{article: draft},
+		&stubCategoryRepo{},
+		&stubGroupRepo{},
+		&stubContentReviewRepo{},
+	)
+
+	err := svc.Reject(context.Background(), 1, entity.CMSTypeArticle, 42, "needs work", true)
+	if err == nil {
+		t.Error("expected error: Reject on DRAFT content should be blocked")
 	}
 }

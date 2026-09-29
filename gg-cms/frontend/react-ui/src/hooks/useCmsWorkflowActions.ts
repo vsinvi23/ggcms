@@ -156,6 +156,7 @@ export function useCmsWorkflowActions({
   const handleSaveAndApprove = useCallback(async () => {
     if (!cmsId) return;
     setIsReviewActing(true);
+    let saved = false;
     try {
       await updateCms.mutateAsync({ id: cmsId, data: buildUpdateData() });
       if (contentFormat === 'tiptap') {
@@ -163,13 +164,18 @@ export function useCmsWorkflowActions({
       } else if (contentBlocks.length > 0) {
         await uploadBody.mutateAsync({ id: cmsId, content: JSON.stringify(contentBlocks), type: cmsType });
       }
+      saved = true;
       await approveCms({ id: cmsId, type: cmsType, data: undefined });
       toast.success(cmsType === 'COURSE'
         ? 'Course saved and approved — ready to publish'
         : 'Article saved and approved — a publisher will pick it up from the queue');
       onSaveAndApproveSuccess?.();
     } catch (err) {
-      toast.error(toUserMessage(err, 'Failed to save and approve'));
+      if (saved) {
+        toast.error(toUserMessage(err, 'Your edits were saved, but approval failed — the content remains in review'));
+      } else {
+        toast.error(toUserMessage(err, 'Failed to save your edits — nothing was approved'));
+      }
     } finally {
       setIsReviewActing(false);
     }
@@ -178,6 +184,7 @@ export function useCmsWorkflowActions({
   const handleSaveAndPublish = useCallback(async () => {
     if (!cmsId) return;
     setIsReviewActing(true);
+    let saved = false;
     try {
       await updateCms.mutateAsync({ id: cmsId, data: buildUpdateData() });
       if (contentFormat === 'tiptap') {
@@ -185,11 +192,16 @@ export function useCmsWorkflowActions({
       } else if (contentBlocks.length > 0) {
         await uploadBody.mutateAsync({ id: cmsId, content: JSON.stringify(contentBlocks), type: cmsType });
       }
+      saved = true;
       await publishCms({ id: cmsId, type: cmsType, data: undefined });
       toast.success(cmsType === 'COURSE' ? 'Course saved and published' : 'Article saved and published');
       onSaveAndPublishSuccess?.();
     } catch (err) {
-      toast.error(toUserMessage(err, 'Failed to save and publish'));
+      if (saved) {
+        toast.error(toUserMessage(err, 'Your edits were saved, but publishing failed — the content was not published'));
+      } else {
+        toast.error(toUserMessage(err, 'Failed to save your edits — nothing was published'));
+      }
     } finally {
       setIsReviewActing(false);
     }

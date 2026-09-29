@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/sheet';
 import { Pencil, Eye, Send, Save, AlertCircle, Sparkles, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
-import { ContentRevisionDto } from '@/api/types';
+import { CmsStatus } from '@/api/types';
+import { ContentFormat } from '@/types/content';
 
 interface PublicQuickEditBarProps {
   contentType: 'article' | 'course' | 'learning_path' | 'topic' | 'practice';
@@ -21,7 +22,13 @@ interface PublicQuickEditBarProps {
   currentTitle: string;
   currentDescription: string;
   currentBody?: string;
-  pendingRevision?: ContentRevisionDto | null;
+  contentFormat?: ContentFormat | null;
+  /** Server-reported draft state — true when this content has an unpublished revision in progress. */
+  hasPendingDraft?: boolean;
+  /** The content's current workflow status (DRAFT/REVIEW/APPROVED/PUBLISHED/REJECTED). */
+  pendingDraftStatus?: CmsStatus;
+  /** ID of the user who last edited this content (the pending draft's author). */
+  pendingDraftAuthorId?: number | null;
   isViewingPending?: boolean;
   onToggleView?: (showPending: boolean) => void;
   onStartInlineEdit?: () => void;
@@ -39,7 +46,10 @@ export function PublicQuickEditBar({
   currentTitle,
   currentDescription,
   currentBody = '',
-  pendingRevision,
+  contentFormat,
+  hasPendingDraft = false,
+  pendingDraftStatus,
+  pendingDraftAuthorId,
   isViewingPending = false,
   onToggleView,
   onStartInlineEdit,
@@ -54,15 +64,17 @@ export function PublicQuickEditBar({
 
   if (!canQuickEditPublic) return null;
 
+  const isTiptap = contentFormat === 'tiptap';
+
   // Determine if pending revision state banner should be visible:
-  // Visible ONLY to Master Admin / Super Admin OR the Editor who created the revision request.
-  const isRevisionAuthor = pendingRevision && user && pendingRevision.requestedBy === user.id;
-  const shouldShowRevisionBanner = pendingRevision && (isMasterAdmin || isRevisionAuthor);
+  // Visible ONLY to Master Admin / Super Admin OR the Editor who last edited this content.
+  const isRevisionAuthor = hasPendingDraft && user && pendingDraftAuthorId === user.id;
+  const shouldShowRevisionBanner = hasPendingDraft && (isMasterAdmin || isRevisionAuthor);
 
   const handleOpenDrawer = () => {
-    setEditTitle(pendingRevision?.title ?? currentTitle);
-    setEditDescription(pendingRevision?.description ?? currentDescription);
-    setEditBody(pendingRevision?.body ?? currentBody);
+    setEditTitle(currentTitle);
+    setEditDescription(currentDescription);
+    setEditBody(currentBody);
     setDrawerOpen(true);
   };
 
@@ -103,7 +115,7 @@ export function PublicQuickEditBar({
           {shouldShowRevisionBanner && (
             <Badge variant="outline" className="border-amber-500/50 text-amber-400 bg-amber-500/10 gap-1 text-[11px]">
               <AlertCircle className="w-3 h-3 text-amber-400" />
-              Specialized Preview: Version Request ({pendingRevision?.status ?? 'DRAFT'})
+              Specialized Preview: Version Request ({pendingDraftStatus ?? 'DRAFT'})
             </Badge>
           )}
         </div>
@@ -121,25 +133,33 @@ export function PublicQuickEditBar({
             </Button>
           )}
 
-          {onStartInlineEdit && (
-            <Button
-              size="sm"
-              onClick={onStartInlineEdit}
-              className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold gap-1 shadow-sm rounded-lg"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-              Inline Canvas Edit
-            </Button>
-          )}
+          {isTiptap ? (
+            <Badge variant="outline" className="h-7 text-xs border-slate-700 bg-slate-800 text-slate-400 font-medium gap-1 px-3">
+              Rich Text content — use the full editor to make changes
+            </Badge>
+          ) : (
+            <>
+              {onStartInlineEdit && (
+                <Button
+                  size="sm"
+                  onClick={onStartInlineEdit}
+                  className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold gap-1 shadow-sm rounded-lg"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  Inline Canvas Edit
+                </Button>
+              )}
 
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleOpenDrawer}
-            className="h-7 text-xs border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 font-medium gap-1 shadow-sm rounded-lg"
-          >
-            Side Drawer Edit
-          </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleOpenDrawer}
+                className="h-7 text-xs border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 font-medium gap-1 shadow-sm rounded-lg"
+              >
+                Side Drawer Edit
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

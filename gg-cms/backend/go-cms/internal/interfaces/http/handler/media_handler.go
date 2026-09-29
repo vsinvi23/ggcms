@@ -21,6 +21,18 @@ func NewMediaHandler(cfg config.UploadConfig, svc settingssvc.Service) *MediaHan
 	return &MediaHandler{uploadCfg: cfg, settingsSvc: svc}
 }
 
+// defaultAllowedMIMEs is used when no "upload.allowed_types" setting is configured.
+// It intentionally excludes types that can execute as active content in a browser
+// (svg, html, javascript) — an empty/unconfigured allowlist must fail closed, not
+// permit every MIME type.
+var defaultAllowedMIMEs = []string{
+	"image/png", "image/jpeg", "image/gif", "image/webp",
+	"application/pdf",
+	"video/mp4", "video/webm",
+	"application/msword",
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
+
 // POST /api/upload — accepts multipart form with "files" field
 func (h *MediaHandler) Upload(c *gin.Context) {
 	// Determine max size and allowed MIME types from settings
@@ -39,6 +51,13 @@ func (h *MediaHandler) Upload(c *gin.Context) {
 					allowedMIMEs[mt] = struct{}{}
 				}
 			}
+		}
+	}
+	// No allowlist configured — fall back to a safe default rather than permitting
+	// every MIME type (an empty allowlist must fail closed, not open).
+	if len(allowedMIMEs) == 0 {
+		for _, mt := range defaultAllowedMIMEs {
+			allowedMIMEs[mt] = struct{}{}
 		}
 	}
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxMB<<20)
@@ -90,12 +109,10 @@ func (h *MediaHandler) Upload(c *gin.Context) {
 		if idx := strings.Index(mime, ";"); idx != -1 {
 			mime = strings.TrimSpace(mime[:idx])
 		}
-		if len(allowedMIMEs) > 0 {
-			if _, ok := allowedMIMEs[mime]; !ok {
-				f.Close()
-				c.JSON(http.StatusUnsupportedMediaType, gin.H{"success": false, "message": fmt.Sprintf("file type not allowed: %s", mime)})
-				return
-			}
+		if _, ok := allowedMIMEs[mime]; !ok {
+			f.Close()
+			c.JSON(http.StatusUnsupportedMediaType, gin.H{"success": false, "message": fmt.Sprintf("file type not allowed: %s", mime)})
+			return
 		}
 		key, publicURL, err := storageProvider.Save(f, fh.Filename, mime, fh.Size)
 		f.Close()

@@ -239,7 +239,7 @@ const RecommendedPathsSection = () => {
 import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
 import { InlinePageEditor } from '@/components/editor/InlinePageEditor';
 import { ContentDiffOverlay, DiffViewMode } from '@/components/engagement/ContentDiffOverlay';
-import { useUpdateCms, useSubmitCmsForReview } from '@/api/hooks/useCms';
+import { useUpdateCms, useSubmitCmsForReview, useCmsById } from '@/api/hooks/useCms';
 
 // ─── Main CourseViewPage Component ────────────────────────────────────────────
 export function CourseViewPage() {
@@ -248,9 +248,8 @@ export function CourseViewPage() {
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
   const courseId = extractSlugFromPath(wildcardPath);
-  const { user, isAuthenticated, isAdmin, isMasterAdmin, canQuickEditPublic } = useAuth();
+  const { isAuthenticated, isAdmin, isMasterAdmin, canQuickEditPublic } = useAuth();
   const [isViewingPending, setIsViewingPending] = useState(false);
-  const [pendingRevision, setPendingRevision] = useState<any>(null);
   const [isInlineEditing, setIsInlineEditing] = useState(false);
   const [diffViewMode, setDiffViewMode] = useState<DiffViewMode>('diff');
 
@@ -277,21 +276,6 @@ export function CourseViewPage() {
         });
       }
     }
-
-    const newRev = {
-      id: Date.now(),
-      parentContentId: numericCourseId || 1,
-      contentType: 'COURSE',
-      versionNumber: (displayCourse as any)?.version ? (displayCourse as any).version + 1 : 2,
-      status: data.submitForReview ? 'REVIEW' : 'DRAFT',
-      requestedBy: user?.id || 1,
-      title: data.title,
-      description: data.description,
-      body: data.body,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setPendingRevision(newRev);
     setIsViewingPending(true);
     setDiffViewMode('diff');
   };
@@ -303,6 +287,15 @@ export function CourseViewPage() {
     'COURSE',
   );
   const numericCourseId = course?.id ?? 0;
+  // Fetch the real, unmasked draft via the authenticated CMS endpoint whenever this
+  // course has a pending draft — the public endpoint substitutes the published
+  // snapshot for hasPendingDraft=true content, so it can never show the actual
+  // in-progress revision. Only fetched for users with quick-edit privilege.
+  const { data: draftCourse } = useCmsById(
+    numericCourseId,
+    canQuickEditPublic && !!course?.hasPendingDraft,
+    'COURSE',
+  );
   const { data: sections = [] } = useSectionsByCourse(
     numericCourseId,
     !!numericCourseId,
@@ -631,6 +624,11 @@ export function CourseViewPage() {
   };
 
   const handleMarkComplete = async (lId: number) => {
+    if (!isAuthenticated || !enrollment) {
+      toast.error('Enroll in this course to track your progress.');
+      return;
+    }
+
     const updated = completedLessonIds.includes(lId)
       ? completedLessonIds
       : [...completedLessonIds, lId];
@@ -643,19 +641,18 @@ export function CourseViewPage() {
     }
 
     const newProgress = totalLessons > 0 ? updated.length / totalLessons : 0;
-    if (enrollment) {
-      try {
-        await updateProgress({
-          enrollmentId: enrollment.id,
-          data: {
-            completedLessonId: lId,
-            progress: newProgress,
-            status: newProgress >= 1 ? 'completed' : 'active',
-          },
-        });
-      } catch (err) {
-        // Fallback saved in localStorage
-      }
+    try {
+      await updateProgress({
+        enrollmentId: enrollment.id,
+        data: {
+          completedLessonId: lId,
+          progress: newProgress,
+          status: newProgress >= 1 ? 'completed' : 'active',
+        },
+      });
+    } catch (err) {
+      toast.error(toUserMessage(err, 'Progress saved locally but failed to sync to your account.'));
+      return;
     }
 
     toast.success('Lesson progress saved!');
@@ -677,9 +674,10 @@ export function CourseViewPage() {
       <InlinePageEditor
         contentType="course"
         contentId={numericCourseId || 1}
-        initialTitle={title}
-        initialDescription={description}
-        initialBody={displayCourse?.body || ''}
+        initialTitle={draftCourse?.title ?? title}
+        initialDescription={draftCourse?.description ?? description}
+        initialBody={draftCourse?.body ?? displayCourse?.body ?? ''}
+        contentFormat={displayCourse?.contentFormat}
         isEditing={isInlineEditing}
         onClose={() => setIsInlineEditing(false)}
         onSave={handleSaveCourseRevision}
@@ -688,29 +686,32 @@ export function CourseViewPage() {
       <PublicQuickEditBar
         contentType="course"
         contentId={numericCourseId || 1}
-        currentTitle={title}
-        currentDescription={description}
-        currentBody={displayCourse?.body || ''}
-        pendingRevision={pendingRevision}
+        currentTitle={draftCourse?.title ?? title}
+        currentDescription={draftCourse?.description ?? description}
+        currentBody={draftCourse?.body ?? displayCourse?.body ?? ''}
+        contentFormat={displayCourse?.contentFormat}
+        hasPendingDraft={!!course?.hasPendingDraft}
+        pendingDraftStatus={course?.status}
+        pendingDraftAuthorId={draftCourse?.updatedBy ?? null}
         isViewingPending={isViewingPending}
         onToggleView={setIsViewingPending}
         onStartInlineEdit={() => setIsInlineEditing(true)}
         onSaveRevision={handleSaveCourseRevision}
       />
 
-      {((displayCourse as any)?.hasPendingDraft || pendingRevision) && (isAdmin || isMasterAdmin) && (
+      {!!course?.hasPendingDraft && (isAdmin || isMasterAdmin) && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
           <ContentDiffOverlay
-            publishedTitle={(displayCourse as any)?.publishedTitle || title}
-            draftTitle={pendingRevision?.title || title}
-            publishedDescription={(displayCourse as any)?.publishedDescription || description}
-            draftDescription={pendingRevision?.description || description}
-            publishedBody={(displayCourse as any)?.publishedBody || displayCourse?.body || ''}
-            draftBody={pendingRevision?.body || displayCourse?.body || ''}
-            status={pendingRevision?.status || displayCourse?.status || 'DRAFT'}
-            hasPendingDraft={(displayCourse as any)?.hasPendingDraft || !!pendingRevision}
-            version={(displayCourse as any)?.version || 2}
-            publishedVersion={(displayCourse as any)?.publishedVersion || 1}
+            publishedTitle={course.publishedTitle || title}
+            draftTitle={draftCourse?.title || title}
+            publishedDescription={course.publishedDescription || description}
+            draftDescription={draftCourse?.description || description}
+            publishedBody={course.publishedBody || displayCourse?.body || ''}
+            draftBody={draftCourse?.body || displayCourse?.body || ''}
+            status={draftCourse?.status || course.status || 'DRAFT'}
+            hasPendingDraft={!!course.hasPendingDraft}
+            version={draftCourse?.version || course.version || 2}
+            publishedVersion={course.publishedVersion || 1}
             viewMode={diffViewMode}
             onViewModeChange={setDiffViewMode}
             onStartInlineEdit={() => setIsInlineEditing(true)}
@@ -1236,14 +1237,22 @@ export function CourseViewPage() {
                       ) : (
                         <Button
                           onClick={async () => {
+                            if (!isEnrolled) {
+                              handleEnroll();
+                              return;
+                            }
                             await handleMarkComplete(currentLesson.id);
                             if (nextLesson) setSelectedLessonId(nextLesson.id);
                           }}
-                          disabled={isMarkingComplete}
+                          disabled={isMarkingComplete || enrolling}
                           className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold gap-2"
                         >
                           <CheckCircle2 className="h-4 w-4" />
-                          {isMarkingComplete ? 'Saving…' : 'Mark as Complete'}
+                          {isMarkingComplete
+                            ? 'Saving…'
+                            : !isEnrolled
+                              ? 'Enroll to Track Progress'
+                              : 'Mark as Complete'}
                         </Button>
                       )}
                     </div>

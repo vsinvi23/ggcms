@@ -19,6 +19,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ContentFormat } from '@/types/content';
 
 interface InlinePageEditorProps {
   contentType: 'article' | 'course' | 'learning_path' | 'topic';
@@ -26,6 +27,7 @@ interface InlinePageEditorProps {
   initialTitle: string;
   initialDescription?: string;
   initialBody?: string;
+  contentFormat?: ContentFormat | null;
   isEditing: boolean;
   onClose: () => void;
   onSave: (data: {
@@ -42,6 +44,7 @@ export function InlinePageEditor({
   initialTitle,
   initialDescription = '',
   initialBody = '',
+  contentFormat,
   isEditing,
   onClose,
   onSave,
@@ -52,6 +55,22 @@ export function InlinePageEditor({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isEditing) return null;
+
+  // Rich Text (TipTap) bodies are structured JSON, not HTML/Markdown text — this
+  // editor's plain textarea would silently overwrite them with garbled plain
+  // text. Refuse to render for that format rather than risk corrupting content.
+  if (contentFormat === 'tiptap') {
+    return (
+      <div className="sticky top-0 z-50 w-full bg-slate-900 border-b-2 border-amber-500 text-slate-100 p-3 shadow-2xl">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3 text-sm">
+          <span>This content uses the Rich Text (WYSIWYG) editor and can't be edited inline here — open it in the full editor instead.</span>
+          <Button size="sm" variant="ghost" onClick={onClose} className="h-8 text-xs text-slate-300 hover:text-white hover:bg-slate-800 gap-1 font-semibold">
+            <X className="w-3.5 h-3.5" /> Close
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleApplyFormat = (tag: string) => {
     let wrapStart = `<${tag}>`;

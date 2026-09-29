@@ -406,8 +406,12 @@ func TestAuthFlow_AdminLogin(t *testing.T) {
 // CMS lifecycle helpers
 // ══════════════════════════════════════════════════════════════════════════════
 
+// publishArticle creates an article as author c, then drives it to PUBLISHED using
+// an admin client for the reviewer-only steps (approve/claim/publish now require
+// admin or category-reviewer-group membership — a plain author has neither).
 func publishArticle(t *testing.T, c *apiClient, suffix, body string) string {
 	t.Helper()
+	admin := newAdminClient(t)
 
 	cr, cb := c.post("/api/cms", map[string]interface{}{
 		"type":        "article",
@@ -421,19 +425,22 @@ func publishArticle(t *testing.T, c *apiClient, suffix, body string) string {
 
 	sr, _ := c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
 	assertStatus(t, sr, 200)
-	ar, _ := c.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
+	ar, _ := admin.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
 	assertStatus(t, ar, 200)
-	// Claim publishing rights: approve clears reviewer_id; non-admin must re-claim before publishing.
-	claimR, _ := c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	// Claim publishing rights: approve clears reviewer_id; must re-claim before publishing.
+	claimR, _ := admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
 	assertStatus(t, claimR, 200)
-	pr, _ := c.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
+	pr, _ := admin.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
 	assertStatus(t, pr, 200)
 
 	return id
 }
 
+// publishCourse mirrors publishArticle for courses — see its comment for why the
+// reviewer-only steps run as admin.
 func publishCourse(t *testing.T, c *apiClient, suffix, body string) string {
 	t.Helper()
+	admin := newAdminClient(t)
 
 	cr, cb := c.post("/api/cms", map[string]interface{}{
 		"type":       "COURSE",
@@ -447,12 +454,12 @@ func publishCourse(t *testing.T, c *apiClient, suffix, body string) string {
 
 	sr, _ := c.post("/api/cms/"+id+"/submit?type=COURSE", nil)
 	assertStatus(t, sr, 200)
-	ar, _ := c.post("/api/cms/"+id+"/approve?type=COURSE", nil)
+	ar, _ := admin.post("/api/cms/"+id+"/approve?type=COURSE", nil)
 	assertStatus(t, ar, 200)
-	// Claim publishing rights: approve clears reviewer_id; non-admin must re-claim before publishing.
-	claimR, _ := c.post("/api/cms/"+id+"/claim-review?type=COURSE", nil)
+	// Claim publishing rights: approve clears reviewer_id; must re-claim before publishing.
+	claimR, _ := admin.post("/api/cms/"+id+"/claim-review?type=COURSE", nil)
 	assertStatus(t, claimR, 200)
-	pr, _ := c.post("/api/cms/"+id+"/publish?type=COURSE", nil)
+	pr, _ := admin.post("/api/cms/"+id+"/publish?type=COURSE", nil)
 	assertStatus(t, pr, 200)
 
 	return id
@@ -613,6 +620,7 @@ func TestReviewWorkflow_Article_SubmitAfterEditCarriesSnapshot(t *testing.T) {
 func TestReviewWorkflow_Article_SnapshotClearedAfterRePublish(t *testing.T) {
 	u := setupTestUser(t, "art_repub")
 	c := u.client
+	admin := newAdminClient(t)
 	suffix := testSuffix + "_art_repub"
 
 	id := publishArticle(t, c, suffix, `[{"id":"f1","type":"paragraph","content":"v1 body."}]`)
@@ -624,11 +632,11 @@ func TestReviewWorkflow_Article_SnapshotClearedAfterRePublish(t *testing.T) {
 
 	sr, _ := c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
 	assertStatus(t, sr, 200)
-	ar, _ := c.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
+	ar, _ := admin.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
 	assertStatus(t, ar, 200)
-	claimR, _ := c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	claimR, _ := admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
 	assertStatus(t, claimR, 200)
-	pr, _ := c.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
+	pr, _ := admin.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
 	assertStatus(t, pr, 200)
 
 	gr, gb := c.get("/api/cms/" + id + "?type=ARTICLE")
@@ -758,6 +766,7 @@ func TestReviewWorkflow_Course_SubmitAfterEditCarriesSnapshot(t *testing.T) {
 func TestReviewWorkflow_Course_SnapshotClearedAfterRePublish(t *testing.T) {
 	u := setupTestUser(t, "crs_repub")
 	c := u.client
+	admin := newAdminClient(t)
 	suffix := testSuffix + "_crs_repub"
 
 	id := publishCourse(t, c, suffix, `[{"id":"j1","type":"paragraph","content":"Course v1."}]`)
@@ -767,10 +776,14 @@ func TestReviewWorkflow_Course_SnapshotClearedAfterRePublish(t *testing.T) {
 	})
 	assertStatus(t, er, 200)
 
-	c.post("/api/cms/"+id+"/submit?type=COURSE", nil)
-	c.post("/api/cms/"+id+"/approve?type=COURSE", nil)
-	c.post("/api/cms/"+id+"/claim-review?type=COURSE", nil)
-	c.post("/api/cms/"+id+"/publish?type=COURSE", nil)
+	sr, _ := c.post("/api/cms/"+id+"/submit?type=COURSE", nil)
+	assertStatus(t, sr, 200)
+	ar, _ := admin.post("/api/cms/"+id+"/approve?type=COURSE", nil)
+	assertStatus(t, ar, 200)
+	claimR, _ := admin.post("/api/cms/"+id+"/claim-review?type=COURSE", nil)
+	assertStatus(t, claimR, 200)
+	pr, _ := admin.post("/api/cms/"+id+"/publish?type=COURSE", nil)
+	assertStatus(t, pr, 200)
 
 	gr, gb := c.get("/api/cms/" + id + "?type=COURSE")
 	assertStatus(t, gr, 200)
@@ -795,6 +808,7 @@ func TestReviewWorkflow_Course_SnapshotClearedAfterRePublish(t *testing.T) {
 func TestReviewWorkflow_Article_RejectSetsStatusRejected(t *testing.T) {
 	u := setupTestUser(t, "art_reject")
 	c := u.client
+	admin := newAdminClient(t)
 	suffix := testSuffix + "_art_reject"
 
 	cr, cb := c.post("/api/cms", map[string]interface{}{
@@ -806,11 +820,13 @@ func TestReviewWorkflow_Article_RejectSetsStatusRejected(t *testing.T) {
 	id := cmsID(t, cb)
 	t.Cleanup(func() { c.delete("/api/cms/" + id + "?type=ARTICLE") })
 
-	c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
+	sr, _ := c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
+	assertStatus(t, sr, 200)
 
-	rr, _ := c.post("/api/cms/"+id+"/reject?type=ARTICLE", map[string]interface{}{
-		"reviewerId": u.rawID, // must be a JSON number, not a string
-		"comment":    "Needs more detail",
+	// Reject requires admin or category-reviewer-group membership; this content has
+	// no category, so only admin can act.
+	rr, _ := admin.post("/api/cms/"+id+"/reject?type=ARTICLE", map[string]interface{}{
+		"comment": "Needs more detail",
 	})
 	assertStatus(t, rr, 200)
 
@@ -831,6 +847,7 @@ func TestReviewWorkflow_Article_RejectSetsStatusRejected(t *testing.T) {
 func TestReviewWorkflow_Article_SendBackPreservesReviewBaseline(t *testing.T) {
 	u := setupTestUser(t, "art_sendback")
 	c := u.client
+	admin := newAdminClient(t)
 	suffix := testSuffix + "_art_sendback"
 
 	cr, cb := c.post("/api/cms", map[string]interface{}{
@@ -842,12 +859,14 @@ func TestReviewWorkflow_Article_SendBackPreservesReviewBaseline(t *testing.T) {
 	id := cmsID(t, cb)
 	t.Cleanup(func() { c.delete("/api/cms/" + id + "?type=ARTICLE") })
 
-	c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
-	// Claim review so this user becomes the assigned reviewer before sending back.
-	claimR, _ := c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	sr, _ := c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
+	assertStatus(t, sr, 200)
+	// Claim review as admin (no category on this content, so a plain user can't claim)
+	// so the claimant becomes the assigned reviewer before sending back.
+	claimR, _ := admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
 	assertStatus(t, claimR, 200)
 
-	sbr, _ := c.post("/api/cms/"+id+"/send-back?type=ARTICLE", map[string]interface{}{
+	sbr, _ := admin.post("/api/cms/"+id+"/send-back?type=ARTICLE", map[string]interface{}{
 		"comment": "Please improve the introduction",
 	})
 	assertStatus(t, sbr, 200)
@@ -877,6 +896,7 @@ func TestReviewWorkflow_Article_SendBackPreservesReviewBaseline(t *testing.T) {
 func TestReviewWorkflow_Import_CourseWithSectionsFlowsThroughFullCycle(t *testing.T) {
 	u := setupTestUser(t, "import_crs")
 	c := u.client
+	admin := newAdminClient(t)
 	suffix := testSuffix + "_import_crs"
 
 	confirmResp, confirmBody := c.post("/api/import/confirm", map[string]interface{}{
@@ -946,11 +966,11 @@ func TestReviewWorkflow_Import_CourseWithSectionsFlowsThroughFullCycle(t *testin
 	// ── Drive the imported course through the standard review cycle ─────────
 	sr, _ := c.post("/api/cms/"+courseID+"/submit?type=COURSE", nil)
 	assertStatus(t, sr, 200)
-	ar, _ := c.post("/api/cms/"+courseID+"/approve?type=COURSE", nil)
+	ar, _ := admin.post("/api/cms/"+courseID+"/approve?type=COURSE", nil)
 	assertStatus(t, ar, 200)
-	claimR, _ := c.post("/api/cms/"+courseID+"/claim-review?type=COURSE", nil)
+	claimR, _ := admin.post("/api/cms/"+courseID+"/claim-review?type=COURSE", nil)
 	assertStatus(t, claimR, 200)
-	pr, _ := c.post("/api/cms/"+courseID+"/publish?type=COURSE", nil)
+	pr, _ := admin.post("/api/cms/"+courseID+"/publish?type=COURSE", nil)
 	assertStatus(t, pr, 200)
 
 	gr2, gb2 := c.get("/api/cms/" + courseID + "?type=COURSE")
@@ -961,11 +981,15 @@ func TestReviewWorkflow_Import_CourseWithSectionsFlowsThroughFullCycle(t *testin
 	}
 }
 
-// TestReviewWorkflow_Article_ClaimReviewSetsReviewer verifies that a user can
-// self-assign via POST /cms/:id/claim-review.
-func TestReviewWorkflow_Article_ClaimReviewSetsReviewer(t *testing.T) {
+// TestReviewWorkflow_Article_ClaimReviewRequiresReviewerAccess verifies that
+// claim-review is NOT an open self-assign: a plain user with no admin role and
+// no category-reviewer-group membership must be denied (regression test for the
+// privilege-escalation bug where anyone could claim any content's review/publish
+// slot), while an admin can still successfully self-assign.
+func TestReviewWorkflow_Article_ClaimReviewRequiresReviewerAccess(t *testing.T) {
 	u := setupTestUser(t, "art_claim")
 	c := u.client
+	admin := newAdminClient(t)
 	suffix := testSuffix + "_art_claim"
 
 	cr, cb := c.post("/api/cms", map[string]interface{}{
@@ -977,9 +1001,16 @@ func TestReviewWorkflow_Article_ClaimReviewSetsReviewer(t *testing.T) {
 	id := cmsID(t, cb)
 	t.Cleanup(func() { c.delete("/api/cms/" + id + "?type=ARTICLE") })
 
-	c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
+	sr, _ := c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
+	assertStatus(t, sr, 200)
 
-	claimResp, _ := c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	// A plain user with no reviewer-group membership must be forbidden from
+	// self-assigning as reviewer on content they don't own/review.
+	forbResp, _ := c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	assertStatus(t, forbResp, 403)
+
+	// An admin can still self-assign.
+	claimResp, _ := admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
 	assertStatus(t, claimResp, 200)
 
 	gr, gb := c.get("/api/cms/" + id + "?type=ARTICLE")
@@ -987,7 +1018,7 @@ func TestReviewWorkflow_Article_ClaimReviewSetsReviewer(t *testing.T) {
 	data := cmsData(t, gb)
 
 	if data["reviewerId"] == nil {
-		t.Error("reviewerId is nil after claim-review — self-assign did not work")
+		t.Error("reviewerId is nil after admin claim-review — self-assign did not work")
 	}
 	if data["status"] != "REVIEW" {
 		t.Errorf("status: got %v, want REVIEW", data["status"])
