@@ -1141,57 +1141,66 @@ export function CourseViewPage() {
               </div>
             ) : (
               /* ── 2. INDIVIDUAL LESSON CONTENT VIEW ────────────────────── */
-              <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 space-y-4 shadow-xs">
-                {/* Breadcrumbs */}
-                <nav className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap pb-1.5 border-b border-border/60">
-                  <button onClick={() => setSelectedLessonId(null)} className="hover:text-foreground transition-colors font-medium">
-                    {title}
-                  </button>
-                  {currentSection && (
-                    <>
-                      <ChevronRight size={12} className="opacity-40" />
-                      <span>{currentSection.title}</span>
-                    </>
-                  )}
-                  {currentLesson && (
-                    <>
-                      <ChevronRight size={12} className="opacity-40" />
-                      <span className="text-foreground font-semibold">{currentLesson.title}</span>
-                    </>
-                  )}
-                </nav>
+              <div className="bg-card border border-border rounded-2xl relative shadow-xs">
+                {/* Sticky Header Group */}
+                <div className="sticky top-0 z-20 bg-card rounded-t-2xl p-4 sm:p-6 pb-2 border-b border-border shadow-xs">
+                  {/* Breadcrumbs */}
+                  <nav className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap pb-1.5 border-b border-border/60">
+                    <button onClick={() => setSelectedLessonId(null)} className="hover:text-foreground transition-colors font-medium">
+                      {title}
+                    </button>
+                    {currentSection && (
+                      <>
+                        <ChevronRight size={12} className="opacity-40" />
+                        <span>{currentSection.title}</span>
+                      </>
+                    )}
+                    {currentLesson && (
+                      <>
+                        <ChevronRight size={12} className="opacity-40" />
+                        <span className="text-foreground font-semibold">{currentLesson.title}</span>
+                      </>
+                    )}
+                  </nav>
 
-                {currentLesson ? (
-                  <>
-                    {/* Lesson Title & Bookmark */}
-                    <div className="flex items-start justify-between gap-4">
-                      <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-snug">
-                        {currentLesson.title}
-                      </h1>
-                      <button
-                        onClick={() => setBookmarked(b => !b)}
-                        className="mt-1 p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                      >
-                        <Bookmark size={18} fill={bookmarked ? 'currentColor' : 'none'} className={bookmarked ? 'text-primary' : ''} />
-                      </button>
-                    </div>
+                  {currentLesson ? (
+                    <>
+                      {/* Lesson Title & Bookmark */}
+                      <div className="flex items-start justify-between gap-4 mt-2">
+                        <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-snug">
+                          {currentLesson.title}
+                        </h1>
+                        <button
+                          onClick={() => setBookmarked(b => !b)}
+                          className="mt-1 p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                        >
+                          <Bookmark size={18} fill={bookmarked ? 'currentColor' : 'none'} className={bookmarked ? 'text-primary' : ''} />
+                        </button>
+                      </div>
 
-                    {/* Engagement toolbar */}
-                    <div className="flex items-center justify-between gap-4 py-3 border-y border-border flex-wrap">
-                      <InteractionBar
-                        contentType="course"
-                        contentId={numericCourseId}
-                        discussRef={discussRef as React.RefObject<HTMLElement>}
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setHighlightsOpen(true)}
-                        className="gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-lg"
-                      >
-                        <Highlighter size={14} /> My Highlights
-                      </Button>
-                    </div>
+                      {/* Engagement toolbar */}
+                      <div className="flex items-center justify-between gap-4 pt-3 mt-3 border-t border-border flex-wrap">
+                        <InteractionBar
+                          contentType="course"
+                          contentId={numericCourseId}
+                          discussRef={discussRef as React.RefObject<HTMLElement>}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setHighlightsOpen(true)}
+                          className="gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-lg"
+                        >
+                          <Highlighter size={14} /> My Highlights
+                        </Button>
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+
+                <div className="p-4 sm:p-6 space-y-4">
+                  {currentLesson ? (
+                    <>
 
                     {/* Video Player Placeholder if video lesson */}
                     {currentLesson.type === 'video' && (
