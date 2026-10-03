@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { extractSlugFromPath, slugify } from '@/lib/slug';
+import { extractSlugFromPath, slugify, buildCourseUrl } from '@/lib/slug';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { usePublicCmsById, usePublicCmsBody, usePublicArticlesByCategory } from '@/api/hooks/usePublicCms';
+import { usePublicCmsById, usePublicCmsBody, usePublicArticlesByCategory, usePublicCoursesByCategory, usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useContentTopics, useTopicContent } from '@/api/hooks/useTopics';
 import { parseBodyToHtml } from '@/lib/htmlParser';
 import { renderTipTapDocToHtml } from '@/lib/tiptapRenderer';
@@ -141,6 +141,10 @@ export default function PublicArticleView() {
   const { data: topicContent } = useTopicContent(primaryTopicId, 'ARTICLE');
   const categoryFallbackSlug = noTopics && article?.categoryName ? slugify(article.categoryName) : '';
   const { data: categoryFallback } = usePublicArticlesByCategory(categoryFallbackSlug, { size: 4 });
+  // Live recommended courses: same category first, otherwise most recent published courses.
+  const articleCategorySlug = article?.categoryName ? slugify(article.categoryName) : '';
+  const { data: categoryCourses } = usePublicCoursesByCategory(articleCategorySlug, { size: 4 });
+  const { data: recentCourses } = usePublicCmsList({ size: 4, type: 'COURSE' });
 
   const [articleState, setArticleState] = useState<ArticleReadState | null>(null);
 
@@ -350,6 +354,10 @@ export default function PublicArticleView() {
   const relatedItems = (primaryTopicId ? topicContent ?? [] : categoryFallback?.items ?? []).filter(
     (item) => item.id !== article.id
   );
+
+  const recommendedCourses = (
+    (categoryCourses?.items?.length ? categoryCourses.items : recentCourses?.items) ?? []
+  ).slice(0, 2);
 
   const showToc = tocEntries.length >= MIN_HEADINGS_FOR_TOC;
 
@@ -705,7 +713,8 @@ export default function PublicArticleView() {
               </section>
             )}
 
-            {/* Next Steps Learning Journey Banner */}
+            {/* Next Steps Learning Journey Banner (live published courses only) */}
+            {recommendedCourses.length > 0 && (
             <div className="mt-10 p-6 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-emerald-500/5 space-y-6 shadow-xs">
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="space-y-1 max-w-xl">
@@ -713,45 +722,43 @@ export default function PublicArticleView() {
                     Recommended Next Steps
                   </Badge>
                   <h3 className="text-xl font-extrabold text-foreground">
-                    Deepen Your Knowledge in {article.categoryName || 'Software & Security'}
+                    {article.categoryName ? `Deepen Your Knowledge in ${article.categoryName}` : 'Keep Learning'}
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Take your reading further with hands-on practice quizzes and structured learning courses tailored to this topic.
+                    Take your reading further with structured courses and hands-on practice.
                   </p>
                 </div>
+                <Button size="sm" variant="outline" asChild className="rounded-xl text-xs font-bold gap-1 hover:bg-emerald-500/10 hover:text-emerald-600">
+                  <Link to="/practice">
+                    Practice Hub <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </Button>
               </div>
 
-              {/* Related Course & Practice Cards Grid */}
+              {/* Related Course Cards Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                <div className="p-4 rounded-2xl border border-border bg-card space-y-3 hover:border-primary/40 transition-all">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-[10px] font-bold bg-primary/10 text-primary">Interactive Course</Badge>
-                    <span className="text-[11px] text-muted-foreground font-semibold">4h 30m</span>
+                {recommendedCourses.map((course) => (
+                  <div key={course.id} className="p-4 rounded-2xl border border-border bg-card space-y-3 hover:border-primary/40 transition-all">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge variant="secondary" className="text-[10px] font-bold bg-primary/10 text-primary">Course</Badge>
+                      {course.categoryName && (
+                        <span className="text-[11px] text-muted-foreground font-semibold truncate">{course.categoryName}</span>
+                      )}
+                    </div>
+                    <h4 className="text-sm font-bold text-foreground line-clamp-2">{course.title}</h4>
+                    {course.description && (
+                      <p className="text-xs text-muted-foreground line-clamp-2">{course.description}</p>
+                    )}
+                    <Button size="sm" asChild className="w-full rounded-xl text-xs font-bold gap-1 mt-1">
+                      <Link to={buildCourseUrl(course)}>
+                        Start Course <ChevronRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </Button>
                   </div>
-                  <h4 className="text-sm font-bold text-foreground">OAuth 2.0 & OIDC Fundamentals Course</h4>
-                  <p className="text-xs text-muted-foreground line-clamp-2">Master PKCE flows, authorization server implementation, and JWT claims verification.</p>
-                  <Button size="sm" asChild className="w-full rounded-xl text-xs font-bold gap-1 mt-1">
-                    <Link to="/course/oauth-2-fundamentals">
-                      Start Interactive Course <ChevronRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </Button>
-                </div>
-
-                <div className="p-4 rounded-2xl border border-border bg-card space-y-3 hover:border-emerald-500/40 transition-all">
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary" className="text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Practice Quiz</Badge>
-                    <span className="text-[11px] text-muted-foreground font-semibold">10 mins</span>
-                  </div>
-                  <h4 className="text-sm font-bold text-foreground">OAuth 2.0 & OIDC Practice Test</h4>
-                  <p className="text-xs text-muted-foreground line-clamp-2">Test your understanding of PKCE verifiers, implicit flow deprecation, and ID tokens.</p>
-                  <Button size="sm" variant="outline" asChild className="w-full rounded-xl text-xs font-bold gap-1 mt-1 hover:bg-emerald-500/10 hover:text-emerald-600">
-                    <Link to="/explore/practice">
-                      Take Practice Quiz <ChevronRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </Button>
-                </div>
+                ))}
               </div>
             </div>
+            )}
 
             {/* Footer actions */}
             <div className="mt-10 pt-8 border-t border-border">
