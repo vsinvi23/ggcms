@@ -6,6 +6,8 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { usePublicCmsById, usePublicCmsBody, usePublicArticlesByCategory } from '@/api/hooks/usePublicCms';
 import { useContentTopics, useTopicContent } from '@/api/hooks/useTopics';
 import { parseBodyToHtml } from '@/lib/htmlParser';
+import { renderTipTapDocToHtml } from '@/lib/tiptapRenderer';
+import { hydrateMermaidDiagrams } from '@/lib/renderMermaidDiagrams';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -70,7 +72,7 @@ import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
 import { InlinePageEditor } from '@/components/editor/InlinePageEditor';
 import { ContentDiffOverlay, DiffViewMode, computeWordDiff } from '@/components/engagement/ContentDiffOverlay';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUpdateCms, useSubmitCmsForReview } from '@/api/hooks/useCms';
+import { useUpdateCms, useSubmitCmsForReview, useCmsById } from '@/api/hooks/useCms';
 
 // Helper for saving article revision
 export default function PublicArticleView() {
@@ -80,7 +82,6 @@ export default function PublicArticleView() {
   const { user, isAdmin, isMasterAdmin, canQuickEditPublic } = useAuth();
   
   const [isViewingPending, setIsViewingPending] = useState(false);
-  const [pendingRevision, setPendingRevision] = useState<any>(null);
   const [isInlineEditing, setIsInlineEditing] = useState(false);
   const [diffViewMode, setDiffViewMode] = useState<DiffViewMode>('diff');
 
@@ -98,6 +99,16 @@ export default function PublicArticleView() {
 
   const { data: article, isLoading: loadingArticle, error } = usePublicCmsById(articleId, true, isPreview);
   const { data: bodyHtml, isLoading: loadingBody } = usePublicCmsBody(articleId, !!article, isPreview);
+
+  // Fetch the real, unmasked draft via the authenticated CMS endpoint whenever this
+  // content has a pending draft — the public endpoint above always substitutes the
+  // published snapshot for hasPendingDraft=true content, so it can never show the
+  // actual in-progress revision. Only fetched for users with quick-edit privilege.
+  const { data: draftArticle } = useCmsById(
+    article?.id ?? 0,
+    canQuickEditPublic && !!article?.hasPendingDraft,
+    'ARTICLE'
+  );
 
   const handleSaveArticleRevision = async (data: { title: string; description: string; body: string; submitForReview: boolean }) => {
     if (article?.id) {
@@ -119,21 +130,6 @@ export default function PublicArticleView() {
         });
       }
     }
-
-    const newRev = {
-      id: Date.now(),
-      parentContentId: article?.id || 1,
-      contentType: 'ARTICLE',
-      versionNumber: (article as any)?.version ? (article as any).version + 1 : 2,
-      status: data.submitForReview ? 'REVIEW' : 'DRAFT',
-      requestedBy: user?.id || 1,
-      title: data.title,
-      description: data.description,
-      body: data.body,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setPendingRevision(newRev);
     setIsViewingPending(true);
     setDiffViewMode('diff');
   };
@@ -162,19 +158,39 @@ export default function PublicArticleView() {
     }
   };
 
-  const publishedBodyText = (article as any)?.publishedBody || bodyHtml || '';
-  const draftBodyText = pendingRevision?.body || bodyHtml || '';
-  const activeBody = pendingRevision && (diffViewMode === 'draft' || diffViewMode === 'diff')
-    ? pendingRevision.body
+  const hasPendingDraft = !!article?.hasPendingDraft;
+  const publishedBodyText = article?.publishedBody || bodyHtml || '';
+  const draftBodyText = draftArticle?.body || bodyHtml || '';
+  const activeBody = hasPendingDraft && (diffViewMode === 'draft' || diffViewMode === 'diff')
+    ? draftBodyText
     : bodyHtml || '';
 
-  const displayBodyHtml = useMemo(() => {
+  const syncDisplayBodyHtml = useMemo(() => {
     if (!article) return '';
-    if ((article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin)) {
+    if (hasPendingDraft && diffViewMode === 'diff' && (isAdmin || isMasterAdmin)) {
       return computeWordDiff(publishedBodyText, draftBodyText);
     }
-    return parseBodyToHtml(activeBody);
-  }, [article, pendingRevision, diffViewMode, isAdmin, isMasterAdmin, publishedBodyText, draftBodyText, activeBody]);
+    return article.contentFormat === 'tiptap' ? '' : parseBodyToHtml(activeBody);
+  }, [article, hasPendingDraft, diffViewMode, isAdmin, isMasterAdmin, publishedBodyText, draftBodyText, activeBody]);
+
+  const [tiptapDisplayBodyHtml, setTiptapDisplayBodyHtml] = useState('');
+  const isTiptapDiffMode = !!article && hasPendingDraft && diffViewMode === 'diff' && (isAdmin || isMasterAdmin);
+
+  useEffect(() => {
+    if (article?.contentFormat === 'tiptap' && !isTiptapDiffMode) {
+      renderTipTapDocToHtml(activeBody).then(setTiptapDisplayBodyHtml);
+    }
+  }, [article?.contentFormat, isTiptapDiffMode, activeBody]);
+
+  const displayBodyHtml = article?.contentFormat === 'tiptap' && !isTiptapDiffMode
+    ? tiptapDisplayBodyHtml
+    : syncDisplayBodyHtml;
+
+  useEffect(() => {
+    if (article?.contentFormat === 'tiptap' && articleBodyRef.current) {
+      hydrateMermaidDiagrams(articleBodyRef.current);
+    }
+  }, [displayBodyHtml, article?.contentFormat]);
 
   useEffect(() => {
     let frameId: number;
@@ -385,11 +401,14 @@ export default function PublicArticleView() {
     </ul>
   );
 
-  const activeTitle = pendingRevision && (diffViewMode === 'draft' || diffViewMode === 'diff') 
-    ? pendingRevision.title 
+  // When hasPendingDraft is true, the public `article` payload already holds the
+  // *published* snapshot in its title/description/body fields (see the backend's
+  // articleToPublicCMS) — the real in-progress draft comes from draftArticle.
+  const activeTitle = hasPendingDraft && (diffViewMode === 'draft' || diffViewMode === 'diff') && draftArticle
+    ? draftArticle.title || ''
     : article.title || 'Untitled Article';
-  const activeDescription = pendingRevision && (diffViewMode === 'draft' || diffViewMode === 'diff')
-    ? pendingRevision.description
+  const activeDescription = hasPendingDraft && (diffViewMode === 'draft' || diffViewMode === 'diff') && draftArticle
+    ? draftArticle.description || ''
     : article.description || '';
 
   return (
@@ -398,9 +417,10 @@ export default function PublicArticleView() {
       <InlinePageEditor
         contentType="article"
         contentId={article.id}
-        initialTitle={article.title || ''}
-        initialDescription={article.description || ''}
-        initialBody={bodyHtml || ''}
+        initialTitle={draftArticle?.title ?? article.title ?? ''}
+        initialDescription={draftArticle?.description ?? article.description ?? ''}
+        initialBody={draftArticle?.body ?? bodyHtml ?? ''}
+        contentFormat={article.contentFormat}
         isEditing={isInlineEditing}
         onClose={() => setIsInlineEditing(false)}
         onSave={handleSaveArticleRevision}
@@ -409,10 +429,13 @@ export default function PublicArticleView() {
       <PublicQuickEditBar
         contentType="article"
         contentId={article.id}
-        currentTitle={article.title || 'Untitled'}
-        currentDescription={article.description || ''}
-        currentBody={bodyHtml || ''}
-        pendingRevision={pendingRevision}
+        currentTitle={draftArticle?.title ?? article.title ?? 'Untitled'}
+        currentDescription={draftArticle?.description ?? article.description ?? ''}
+        currentBody={draftArticle?.body ?? bodyHtml ?? ''}
+        contentFormat={article.contentFormat}
+        hasPendingDraft={hasPendingDraft}
+        pendingDraftStatus={article.status}
+        pendingDraftAuthorId={draftArticle?.updatedBy ?? null}
         isViewingPending={isViewingPending}
         onToggleView={setIsViewingPending}
         onStartInlineEdit={() => setIsInlineEditing(true)}
@@ -421,18 +444,18 @@ export default function PublicArticleView() {
 
       <div className="max-w-6xl mx-auto pt-4 px-4 sm:px-6">
         {/* ── Privileged Admin Visual Diff Banner Overlay ─────────────────── */}
-        {(article.hasPendingDraft || pendingRevision) && (isAdmin || isMasterAdmin) && (
+        {hasPendingDraft && (isAdmin || isMasterAdmin) && (
           <ContentDiffOverlay
-            publishedTitle={(article as any).publishedTitle || article.title}
-            draftTitle={pendingRevision?.title || article.title}
-            publishedDescription={(article as any).publishedDescription || article.description}
-            draftDescription={pendingRevision?.description || article.description}
+            publishedTitle={article.publishedTitle || article.title || ''}
+            draftTitle={draftArticle?.title || article.title || ''}
+            publishedDescription={article.publishedDescription || article.description || ''}
+            draftDescription={draftArticle?.description || article.description || ''}
             publishedBody={publishedBodyText}
             draftBody={draftBodyText}
-            status={pendingRevision?.status || article.status || 'DRAFT'}
-            hasPendingDraft={article.hasPendingDraft || !!pendingRevision}
-            version={(article as any).version || 2}
-            publishedVersion={(article as any).publishedVersion || 1}
+            status={draftArticle?.status || article.status || 'DRAFT'}
+            hasPendingDraft={hasPendingDraft}
+            version={draftArticle?.version || article.version || 2}
+            publishedVersion={article.publishedVersion || 1}
             viewMode={diffViewMode}
             onViewModeChange={setDiffViewMode}
             onStartInlineEdit={() => setIsInlineEditing(true)}
@@ -463,29 +486,37 @@ export default function PublicArticleView() {
                 )}
               </div>
 
-              <h1 
-                className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight tracking-tight"
-                dangerouslySetInnerHTML={
-                  (article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin) && (article as any).publishedTitle
-                    ? { __html: computeWordDiff((article as any).publishedTitle, activeTitle) }
-                    : undefined
-                }
-              >
-                {!((article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin) && (article as any).publishedTitle) && activeTitle}
-              </h1>
+              {(() => {
+                const titleDiffMode = hasPendingDraft && diffViewMode === 'diff' && (isAdmin || isMasterAdmin) && !!article.publishedTitle;
+                return (
+                  <h1
+                    className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4 leading-tight tracking-tight"
+                    dangerouslySetInnerHTML={
+                      titleDiffMode
+                        ? { __html: computeWordDiff(article.publishedTitle || '', activeTitle) }
+                        : undefined
+                    }
+                  >
+                    {!titleDiffMode && activeTitle}
+                  </h1>
+                );
+              })()}
 
-              {activeDescription && (
-                <p 
-                  className="text-xl text-muted-foreground mb-6 leading-relaxed"
-                  dangerouslySetInnerHTML={
-                    (article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin) && (article as any).publishedDescription
-                      ? { __html: computeWordDiff((article as any).publishedDescription, activeDescription) }
-                      : undefined
-                  }
-                >
-                  {!((article.hasPendingDraft || pendingRevision) && diffViewMode === 'diff' && (isAdmin || isMasterAdmin) && (article as any).publishedDescription) && activeDescription}
-                </p>
-              )}
+              {activeDescription && (() => {
+                const descDiffMode = hasPendingDraft && diffViewMode === 'diff' && (isAdmin || isMasterAdmin) && !!article.publishedDescription;
+                return (
+                  <p
+                    className="text-xl text-muted-foreground mb-6 leading-relaxed"
+                    dangerouslySetInnerHTML={
+                      descDiffMode
+                        ? { __html: computeWordDiff(article.publishedDescription || '', activeDescription) }
+                        : undefined
+                    }
+                  >
+                    {!descDiffMode && activeDescription}
+                  </p>
+                );
+              })()}
 
               {/* Author and meta info */}
               <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground mb-6">

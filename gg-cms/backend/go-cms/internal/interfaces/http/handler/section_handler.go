@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	sectionsvc "github.com/serenya/go-cms/internal/application/section"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
@@ -14,10 +15,34 @@ import (
 
 type SectionHandler struct {
 	service sectionsvc.Service
+	cmsSvc  cmssvc.Service
 }
 
-func NewSectionHandler(svc sectionsvc.Service) *SectionHandler {
-	return &SectionHandler{service: svc}
+func NewSectionHandler(svc sectionsvc.Service, cmsSvc cmssvc.Service) *SectionHandler {
+	return &SectionHandler{service: svc, cmsSvc: cmsSvc}
+}
+
+// checkCourseOwnership verifies the caller is an admin or owns the course a
+// section belongs to. Returns false (and writes the HTTP response) if denied.
+func (h *SectionHandler) checkCourseOwnership(c *gin.Context, sec *entity.Section) bool {
+	if middleware.IsAdmin(c) {
+		return true
+	}
+	if sec.CourseID == nil {
+		response.Forbidden(c, "cannot edit a section with no parent course")
+		return false
+	}
+	course, err := h.cmsSvc.GetByID(c.Request.Context(), *sec.CourseID, entity.CMSTypeCourse)
+	if err != nil {
+		response.Forbidden(c, "cannot edit this section")
+		return false
+	}
+	_, ownerID := extractCMSTitleAndOwner(course, entity.CMSTypeCourse)
+	if ownerID != middleware.GetUserID(c) {
+		response.Forbidden(c, "cannot edit a section belonging to a course you do not own")
+		return false
+	}
+	return true
 }
 
 // GET /api/sections?filters[course][id][$eq]=courseId
@@ -79,6 +104,14 @@ func (h *SectionHandler) Update(c *gin.Context) {
 		response.BadRequest(c, "invalid section ID")
 		return
 	}
+	existing, fetchErr := h.service.GetByID(c.Request.Context(), id)
+	if fetchErr != nil {
+		response.NotFound(c, "section not found")
+		return
+	}
+	if !h.checkCourseOwnership(c, existing) {
+		return
+	}
 	var req dto.UpdateSectionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
@@ -103,6 +136,14 @@ func (h *SectionHandler) Delete(c *gin.Context) {
 	id, err := parseID(c, "id")
 	if err != nil {
 		response.BadRequest(c, "invalid section ID")
+		return
+	}
+	existing, fetchErr := h.service.GetByID(c.Request.Context(), id)
+	if fetchErr != nil {
+		response.NotFound(c, "section not found")
+		return
+	}
+	if !h.checkCourseOwnership(c, existing) {
 		return
 	}
 	if err := h.service.Delete(c.Request.Context(), id); err != nil {

@@ -4,6 +4,8 @@
 
 export type WorkflowStatus = 'draft' | 'submitted' | 'in_review' | 'approved' | 'published' | 'rejected';
 
+export type ContentFormat = 'blocks' | 'html' | 'tiptap';
+
 export interface Category {
   id: string;
   name: string;

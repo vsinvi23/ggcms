@@ -71,6 +71,10 @@ func (h *TaskHandler) GetByID(c *gin.Context) {
 		response.NotFound(c, "task not found")
 		return
 	}
+	if !middleware.IsAdmin(c) && task.UserID != middleware.GetUserID(c) {
+		response.Forbidden(c, "cannot access a task you do not own")
+		return
+	}
 	response.OK(c, mapTaskToDTO(task))
 }
 
@@ -103,6 +107,17 @@ func (h *TaskHandler) Update(c *gin.Context) {
 		response.BadRequest(c, "invalid task ID")
 		return
 	}
+	if !middleware.IsAdmin(c) {
+		existing, fetchErr := h.service.GetByID(c.Request.Context(), id)
+		if fetchErr != nil {
+			response.NotFound(c, "task not found")
+			return
+		}
+		if existing.UserID != middleware.GetUserID(c) {
+			response.Forbidden(c, "cannot edit a task you do not own")
+			return
+		}
+	}
 	var req dto.UpdateTaskRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
@@ -122,6 +137,17 @@ func (h *TaskHandler) Delete(c *gin.Context) {
 	if err != nil {
 		response.BadRequest(c, "invalid task ID")
 		return
+	}
+	if !middleware.IsAdmin(c) {
+		existing, fetchErr := h.service.GetByID(c.Request.Context(), id)
+		if fetchErr != nil {
+			response.NotFound(c, "task not found")
+			return
+		}
+		if existing.UserID != middleware.GetUserID(c) {
+			response.Forbidden(c, "cannot delete a task you do not own")
+			return
+		}
 	}
 	if err := h.service.Delete(c.Request.Context(), id); err != nil {
 		response.InternalError(c, err.Error())

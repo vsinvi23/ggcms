@@ -18,23 +18,10 @@ import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
 const TopicDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [isViewingPending, setIsViewingPending] = useState(false);
-  const [pendingRevision, setPendingRevision] = useState<any>(null);
 
-  const handleSaveTopicRevision = async (data: { title: string; description: string; body: string; submitForReview: boolean }) => {
-    const newRev = {
-      id: Date.now(),
-      parentContentId: slug || '1',
-      contentType: 'TOPIC',
-      versionNumber: 2,
-      status: data.submitForReview ? 'REVIEW' : 'DRAFT',
-      requestedBy: 1,
-      title: data.title,
-      description: data.description,
-      body: data.body,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setPendingRevision(newRev);
+  // NOTE: topic quick-edit has no backing update API yet — this only toggles the
+  // local "viewing pending" UI state, it doesn't persist anything.
+  const handleSaveTopicRevision = async (_data: { title: string; description: string; body: string; submitForReview: boolean }) => {
     setIsViewingPending(true);
   };
   const { data: topics = [], isLoading: loadingTopics } = useTopics();
@@ -114,7 +101,6 @@ const TopicDetailPage = () => {
         currentTitle={topic.name}
         currentDescription={topic.description || ''}
         currentBody=""
-        pendingRevision={pendingRevision}
         isViewingPending={isViewingPending}
         onToggleView={setIsViewingPending}
         onSaveRevision={handleSaveTopicRevision}
