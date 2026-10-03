@@ -2,8 +2,8 @@
 
 - **Target Environment**: prod
 - **Release Version**: v1.4.5
-- **Build Timestamp**: 2026-10-03T05:54:26Z
-- **Git Commit**: ab4b59f
+- **Build Timestamp**: 2026-10-03T06:23:31Z
+- **Git Commit**: 0d82f553
 
 ## Component Version Matrix
 - **React UI**: v1.5.5
@@ -18,14 +18,14 @@
 
 ## Recent Change Log (Git Commits)
 ```
-ab4b59f update content
-67863dc update content
-f494325 content updated
-291d023 fix(layout): attach TOC scroll listener to main overflow container for accurate scroll spy active tracking
-c5cf2bd fix(sanitize): allow id attribute so header anchor IDs and TOC scroll tracking function properly
-e348fd1 fix(frontend): update right-rail TOC heading extraction and scroll spy alignment
-c1825e7 fix(frontend): resolve article view crash, add error audit logging & deploy GA v1.4.1
-3d4c007 chore(rules): update deployment scripts and workspace rules to exclude Content Factory by default
-1beb377 release(prod): GA v1.3.1 - inline page editing, diff overlay, super admin direct import target state, unified course runner search & release notes
-69a69dc feat(v1.3.1): allow super admin option to select target state on import for direct publishing
+0d82f553 merge: final checkin for release v1.4.5
+5e013e88 chore: update codebase memory graph and content-factory version metadata
+90d34f6f Merge branch 'main' of https://github.com/vsinvi23/ggcms
+53258d75 merge: main into release for v1.4.5
+c1c63ccb feat(release): v1.4.5 - multi-part content packages, learning path slug ingestion, and postgres migrations 045-046
+fcd66955 fix(security): close review-workflow privilege escalation and IDOR gaps
+24f0f65d feat(content): add TipTap WYSIWYG editor as alternative content format
+ab4b59f0 update content
+67863dc1 update content
+f494325d content updated
 ```

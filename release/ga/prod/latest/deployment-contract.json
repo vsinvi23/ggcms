@@ -4,12 +4,12 @@
   "ui_version": "1.5.5",
   "backend_version": "1.5.5",
   "db_migration_version": "1.5.5",
-  "db_schema_hash": "sha256:b82bc03f2ca21a002fe41ede5c87faed885fd2a17692cc8397db9afd44839bbd",
+  "db_schema_hash": "sha256:a660ecd6a5533535f7ce71b65ed9c4334e4067102563447636988ac068919a19",
   "backup_manifest_ref": "",
   "api_contract_version": "v1",
   "rollback_target": "",
-  "deployment_status": "prepared",
-  "created_at": "2026-10-03T05:54:26Z",
-  "updated_at": "2026-10-03T05:54:26Z",
-  "git_commit": "ab4b59f"
+  "deployment_status": "success",
+  "created_at": "2026-10-03T06:23:31Z",
+  "updated_at": "2026-10-03T06:23:54Z",
+  "git_commit": "0d82f553"
 }
