@@ -1306,11 +1306,12 @@ export function CourseViewPage() {
                   </div>
                 )}
               </div>
-            )}
             </div>
+            )}
           </div>
         </div>
       </div>
+    </div>
 
       {/* Highlights slide-over panel */}
       <HighlightsPanel
