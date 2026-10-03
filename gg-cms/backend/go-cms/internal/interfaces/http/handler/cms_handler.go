@@ -149,6 +149,7 @@ func (h *CMSHandler) Create(c *gin.Context) {
 		Body:                req.Body,
 		ArticleType:         req.ArticleType,
 		CourseType:          req.CourseType,
+		ContentFormat:       req.ContentFormat,
 		CategoryID:          req.CategoryID,
 		CreatedByID:         userID,
 		ThumbnailURL:        req.ThumbnailURL,
@@ -233,6 +234,7 @@ func (h *CMSHandler) Update(c *gin.Context) {
 		Body:                req.Body,
 		ArticleType:         req.ArticleType,
 		CourseType:          req.CourseType,
+		ContentFormat:       req.ContentFormat,
 		CategoryID:          req.CategoryID,
 		ThumbnailURL:        req.ThumbnailURL,
 		ThumbnailStorageKey: req.ThumbnailStorageKey,
@@ -614,8 +616,8 @@ func (h *CMSHandler) ClaimReview(c *gin.Context) {
 	}
 	cmsType := entity.CMSType(c.DefaultQuery("type", "ARTICLE"))
 	userID := middleware.GetUserID(c)
-	if err := h.service.ClaimReview(c.Request.Context(), id, cmsType, userID); err != nil {
-		response.InternalError(c, err.Error())
+	if err := h.service.ClaimReview(c.Request.Context(), id, cmsType, userID, middleware.IsAdmin(c)); err != nil {
+		response.Forbidden(c, err.Error())
 		return
 	}
 	// Create or update the reviewer task so it appears in their task list.
@@ -774,6 +776,7 @@ func articleToCMS(a *entity.Article) dto.CMSResponse {
 		Description:   a.Description,
 		Body:          a.Body,
 		ArticleType:   articleType,
+		ContentFormat: a.ContentFormat,
 		BlockCount:    blockCount,
 		Status:        string(a.Status),
 		CategoryID:    a.CategoryID,
@@ -842,6 +845,7 @@ func courseToCMS(c *entity.Course) dto.CMSResponse {
 		Description:   c.Description,
 		Body:          c.Body,
 		CourseType:    &courseType,
+		ContentFormat: c.ContentFormat,
 		BlockCount:    blockCount,
 		Status:        string(c.Status),
 		CategoryID:    c.CategoryID,

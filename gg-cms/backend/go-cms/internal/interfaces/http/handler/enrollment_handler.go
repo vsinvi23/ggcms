@@ -84,6 +84,19 @@ func (h *EnrollmentHandler) Update(c *gin.Context) {
 		response.BadRequest(c, "invalid enrollment ID")
 		return
 	}
+
+	if !middleware.IsAdmin(c) {
+		existing, fetchErr := h.service.GetByID(c.Request.Context(), id)
+		if fetchErr != nil {
+			response.NotFound(c, "enrollment not found")
+			return
+		}
+		if existing.UserID != middleware.GetUserID(c) {
+			response.Forbidden(c, "cannot update an enrollment you do not own")
+			return
+		}
+	}
+
 	var req dto.UpdateEnrollmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())

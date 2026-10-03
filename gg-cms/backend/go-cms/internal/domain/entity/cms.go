@@ -56,6 +56,7 @@ type Article struct {
 	Description         *string   `gorm:"type:text"`
 	Body                *string   `gorm:"type:text"`
 	ArticleType         string    `gorm:"type:varchar(50);not null;default:''"`
+	ContentFormat       string    `gorm:"column:content_format;type:varchar(20);not null;default:'blocks'"`
 	Status              CMSStatus `gorm:"type:varchar(20);not null;default:'DRAFT'"`
 	CategoryID          *uint     `gorm:"index"`
 	CreatedByID         uint      `gorm:"not null;index"`
@@ -94,6 +95,7 @@ type Course struct {
 	Description         *string    `gorm:"type:text"`
 	Body                *string    `gorm:"type:text"`
 	CourseType          CourseType `gorm:"type:varchar(30);not null;default:'STANDARD'"`
+	ContentFormat       string     `gorm:"column:content_format;type:varchar(20);not null;default:'blocks'"`
 	Status              CMSStatus  `gorm:"type:varchar(20);not null;default:'DRAFT'"`
 	CategoryID          *uint      `gorm:"index"`
 	CreatedByID         uint       `gorm:"not null;index"`

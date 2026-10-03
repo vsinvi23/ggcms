@@ -152,30 +152,33 @@ func cmsField(t *testing.T, c *apiClient, id, cmsType, field string) interface{}
 	return cmsData(t, body)[field]
 }
 
-// runArticleWorkflow drives an article through submit→approve→claim→publish using the same client.
-// Used when the author and reviewer are the same user (no reviewer-group restriction on the category).
+// runArticleWorkflow submits an article as c, then drives approve→claim→publish using
+// a fresh admin client. Reviewer-side actions require admin or category-reviewer-group
+// membership; callers of this helper use content with no category, so only admin can act.
 func runArticleWorkflow(t *testing.T, c *apiClient, id string) {
 	t.Helper()
+	admin := newAdminClient(t)
 	sr, _ := c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
 	assertStatus(t, sr, http.StatusOK)
-	ar, _ := c.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
+	ar, _ := admin.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
 	assertStatus(t, ar, http.StatusOK)
-	cr, _ := c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	cr, _ := admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
 	assertStatus(t, cr, http.StatusOK)
-	pr, _ := c.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
+	pr, _ := admin.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
 	assertStatus(t, pr, http.StatusOK)
 }
 
-// runCourseWorkflow drives a course through submit→approve→claim→publish.
+// runCourseWorkflow mirrors runArticleWorkflow for courses.
 func runCourseWorkflow(t *testing.T, c *apiClient, id string) {
 	t.Helper()
+	admin := newAdminClient(t)
 	sr, _ := c.post("/api/cms/"+id+"/submit?type=COURSE", nil)
 	assertStatus(t, sr, http.StatusOK)
-	ar, _ := c.post("/api/cms/"+id+"/approve?type=COURSE", nil)
+	ar, _ := admin.post("/api/cms/"+id+"/approve?type=COURSE", nil)
 	assertStatus(t, ar, http.StatusOK)
-	cr, _ := c.post("/api/cms/"+id+"/claim-review?type=COURSE", nil)
+	cr, _ := admin.post("/api/cms/"+id+"/claim-review?type=COURSE", nil)
 	assertStatus(t, cr, http.StatusOK)
-	pr, _ := c.post("/api/cms/"+id+"/publish?type=COURSE", nil)
+	pr, _ := admin.post("/api/cms/"+id+"/publish?type=COURSE", nil)
 	assertStatus(t, pr, http.StatusOK)
 }
 
@@ -444,9 +447,10 @@ func TestScenario_User_SelfManagement(t *testing.T) {
 func TestScenario_Article_HappyPath(t *testing.T) {
 	author := setupTestUser(t, "art_happy")
 	c := author.client
+	admin := newAdminClient(t)
 	title := "Happy Path Article " + testSuffix
 
-	// 1. Create article (no category → reviewer-group check bypassed for this test)
+	// 1. Create article (no category → only admin can claim/approve/publish it)
 	id := createDraftArticle(t, c, title, "")
 
 	if got := cmsFieldStr(t, c, id, "ARTICLE", "status"); got != "DRAFT" {
@@ -460,23 +464,23 @@ func TestScenario_Article_HappyPath(t *testing.T) {
 		t.Errorf("after submit: status=%q want REVIEW", got)
 	}
 
-	// 3. Claim review
-	cr, _ := c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	// 3. Claim review (as admin — no category on this content)
+	cr, _ := admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
 	assertStatus(t, cr, http.StatusOK)
 
 	// 4. Approve
-	ar, _ := c.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
+	ar, _ := admin.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
 	assertStatus(t, ar, http.StatusOK)
 	if got := cmsFieldStr(t, c, id, "ARTICLE", "status"); got != "APPROVED" {
 		t.Errorf("after approve: status=%q want APPROVED", got)
 	}
 
 	// 5. Claim publishing rights (approve clears reviewer_id)
-	clR, _ := c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	clR, _ := admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
 	assertStatus(t, clR, http.StatusOK)
 
 	// 6. Publish
-	pr, _ := c.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
+	pr, _ := admin.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
 	assertStatus(t, pr, http.StatusOK)
 	if got := cmsFieldStr(t, c, id, "ARTICLE", "status"); got != "PUBLISHED" {
 		t.Errorf("after publish: status=%q want PUBLISHED", got)
@@ -512,14 +516,16 @@ func TestScenario_Article_HappyPath(t *testing.T) {
 func TestScenario_Article_RejectFlow(t *testing.T) {
 	author := setupTestUser(t, "art_rej")
 	c := author.client
+	admin := newAdminClient(t)
 	title := "Reject Flow Article " + testSuffix
 
 	id := createDraftArticle(t, c, title, "")
 	c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	// No category on this content, so claim-review/reject require admin.
+	admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
 
 	// Reject
-	rejResp, _ := c.post("/api/cms/"+id+"/reject?type=ARTICLE", map[string]interface{}{
+	rejResp, _ := admin.post("/api/cms/"+id+"/reject?type=ARTICLE", map[string]interface{}{
 		"comment": "Needs more detail and better examples",
 	})
 	assertStatus(t, rejResp, http.StatusOK)
@@ -546,12 +552,14 @@ func TestScenario_Article_RejectFlow(t *testing.T) {
 func TestScenario_Article_RejectThenReviseAndPublish(t *testing.T) {
 	author := setupTestUser(t, "art_rej2pub")
 	c := author.client
+	admin := newAdminClient(t)
 	title := "Reject-Revise Article " + testSuffix
 
 	id := createDraftArticle(t, c, title, "")
 	c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/reject?type=ARTICLE", map[string]interface{}{
+	// No category on this content, so claim-review/approve/reject/publish require admin.
+	admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	admin.post("/api/cms/"+id+"/reject?type=ARTICLE", map[string]interface{}{
 		"comment": "Please improve the introduction",
 	})
 
@@ -567,10 +575,10 @@ func TestScenario_Article_RejectThenReviseAndPublish(t *testing.T) {
 	assertStatus(t, sr, http.StatusOK)
 
 	// Approve and publish
-	c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
-	pr, _ := c.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
+	admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	admin.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
+	admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	pr, _ := admin.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
 	assertStatus(t, pr, http.StatusOK)
 
 	if got := cmsFieldStr(t, c, id, "ARTICLE", "status"); got != "PUBLISHED" {
@@ -589,6 +597,7 @@ func TestScenario_Article_RejectThenReviseAndPublish(t *testing.T) {
 func TestScenario_Article_SendBackAndRevise(t *testing.T) {
 	author := setupTestUser(t, "art_sendrevise")
 	c := author.client
+	admin := newAdminClient(t)
 	title := "SendBack Revise Article " + testSuffix
 	origBody := `[{"id":"b1","type":"paragraph","content":"First version of the article."}]`
 	newBody := `[{"id":"b2","type":"paragraph","content":"Revised and improved article content."}]`
@@ -596,16 +605,17 @@ func TestScenario_Article_SendBackAndRevise(t *testing.T) {
 	id := createDraftArticle(t, c, title, "")
 	c.put("/api/cms/"+id+"?type=ARTICLE", map[string]interface{}{"body": origBody})
 	c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	// No category on this content, so claim-review/review-note/send-back require admin.
+	admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
 
 	// Save a review note before sending back
-	noteResp, _ := c.post("/api/cms/"+id+"/review-note?type=ARTICLE", map[string]interface{}{
+	noteResp, _ := admin.post("/api/cms/"+id+"/review-note?type=ARTICLE", map[string]interface{}{
 		"note": "Consider adding examples in section 2",
 	})
 	assertStatus(t, noteResp, http.StatusOK)
 
 	// Send back
-	sbResp, _ := c.post("/api/cms/"+id+"/send-back?type=ARTICLE", map[string]interface{}{
+	sbResp, _ := admin.post("/api/cms/"+id+"/send-back?type=ARTICLE", map[string]interface{}{
 		"comment": "Please revise section 2 with concrete examples",
 	})
 	assertStatus(t, sbResp, http.StatusOK)
@@ -625,10 +635,10 @@ func TestScenario_Article_SendBackAndRevise(t *testing.T) {
 	// Author revises and resubmits
 	c.put("/api/cms/"+id+"?type=ARTICLE", map[string]interface{}{"body": newBody})
 	c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
-	pr, _ := c.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
+	admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	admin.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
+	admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	pr, _ := admin.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
 	assertStatus(t, pr, http.StatusOK)
 
 	if got := cmsFieldStr(t, c, id, "ARTICLE", "status"); got != "PUBLISHED" {
@@ -647,6 +657,7 @@ func TestScenario_Article_SendBackAndRevise(t *testing.T) {
 func TestScenario_Article_RepublishCycle(t *testing.T) {
 	author := setupTestUser(t, "art_repub2")
 	c := author.client
+	admin := newAdminClient(t)
 	title := "Republish Article " + testSuffix
 	v1Body := `[{"id":"v1","type":"paragraph","content":"Published v1 content."}]`
 	v2Body := `[{"id":"v2","type":"paragraph","content":"Draft v2 — improved content."}]`
@@ -675,12 +686,12 @@ func TestScenario_Article_RepublishCycle(t *testing.T) {
 		t.Errorf("after edit: draft body=%v want v2 body", data["body"])
 	}
 
-	// Re-submit and re-publish
+	// Re-submit and re-publish (as admin — no category on this content)
 	c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
+	admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	admin.post("/api/cms/"+id+"/approve?type=ARTICLE", nil)
+	admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	admin.post("/api/cms/"+id+"/publish?type=ARTICLE", nil)
 
 	// Verify snapshot cleared, PUBLISHED
 	data2 := cmsData(t, func() map[string]interface{} {
@@ -708,10 +719,12 @@ func TestScenario_Article_RepublishCycle(t *testing.T) {
 func TestScenario_Article_ActivityLogAndReassignReview(t *testing.T) {
 	author := setupTestUser(t, "art_activity")
 	c := author.client
+	admin := newAdminClient(t)
 	id := createDraftArticle(t, c, "Activity Log Article "+testSuffix, "")
 
 	c.post("/api/cms/"+id+"/submit?type=ARTICLE", nil)
-	c.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
+	// No category on this content, so claim-review requires admin.
+	admin.post("/api/cms/"+id+"/claim-review?type=ARTICLE", nil)
 
 	// Reassign review (release the reviewer assignment)
 	reassignResp, _ := c.post("/api/cms/"+id+"/reassign-review?type=ARTICLE", map[string]interface{}{
