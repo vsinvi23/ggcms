@@ -11,11 +11,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { usePublicLearningPathById, usePublicLearningPaths, usePublicCmsList } from '@/api/hooks/usePublicCms';
+import { useSectionsByCourse } from '@/api/hooks/useSections';
 import { useMyEnrollments } from '@/api/hooks/useEnrollments';
 import { useAuth } from '@/contexts/AuthContext';
 import { EnrollmentDto } from '@/api/types';
 import { buildCourseUrl } from '@/lib/slug';
 import { cn } from '@/lib/utils';
+import { CURATED_LEARNING_PATHS, CuratedLearningPath } from '@/data/learningPathData';
 
 type CourseStatus = 'completed' | 'current' | 'upcoming';
 
@@ -83,6 +85,172 @@ const getModuleChapters = (course: any, moduleIndex: number): ModuleChapter[] =>
 
 import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
 
+interface CourseModuleCardProps {
+  course: any;
+  index: number;
+  status: CourseStatus;
+  isExpanded: boolean;
+  onToggleExpand: (id: number) => void;
+}
+
+const CourseModuleCard = ({ course, index, status, isExpanded, onToggleExpand }: CourseModuleCardProps) => {
+  const courseId = typeof course.id === 'number' ? course.id : (parseInt(String(course.id), 10) || 0);
+  const { data: dbSections } = useSectionsByCourse(courseId, courseId > 0);
+
+  const chapters: ModuleChapter[] = useMemo(() => {
+    if (dbSections && dbSections.length > 0) {
+      const list: ModuleChapter[] = [];
+      dbSections.forEach((sec, sIdx) => {
+        if (sec.lessons && sec.lessons.length > 0) {
+          sec.lessons.forEach((les, lIdx) => {
+            let type: 'Video' | 'Reading' | 'Hands-on Lab' | 'Quiz' = 'Reading';
+            if (les.type === 'video') type = 'Video';
+            else if (les.type === 'quiz') type = 'Quiz';
+            else if (les.type === 'lab') type = 'Hands-on Lab';
+
+            list.push({
+              id: `les-${les.id}`,
+              title: les.title || `Lesson ${lIdx + 1}: ${sec.title}`,
+              type,
+              durationMinutes: les.duration || 15,
+              description: `Section ${sIdx + 1}: ${sec.title}`,
+            });
+          });
+        } else {
+          list.push({
+            id: `sec-${sec.id}`,
+            title: sec.title,
+            type: 'Reading',
+            durationMinutes: 20,
+            description: sec.description || `Section ${sIdx + 1} of ${course.title}`,
+          });
+        }
+      });
+      return list;
+    }
+    return getModuleChapters(course, index + 1);
+  }, [dbSections, course, index]);
+
+  return (
+    <Card
+      key={course.id}
+      className={cn(
+        'transition-all rounded-2xl border border-border overflow-hidden bg-card',
+        isExpanded ? 'shadow-md border-emerald-500/40' : 'hover:border-emerald-500/30'
+      )}
+    >
+      <div
+        onClick={() => onToggleExpand(course.id)}
+        className="p-5 flex items-center justify-between gap-4 cursor-pointer select-none hover:bg-muted/30 transition-colors"
+      >
+        <div className="flex items-start gap-4 min-w-0">
+          <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+            {status === 'completed' && <CheckCircle2 className="h-5 w-5" />}
+            {status === 'current' && <PlayCircle className="h-5 w-5" />}
+            {status === 'upcoming' && <Circle className="h-5 w-5 text-muted-foreground" />}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                Module {String(index + 1).padStart(2, '0')}
+              </span>
+              <span className="text-xs text-muted-foreground font-medium">
+                &bull; {chapters.length} Sub-modules
+              </span>
+            </div>
+            <h3 className="text-lg font-bold text-foreground transition-colors line-clamp-1 mt-0.5">
+              {course.title}
+            </h3>
+            {course.description && (
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                {course.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <Badge variant="secondary" className="hidden sm:inline-flex text-xs">
+            {chapters.reduce((acc, c) => acc + c.durationMinutes, 0)} mins
+          </Badge>
+          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+            <ChevronDown className={cn('w-4 h-4 transition-transform duration-200', isExpanded && 'rotate-180')} />
+          </div>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="border-t border-border bg-muted/20 p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              Chapters & Sub-modules
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {chapters.length} Interactive Lessons
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
+            {chapters.map((ch, chIdx) => (
+              <div
+                key={ch.id}
+                className="p-3.5 rounded-xl border border-border/70 bg-card hover:border-emerald-500/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold">
+                    {index + 1}.{chIdx + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-sm font-bold text-foreground">
+                        {ch.title}
+                      </h4>
+                      <Badge variant="outline" className="text-[10px] px-2 py-0 h-4 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
+                        {ch.type === 'Video' && <Play className="w-2.5 h-2.5 mr-1 inline" />}
+                        {ch.type === 'Reading' && <FileText className="w-2.5 h-2.5 mr-1 inline" />}
+                        {ch.type === 'Hands-on Lab' && <Code2 className="w-2.5 h-2.5 mr-1 inline" />}
+                        {ch.type === 'Quiz' && <HelpCircle className="w-2.5 h-2.5 mr-1 inline" />}
+                        {ch.type}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                      {ch.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-border/40">
+                  <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    {ch.durationMinutes}m
+                  </span>
+                  <Link to={`${buildCourseUrl(course)}?chapter=${ch.id}`}>
+                    <Button size="sm" variant="ghost" className="h-8 rounded-lg text-xs gap-1 font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
+                      Start Chapter <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-2 flex items-center justify-between border-t border-border/60">
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Complete all sub-modules to finish Module {String(index + 1).padStart(2, '0')}.
+            </span>
+            <Link to={buildCourseUrl(course)}>
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2 text-xs font-bold ml-auto">
+                <PlayCircle className="w-4 h-4" /> Launch Full Module
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+};
+
 const LearningPathPage = () => {
   const { path: pathId } = useParams<{ path: string }>();
   const navigate = useNavigate();
@@ -120,7 +288,7 @@ const LearningPathPage = () => {
     return m;
   }, [enrollments]);
 
-  // Live database data resolution with fuzzy fallback matching
+  // Live database data resolution with dynamic course auto-matching & fallback
   const data = useMemo(() => {
     let targetRaw = apiData;
     if (!targetRaw && allDbPaths && allDbPaths.length > 0 && pathId) {
@@ -134,16 +302,100 @@ const LearningPathPage = () => {
           return keywords.some(k => k.length > 2 && (t.includes(k) || s.includes(k)));
         });
       }
-      if (!targetRaw) {
-        targetRaw = allDbPaths[0];
-      }
+    }
+
+    // Match curated metadata if available
+    const searchSlug = (pathId || targetRaw?.slug || targetRaw?.title || '').toLowerCase();
+    const curatedMatch = CURATED_LEARNING_PATHS.find(
+      cp => cp.slug === searchSlug || String(cp.id) === String(targetRaw?.id) || cp.title.toLowerCase().includes(searchSlug)
+    );
+
+    if (!targetRaw && curatedMatch) {
+      targetRaw = {
+        id: curatedMatch.id,
+        kind: curatedMatch.kind,
+        title: curatedMatch.title,
+        description: curatedMatch.description,
+        slug: curatedMatch.slug,
+        courses: [],
+      } as any;
+    }
+
+    if (!targetRaw && allDbPaths && allDbPaths.length > 0) {
+      targetRaw = allDbPaths[0];
+    }
+
+    if (!targetRaw && CURATED_LEARNING_PATHS.length > 0) {
+      const first = CURATED_LEARNING_PATHS[0];
+      targetRaw = {
+        id: first.id,
+        kind: first.kind,
+        title: first.title,
+        description: first.description,
+        slug: first.slug,
+        courses: [],
+      } as any;
     }
 
     if (!targetRaw) return null;
-    const cmsMap = new Map<number, any>();
-    (publicCmsCourses?.items || []).forEach(item => cmsMap.set(item.id, item));
 
-    const enrichedCourses = (targetRaw.courses || []).map((cItem: any) => {
+    const cmsMap = new Map<number, any>();
+    const allCmsCourses = publicCmsCourses?.items || [];
+    allCmsCourses.forEach(item => cmsMap.set(item.id, item));
+
+    let rawCoursesList = targetRaw.courses || [];
+
+    // DYNAMIC MATCHING: If database path has 0 linked courses, dynamically assign CMS courses / curated modules
+    if (rawCoursesList.length === 0) {
+      if (curatedMatch && curatedMatch.modules.length > 0) {
+        rawCoursesList = curatedMatch.modules.map(m => {
+          const match = allCmsCourses.find(c =>
+            c.title.toLowerCase().includes(m.title.toLowerCase()) ||
+            m.title.toLowerCase().includes((c.categoryName || '').toLowerCase())
+          );
+          return {
+            courseId: match?.id || m.id,
+            id: match?.id || m.id,
+            title: match?.title || m.title,
+            description: match?.description || m.description,
+            durationMinutes: m.durationMinutes,
+            sectionsCount: m.lessonCount,
+          };
+        });
+      } else if (allCmsCourses.length > 0) {
+        const pTitle = (targetRaw.title || '').toLowerCase();
+        const matchedCms = allCmsCourses.filter(c => {
+          const cTitle = c.title.toLowerCase();
+          const cCat = (c.categoryName || '').toLowerCase();
+          if (pTitle.includes('security') || pTitle.includes('identity')) {
+            return cTitle.includes('security') || cTitle.includes('oauth') || cTitle.includes('identity') || cCat.includes('security');
+          }
+          if (pTitle.includes('backend') || pTitle.includes('go')) {
+            return cTitle.includes('go') || cTitle.includes('backend') || cTitle.includes('microservice') || cCat.includes('backend') || cCat.includes('design');
+          }
+          if (pTitle.includes('cloud') || pTitle.includes('devops')) {
+            return cTitle.includes('docker') || cTitle.includes('cloud') || cTitle.includes('container') || cCat.includes('cloud') || cCat.includes('infrastructure');
+          }
+          if (pTitle.includes('design') || pTitle.includes('interview')) {
+            return cTitle.includes('design') || cTitle.includes('sharded') || cTitle.includes('architecture') || cCat.includes('design');
+          }
+          if (pTitle.includes('ai') || pTitle.includes('machine')) {
+            return cTitle.includes('ai') || cTitle.includes('model') || cTitle.includes('data') || cCat.includes('ai');
+          }
+          return true;
+        });
+
+        const selectedCourses = matchedCms.length > 0 ? matchedCms.slice(0, 4) : allCmsCourses.slice(0, 4);
+        rawCoursesList = selectedCourses.map(c => ({
+          courseId: c.id,
+          id: c.id,
+          title: c.title,
+          description: c.description,
+        }));
+      }
+    }
+
+    const enrichedCourses = rawCoursesList.map((cItem: any) => {
       const cId = cItem.courseId || cItem.id;
       const cmsCourse = cmsMap.get(cId);
       return {
@@ -155,8 +407,8 @@ const LearningPathPage = () => {
         createdBy: cmsCourse?.createdBy || 1,
         status: 'PUBLISHED' as const,
         blockCount: cmsCourse?.sectionsCount || cmsCourse?.lessonsCount || 8,
-        durationMinutes: cmsCourse?.durationMinutes || 180,
-        slug: cmsCourse?.slug || buildCourseUrl(cmsCourse || { id: cId, title: cItem.title }),
+        durationMinutes: cmsCourse?.durationMinutes || cItem.durationMinutes || 180,
+        slug: cmsCourse?.slug || buildCourseUrl(cmsCourse || { id: cId, title: cItem.title || `Course Module #${cId}` }),
         tags: cmsCourse?.tags || ['Backend', 'Engineering'],
         createdAt: cmsCourse?.createdAt || new Date().toISOString(),
       };
@@ -169,15 +421,30 @@ const LearningPathPage = () => {
       description: targetRaw.description,
       estimatedHours: enrichedCourses.length ? Math.ceil(enrichedCourses.reduce((acc, curr) => acc + (curr.durationMinutes || 180), 0) / 60) : 24,
       level: 'Intermediate → Advanced',
-      skillsGained: enrichedCourses.map(c => `Master ${c.title}`),
+      skillsGained: curatedMatch?.skillsGained || enrichedCourses.map(c => `Master ${c.title}`),
       courses: enrichedCourses,
     };
   }, [apiData, allDbPaths, pathId, publicCmsCourses]);
 
-  // Dynamic Related Paths from database
+  // Dynamic Related Paths from database with dynamic module count fallback
   const relatedPaths = useMemo(() => {
     if (!allDbPaths || !data) return [];
-    return allDbPaths.filter(p => String(p.id) !== String(data.id));
+    return allDbPaths
+      .filter(p => String(p.id) !== String(data.id))
+      .map(rp => {
+        const searchSlug = (rp.slug || rp.title || '').toLowerCase();
+        const curatedMatch = CURATED_LEARNING_PATHS.find(
+          cp => cp.slug === searchSlug || String(cp.id) === String(rp.id) || cp.title.toLowerCase().includes(searchSlug)
+        );
+        let moduleCount = rp.courses?.length || rp.courseCount || 0;
+        if (moduleCount === 0) {
+          moduleCount = curatedMatch?.modules?.length || 4;
+        }
+        return {
+          ...rp,
+          moduleCount,
+        };
+      });
   }, [allDbPaths, data]);
 
   if (isLoading && !data) {
@@ -458,129 +725,16 @@ const LearningPathPage = () => {
               <div className="space-y-4">
                 {courses.map((course, index) => {
                   const status = getCourseStatus(course.id);
-                  const isExpanded = expandedModules[course.id] !== false; // Default expanded for rich view
-                  const chapters = getModuleChapters(course, index + 1);
-
+                  const isExpanded = expandedModules[course.id] !== false;
                   return (
-                    <Card
+                    <CourseModuleCard
                       key={course.id}
-                      className={cn(
-                        'transition-all rounded-2xl border border-border overflow-hidden bg-card',
-                        isExpanded ? 'shadow-md border-emerald-500/40' : 'hover:border-emerald-500/30'
-                      )}
-                    >
-                      {/* Module Accordion Header */}
-                      <div
-                        onClick={() => toggleModuleExpand(course.id)}
-                        className="p-5 flex items-center justify-between gap-4 cursor-pointer select-none hover:bg-muted/30 transition-colors"
-                      >
-                        <div className="flex items-start gap-4 min-w-0">
-                          <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                            {status === 'completed' && <CheckCircle2 className="h-5 w-5" />}
-                            {status === 'current' && <PlayCircle className="h-5 w-5" />}
-                            {status === 'upcoming' && <Circle className="h-5 w-5 text-muted-foreground" />}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                                Module {String(index + 1).padStart(2, '0')}
-                              </span>
-                              <span className="text-xs text-muted-foreground font-medium">
-                                &bull; {chapters.length} Sub-modules
-                              </span>
-                            </div>
-                            <h3 className="text-lg font-bold text-foreground transition-colors line-clamp-1 mt-0.5">
-                              {course.title}
-                            </h3>
-                            {course.description && (
-                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                                {course.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 shrink-0">
-                          <Badge variant="secondary" className="hidden sm:inline-flex text-xs">
-                            {chapters.reduce((acc, c) => acc + c.durationMinutes, 0)} mins
-                          </Badge>
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                            <ChevronDown className={cn('w-4 h-4 transition-transform duration-200', isExpanded && 'rotate-180')} />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Expanded Sub-modules & Chapters List */}
-                      {isExpanded && (
-                        <div className="border-t border-border bg-muted/20 p-5 space-y-4">
-                          <div className="flex items-center justify-between border-b border-border/60 pb-3">
-                            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                              <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                              Chapters & Sub-modules
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {chapters.length} Interactive Lessons
-                            </span>
-                          </div>
-
-                          <div className="space-y-2.5">
-                            {chapters.map((ch, chIdx) => (
-                              <div
-                                key={ch.id}
-                                className="p-3.5 rounded-xl border border-border/70 bg-card hover:border-emerald-500/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                              >
-                                <div className="flex items-start gap-3 min-w-0">
-                                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold">
-                                    {index + 1}.{chIdx + 1}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <h4 className="text-sm font-bold text-foreground">
-                                        {ch.title}
-                                      </h4>
-                                      <Badge variant="outline" className="text-[10px] px-2 py-0 h-4 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
-                                        {ch.type === 'Video' && <Play className="w-2.5 h-2.5 mr-1 inline" />}
-                                        {ch.type === 'Reading' && <FileText className="w-2.5 h-2.5 mr-1 inline" />}
-                                        {ch.type === 'Hands-on Lab' && <Code2 className="w-2.5 h-2.5 mr-1 inline" />}
-                                        {ch.type === 'Quiz' && <HelpCircle className="w-2.5 h-2.5 mr-1 inline" />}
-                                        {ch.type}
-                                      </Badge>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                                      {ch.description}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-border/40">
-                                  <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                                    <Clock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                                    {ch.durationMinutes}m
-                                  </span>
-                                  <Link to={`${buildCourseUrl(course)}?chapter=${ch.id}`}>
-                                    <Button size="sm" variant="ghost" className="h-8 rounded-lg text-xs gap-1 font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
-                                      Start Chapter <ArrowRight className="w-3.5 h-3.5" />
-                                    </Button>
-                                  </Link>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Full Module CTA Action Bar */}
-                          <div className="pt-2 flex items-center justify-between border-t border-border/60">
-                            <span className="text-xs text-muted-foreground hidden sm:inline">
-                              Complete all sub-modules to finish Module {String(index + 1).padStart(2, '0')}.
-                            </span>
-                            <Link to={buildCourseUrl(course)}>
-                              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2 text-xs font-bold ml-auto">
-                                <PlayCircle className="w-4 h-4" /> Launch Full Module
-                              </Button>
-                            </Link>
-                          </div>
-                        </div>
-                      )}
-                    </Card>
+                      course={course}
+                      index={index}
+                      status={status}
+                      isExpanded={isExpanded}
+                      onToggleExpand={toggleModuleExpand}
+                    />
                   );
                 })}
               </div>
@@ -618,7 +772,7 @@ const LearningPathPage = () => {
                       <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
                         <span className="flex items-center gap-1">
                           <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                          {(rp as any).modules?.length || (rp as any).courses?.length || (rp as any).courseCount || 0} Modules
+                          {rp.moduleCount} Modules
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
