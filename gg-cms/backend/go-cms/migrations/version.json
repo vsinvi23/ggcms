@@ -1,8 +1,8 @@
 {
   "name": "db-migrations",
-  "version": "1.5.13",
+  "version": "1.6.1",
   "description": "PostgreSQL Schema Migrations",
   "last_migration": "049_learning_path_integrity.sql",
-  "updated_at": "2026-10-03T16:13:42Z",
+  "updated_at": "2026-10-03T16:54:26Z",
   "db_schema_hash": "sha256:f734265a0c13c5c9dfe8949c348fdf522f392600463b54df0bf2ffa7490cade2"
 }

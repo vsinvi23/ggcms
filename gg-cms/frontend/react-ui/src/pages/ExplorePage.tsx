@@ -35,7 +35,9 @@ export function ExplorePage() {
   // Live backend categories API hook
   const { data: backendCategories } = useCategories();
   // Live backend published CMS articles API hook
-  const { data: publicCmsData } = usePublicCmsList({ type: 'ARTICLE', size: 50 });
+  const { data: publicArticlesData } = usePublicCmsList({ type: 'ARTICLE', size: 50 });
+  const { data: publicCoursesData } = usePublicCmsList({ type: 'COURSE', size: 50 });
+  
   // Live backend content format types API hook
   const { data: backendArticleTypes } = useContentTypes('article');
 
@@ -44,17 +46,25 @@ export function ExplorePage() {
     if (fetched.length > 0) {
       return ['All', ...Array.from(new Set(fetched))];
     }
-    return ['All', 'Articles', 'Guides', 'Tutorials', 'Deep Dives', 'Cheat Sheets', 'References', 'Labs', 'Projects'];
+    return ['All', 'Articles', 'Guides', 'Tutorials', 'Deep Dives', 'Cheat Sheets', 'References', 'Labs', 'Projects', 'Course'];
   }, [backendArticleTypes]);
 
   const backendExploreItems = useMemo(() => {
-    if (!publicCmsData?.items || publicCmsData.items.length === 0) return [];
-    return publicCmsData.items.map(item => ({
+    const items = [];
+    if (publicArticlesData?.items) {
+      items.push(...publicArticlesData.items);
+    }
+    if (publicCoursesData?.items) {
+      items.push(...publicCoursesData.items);
+    }
+    if (items.length === 0) return [];
+    
+    return items.map(item => ({
       id: String(item.id),
       slug: item.slug || buildArticleUrl(item),
       title: item.title,
       excerpt: item.description || '',
-      contentType: (item.articleType as any) || 'Article',
+      contentType: (item.articleType as string) || (item.courseType ? 'Course' : 'Article'),
       category: item.categoryName || 'Engineering',
       readingTimeMinutes: item.readingTimeMinutes || 10,
       domain: item.categoryName || 'General',
@@ -63,7 +73,7 @@ export function ExplorePage() {
       isTrending: true,
       isFeatured: false,
     }));
-  }, [publicCmsData]);
+  }, [publicArticlesData, publicCoursesData]);
 
   const allExploreItems = useMemo(() => {
     return backendExploreItems;

@@ -18,6 +18,7 @@ const ConfigurationPage = lazy(() => import('./pages/ConfigurationPage'));
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
 const ContentManagement = lazy(() => import('./pages/ContentManagement'));
 const CourseManagement = lazy(() => import('./pages/CourseManagement'));
+const LearningPathManagement = lazy(() => import('./pages/LearningPathManagement'));
 const CourseCreator = lazy(() => import('./pages/CourseCreator'));
 const ArticleManagement = lazy(() => import('./pages/ArticleManagement'));
 const ArticleCreator = lazy(() => import('./pages/ArticleCreator'));
@@ -178,6 +179,7 @@ const App = () => (
                 <Route path="/dashboard/courses" element={<ProtectedRoute><CourseManagement /></ProtectedRoute>} />
                 <Route path="/dashboard/courses/create" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
                 <Route path="/dashboard/courses/:id/edit" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/dashboard/learning-paths" element={<ProtectedRoute><LearningPathManagement /></ProtectedRoute>} />
                 <Route path="/dashboard/articles" element={<ProtectedRoute><ArticleManagement /></ProtectedRoute>} />
                 <Route path="/dashboard/articles/create" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
                 <Route path="/dashboard/users" element={<ProtectedRoute requireAdmin><UserManagementDashboard /></ProtectedRoute>} />
