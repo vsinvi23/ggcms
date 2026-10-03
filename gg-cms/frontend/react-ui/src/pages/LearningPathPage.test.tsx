@@ -65,4 +65,16 @@ describe('LearningPathPage (Panel 5 UI Spec)', () => {
     expect(screen.getByText("Skills You'll Gain")).toBeInTheDocument();
     expect(screen.getAllByText('Master Container Security Masterclass')[0]).toBeInTheDocument();
   });
+
+  it('renders related paths tab without crashing when modules property is missing', () => {
+    const { fireEvent } = require('@testing-library/react');
+    renderPage();
+
+    const relatedTabBtn = screen.getByText('Related Paths');
+    expect(relatedTabBtn).toBeInTheDocument();
+    fireEvent.click(relatedTabBtn);
+
+    expect(screen.getByText('Fullstack Go Developer')).toBeInTheDocument();
+    expect(screen.getByText('0 Modules')).toBeInTheDocument();
+  });
 });

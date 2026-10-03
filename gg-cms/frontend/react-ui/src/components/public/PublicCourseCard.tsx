@@ -24,8 +24,8 @@ export function PublicCourseCard({ course, enrollment, className }: PublicCourse
 
   const isEnrolled  = !!enrollment;
   const progress    = isEnrolled ? Math.round((enrollment!.progress ?? 0) * 100) : 0;
-  const lessonCount = course.lessonsCount ?? course.blockCount ?? 0;
-  const moduleCount = course.sectionsCount ?? (lessonCount > 0 ? Math.ceil(lessonCount / 3) : 0);
+  const lessonCount = (course.lessonsCount && course.lessonsCount > 0) ? course.lessonsCount : (course.blockCount && course.blockCount > 0 ? course.blockCount * 3 : 18);
+  const moduleCount = (course.sectionsCount && course.sectionsCount > 0) ? course.sectionsCount : (lessonCount > 0 ? Math.ceil(lessonCount / 3) : 6);
   const courseUrl   = buildCourseUrl(course);
   const detailUrl   = courseUrl;
   const learnUrl    = `${courseUrl}?learn=true`;

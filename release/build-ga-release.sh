@@ -163,8 +163,10 @@ cp -r gg-cms/frontend/react-ui/dist gg-cms/backend/go-cms/dist
 
 # --- Package GA release payload ---
 echo "▶ Preparing GA release directory..."
+rm -rf "$LATEST_DIR/db/migrations"
 mkdir -p "$LATEST_DIR/db/migrations"
 cp -r gg-cms/backend/go-cms/migrations/postgres/* "$LATEST_DIR/db/migrations/"
+
 
 DEPLOYMENT_CONTRACT="$LATEST_DIR/deployment-contract.json"
 

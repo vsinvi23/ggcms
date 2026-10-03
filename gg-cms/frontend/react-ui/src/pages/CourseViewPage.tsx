@@ -441,8 +441,9 @@ export function CourseViewPage() {
     return Array.from(new Set([...fromApi, ...localCompletedIds]));
   }, [enrollment, localCompletedIds]);
   const allLessons = useMemo(() => displaySections.flatMap(getAllLessons), [displaySections]);
-  const totalLessons = allLessons.length > 0 ? allLessons.length : (displayCourse?.lessonsCount ?? 0);
-  const totalModules = displaySections.length > 0 ? displaySections.length : (displayCourse?.sectionsCount ?? 0);
+  const totalLessons = allLessons.length > 0 ? allLessons.length : ((displayCourse?.lessonsCount && displayCourse.lessonsCount > 0) ? displayCourse.lessonsCount : ((displayCourse?.blockCount && displayCourse.blockCount > 0) ? displayCourse.blockCount * 3 : 18));
+  const totalModules = displaySections.length > 0 ? displaySections.length : ((displayCourse?.sectionsCount && displayCourse.sectionsCount > 0) ? displayCourse.sectionsCount : (totalLessons > 0 ? Math.ceil(totalLessons / 3) : 6));
+
 
   // Automatically mark course as referred when opened, and update course progress
   React.useEffect(() => {
@@ -767,9 +768,9 @@ export function CourseViewPage() {
           </div>
 
           {/* 2-Column Runner Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* LEFT COLUMN: Questions or Modules/Lessons Navigator (4 Cols) */}
-            <div className="lg:col-span-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* LEFT COLUMN: Sticky Modules/Lessons Navigator (4 Cols) */}
+            <div className="lg:col-span-4 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto pr-0.5">
               {isPracticeCourse ? (
                 <QuestionNavigator
                   totalQuestions={totalLessons || 4}
@@ -792,7 +793,7 @@ export function CourseViewPage() {
             </div>
 
             {/* RIGHT COLUMN: Content Runner Card (8 Cols) */}
-            <div className="lg:col-span-8 space-y-6">
+            <div className="lg:col-span-8 space-y-4">
               {isPracticeCourse ? (
                 /* ── PRACTICE COURSE RUNNER ────── */
                 <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
@@ -1114,9 +1115,9 @@ export function CourseViewPage() {
               </div>
             ) : (
               /* ── 2. INDIVIDUAL LESSON CONTENT VIEW ────────────────────── */
-              <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
+              <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 space-y-4 shadow-xs">
                 {/* Breadcrumbs */}
-                <nav className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap pb-2 border-b border-border/60">
+                <nav className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap pb-1.5 border-b border-border/60">
                   <button onClick={() => setSelectedLessonId(null)} className="hover:text-foreground transition-colors font-medium">
                     {title}
                   </button>
@@ -1138,7 +1139,7 @@ export function CourseViewPage() {
                   <>
                     {/* Lesson Title & Bookmark */}
                     <div className="flex items-start justify-between gap-4">
-                      <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground leading-tight">
+                      <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-snug">
                         {currentLesson.title}
                       </h1>
                       <button

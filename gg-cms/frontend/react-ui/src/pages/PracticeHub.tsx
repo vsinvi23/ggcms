@@ -91,6 +91,7 @@ export function PracticeHub() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
+  const [showAllMorePractice, setShowAllMorePractice] = useState(false);
   
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
@@ -126,6 +127,14 @@ export function PracticeHub() {
   const allQuizzes = useMemo(() => {
     return dbQuizzes;
   }, [dbQuizzes]);
+
+  const remainingQuizzes = useMemo(() => {
+    return allQuizzes.filter(q => activeQuiz && q.id !== activeQuiz.id);
+  }, [allQuizzes, activeQuiz]);
+
+  const displayedQuizzes = useMemo(() => {
+    return showAllMorePractice ? remainingQuizzes : remainingQuizzes.slice(0, 3);
+  }, [remainingQuizzes, showAllMorePractice]);
 
   const categories = useMemo(() => {
     const fetched = (backendCategories ?? []).map(c => c.name).filter(Boolean);
@@ -446,7 +455,7 @@ export function PracticeHub() {
                   </div>
 
                   <div className="space-y-3">
-                    {allQuizzes.filter(q => q.id !== activeQuiz.id).map(q => {
+                    {displayedQuizzes.map(q => {
                       const itemAttempt = attempts[q.id] || (q.slug ? attempts[q.slug] : null);
                       return (
                         <div key={q.id} className="p-3 rounded-xl border border-border hover:border-primary/40 transition-all bg-card/60 space-y-2">
@@ -471,6 +480,19 @@ export function PracticeHub() {
                       );
                     })}
                   </div>
+
+                  {remainingQuizzes.length > 3 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAllMorePractice(prev => !prev)}
+                      className="w-full text-xs font-semibold text-primary hover:bg-primary/5 h-8 rounded-xl pt-1"
+                    >
+                      {showAllMorePractice
+                        ? 'Show Less'
+                        : `Show More (${remainingQuizzes.length - 3} more sets)`}
+                    </Button>
+                  )}
                 </div>
 
                 {/* Related Learning Courses */}
