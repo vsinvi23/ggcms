@@ -2,24 +2,37 @@
 
 -- 1. Identity & Application Security Engineering Roadmap
 INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
-SELECT 'Security Engineer', 'Identity & Application Security Engineering Roadmap', 'Comprehensive security engineering roadmap covering OAuth 2.0/OIDC delegated authorization, PKCE, X.509 PKI, mTLS microservice security, and OWASP Top 10 LLM defenses.', 'identity-appsec-engineer-roadmap', u.id
-FROM users u WHERE u.email = 'admin@gg-cms.local'
+SELECT 'SECURITY_TRACK', 'Cybersecurity & Identity Architecture', 'Deep dive into OAuth 2.0, OpenID Connect (OIDC), PKI & Cryptography, Web Application Pentesting, and Zero Trust access control.', 'cybersecurity-identity', u.id
+FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
 ON CONFLICT DO NOTHING;
 
 -- 2. Backend Systems Engineering Roadmap
 INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
-SELECT 'Backend Engineer', 'Backend Systems Engineering Roadmap', 'Advanced backend engineering roadmap covering Go microservices, concurrency patterns, DDD, and high-throughput gRPC services.', 'backend-systems-engineer-roadmap', u.id
-FROM users u WHERE u.email = 'admin@gg-cms.local'
+SELECT 'STRUCTURED_PATH', 'Full-Stack Software Engineering Track', 'Master modern frontend development, backend microservices in Go, database modeling in PostgreSQL, and cloud deployments.', 'software-engineering', u.id
+FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
 ON CONFLICT DO NOTHING;
 
 -- 3. Cloud Platform Engineering Roadmap
 INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
-SELECT 'Platform Engineer', 'Cloud Platform Engineering Roadmap', 'Production platform engineering roadmap covering GCP Cloud Run, Kubernetes rolling updates, and Terraform modular IaC.', 'cloud-platform-engineer-roadmap', u.id
-FROM users u WHERE u.email = 'admin@gg-cms.local'
+SELECT 'STRUCTURED_PATH', 'Cloud Infrastructure & DevOps Mastery', 'Learn container orchestration with Kubernetes, Cloud Infrastructure on GCP & AWS, CI/CD automation, and Observability.', 'cloud-devops', u.id
+FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
 ON CONFLICT DO NOTHING;
 
 -- 4. AI & ML Platform Engineering Roadmap
 INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
-SELECT 'AI Engineer', 'AI & ML Platform Engineering Roadmap', 'Production AI engineering roadmap covering RAG architecture, vector search, prompt engineering, and ML model evaluation metrics.', 'ai-ml-platform-engineer-roadmap', u.id
-FROM users u WHERE u.email = 'admin@gg-cms.local'
+SELECT 'STRUCTURED_PATH', 'AI & Machine Learning Engineering Track', 'Build and deploy AI applications using Large Language Models (LLMs), Vector Databases, RAG architectures, and AI Agents.', 'ai-ml-engineering', u.id
+FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
 ON CONFLICT DO NOTHING;
+
+-- 5. System Design & Technical Interview
+INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
+SELECT 'INTERVIEW_PREP', 'System Design & Technical Interview Mastery', 'Master high-scale system design, caching strategies, load balancing, database sharding, and crack senior tech interviews.', 'system-design', u.id
+FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
+ON CONFLICT DO NOTHING;
+
+-- 6. API Security & OWASP Top 10
+INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
+SELECT 'SECURITY_TRACK', 'API Security & OWASP Top 10 Deep Dive', 'Identify, exploit, and patch API vulnerabilities based on OWASP API Security Top 10 guidelines.', 'api-security', u.id
+FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
+ON CONFLICT DO NOTHING;
+

@@ -120,13 +120,30 @@ const LearningPathPage = () => {
     return m;
   }, [enrollments]);
 
-  // Live database data resolution with full course metadata hydration
+  // Live database data resolution with fuzzy fallback matching
   const data = useMemo(() => {
-    if (!apiData) return null;
+    let targetRaw = apiData;
+    if (!targetRaw && allDbPaths && allDbPaths.length > 0 && pathId) {
+      const q = pathId.toLowerCase();
+      targetRaw = allDbPaths.find(p => p.slug === q || String(p.id) === q);
+      if (!targetRaw) {
+        const keywords = q.split(/[-_]/);
+        targetRaw = allDbPaths.find(p => {
+          const t = (p.title || '').toLowerCase();
+          const s = (p.slug || '').toLowerCase();
+          return keywords.some(k => k.length > 2 && (t.includes(k) || s.includes(k)));
+        });
+      }
+      if (!targetRaw) {
+        targetRaw = allDbPaths[0];
+      }
+    }
+
+    if (!targetRaw) return null;
     const cmsMap = new Map<number, any>();
     (publicCmsCourses?.items || []).forEach(item => cmsMap.set(item.id, item));
 
-    const enrichedCourses = (apiData.courses || []).map((cItem: any) => {
+    const enrichedCourses = (targetRaw.courses || []).map((cItem: any) => {
       const cId = cItem.courseId || cItem.id;
       const cmsCourse = cmsMap.get(cId);
       return {
@@ -146,16 +163,16 @@ const LearningPathPage = () => {
     });
 
     return {
-      id: apiData.id,
-      kind: apiData.kind || 'Structured Learning Path',
-      title: apiData.title,
-      description: apiData.description,
+      id: targetRaw.id,
+      kind: targetRaw.kind || 'Structured Learning Path',
+      title: targetRaw.title,
+      description: targetRaw.description,
       estimatedHours: enrichedCourses.length ? Math.ceil(enrichedCourses.reduce((acc, curr) => acc + (curr.durationMinutes || 180), 0) / 60) : 24,
       level: 'Intermediate → Advanced',
       skillsGained: enrichedCourses.map(c => `Master ${c.title}`),
       courses: enrichedCourses,
     };
-  }, [apiData, publicCmsCourses]);
+  }, [apiData, allDbPaths, pathId, publicCmsCourses]);
 
   // Dynamic Related Paths from database
   const relatedPaths = useMemo(() => {
@@ -179,6 +196,26 @@ const LearningPathPage = () => {
       </PublicLayout>
     );
   }
+
+  if (!data) {
+    return (
+      <PublicLayout>
+        <div className="max-w-6xl mx-auto px-6 py-16 text-center space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
+            <GraduationCap className="w-8 h-8" />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight">Learning Path Not Found</h1>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            The learning path requested could not be found. Explore our available career roadmaps below.
+          </p>
+          <Button onClick={() => navigate('/learning-paths')} className="mt-4">
+            Explore All Learning Paths
+          </Button>
+        </div>
+      </PublicLayout>
+    );
+  }
+
 
   const courses = data.courses ?? [];
   const hasProgress = courses.some(course => {
@@ -573,7 +610,7 @@ const LearningPathPage = () => {
                         <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                           {rp.kind === 'INTERVIEW_PREP' ? 'Interview Prep' : 'Structured Path'}
                         </Badge>
-                        <span className="text-xs text-muted-foreground font-semibold">{rp.level}</span>
+                        <span className="text-xs text-muted-foreground font-semibold">{rp.level || 'Intermediate'}</span>
                       </div>
                       <h3 className="text-lg font-bold text-foreground line-clamp-1">{rp.title}</h3>
                       <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{rp.description}</p>
@@ -581,16 +618,16 @@ const LearningPathPage = () => {
                       <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
                         <span className="flex items-center gap-1">
                           <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                          {rp.modules.length} Modules
+                          {(rp as any).modules?.length || (rp as any).courses?.length || (rp as any).courseCount || 0} Modules
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                          {rp.estimatedHours} Hours
+                          {(rp as any).estimatedHours || ((rp as any).courses?.length ? (rp as any).courses.length * 3 : 20)} Hours
                         </span>
                       </div>
                     </div>
 
-                    <Link to={`/learn/${rp.slug}`}>
+                    <Link to={`/learn/${rp.slug || rp.id}`}>
                       <Button variant="outline" className="w-full rounded-xl gap-2 hover:bg-emerald-500/10 hover:text-emerald-600">
                         View Path <ChevronRight className="w-4 h-4" />
                       </Button>
