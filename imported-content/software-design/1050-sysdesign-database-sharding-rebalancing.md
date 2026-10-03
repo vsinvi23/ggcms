@@ -1,3 +1,11 @@
+---
+title: "Sharded Database Rebalancing: Moving Terabytes of Data Without Database Downtime"
+description: "As a dataset grows beyond the capacity of a single monolithic database node, horizontal scaling (sharding) becomes necessary. Data is partitioned across multiple database instances (shards) based on a"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Database Rebalancing: Moving Terabytes of Data Without Database Downtime
 
 ## The Problem: Hotspots and Capacity Limits

@@ -1,3 +1,11 @@
+---
+title: "Demystifying Golang Concurrency: Goroutines, Channels, and the M:N Scheduler"
+description: "Move beyond simple `go func()` calls to master the internal architecture of the Go Runtime Scheduler, memory synchronization, buffered channels, and the Communicating Sequential Processes (CSP) model."
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Demystifying Golang Concurrency: Goroutines, Channels, and the M:N Scheduler
 
 > Move beyond simple `go func()` calls to master the internal architecture of the Go Runtime Scheduler, memory synchronization, buffered channels, and the Communicating Sequential Processes (CSP) model.

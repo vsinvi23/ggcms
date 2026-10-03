@@ -1,3 +1,11 @@
+---
+title: "MCP Security: What Happens When an AI Agent Gets Access to Your APIs?"
+description: "Connecting an AI agent to Model Context Protocol (MCP) servers gives it unprecedented capabilities to interact with your codebase, databases, and third-party APIs. However, this power introduces a cri"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # MCP Security: What Happens When an AI Agent Gets Access to Your APIs?
 
 ### The Problem: Indirect Prompt Injection and Tool Hijacking

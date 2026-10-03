@@ -1,3 +1,11 @@
+---
+title: "Rate Limiting as a Security Control: Defeating Credential Stuffing and L7 DDoS"
+description: "At the application layer, availability and authentication security are inextricably linked. Without robust rate limiting, any endpoint—particularly resource-heavy ones like `/api/v1/auth/login` or PDF"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Rate Limiting as a Security Control: Defeating Credential Stuffing and L7 DDoS
 
 At the application layer, availability and authentication security are inextricably linked. Without robust rate limiting, any endpoint—particularly resource-heavy ones like `/api/v1/auth/login` or PDF generation routes—becomes a massive liability. Attackers exploit these gaps through credential stuffing (testing millions of stolen username/password pairs) or Layer 7 (L7) Distributed Denial of Service (DDoS) attacks designed to exhaust database connection pools or CPU cycles.

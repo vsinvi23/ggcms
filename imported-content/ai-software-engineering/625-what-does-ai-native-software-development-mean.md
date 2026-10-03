@@ -1,4 +1,4 @@
----
+--- 
 title: "What Does AI-Native Software Development Actually Mean?"
 slug: "what-does-ai-native-software-development-mean"
 category: "AI Software Engineering"
@@ -41,7 +41,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # What Does AI-Native Software Development Actually Mean?
 

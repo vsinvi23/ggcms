@@ -1,3 +1,11 @@
+---
+title: "Microservice Resilience: Processing Poison Pills and Implementing Dead Letter Queues (DLQ)"
+description: "Asynchronous messaging (using Kafka, RabbitMQ, or AWS SQS) is a cornerstone of microservice architecture. It provides decoupling and temporal buffering. A Producer publishes a message, and a Consumer "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Microservice Resilience: Processing Poison Pills and Implementing Dead Letter Queues (DLQ)
 
 ## The Problem: The Infinite Retry Loop

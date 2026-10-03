@@ -1,3 +1,11 @@
+---
+title: "GCP Workload Identity Federation: Eliminating Long-Lived Static Service Account Keys"
+description: "Historically, authenticating non-GCP workloads (such as GitHub Actions pipelines, GitLab runners, or on-premise Kubernetes clusters) to Google Cloud APIs required exporting a Service Account JSON key."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Workload Identity Federation: Eliminating Long-Lived Static Service Account Keys
 
 ## The Problem: The Toxic Risk of Exported Service Account JSON Keys

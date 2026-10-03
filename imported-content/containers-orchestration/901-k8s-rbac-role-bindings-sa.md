@@ -1,3 +1,11 @@
+---
+title: "Kubernetes RBAC: Hardening Cluster Roles, Roles, and Service Account Tokens"
+description: "Role-Based Access Control (RBAC) in Kubernetes dictates who can do what, and to which resources. The most critical, yet frequently mismanaged, aspect of RBAC involves machine identities: **Service Acc"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes RBAC: Hardening Cluster Roles, Roles, and Service Account Tokens
 
 ## The Problem: Over-Privileged Service Accounts

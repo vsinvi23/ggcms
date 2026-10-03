@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Authorization Code Flow: Step-by-Step State Machine"
+description: "**Problem:** Allowing a third-party application to directly handle a user's credentials (username/password) violates zero-trust principles. The Authorization Code Flow solves this by establishing a fe"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Authorization Code Flow: Step-by-Step State Machine
 
 **Problem:** Allowing a third-party application to directly handle a user's credentials (username/password) violates zero-trust principles. The Authorization Code Flow solves this by establishing a federated state machine that keeps credentials isolated at the Identity Provider (IdP).

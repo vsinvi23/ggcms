@@ -1,3 +1,11 @@
+---
+title: "eBPF in Kubernetes: Bypassing TCP stack routing using Cilium and sockops"
+description: "In a high-throughput microservices architecture, network latency and CPU utilization spent processing network packets become significant bottlenecks. When two Pods residing on the same Kubernetes Node"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # eBPF in Kubernetes: Bypassing TCP stack routing using Cilium and sockops
 
 ### The Problem: Networking Overhead in Microservices

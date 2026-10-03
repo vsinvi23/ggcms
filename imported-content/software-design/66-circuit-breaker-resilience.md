@@ -1,3 +1,11 @@
+---
+title: "The Circuit Breaker Pattern: Preventing Cascade Failures"
+description: "In a distributed microservice architecture, services constantly communicate over the network. Network calls, unlike local function calls, are inherently unreliable. Packets drop, routers fail, and dow"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The Circuit Breaker Pattern: Preventing Cascade Failures
 
 ## The Problem: The Cascading Failure

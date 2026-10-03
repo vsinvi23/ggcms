@@ -1,3 +1,11 @@
+---
+title: "Apache Spark SQL: Optimizing Joins with Broadcast Hash Joins"
+description: "In distributed data processing, the Join operation is both the most powerful and the most expensive capability. When Apache Spark joins two large datasets (e.g., joining a `Sales` table with a `Custom"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Apache Spark SQL: Optimizing Joins with Broadcast Hash Joins
 
 ## The Problem: The Shuffle and Data Skew

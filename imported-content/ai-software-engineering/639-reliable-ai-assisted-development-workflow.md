@@ -1,4 +1,4 @@
----
+--- 
 title: "How to Build a Reliable AI-Assisted Development Workflow"
 slug: "reliable-ai-assisted-development-workflow"
 category: "AI Software Engineering"
@@ -46,7 +46,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # How to Build a Reliable AI-Assisted Development Workflow
 

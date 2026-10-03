@@ -1,3 +1,11 @@
+---
+title: "ACME Let's Encrypt: Configuring Certbot Timers for Automated Seamless Renewals"
+description: "Historically, TLS certificates were valid for 1 to 3 years. Procurement involved generating a CSR, emailing it to a Certificate Authority (CA), paying an invoice, waiting for manual validation, and ma"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # ACME Let's Encrypt: Configuring Certbot Timers for Automated Seamless Renewals
 
 ## The Problem: The Outage Cost of Manual PKI

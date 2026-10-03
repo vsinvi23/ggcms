@@ -1,3 +1,11 @@
+---
+title: "PostgreSQL MVCC: Optimizing Autovacuum for High-Write Loads"
+description: "Learn how PostgreSQL's Multi-Version Concurrency Control (MVCC) creates dead tuples under high-write microservice workloads, analyze how cost-based vacuuming works, and discover how to tune autovacuum parameters to prevent table bloat."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # PostgreSQL MVCC: Optimizing Autovacuum for High-Write Loads
 
 > Learn how PostgreSQL's Multi-Version Concurrency Control (MVCC) creates dead tuples under high-write microservice workloads, analyze how cost-based vacuuming works, and discover how to tune autovacuum parameters to prevent table bloat.

@@ -1,3 +1,11 @@
+---
+title: "GCP Workload Identity Federation: Eliminating Static Keys in GitHub Actions Pipelines"
+description: "In automated continuous delivery pipelines (such as GitHub Actions deploying workloads to Google Cloud), machines require authentication to GCP APIs. Traditionally, teams achieved this by exporting a "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Workload Identity Federation: Eliminating Static Keys in GitHub Actions Pipelines
 
 ## The Problem: The Security Debt of Long-Lived Service Account Keys

@@ -1,3 +1,11 @@
+---
+title: "SSL Stripping and Downgrade Attacks: How HSTS Fixes the Flaw"
+description: "**Problem:** Cryptographic protocols are useless if an attacker can intercept the initial HTTP request and prevent the transition to HTTPS entirely, leaving the connection in plaintext."
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # SSL Stripping and Downgrade Attacks: How HSTS Fixes the Flaw
 
 **Problem:** Cryptographic protocols are useless if an attacker can intercept the initial HTTP request and prevent the transition to HTTPS entirely, leaving the connection in plaintext. 

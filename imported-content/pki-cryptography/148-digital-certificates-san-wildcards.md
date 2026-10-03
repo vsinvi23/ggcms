@@ -1,3 +1,11 @@
+---
+title: "Managing TLS Certificates: Subject Alternative Names (SAN) and Wildcards"
+description: "In the early days of the internet, securing a website with SSL/TLS was a rigid and straightforward process. When a Certificate Authority (CA) issued an X.509 digital certificate, it placed the exact r"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Managing TLS Certificates: Subject Alternative Names (SAN) and Wildcards
 
 ## The Problem: The Rigid 'Common Name' 

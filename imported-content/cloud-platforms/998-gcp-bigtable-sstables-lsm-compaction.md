@@ -1,3 +1,11 @@
+---
+title: "Google Cloud Bigtable Architecture: Designing Row Keys to Prevent SSTable Hotspotting"
+description: "Google Cloud Bigtable is a high-performance, low-latency NoSQL database designed for massive analytical and operational workloads."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Google Cloud Bigtable Architecture: Designing Row Keys to Prevent SSTable Hotspotting
 
 ## The Problem: Monotonically Increasing Keys and Tablet Hotspotting

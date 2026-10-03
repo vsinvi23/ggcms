@@ -1,3 +1,11 @@
+---
+title: "FIDO2 and CTAP2: How Browsers Talk to Hardware Security Keys"
+description: "Traditional authentication models—including passwords and shared secrets—are fundamentally vulnerable to phishing, credential stuffing, and session hijacking. Even modern Multi-Factor Authentication ("
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # FIDO2 and CTAP2: How Browsers Talk to Hardware Security Keys
 
 ## The Problem: The Phishability of Traditional Authentication

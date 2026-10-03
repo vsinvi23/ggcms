@@ -1,3 +1,11 @@
+---
+title: "LLM Quantization: Running 70B Models on Consumer GPUs (GGUF/AWQ)"
+description: "A Large Language Model with $70\text{B}$ parameters is highly capable, but storing its weights in native half-precision format (FP16 or BF16) requires an immense amount of VRAM:"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Quantization: Running 70B Models on Consumer GPUs (GGUF/AWQ)
 
 ## The Problem: The VRAM Barrier of Modern LLMs

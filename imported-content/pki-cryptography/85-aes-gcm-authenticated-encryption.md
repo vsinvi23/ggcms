@@ -1,3 +1,11 @@
+---
+title: "AES-GCM: Enforcing Confidentiality and Integrity with AEAD"
+description: "For years, the industry standard for symmetric encryption was AES in Cipher Block Chaining (CBC) mode. AES-CBC encrypts data in 16-byte blocks, providing excellent confidentiality. However, CBC mode l"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # AES-GCM: Enforcing Confidentiality and Integrity with AEAD
 
 ## The Problem: The Malleability of Unauthenticated Encryption

@@ -1,3 +1,11 @@
+---
+title: "Demystifying the Black Box: JWT Explained from Scratch"
+description: "To many developers, JSON Web Tokens (JWTs) look like encrypted blobs of high-security ciphertext. This misconception is dangerous."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Demystifying the Black Box: JWT Explained from Scratch
 
 ## The Problem: The Cryptographic Illusion

@@ -1,3 +1,11 @@
+---
+title: "Deep Dive into JIT Compilation: Tiered Compilation, HotSpot, and Native Optimization"
+description: "At startup, Java runs slower than pre-compiled native languages like C++. Yet, after running for several minutes, high-throughput Java server applications can reach, and sometimes exceed, compiled exe"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Deep Dive into JIT Compilation: Tiered Compilation, HotSpot, and Native Optimization
 
 At startup, Java runs slower than pre-compiled native languages like C++. Yet, after running for several minutes, high-throughput Java server applications can reach, and sometimes exceed, compiled execution speeds. This magic is driven by the Just-In-Time (JIT) compiler of the HotSpot JVM.

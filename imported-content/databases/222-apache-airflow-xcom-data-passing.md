@@ -1,3 +1,11 @@
+---
+title: "Airflow XComs: The Anti-Pattern of Passing Large Dataframes Between Tasks"
+description: "Apache Airflow is the industry standard for orchestrating data pipelines. It utilizes a Directed Acyclic Graph (DAG) architecture where independent tasks execute in sequence. Because tasks run in isol"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Airflow XComs: The Anti-Pattern of Passing Large Dataframes Between Tasks
 
 ### The Problem: Metadata Database Bloat and OOM Crashes

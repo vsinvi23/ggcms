@@ -1,3 +1,11 @@
+---
+title: "Redis Sentinel: Cluster Failover and Consensus Protocols"
+description: "SENTINEL get-master-addr-by-name mymaster"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Sentinel: Cluster Failover and Consensus Protocols
 
 ## The Problem: Single Point of Failure

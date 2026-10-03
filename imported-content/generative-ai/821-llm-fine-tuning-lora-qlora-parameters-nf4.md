@@ -1,3 +1,11 @@
+---
+title: "Fine-Tuning LLMs: Parameter-Efficient LoRA and QLoRA NF4 Quantization"
+description: "Fine-tuning a pre-trained Large Language Model (LLM) for specific domains or tasks is highly effective, but standard full-parameter fine-tuning is prohibitively expensive. Updating a 70-billion parame"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Fine-Tuning LLMs: Parameter-Efficient LoRA and QLoRA NF4 Quantization
 
 ### The Problem: The Cost of Full Fine-Tuning

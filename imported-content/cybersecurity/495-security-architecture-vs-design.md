@@ -1,3 +1,11 @@
+---
+title: "Security Architecture vs. Security Design: Bridging Policy and Code"
+description: "Enterprise security failures rarely occur because of a lack of documentation. Instead, they occur due to the massive execution gap between high-level **Security Architecture** and low-level **Security"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Security Architecture vs. Security Design: Bridging Policy and Code
 
 ## The Problem: The Disconnect Between Mandates and Implementation

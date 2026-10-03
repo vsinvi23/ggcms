@@ -1,3 +1,11 @@
+---
+title: "Designing Sagas: Writing Idempotent and Commutative Compensating Transactions"
+description: "In a monolithic application, transactions are simple. You wrap multiple database operations in a `BEGIN TRANSACTION` and `COMMIT` block. If anything fails, the database automatically performs a `ROLLB"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing Sagas: Writing Idempotent and Commutative Compensating Transactions
 
 In a monolithic application, transactions are simple. You wrap multiple database operations in a `BEGIN TRANSACTION` and `COMMIT` block. If anything fails, the database automatically performs a `ROLLBACK`, guaranteeing atomicity.

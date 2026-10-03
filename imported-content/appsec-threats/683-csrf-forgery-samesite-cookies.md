@@ -1,3 +1,11 @@
+---
+title: "CSRF Security: Forging State-Changing Requests and Anti-CSRF Token Architectures"
+description: "Cross-Site Request Forgery (CSRF) exploits a fundamental design property of web browsers: ambient credential transmission. When a user authenticates against an application, the server issues a session"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # CSRF Security: Forging State-Changing Requests and Anti-CSRF Token Architectures
 
 ## The Problem: Ambient Credentials and Automated Trust

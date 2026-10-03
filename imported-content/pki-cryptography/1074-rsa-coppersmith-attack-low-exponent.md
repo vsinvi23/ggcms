@@ -1,3 +1,11 @@
+---
+title: "RSA Vulnerabilities: Coppersmith's Attack on Low Public Exponents (e=3)"
+description: "In RSA cryptography, the public key is composed of a modulus $N = pq$ and a public exponent $e$. Standard public exponents include $65537$ ($2^{16} + 1$) and, historically, smaller exponents like $3$ "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # RSA Vulnerabilities: Coppersmith's Attack on Low Public Exponents (e=3)
 
 ## The Problem: The Performance Trap of Low Exponents

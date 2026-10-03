@@ -1,3 +1,11 @@
+---
+title: "Authentication Bypass: Demystifying Logic Flaws, Magic Hashes, and Object Injection"
+description: "An authentication bypass is one of the most high-severity security vulnerabilities a system can suffer. Unlike brute-force or credential stuffing attacks, which attempt to guess valid secrets, an auth"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Authentication Bypass: Demystifying Logic Flaws, Magic Hashes, and Object Injection
 
 An authentication bypass is one of the most high-severity security vulnerabilities a system can suffer. Unlike brute-force or credential stuffing attacks, which attempt to guess valid secrets, an authentication bypass exploits design errors, implementation flaws, or language-specific quirks to trick the application into logging the attacker in without *any* valid credentials.

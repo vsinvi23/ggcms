@@ -1,3 +1,11 @@
+---
+title: "Attribute-Based Access Control (ABAC): Writing OPA Rego Policies"
+description: "In large enterprise systems, Role-Based Access Control (RBAC) scales poorly. Under a pure RBAC model, access is determined strictly by predefined user groups (e.g., `Admin`, `Manager`, `Employee`). As"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Attribute-Based Access Control (ABAC): Writing OPA Rego Policies
 
 ## The Problem: Role Explosion and the Static Limits of RBAC

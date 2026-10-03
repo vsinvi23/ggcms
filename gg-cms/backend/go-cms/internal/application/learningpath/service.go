@@ -17,17 +17,20 @@ type CreateRequest struct {
 	Kind        string
 	Title       string
 	Description string
+	Slug        string
 	CreatedByID uint
 }
 
 type UpdateRequest struct {
 	Title       *string
 	Description *string
+	Slug        *string
 }
 
 type Service interface {
 	List(ctx context.Context, kind string) ([]*entity.LearningPath, error)
 	GetByID(ctx context.Context, id uint) (*entity.LearningPath, error)
+	GetByIDOrSlug(ctx context.Context, idOrSlug string) (*entity.LearningPath, error)
 	Create(ctx context.Context, req CreateRequest) (*entity.LearningPath, error)
 	Update(ctx context.Context, id uint, req UpdateRequest) (*entity.LearningPath, error)
 	Delete(ctx context.Context, id uint) error
@@ -50,11 +53,16 @@ func (s *service) GetByID(ctx context.Context, id uint) (*entity.LearningPath, e
 	return s.repo.FindByID(ctx, id)
 }
 
+func (s *service) GetByIDOrSlug(ctx context.Context, idOrSlug string) (*entity.LearningPath, error) {
+	return s.repo.FindByIDOrSlug(ctx, idOrSlug)
+}
+
 func (s *service) Create(ctx context.Context, req CreateRequest) (*entity.LearningPath, error) {
 	lp := &entity.LearningPath{
 		Kind:        req.Kind,
 		Title:       req.Title,
 		Description: req.Description,
+		Slug:        req.Slug,
 		CreatedByID: req.CreatedByID,
 	}
 	if err := s.repo.Create(ctx, lp); err != nil {

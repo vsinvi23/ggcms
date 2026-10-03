@@ -1,3 +1,11 @@
+---
+title: "Web Session Security: Mitigating Session Hijacking and Session Fixation Attacks"
+description: "HTTP is a stateless protocol. To maintain state, servers issue a Session Identifier (usually via a `Set-Cookie` header), which the browser returns on subsequent requests. The security of the entire au"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Web Session Security: Mitigating Session Hijacking and Session Fixation Attacks
 
 ## The Problem: The Fragility of the Session Identifier

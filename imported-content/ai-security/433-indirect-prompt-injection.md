@@ -1,3 +1,11 @@
+---
+title: "Indirect Prompt Injection: The Attack You Don't See Coming"
+description: "Most developer discussions surrounding Large Language Model (LLM) security focus on direct prompt injection—where a malicious user actively crafts queries to bypass system boundaries. However, a far m"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # Indirect Prompt Injection: The Attack You Don't See Coming
 
 Most developer discussions surrounding Large Language Model (LLM) security focus on direct prompt injection—where a malicious user actively crafts queries to bypass system boundaries. However, a far more insidious and quiet threat is rising in multi-agent and Retrieval-Augmented Generation (RAG) environments: **Indirect Prompt Injection**.

@@ -1,3 +1,11 @@
+---
+title: "Kafka Log Compaction: Retaining the Latest Key State for KTables"
+description: "In event-driven microservices, downstream consumers often need to maintain a materialized cache of entity states, such as current user profiles, account balances, or product prices."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Log Compaction: Retaining the Latest Key State for KTables
 
 ## The Problem: Infinite Log Growth and Cold-Start Latency

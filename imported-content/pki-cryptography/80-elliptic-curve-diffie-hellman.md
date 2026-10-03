@@ -1,3 +1,11 @@
+---
+title: "Elliptic Curve Diffie-Hellman (ECDH): Mathematical Proofs and Key Agreement"
+description: "Imagine you and a remote party want to establish a secure encrypted channel, but every single packet you send over the internet is being intercepted and recorded by an adversary. How can you both agre"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Elliptic Curve Diffie-Hellman (ECDH): Mathematical Proofs and Key Agreement
 
 ## The Problem: Secure Key Exchange Over Monitored Channels

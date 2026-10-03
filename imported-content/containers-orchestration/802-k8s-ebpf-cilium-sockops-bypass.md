@@ -1,3 +1,11 @@
+---
+title: "eBPF in Kubernetes: Bypassing TCP Stack Routing using Cilium and sockops"
+description: "In traditional Kubernetes networking (e.g., using kube-proxy with iptables or IPVS), pod-to-pod communication on the same physical node traverses a significant portion of the Linux kernel network stac"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # eBPF in Kubernetes: Bypassing TCP Stack Routing using Cilium and sockops
 
 ### The Problem: Kernel Network Stack Overhead

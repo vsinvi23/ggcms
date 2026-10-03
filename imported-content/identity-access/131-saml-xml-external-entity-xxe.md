@@ -1,3 +1,11 @@
+---
+title: "SAML Vulnerabilities: Preventing XML External Entity (XXE) Injections"
+description: "The Security Assertion Markup Language (SAML) protocol is the foundation of enterprise Single Sign-On (SSO). It relies on XML-formatted assertions passed between an Identity Provider (IdP) and a Servi"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SAML Vulnerabilities: Preventing XML External Entity (XXE) Injections
 
 ## The Problem: The Inherent Insecurity of Legacy XML Parsing

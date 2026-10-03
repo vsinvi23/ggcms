@@ -1,3 +1,11 @@
+---
+title: "Secrets Management for AI Agents: Eliminating Prompt-Driven Credential Leakage"
+description: "To execute downstream tools (e.g., Stripe payments, Slack messages, SendGrid mailing), an AI Agent must have access to credentials. However, injecting API tokens directly into the LLM system prompt, o"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # Secrets Management for AI Agents: Eliminating Prompt-Driven Credential Leakage
 
 ## Problem Statement

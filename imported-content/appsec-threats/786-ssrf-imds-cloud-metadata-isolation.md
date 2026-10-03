@@ -1,3 +1,11 @@
+---
+title: "Server-Side Request Forgery (SSRF): Preventing Cloud Metadata Extraction"
+description: "Server-Side Request Forgery (SSRF) occurs when an application receives a user-supplied URL (e.g., for fetching a profile image, downloading an external RSS feed, or generating a PDF invoice) and makes"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Server-Side Request Forgery (SSRF): Preventing Cloud Metadata Extraction
 
 ## The Problem

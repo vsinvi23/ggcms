@@ -1,3 +1,11 @@
+---
+title: "How an AI Agent Can Be Manipulated Through a Web Page"
+description: "As autonomous web-browsing and research agents become mainstream, they introduce a distinct attack surface known as **semantic-rendering mismatch**. This exploit takes advantage of a basic technical s"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # How an AI Agent Can Be Manipulated Through a Web Page
 
 As autonomous web-browsing and research agents become mainstream, they introduce a distinct attack surface known as **semantic-rendering mismatch**. This exploit takes advantage of a basic technical shortcut: web scraping pipelines extract raw text from HTML without compiling the layout or style engine. Consequently, elements that are visually invisible to human eyes are perfectly readable—and highly influential—to an AI agent.

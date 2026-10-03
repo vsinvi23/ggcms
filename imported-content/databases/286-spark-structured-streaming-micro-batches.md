@@ -1,3 +1,11 @@
+---
+title: "Spark Structured Streaming: State Management, Watermarks, and Micro-Batching Architectures"
+description: "Processing live streams of data—such as clickstreams or device logs—frequently requires calculating aggregations over event-time windows (e.g., counting errors per server over rolling 15-minute window"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Spark Structured Streaming: State Management, Watermarks, and Micro-Batching Architectures
 
 ## The Stateful Streaming Memory Exhaustion Problem

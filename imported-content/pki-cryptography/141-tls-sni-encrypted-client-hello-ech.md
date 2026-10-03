@@ -1,3 +1,11 @@
+---
+title: "Encrypted Client Hello (ECH): Closing the TLS 1.3 SNI Privacy Leak"
+description: "Transport Layer Security (TLS) 1.3 brought massive improvements to web privacy by encrypting the majority of the TLS handshake, including the server certificate. However, one glaring privacy leak rema"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Encrypted Client Hello (ECH): Closing the TLS 1.3 SNI Privacy Leak
 
 ## The Problem: The SNI Privacy Leak in TLS

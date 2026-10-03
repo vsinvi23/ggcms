@@ -1,3 +1,11 @@
+---
+title: "Password Cracking: How Hashcat Leverages GPU Pipelines to Break MD5 and SHA-1"
+description: "For decades, developers relied on cryptographic hash functions like MD5 and SHA-1 to store passwords. The logic was straightforward: hash functions are one-way mathematical operations. You cannot reve"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Password Cracking: How Hashcat Leverages GPU Pipelines to Break MD5 and SHA-1
 
 ## The Problem: The Illusion of Hash Security

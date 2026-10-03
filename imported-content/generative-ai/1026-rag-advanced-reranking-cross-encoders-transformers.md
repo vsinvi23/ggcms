@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking"
+description: "Standard Retrieval-Augmented Generation (RAG) relies on **Bi-Encoders** to compute embeddings. A Bi-Encoder processes the user's query and the document chunks *independently* to generate two separate "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking
 
 ## The Problem: The Precision Limit of Bi-Encoders

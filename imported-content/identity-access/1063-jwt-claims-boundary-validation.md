@@ -1,3 +1,11 @@
+---
+title: "JWT Claim Validation: Enforcing Issuer (iss) and Audience (aud) Boundaries"
+description: "Cryptographic signature verification is only half of the validation lifecycle of JSON Web Tokens (JWTs). A token can be perfectly signed by a trusted Certificate Authority or Identity Provider (IdP), "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Claim Validation: Enforcing Issuer (iss) and Audience (aud) Boundaries
 
 Cryptographic signature verification is only half of the validation lifecycle of JSON Web Tokens (JWTs). A token can be perfectly signed by a trusted Certificate Authority or Identity Provider (IdP), yet remain completely invalid for the specific application environment attempting to process it. Failing to strictly enforce Issuer (`iss`) and Audience (`aud`) boundaries is one of the most common causes of cross-tenant privilege escalation and environment confusion.

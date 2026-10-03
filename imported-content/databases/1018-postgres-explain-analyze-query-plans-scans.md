@@ -1,3 +1,11 @@
+---
+title: "Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Scans"
+description: "SQL is a declarative language. You define *what* data you want to retrieve, but you do not specify the physical algorithms used to retrieve, filter, and join those records."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Scans
 
 ## The Problem: The SQL Optimization Guessing Game

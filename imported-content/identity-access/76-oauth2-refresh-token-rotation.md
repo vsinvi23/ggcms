@@ -1,3 +1,11 @@
+---
+title: "Securing Single-Page Apps with Refresh Token Rotation"
+description: "In modern web architectures, Single-Page Applications (SPAs) built with frameworks like React, Vue, or Angular communicate with backend APIs using OAuth 2.0 access tokens. Because access tokens are sh"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Securing Single-Page Apps with Refresh Token Rotation
 
 ### The Problem: The Stateless Storage Dilemma

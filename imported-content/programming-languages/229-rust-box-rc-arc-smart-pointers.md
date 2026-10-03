@@ -1,3 +1,11 @@
+---
+title: "Rust Smart Pointers: Navigating Box, Rc, and Arc Thread Safety"
+description: "By default, Rust allocates variables on the stack and enforces a strict single-ownership model. This design achieves memory safety without a garbage collector. However, production applications often d"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Smart Pointers: Navigating Box, Rc, and Arc Thread Safety
 
 By default, Rust allocates variables on the stack and enforces a strict single-ownership model. This design achieves memory safety without a garbage collector. However, production applications often demand more flexible memory layouts, such as dynamic sizing, recursive structures, and shared ownership. Attempting to solve these design requirements with standard stack allocation or basic references (`&T` and `&mut T`) frequently results in rigid lifetime annotations or compile-time borrow checker errors.

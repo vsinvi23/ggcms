@@ -1,3 +1,11 @@
+---
+title: "Modern C++ Memory Management: RAII, Smart Pointers, and Object Lifetimes"
+description: "Master the low-level mechanics of stack and heap allocation, reference counting control blocks, move semantics, and the Resource Acquisition Is Initialization (RAII) paradigm to write leak-free, high-performance C++ systems."
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Modern C++ Memory Management: RAII, Smart Pointers, and Object Lifetimes
 
 > Master the low-level mechanics of stack and heap allocation, reference counting control blocks, move semantics, and the Resource Acquisition Is Initialization (RAII) paradigm to write leak-free, high-performance C++ systems.

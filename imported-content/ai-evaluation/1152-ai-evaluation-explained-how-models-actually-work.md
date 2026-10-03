@@ -1,4 +1,4 @@
----
+--- 
 title: "AI Evaluation Explained: How Do You Know a Model Actually Works?"
 slug: "ai-evaluation-explained-how-models-actually-work"
 category: "AI Evaluation"
@@ -38,7 +38,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "generative-ai"
 ---
+
 
 # AI Evaluation Explained: How Do You Know a Model Actually Works?
 

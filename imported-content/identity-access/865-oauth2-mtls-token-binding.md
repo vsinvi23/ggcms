@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 mTLS: Binding Access Tokens to Client Certificates (RFC 8705)"
+description: "The majority of OAuth 2.0 deployments rely on basic Bearer Tokens. A bearer token is structurally identical to cash: whoever holds the token can spend it. If an attacker exfiltrates a bearer token via"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 mTLS: Binding Access Tokens to Client Certificates (RFC 8705)
 
 ## The Problem: The Inherent Vulnerability of Standard Bearer Tokens

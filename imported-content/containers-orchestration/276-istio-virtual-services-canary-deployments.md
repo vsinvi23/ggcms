@@ -1,3 +1,11 @@
+---
+title: "Istio Traffic Management: Canary Routing via Service Mesh"
+description: "When deploying updates to high-traffic production environments, deploying in place or using standard blue-green updates represents a major risk. A bug in the new release can crash the entire system, c"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Istio Traffic Management: Canary Routing via Service Mesh
 
 ## The Problem: The Inflexibility of Standard Kubernetes Rollouts

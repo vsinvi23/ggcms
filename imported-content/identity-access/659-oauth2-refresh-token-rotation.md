@@ -1,3 +1,11 @@
+---
+title: "Securing Client Sessions: Refresh Token Rotation (RTR) and Token Family Reuse Detection"
+description: "In single-page applications (SPAs) and mobile clients, access tokens are kept short-lived (e.g., 15 minutes) to minimize the attack surface of exfiltration. To maintain seamless UX, refresh tokens are"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Securing Client Sessions: Refresh Token Rotation (RTR) and Token Family Reuse Detection
 
 ## The Problem: The Infinite Lifespan of Stolen Refresh Tokens

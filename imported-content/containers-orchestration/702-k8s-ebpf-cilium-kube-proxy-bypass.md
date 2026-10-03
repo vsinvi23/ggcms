@@ -1,3 +1,11 @@
+---
+title: "Leveraging eBPF in Kubernetes: Bypassing iptables and kube-proxy with Cilium"
+description: "As Kubernetes clusters scale to hundreds of nodes and thousands of services, traditional network routing mechanisms hit a processing ceiling. Traditionally, Kubernetes relies on `kube-proxy` configuri"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Leveraging eBPF in Kubernetes: Bypassing iptables and kube-proxy with Cilium
 
 As Kubernetes clusters scale to hundreds of nodes and thousands of services, traditional network routing mechanisms hit a processing ceiling. Traditionally, Kubernetes relies on `kube-proxy` configuring the Linux kernel's `iptables` or `IPVS` subsystems. However, `iptables` was never designed for dynamic, microsecond-level cloud-native operations. It requires a sequential $O(N)$ evaluation of packet filtering rules. For each new connection, the kernel must traverse thousands of rules, incurring high CPU overhead, packet latency, and slow service routing.

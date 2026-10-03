@@ -1,3 +1,11 @@
+---
+title: "Mitigating Session Hijacking and Session Fixation Attacks"
+description: "Despite the rise of stateless tokens, session-based state remains a cornerstone of web security. When a user authenticates, the server generates a unique Session ID and returns it, typically in a cook"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Mitigating Session Hijacking and Session Fixation Attacks
 
 ### The Problem: The Session as a Static Vault

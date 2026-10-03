@@ -1,3 +1,11 @@
+---
+title: "Database Sharding: Horizontal Scaling of SQL Databases with Vitess"
+description: "In modern software development, scaling application servers is relatively straightforward: you spin up more container instances behind a stateless load balancer. However, scaling relational databases "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Database Sharding: Horizontal Scaling of SQL Databases with Vitess
 
 ## The Problem: The Single-Instance Database Wall

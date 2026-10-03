@@ -1,3 +1,11 @@
+---
+title: "Postgres Index Bloat: Reclaiming Disk Space with REINDEX CONCURRENTLY"
+description: "PostgreSQL uses Multi-Version Concurrency Control (MVCC) to support high-concurrency read and write operations. Under MVCC, an `UPDATE` statement does not modify a row in place; instead, it writes a n"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres Index Bloat: Reclaiming Disk Space with REINDEX CONCURRENTLY
 
 ## The Problem: MVCC Side-Effects and Index Fragmentation

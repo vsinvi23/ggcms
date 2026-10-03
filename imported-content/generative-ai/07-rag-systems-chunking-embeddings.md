@@ -1,3 +1,11 @@
+---
+title: "Building Production-Grade RAG Systems: Chunking Strategies, Vector Embeddings, and Metadata Filtering"
+description: "Learn how to architect highly accurate Retrieval-Augmented Generation (RAG) systems using strategic semantic chunking, multi-dimensional vector embeddings, cosine similarity search, and hybrid metadata filters."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Building Production-Grade RAG Systems: Chunking Strategies, Vector Embeddings, and Metadata Filtering
 
 > Learn how to architect highly accurate Retrieval-Augmented Generation (RAG) systems using strategic semantic chunking, multi-dimensional vector embeddings, cosine similarity search, and hybrid metadata filters.

@@ -1,3 +1,11 @@
+---
+title: "TLS Certificate Pinning: Defeating Rogue CAs and MitM Attacks in Mobile Apps"
+description: "By default, modern client operating systems (iOS, Android, Windows) rely on a built-in trust store consisting of over 100 root Certificate Authorities (CAs). If any of these CAs are compromised, or if"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS Certificate Pinning: Defeating Rogue CAs and MitM Attacks in Mobile Apps
 
 ## The Problem: The Flawed Foundation of Global Trust Stores

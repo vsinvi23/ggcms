@@ -1,3 +1,11 @@
+---
+title: "AWS Lambda Internals: Firecracker MicroVMs, Cold Starts, and SnapStart"
+description: "The promise of AWS Lambda is scale-to-zero compute: you only pay when your code runs, and AWS handles provisioning the underlying infrastructure. However, this model introduces a fundamental tension b"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Lambda Internals: Firecracker MicroVMs, Cold Starts, and SnapStart
 
 ## The Problem: The Serverless Latency vs. Isolation Trade-off

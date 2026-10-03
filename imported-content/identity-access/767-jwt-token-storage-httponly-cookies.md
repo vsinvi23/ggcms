@@ -1,3 +1,11 @@
+---
+title: "Secure Token Storage in SPAs: HttpOnly Cookies vs. In-Memory Refresh Rotation"
+description: "Single Page Applications (SPAs) must manage access and refresh tokens to persist sessions. However, developers are often trapped in a classic security dilemma: **how to store tokens without exposing t"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Secure Token Storage in SPAs: HttpOnly Cookies vs. In-Memory Refresh Rotation
 
 ## The Problem: The XSS vs. CSRF Storage Dilemma

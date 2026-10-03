@@ -1,3 +1,11 @@
+---
+title: "Feature Toggles: Branch by Abstraction and Decoupling Deployment from Software Release"
+description: "In traditional software development, building a massive new feature takes weeks or months. To avoid destabilizing the main production codebase, developers work in isolated \"Feature Branches.\""
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Feature Toggles: Branch by Abstraction and Decoupling Deployment from Software Release
 
 ## The Problem: The Danger of Long-Lived Feature Branches

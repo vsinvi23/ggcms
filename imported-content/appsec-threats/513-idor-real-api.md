@@ -1,3 +1,11 @@
+---
+title: "IDOR Explained with a Real API: Preventing Predictable Reference Attacks"
+description: "Insecure Direct Object Reference (IDOR) occurs when an application exposes a direct pointer to an underlying database record—such as an auto-incrementing integer key—and fails to validate whether the "
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # IDOR Explained with a Real API: Preventing Predictable Reference Attacks
 
 Insecure Direct Object Reference (IDOR) occurs when an application exposes a direct pointer to an underlying database record—such as an auto-incrementing integer key—and fails to validate whether the requester owns or is authorized to access that object. IDOR represents a critical sub-category of Broken Access Control and remains one of the most widely exploited vulnerabilities in modern APIs.

@@ -1,3 +1,11 @@
+---
+title: "Sharding Relational Databases: Hash-based vs Range-based"
+description: "Relational databases like PostgreSQL and MySQL are traditionally monolithic. They scale *vertically*: when you run out of CPU, memory, or disk space, you buy a bigger server. However, vertical scaling"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharding Relational Databases: Hash-based vs Range-based
 
 ## The Problem: The Single Machine Bottleneck

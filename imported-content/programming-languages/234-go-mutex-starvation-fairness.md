@@ -1,3 +1,11 @@
+---
+title: "Go Mutexes: Starvation Modes and Fairness in sync.Mutex"
+description: "Concurrency is a core tenet of the Go programming language, enabled by goroutines and channels. When shared memory must be modified, Go provides `sync.Mutex` for mutual exclusion. However, under high "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Mutexes: Starvation Modes and Fairness in sync.Mutex
 
 Concurrency is a core tenet of the Go programming language, enabled by goroutines and channels. When shared memory must be modified, Go provides `sync.Mutex` for mutual exclusion. However, under high contention, simple locking mechanisms can cause severe latency distribution problems: some goroutines may get starved of execution, waiting indefinitely while others repeatedly acquire the lock.

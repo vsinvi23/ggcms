@@ -1,3 +1,11 @@
+---
+title: "PKI Certificate Revocation: CRLs vs OCSP Stapling"
+description: "In a Public Key Infrastructure (PKI), an X.509 certificate acts as a digital passport. It has an expiration date, often set a year in the future. But what happens if the server's private key is stolen"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # PKI Certificate Revocation: CRLs vs OCSP Stapling
 
 ## The Problem: The Zombie Certificate

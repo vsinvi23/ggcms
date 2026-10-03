@@ -1,3 +1,11 @@
+---
+title: "Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC"
+description: "A major anti-pattern in machine learning development is relying solely on raw **classification accuracy** to evaluate model performance. On highly imbalanced datasets—such as credit card fraud detecti"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC
 
 ## The Problem

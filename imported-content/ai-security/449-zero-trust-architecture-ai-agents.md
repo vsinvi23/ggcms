@@ -1,3 +1,11 @@
+---
+title: "Zero-Trust for AI Agents: Micro-Segmentation and Assume-Breach Architectures"
+description: "The rapid emergence of autonomous, multi-agent systems has outpaced traditional network security models. In a monolithic agent setup, a single system prompt compromise can cascade, leading to unauthor"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # Zero-Trust for AI Agents: Micro-Segmentation and Assume-Breach Architectures
 
 The rapid emergence of autonomous, multi-agent systems has outpaced traditional network security models. In a monolithic agent setup, a single system prompt compromise can cascade, leading to unauthorized data access and lateral movement across private networks. To secure modern multi-agent systems, security teams must design architectures based on a "zero-trust" model: assuming that any individual agent is permanently vulnerable to compromise, and implementing strict micro-segmentation to limit the blast radius.

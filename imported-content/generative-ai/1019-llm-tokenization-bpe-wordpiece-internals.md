@@ -1,3 +1,11 @@
+---
+title: "LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece Under the Hood"
+description: "Mapping raw text into numerical representations for neural networks presents a fundamental trade-off. Word-level tokenization scales the vocabulary infinitely, leading to massive, sparse embedding mat"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece Under the Hood
 
 ## The Problem

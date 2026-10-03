@@ -1,3 +1,11 @@
+---
+title: "Secure Token Storage in SPAs: HttpOnly Cookies vs In-Memory Refresh Rotation"
+description: "Single-Page Applications (SPAs) are executed entirely in the user's browser, making secure token storage exceptionally difficult. If an SPA stores Access Tokens and Refresh Tokens in `localStorage` or"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Secure Token Storage in SPAs: HttpOnly Cookies vs In-Memory Refresh Rotation
 
 ## The Problem

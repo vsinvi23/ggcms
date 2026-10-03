@@ -1,3 +1,11 @@
+---
+title: "Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Scans"
+description: "When a SQL query takes several seconds to execute, developers often resort to guess-driven performance tuning: they blindly add index after index, alter schema fields, or rewrite queries at random. Th"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Scans
 
 ## The Problem: The "Black Box" Query Optimizer and Guesswork Tuning

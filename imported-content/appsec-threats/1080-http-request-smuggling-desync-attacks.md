@@ -1,3 +1,11 @@
+---
+title: "HTTP Request Smuggling: Exploiting Frontend/Backend Desync Vulnerabilities"
+description: "In high-performance web environments, user requests pass through a tiered routing architecture. An edge proxy (such as a load balancer, reverse proxy, or Web Application Firewall) intercepts internet-"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # HTTP Request Smuggling: Exploiting Frontend/Backend Desync Vulnerabilities
 
 ## The Problem: Ambiguous Request Framing

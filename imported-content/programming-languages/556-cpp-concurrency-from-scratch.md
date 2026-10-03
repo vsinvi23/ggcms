@@ -1,3 +1,11 @@
+---
+title: "C++ Concurrency from Scratch: std::thread and OS Scheduling"
+description: "Software needs to exploit modern multi-core processors. Single-threaded execution blocks UI threads during heavy IO or wastes processing potential. We need a way to execute multiple sequences of instr"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Concurrency from Scratch: std::thread and OS Scheduling
 
 ## Problem Statement

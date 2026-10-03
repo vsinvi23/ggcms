@@ -1,3 +1,11 @@
+---
+title: "Hardening the Docker Daemon: Securing /var/run/docker.sock and Rootless Mode"
+description: "Docker architecture relies on a client-server model. The Docker CLI (the client) communicates with the `dockerd` daemon via a local UNIX socket, typically located at `/var/run/docker.sock`."
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Hardening the Docker Daemon: Securing /var/run/docker.sock and Rootless Mode
 
 ## The Problem: The Root Equivalent Daemon

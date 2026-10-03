@@ -1,3 +1,11 @@
+---
+title: "Python Generators: Processing Gigabyte Logs with Zero RAM"
+description: "In modern backend systems, log analysis is an indispensable task. However, production services easily generate log files spanning tens of gigabytes. A standard approach to processing files in Python i"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Generators: Processing Gigabyte Logs with Zero RAM
 
 ### The Problem: The Out-of-Memory Cliff

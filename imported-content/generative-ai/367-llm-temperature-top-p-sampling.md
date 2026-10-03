@@ -1,3 +1,11 @@
+---
+title: "LLM Decoding Strategies: Temperature, Top-K, and Top-P (Nucleus) Sampling"
+description: "At each generation step, a Large Language Model projects its final hidden state onto the vocabulary dimension, producing a vector of raw **logits** ($y \in \mathbb{R}^{|V|}$). Converting these logits "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Decoding Strategies: Temperature, Top-K, and Top-P (Nucleus) Sampling
 
 ## The Problem: The Pitfalls of Greedy vs Unconstrained Sampling

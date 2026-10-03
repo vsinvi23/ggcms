@@ -1,3 +1,11 @@
+---
+title: "The CIA Triad Explained Through Real Incidents"
+description: "The CIA Triad (Confidentiality, Integrity, Availability) is the foundational model of information security. However, it is often taught as an abstract, academic concept. Developers often treat it as c"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # The CIA Triad Explained Through Real Incidents
 
 ## The Problem

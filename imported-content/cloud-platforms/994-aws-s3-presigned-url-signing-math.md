@@ -1,3 +1,11 @@
+---
+title: "Securing AWS S3: Inside the Signature Version 4 (SigV4) Pre-Signed URL Lifecycle"
+description: "To share private assets stored in Amazon S3 (such as user-specific invoices, medical records, or secure firmware downloads), developers often use Pre-Signed URLs. A pre-signed URL embeds a cryptograph"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Securing AWS S3: Inside the Signature Version 4 (SigV4) Pre-Signed URL Lifecycle
 
 ## The Problem: The Danger of Long-Lived Shared Secrets

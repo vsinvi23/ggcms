@@ -1,3 +1,11 @@
+---
+title: "Privileged Access Management (PAM): Engineering Just-in-Time Zero-Standing Privileges"
+description: "In many engineering organizations, developers, database administrators, and SREs have permanent admin access to production environments. This is known as **Standing Privileges**."
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Privileged Access Management (PAM): Engineering Just-in-Time Zero-Standing Privileges
 
 ## The Problem: The Danger of Standing Privileges

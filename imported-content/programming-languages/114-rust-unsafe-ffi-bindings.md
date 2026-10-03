@@ -1,3 +1,11 @@
+---
+title: "Rust Unsafe: Bypassing the Borrow Checker for FFI Bindings"
+description: "Rust's defining feature is its strict compiler. The borrow checker ensures memory safety and thread safety without a garbage collector by enforcing rigid rules around ownership, aliasing, and lifetime"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Unsafe: Bypassing the Borrow Checker for FFI Bindings
 
 ## The Problem: The Real World Speaks C

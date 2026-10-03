@@ -1,3 +1,11 @@
+---
+title: "Secure Password Storage: Tuning Argon2id Parameters for Optimal ASIC/GPU Resistance"
+description: "When application databases are breached, leaked user password tables are subjected to high-throughput, offline brute-force attacks. Adversaries utilize highly parallelized hardware, such as graphics p"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Secure Password Storage: Tuning Argon2id Parameters for Optimal ASIC/GPU Resistance
 
 ## The Problem: The Industrialization of Password Cracking

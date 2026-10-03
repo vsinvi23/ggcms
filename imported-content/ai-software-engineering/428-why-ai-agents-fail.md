@@ -1,3 +1,11 @@
+---
+title: "Why AI Agents Fail: A Deep Dive into Agentic Failure Modes"
+description: "When an AI agent transitions from a controlled local prototype to an active production environment, standard software failure signatures (like syntax errors, database locks, or null pointers) disappea"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Why AI Agents Fail: A Deep Dive into Agentic Failure Modes
 
 ## The Autopsy of Failed Deployments

@@ -1,3 +1,11 @@
+---
+title: "RAG vs Long Context: How Should AI Understand Your Codebase?"
+description: "When building AI assistants to help navigate, refactor, or debug enterprise codebases, engineers face a core design decision: How should the LLM access the codebase? A modern software repository consi"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # RAG vs Long Context: How Should AI Understand Your Codebase?
 
 ## The Problem: The Cognitive Overload of Code repositories

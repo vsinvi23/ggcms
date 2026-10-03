@@ -1,3 +1,11 @@
+---
+title: "ACME Let's Encrypt: Configuring Certbot Timers for Automated Seamless Renewals"
+description: "Manual SSL/TLS certificate management is a liability. Historically, certificates were valid for years, but standard-setting bodies and root trust stores have systematically reduced this validity windo"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # ACME Let's Encrypt: Configuring Certbot Timers for Automated Seamless Renewals
 
 ## The Problem: The Downward Spiral of Certificate Lifespans

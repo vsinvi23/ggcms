@@ -1,3 +1,11 @@
+---
+title: "std::vector Explained Internally: Contiguous Memory Arrays"
+description: "Software routinely needs arrays that can grow at runtime. C-style dynamic arrays require manual reallocation and data copying, leading to memory leaks, dangling pointers, and constant overhead. We nee"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # std::vector Explained Internally: Contiguous Memory Arrays
 
 ## Problem Statement

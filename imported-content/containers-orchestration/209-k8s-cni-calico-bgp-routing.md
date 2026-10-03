@@ -1,3 +1,11 @@
+---
+title: "Kubernetes CNI: How Calico Uses BGP to Route Pod IPs Without Encapsulation"
+description: "In traditional Kubernetes network implementations like Flannel, pod-to-pod communication across different nodes often relies on overlay networks using technologies like VXLAN or IP-in-IP. When a pod o"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes CNI: How Calico Uses BGP to Route Pod IPs Without Encapsulation
 
 ## The Problem: The Overhead of Overlay Networks

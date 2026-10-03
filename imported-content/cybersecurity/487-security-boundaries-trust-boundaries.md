@@ -1,3 +1,11 @@
+---
+title: "Security Boundaries and Trust Boundaries: Where Data Changes Classification"
+description: "When building complex systems, engineers often visualize data flowing smoothly from a user's browser, through an API gateway, into a microservice, and finally resting in a database. If the entire back"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Security Boundaries and Trust Boundaries: Where Data Changes Classification
 
 ## The Problem: The Flat Network Illusion

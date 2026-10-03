@@ -1,3 +1,11 @@
+---
+title: "Sharded Database Scaling: Mitigating Replication Lag and Read-Your-Own-Writes Inconsistencies"
+description: "In a high-throughput, sharded database topology, scaling read capacity typically involves provisioning asynchronous read replicas. A master node handles writes and streams changes (e.g., via WAL or bi"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Database Scaling: Mitigating Replication Lag and Read-Your-Own-Writes Inconsistencies
 
 ## The Problem: Eventual Consistency and Stale Reads

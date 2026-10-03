@@ -1,3 +1,11 @@
+---
+title: "OIDC for AI Agents: Does It Make Sense?"
+description: "As organizations orchestrate multi-agent systems across hybrid clouds, establishing a common trust framework is vital. While OAuth 2.0 handles delegation, it does not solve the identity problem. Downs"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # OIDC for AI Agents: Does It Make Sense?
 
 As organizations orchestrate multi-agent systems across hybrid clouds, establishing a common trust framework is vital. While OAuth 2.0 handles delegation, it does not solve the identity problem. Downstream services must answer a deeper question: *What are the specific capabilities and characteristics of the calling agent?* Using OpenID Connect (OIDC) to federate trust and transmit verifiable agent claims solves this.

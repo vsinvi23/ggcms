@@ -1,3 +1,11 @@
+---
+title: "The Strangler Fig Pattern: Incrementally Migrating Monoliths to Microservices"
+description: "Technical debt accumulates, and monoliths eventually reach a point where feature delivery slows to a crawl. The natural engineering impulse is the \"Big Bang\" rewrite: freeze feature development on the"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The Strangler Fig Pattern: Incrementally Migrating Monoliths to Microservices
 
 ## The Problem: The "Big Bang" Rewrite Trap

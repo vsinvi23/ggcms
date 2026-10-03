@@ -1,3 +1,11 @@
+---
+title: "Tuning JVM Performance: Sizing Survivor Spaces and Configuring Young-Generation Copy GC"
+description: "High-throughput Java applications often generate millions of short-to-medium-lived objects per second—such as JSON transport payloads, telemetry objects, or database DTOs. If the JVM's Young Generatio"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Tuning JVM Performance: Sizing Survivor Spaces and Configuring Young-Generation Copy GC
 
 ## The Problem

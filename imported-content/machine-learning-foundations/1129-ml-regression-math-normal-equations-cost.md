@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Linear Regression, Cost Functions, and Normal Equations"
+description: "Predicting continuous numerical values from input features relies on defining an optimal linear relationship. Iterative optimization (like Gradient Descent) works well but requires careful tuning of h"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Linear Regression, Cost Functions, and Normal Equations
 
 ## The Problem

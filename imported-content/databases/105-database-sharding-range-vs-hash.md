@@ -1,3 +1,11 @@
+---
+title: "Database Partitioning: Range-based vs Hash-based Sharding"
+description: "As a monolithic database grows to terabytes of data, single-node vertical scaling (adding RAM and CPU) eventually becomes economically and physically impossible. Indexes no longer fit in memory, resul"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Database Partitioning: Range-based vs Hash-based Sharding
 
 ## The Problem: The Monolithic Database Ceiling

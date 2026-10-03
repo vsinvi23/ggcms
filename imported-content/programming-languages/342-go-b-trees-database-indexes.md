@@ -1,3 +1,11 @@
+---
+title: "B-Trees in Go: Implementing High-Fanout Disk-Optimized Nodes for Databases"
+description: "Traditional Binary Search Trees (BSTs) assume all data resides in RAM. When datasets exceed memory, they spill to disk. Disk reads operate in blocks (pages), typically 4KB or 8KB. A BST traversal migh"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # B-Trees in Go: Implementing High-Fanout Disk-Optimized Nodes for Databases
 
 ## The Problem: The Cost of Disk I/O

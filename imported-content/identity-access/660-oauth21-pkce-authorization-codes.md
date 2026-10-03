@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.1 Security Hardening: Mandating PKCE Globally"
+description: "In standard OAuth 2.0 (RFC 6749), public clients (e.g., mobile apps, SPAs) cannot securely store a `client_secret`. Historically, these apps relied on the Implicit Flow (which leaked tokens in the URL"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.1 Security Hardening: Mandating PKCE Globally
 
 ## The Problem: Authorization Code Interception

@@ -1,3 +1,11 @@
+---
+title: "From Java 8 to 21: The Evolution of Records, Sealed Classes, and Pattern Matching"
+description: "For years, Java developers faced a frustrating trade-off when designing data-centric architectures. Modeling simple domain data required writing hundreds of lines of boilerplate—getters, setters, `has"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # From Java 8 to 21: The Evolution of Records, Sealed Classes, and Pattern Matching
 
 For years, Java developers faced a frustrating trade-off when designing data-centric architectures. Modeling simple domain data required writing hundreds of lines of boilerplate—getters, setters, `hashCode()`, `equals()`, and `toString()`—or relying on bytecode-generation libraries like Lombok. Worse, representing closed domain models (like a fixed set of payment methods) in a type-safe, compiler-verifiable way was nearly impossible. Developers had to choose between open-ended inheritance hierarchies or brittle, error-prone run-time type checks.

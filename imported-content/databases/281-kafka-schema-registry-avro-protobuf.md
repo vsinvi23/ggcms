@@ -1,3 +1,11 @@
+---
+title: "Kafka Schema Registry: Enforcing Contract Evolution with Avro and Protobuf"
+description: "In distributed event-driven architectures, Kafka acts as the central nervous system. Independent microservices produce events into shared topics, which are consumed by downstream applications. Because"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Schema Registry: Enforcing Contract Evolution with Avro and Protobuf
 
 ## The Schema Drift and Deserialization Catastrophe

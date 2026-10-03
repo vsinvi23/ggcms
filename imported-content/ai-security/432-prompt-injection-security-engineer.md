@@ -1,3 +1,11 @@
+---
+title: "Prompt Injection Explained Like a Security Engineer"
+description: "In classical software security, mixing the control plane (instructions) and the data plane (untrusted inputs) in a single execution channel is a foundational vulnerability. This design flaw underpins "
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # Prompt Injection Explained Like a Security Engineer
 
 In classical software security, mixing the control plane (instructions) and the data plane (untrusted inputs) in a single execution channel is a foundational vulnerability. This design flaw underpins SQL Injection, Cross-Site Scripting (XSS), and format-string vulnerabilities. Large Language Models (LLMs) suffer from a fundamentally identical, yet far more intractable version of this flaw: **Prompt Injection**.

@@ -1,3 +1,11 @@
+---
+title: "OAuth Scopes vs. Application Roles: Limiting API Blast Radius"
+description: "One of the most pervasive design errors in modern API development is treating **OAuth Scopes** as **User Roles** or **Internal Permissions** (e.g., assigning a scope of `admin` to a token because the "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth Scopes vs. Application Roles: Limiting API Blast Radius
 
 ## The Problem: Confusing Client Delegation with User Permissions

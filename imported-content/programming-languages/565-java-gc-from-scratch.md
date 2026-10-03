@@ -1,3 +1,11 @@
+---
+title: "Garbage Collection from First Principles: Tracing GC Roots and Object Reachability"
+description: "To build systems that run continuously without leak-induced degradation, you must understand how a tracing Garbage Collector operates. Rather than relying on simple, flawed metrics like reference coun"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Garbage Collection from First Principles: Tracing GC Roots and Object Reachability
 
 To build systems that run continuously without leak-induced degradation, you must understand how a tracing Garbage Collector operates. Rather than relying on simple, flawed metrics like reference counts, modern execution environments determine memory liveness using graph-theoretic reachability analyses.

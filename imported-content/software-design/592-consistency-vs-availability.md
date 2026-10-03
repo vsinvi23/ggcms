@@ -1,3 +1,11 @@
+---
+title: "Consistency vs Availability Explained"
+description: "When designing distributed microservices, a fundamental tension exists between data accuracy and system uptime. Imagine an e-commerce platform. A user adds an item to their cart, proceeds to checkout,"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Consistency vs Availability Explained
 
 ## The Problem: Stale Data or Dead APIs

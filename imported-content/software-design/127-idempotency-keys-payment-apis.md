@@ -1,3 +1,11 @@
+---
+title: "Designing Idempotent APIs: Handling Network Retries Safely in Payments"
+description: "In distributed systems, the network is inherently unreliable. When a client makes an HTTP POST request to a server—for example, a mobile app sending a \"Charge Credit Card $50\" payload—three things can"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing Idempotent APIs: Handling Network Retries Safely in Payments
 
 ## The Problem: The "Two Generals" of HTTP

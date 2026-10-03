@@ -1,3 +1,11 @@
+---
+title: "Context Windows Explained for Software Engineers"
+description: "As Large Language Model (LLM) context windows expand from 4K tokens to 2M tokens, developers have begun treating them as infinite, zero-cost memory storage. It is common to dump entire repositories, l"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Context Windows Explained for Software Engineers
 
 ## The Problem: The Cost of "Infinite" Context

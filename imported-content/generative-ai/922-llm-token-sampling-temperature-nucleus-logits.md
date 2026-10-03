@@ -1,3 +1,11 @@
+---
+title: "LLM Decoding Strategies: Temperature, Top-K, and Top-P (Nucleus) Sampling"
+description: "**The Problem:** LLMs do not output text; they output a probability distribution (logits) over their entire vocabulary for the next token. Selecting the next token from this distribution dictates the "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Decoding Strategies: Temperature, Top-K, and Top-P (Nucleus) Sampling
 
 **The Problem:** LLMs do not output text; they output a probability distribution (logits) over their entire vocabulary for the next token. Selecting the next token from this distribution dictates the creativity, coherence, and determinism of the output. Greedy decoding (picking the highest probability token) causes repetitive loops. Sampling strategies reshape the distribution to balance exploration and exploitation.

@@ -1,3 +1,11 @@
+---
+title: "Key Derivation Functions: Why scrypt Defeats ASIC and GPU Password Cracking"
+description: "A common misconception among junior developers is that cryptographic hash functions like SHA-256 are suitable for storing user passwords. This is a critical security flaw."
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Key Derivation Functions: Why scrypt Defeats ASIC and GPU Password Cracking
 
 ## The Problem: The Speed of Cryptographic Hashes

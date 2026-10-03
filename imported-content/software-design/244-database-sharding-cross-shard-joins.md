@@ -1,3 +1,11 @@
+---
+title: "Sharded Databases: The Nightmare of Cross-Shard Joins and Application-Level Scatter-Gather"
+description: "When a monolithic relational database reaches the physical limits of a single machine—maxing out IOPS, memory, or CPU—architects often turn to **Sharding** (horizontal partitioning). By distributing r"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Databases: The Nightmare of Cross-Shard Joins and Application-Level Scatter-Gather
 
 When a monolithic relational database reaches the physical limits of a single machine—maxing out IOPS, memory, or CPU—architects often turn to **Sharding** (horizontal partitioning). By distributing rows across multiple database instances, you can scale writes infinitely. 

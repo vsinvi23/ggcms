@@ -1,3 +1,11 @@
+---
+title: "Secure Token Storage in SPAs: Comparing HttpOnly Cookies vs In-Memory Refresh Rotation"
+description: "Single Page Applications (SPAs) built with React, Vue, or Angular face a critical security dilemma when handling OAuth2/OIDC tokens: **Where do we store the tokens?**"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Secure Token Storage in SPAs: Comparing HttpOnly Cookies vs In-Memory Refresh Rotation
 
 ## The Problem

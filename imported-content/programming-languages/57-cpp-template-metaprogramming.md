@@ -1,3 +1,11 @@
+---
+title: "C++ Template Metaprogramming: Turing Completeness at Compile Time"
+description: "In systems programming, execution performance is paramount. Traditional software architectures rely heavily on runtime polymorphism (virtual functions and dynamic dispatch) to write generic, reusable "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Template Metaprogramming: Turing Completeness at Compile Time
 
 ### The Problem: Runtime Overhead vs. Code Duplication

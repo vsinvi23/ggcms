@@ -1,3 +1,11 @@
+---
+title: "OAuth State Parameter: Cryptographic Mitigation of CSRF Attacks"
+description: "During any OAuth 2.0 redirect-based flow, the user's browser is shuttled between the Client application and the Authorization Server. Because the final step (the callback) is triggered by an inbound H"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth State Parameter: Cryptographic Mitigation of CSRF Attacks
 
 During any OAuth 2.0 redirect-based flow, the user's browser is shuttled between the Client application and the Authorization Server. Because the final step (the callback) is triggered by an inbound HTTP GET request on the Client's domain, the client is highly vulnerable to **Cross-Site Request Forgery (CSRF)**.

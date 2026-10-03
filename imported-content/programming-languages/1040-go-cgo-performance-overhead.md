@@ -1,3 +1,11 @@
+---
+title: "CGO Internals: The Hidden Performance Costs of Transitioning Between Go and C boundaries"
+description: "Go developers often reach for CGO to leverage existing C/C++ libraries (e.g., SQLite, TensorFlow, OpenCV) or invoke platform-specific OS APIs. However, wrapping a fast C function in CGO frequently res"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # CGO Internals: The Hidden Performance Costs of Transitioning Between Go and C boundaries
 
 ## The Problem: The High Cost of Foreign Function Interfaces

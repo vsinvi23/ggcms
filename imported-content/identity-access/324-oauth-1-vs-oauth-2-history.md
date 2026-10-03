@@ -1,3 +1,11 @@
+---
+title: "OAuth 1.0a vs OAuth 2.0: The Death of Cryptographic MAC Tokens and the Rise of Bearer Tokens"
+description: "**Problem:** OAuth 1.0a was mathematically robust but notoriously difficult for developers to implement due to complex cryptographic signing requirements. OAuth 2.0 abandoned this cryptography in favo"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 1.0a vs OAuth 2.0: The Death of Cryptographic MAC Tokens and the Rise of Bearer Tokens
 
 **Problem:** OAuth 1.0a was mathematically robust but notoriously difficult for developers to implement due to complex cryptographic signing requirements. OAuth 2.0 abandoned this cryptography in favor of simplicity, shifting the security burden entirely to the transport layer (TLS).

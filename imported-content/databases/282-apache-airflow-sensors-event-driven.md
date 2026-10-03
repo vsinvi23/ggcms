@@ -1,3 +1,11 @@
+---
+title: "Airflow Sensors vs Deferrable Operators: Eliminating Worker Starvation in Event-Driven DAGs"
+description: "In modern data pipelines, workflows frequently wait for external events: a file landing in Amazon S3, a Snowflake copy job completing, or an external API responding. Historically, Apache Airflow monit"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Airflow Sensors vs Deferrable Operators: Eliminating Worker Starvation in Event-Driven DAGs
 
 ## The Idle Wait and Worker Starvation Problem

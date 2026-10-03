@@ -1,3 +1,11 @@
+---
+title: "Go `sync.WaitGroup` and `sync/atomic`: Wait-Free Counters and Hardware CAS Instructions"
+description: "In highly concurrent Go applications, goroutines frequently need to share and update state, such as keeping track of active connections, tallying metrics, or coordinating task completion. The traditio"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go `sync.WaitGroup` and `sync/atomic`: Wait-Free Counters and Hardware CAS Instructions
 
 ## The Problem: The High Cost of Mutexes

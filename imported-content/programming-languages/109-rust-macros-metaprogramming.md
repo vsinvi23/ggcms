@@ -1,3 +1,11 @@
+---
+title: "Rust Macros: Declarative vs Procedural Metaprogramming"
+description: "In software engineering, repetition is the enemy of maintainability. We often find ourselves writing the same structural code repeatedly—implementing a trait for ten different numeric types, generatin"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Macros: Declarative vs Procedural Metaprogramming
 
 ## The Problem: Boilerplate and Boilerplate Alone

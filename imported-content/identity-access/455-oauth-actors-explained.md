@@ -1,3 +1,11 @@
+---
+title: "OAuth Actors Explained: Core Architecture Roles"
+description: "To design, implement, or troubleshoot an OAuth 2.0 implementation, you must move beyond abstract definitions of \"apps\" and \"servers\" and adopt the precise, standard terminology defined in RFC 6749."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth Actors Explained: Core Architecture Roles
 
 To design, implement, or troubleshoot an OAuth 2.0 implementation, you must move beyond abstract definitions of "apps" and "servers" and adopt the precise, standard terminology defined in RFC 6749.

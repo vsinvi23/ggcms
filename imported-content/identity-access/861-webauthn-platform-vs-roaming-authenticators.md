@@ -1,3 +1,11 @@
+---
+title: "WebAuthn: Platform vs Roaming Authenticators and CTAP2 Protocol Handshakes"
+description: "When engineering passwordless authentication with WebAuthn (FIDO2), developers face complex, state-dependent architectural options. The key design issue centers around authenticator selection. Specifi"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # WebAuthn: Platform vs Roaming Authenticators and CTAP2 Protocol Handshakes
 
 ## The Problem: The Challenge of Enforcing Hardware Cryptographic Assurances

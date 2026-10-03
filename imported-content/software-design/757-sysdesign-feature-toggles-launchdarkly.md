@@ -1,3 +1,11 @@
+---
+title: "Feature Toggles: Branch by Abstraction and Decoupling Deployment from Software Release"
+description: "In traditional software development, large features are developed on long-lived \"feature branches.\" Developers work for weeks or months in isolation. When it is finally time to integrate, the team spe"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Feature Toggles: Branch by Abstraction and Decoupling Deployment from Software Release
 
 ## The Problem: The Merge Conflict and Delivery Bottleneck

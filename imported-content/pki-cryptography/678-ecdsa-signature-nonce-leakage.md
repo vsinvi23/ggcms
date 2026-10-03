@@ -1,3 +1,11 @@
+---
+title: "Digital Signatures: The Mathematics of ECDSA Verification and Nonce Leakage Hazards"
+description: "The Elliptic Curve Digital Signature Algorithm (ECDSA) is the mathematical bedrock of digital signatures in blockchains (Bitcoin, Ethereum), TLS connections, and SSH handshakes. It is favored for its "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Digital Signatures: The Mathematics of ECDSA Verification and Nonce Leakage Hazards
 
 ## The Problem: The Fragile Lifecycle of ECDSA Nonces

@@ -1,3 +1,11 @@
+---
+title: "Post-Quantum Signatures: Transitioning to Crystals-Dilithium (ML-DSA)"
+description: "Modern Public Key Infrastructure (PKI) relies entirely on asymmetric cryptography algorithms like RSA, ECDSA, and EdDSA. The bedrock security of these algorithms is anchored in the mathematical diffic"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Post-Quantum Signatures: Transitioning to Crystals-Dilithium (ML-DSA)
 
 ## The Problem: Shor's Algorithm and the Quantum Threat

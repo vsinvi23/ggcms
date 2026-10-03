@@ -1,3 +1,11 @@
+---
+title: "Sharded Database Routing: Stabilizing Node Failures with Consistent Hashing and Virtual Nodes (VNodes)"
+description: "In distributed caching (like Memcached) or databases (like Cassandra), we must map a key to a specific node. The naive approach is Modulo Hashing:"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Database Routing: Stabilizing Node Failures with Consistent Hashing and Virtual Nodes (VNodes)
 
 ## The Problem: The Modulo Hashing Collapse

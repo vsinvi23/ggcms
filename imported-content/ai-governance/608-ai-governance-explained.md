@@ -1,4 +1,4 @@
----
+--- 
 title: "AI Governance Explained: Turning Responsible AI Principles Into Engineering Practice"
 slug: "ai-governance-explained"
 category: "AI Governance"
@@ -37,7 +37,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # AI Governance Explained: Turning Responsible AI Principles Into Engineering Practice
 

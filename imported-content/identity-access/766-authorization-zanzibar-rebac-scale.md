@@ -1,3 +1,11 @@
+---
+title: "Google Zanzibar vs. OPA: ReBAC at Global Scale"
+description: "When scaling modern enterprise platforms, traditional Access Control models such as **Role-Based Access Control (RBAC)** and **Attribute-Based Access Control (ABAC)** hit a scaling wall. Consider a co"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Google Zanzibar vs. OPA: ReBAC at Global Scale
 
 ## The Problem: The Granular Authorization Scaling Wall

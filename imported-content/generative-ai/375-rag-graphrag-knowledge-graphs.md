@@ -1,3 +1,11 @@
+---
+title: "GraphRAG: Fusing Vector Search with Cypher Knowledge Graphs"
+description: "**The Problem:** Vector databases are excellent at finding semantically similar text, but they are terrible at complex relational logic. If you ask a vector DB, \"Which employees report to the manager "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # GraphRAG: Fusing Vector Search with Cypher Knowledge Graphs
 
 **The Problem:** Vector databases are excellent at finding semantically similar text, but they are terrible at complex relational logic. If you ask a vector DB, "Which employees report to the manager of the person who wrote document X?", it will fail completely. Vector distance does not represent structural ontology.

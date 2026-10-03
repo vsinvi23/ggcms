@@ -1,3 +1,11 @@
+---
+title: "Authentication Architecture Explained: Factors and IdPs"
+description: "For decades, the first task in building a new web application was writing the `users` table schema, hashing passwords with bcrypt, and managing session cookies."
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Authentication Architecture Explained: Factors and IdPs
 
 ## The Problem: "Building our own login system"

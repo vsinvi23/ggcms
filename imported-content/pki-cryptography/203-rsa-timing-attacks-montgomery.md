@@ -1,3 +1,11 @@
+---
+title: "RSA Timing Attacks: Mitigating Side-Channels with Montgomery Reduction and Blinding"
+description: "In theoretical cryptography, RSA is a purely mathematical construct: given a ciphertext $c$ and a private key $(d, n)$, the plaintext $m$ is recovered via the modular exponentiation $m = c^d \pmod n$."
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # RSA Timing Attacks: Mitigating Side-Channels with Montgomery Reduction and Blinding
 
 ## The Problem: The Cryptographic Stopwatch

@@ -1,3 +1,11 @@
+---
+title: "Clean Architecture: Ports and Adapters (Hexagonal) in Microservices"
+description: "One of the most insidious architectural anti-patterns in modern microservice development is the \"Framework Trap.\" It begins innocently: a team chooses a web framework (like Express, Spring Boot, or Fi"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Clean Architecture: Ports and Adapters (Hexagonal) in Microservices
 
 ## The Problem: The Framework Trap

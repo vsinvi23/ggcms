@@ -1,3 +1,11 @@
+---
+title: "Secure File Upload Architecture: Defeating Polyglot Files and Execute Bypass"
+description: "Allowing users to upload files is one of the highest-risk capabilities a web application can offer. Attackers leverage upload forms to distribute malware, trigger client-side XSS, or achieve Remote Co"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Secure File Upload Architecture: Defeating Polyglot Files and Execute Bypass
 
 ## The Problem

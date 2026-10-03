@@ -1,3 +1,11 @@
+---
+title: "Tool Poisoning Attacks Against AI Agents"
+description: "As Large Language Model (LLM) architectures shift from passive chatbots to active, tool-using agents, a critical new vulnerability class has emerged: **Tool Poisoning**. By compromising the structured"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # Tool Poisoning Attacks Against AI Agents
 
 As Large Language Model (LLM) architectures shift from passive chatbots to active, tool-using agents, a critical new vulnerability class has emerged: **Tool Poisoning**. By compromising the structured response returned by an API or a Model Context Protocol (MCP) server, an attacker can inject malicious payloads that hijack the agent's logical reasoning loop and force the execution of unauthorized subsequent actions.

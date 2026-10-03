@@ -1,3 +1,11 @@
+---
+title: "Go Error Handling: The Mechanics of `defer`, `panic`, and `recover`"
+description: "In Go, error handling is explicitly designed to be simple, predictable, and clean, steering clear of traditional `try-catch` exception blocks. However, when standard `error` returns are insufficient, "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Error Handling: The Mechanics of `defer`, `panic`, and `recover`
 
 In Go, error handling is explicitly designed to be simple, predictable, and clean, steering clear of traditional `try-catch` exception blocks. However, when standard `error` returns are insufficient, Go provides three specific runtime control flow mechanisms: `defer`, `panic`, and `recover`.

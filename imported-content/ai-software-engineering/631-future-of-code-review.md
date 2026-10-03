@@ -1,4 +1,4 @@
----
+--- 
 title: "AI Coding Agents and the Future of Code Review"
 slug: "ai-coding-agents-future-of-code-review"
 category: "AI Software Engineering"
@@ -42,7 +42,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # AI Coding Agents and the Future of Code Review
 

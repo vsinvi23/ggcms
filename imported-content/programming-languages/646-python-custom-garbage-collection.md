@@ -1,3 +1,11 @@
+---
+title: "Python CPython GC Tuning: Configuring Reference Counts and Generational Thresholds"
+description: "Python manages memory using a two-tier strategy: **Reference Counting** and a **Generational Cyclic Garbage Collector (GC)**. While reference counting instantly cleans up objects when their reference "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python CPython GC Tuning: Configuring Reference Counts and Generational Thresholds
 
 ## The Problem

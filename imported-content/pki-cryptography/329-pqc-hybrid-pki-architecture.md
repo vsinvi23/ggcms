@@ -1,3 +1,11 @@
+---
+title: "Post-Quantum Hybrid PKI: Combining Classical ECC with ML-KEM"
+description: "A Cryptographically Relevant Quantum Computer (CRQC) running Shor's algorithm will completely compromise asymmetric cryptography based on integer factorization (RSA) and discrete logarithms (ECC). Whi"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Post-Quantum Hybrid PKI: Combining Classical ECC with ML-KEM
 
 ## The Problem: Shor's Algorithm and the "Store Now, Decrypt Later" Threat

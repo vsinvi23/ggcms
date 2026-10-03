@@ -1,3 +1,11 @@
+---
+title: "Function Pointers Explained"
+description: "C is a procedural language without native support for Object-Oriented polymorphism (interfaces, virtual methods) or dynamic dispatch. When you need a system that can swap out behavior at runtime—like "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Function Pointers Explained
 
 ## The Problem

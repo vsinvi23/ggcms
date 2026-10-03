@@ -1,3 +1,11 @@
+---
+title: "Bleichenbacher's Oracle: How Padding Flaws Break RSA Encryption"
+description: "In introductory cryptography, we learn \"Textbook RSA\": to encrypt a message $m$, you compute the ciphertext $c = m^e \pmod n$."
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Bleichenbacher's Oracle: How Padding Flaws Break RSA Encryption
 
 ## The Problem: The Danger of "Textbook RSA"

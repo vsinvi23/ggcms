@@ -1,3 +1,11 @@
+---
+title: "System Design Basics: Layer 4 vs Layer 7 Load Balancing"
+description: "A single server has finite resources (CPU, Memory, Network I/O). As traffic scales, we must distribute incoming requests across a fleet of servers. A Load Balancer sits between the clients and the bac"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # System Design Basics: Layer 4 vs Layer 7 Load Balancing
 
 ## The Problem

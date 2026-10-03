@@ -1,3 +1,11 @@
+---
+title: "RAII: The C++ Idea That Changes Everything"
+description: "In computer science, managing resources—memory, file descriptors, network sockets, and database connections—is one of the most critical challenges. Garbage-collected languages (such as Java, Python, o"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # RAII: The C++ Idea That Changes Everything
 
 In computer science, managing resources—memory, file descriptors, network sockets, and database connections—is one of the most critical challenges. Garbage-collected languages (such as Java, Python, or C#) have standardized memory cleanup, but they fail fundamentally when it comes to non-memory resources. In C++, Resource Acquisition Is Initialization (RAII) provides a complete, compile-time, deterministic solution to resource management. It is arguably the single most powerful pattern in the language.

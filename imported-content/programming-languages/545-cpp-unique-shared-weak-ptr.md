@@ -1,3 +1,11 @@
+---
+title: "unique_ptr vs. shared_ptr vs. weak_ptr: Ownership Semantics and Reference Counting Internals"
+description: "Modern C++ provides three smart pointers that codify object ownership rules directly into the type system: `std::unique_ptr`, `std::shared_ptr`, and `std::weak_ptr`. Misunderstanding their distinct ow"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # unique_ptr vs. shared_ptr vs. weak_ptr: Ownership Semantics and Reference Counting Internals
 
 Modern C++ provides three smart pointers that codify object ownership rules directly into the type system: `std::unique_ptr`, `std::shared_ptr`, and `std::weak_ptr`. Misunderstanding their distinct ownership semantics and internal memory layouts leads to performance bottlenecks, resource cycles, or thread-safety hazards. This deep dive analyzes their mechanics and details how to apply them to build robust systems.

@@ -1,3 +1,11 @@
+---
+title: "Secure File Upload Architecture: Defeating Polyglot Files and Execute Bypass"
+description: "Allowing users to upload files—resumes, avatars, financial documents—is a business necessity, but it represents one of the most critical threat vectors in web applications. A poorly designed upload me"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Secure File Upload Architecture: Defeating Polyglot Files and Execute Bypass
 
 ## The Problem: The Trojan Horse in the Application

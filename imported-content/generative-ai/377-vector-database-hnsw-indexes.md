@@ -1,3 +1,11 @@
+---
+title: "Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs"
+description: "**The Problem:** Finding the exact closest vector in a database of 10 million embeddings requires calculating the distance between the query vector and *every single one* of the 10 million vectors (K-"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs
 
 **The Problem:** Finding the exact closest vector in a database of 10 million embeddings requires calculating the distance between the query vector and *every single one* of the 10 million vectors (K-Nearest Neighbors / K-NN). This exhaustive search, $O(N)$, is far too slow for real-time RAG applications. 

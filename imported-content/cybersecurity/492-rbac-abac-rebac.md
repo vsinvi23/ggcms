@@ -1,3 +1,11 @@
+---
+title: "RBAC vs. ABAC vs. ReBAC: Reimagining Authorization with Google Zanzibar"
+description: "Traditional access control models assume static hierarchies or flat attribute sets."
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # RBAC vs. ABAC vs. ReBAC: Reimagining Authorization with Google Zanzibar
 
 ## The Problem: The Graph Authorization Nightmare

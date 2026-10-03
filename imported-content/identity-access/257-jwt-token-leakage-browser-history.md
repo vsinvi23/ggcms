@@ -1,3 +1,11 @@
+---
+title: "Token Leakage: Why Passing JWTs in URL Query Parameters is a Critical Vulnerability"
+description: "JSON Web Tokens (JWTs) are the standard mechanism for maintaining stateless authentication in modern web applications. The secure and accepted standard for transmitting a JWT from a client to a server"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Token Leakage: Why Passing JWTs in URL Query Parameters is a Critical Vulnerability
 
 ## The Problem: The Temptation of URL-Based Authentication

@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking"
+description: "Standard Retrieval-Augmented Generation (RAG) pipelines rely on **Bi-Encoders** to search and retrieve relevant documents."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking
 
 ### The Problem: The Precision Bottleneck of Vector Search (Bi-Encoders)

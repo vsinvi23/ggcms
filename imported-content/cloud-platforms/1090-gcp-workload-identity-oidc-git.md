@@ -1,3 +1,11 @@
+---
+title: "GCP Workload Identity Federation: Eliminating Static Keys in GitHub Actions Pipelines"
+description: "Historically, authenticating a CI/CD pipeline (like GitHub Actions) to Google Cloud Platform (GCP) required generating a long-lived Service Account JSON key, storing it as a repository secret, and pas"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Workload Identity Federation: Eliminating Static Keys in GitHub Actions Pipelines
 
 ## The Problem: The Perils of Static Service Account Keys

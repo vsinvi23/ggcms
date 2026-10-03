@@ -1,4 +1,4 @@
----
+--- 
 title: "Zero Trust for AI Agents: Applying Zero Trust Principles to Autonomous Systems"
 slug: "zero-trust-for-ai-agents-autonomous-systems"
 category: "Security"
@@ -44,7 +44,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "identity-access"
 ---
+
 
 # Zero Trust for AI Agents: Applying Zero Trust Principles to Autonomous Systems
 

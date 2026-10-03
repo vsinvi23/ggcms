@@ -1,3 +1,11 @@
+---
+title: "Secure File Upload Architecture: Defeating Polyglot Files and Execute Bypass"
+description: "Enabling users to upload files (e.g., profile avatars, documents, attachments) is a standard requirement for modern web applications. However, file upload interfaces represent one of the most high-ris"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Secure File Upload Architecture: Defeating Polyglot Files and Execute Bypass
 
 ## The Problem: The Ingestion of Hostile Executables

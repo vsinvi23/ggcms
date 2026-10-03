@@ -1,3 +1,11 @@
+---
+title: "SIEM Explained from Scratch: Aggregation, Correlation, and Alerting"
+description: "An attacker phishes a user (Email Gateway logs), VPNs into the network (VPN Firewall logs), downloads a payload (Web Proxy logs), and creates a local admin account (Endpoint logs)."
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # SIEM Explained from Scratch: Aggregation, Correlation, and Alerting
 
 ## The Problem: Siloed Visibility

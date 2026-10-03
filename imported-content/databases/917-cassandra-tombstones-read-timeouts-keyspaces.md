@@ -1,3 +1,11 @@
+---
+title: "Cassandra Deletions: Why Tombstones Cause Read Latency and Timeouts"
+description: "In relational databases like MySQL or PostgreSQL, deleting a row immediately reclaims or flags that space for in-place overwriting."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Deletions: Why Tombstones Cause Read Latency and Timeouts
 
 ## The Problem: The Deletion Paradox of Log-Structured Databases

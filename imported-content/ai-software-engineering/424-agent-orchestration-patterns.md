@@ -1,3 +1,11 @@
+---
+title: "Agent Orchestration Patterns: Supervisor, Hierarchical, and Network Routing"
+description: "As systems scale from isolated chat agents to complex multi-agent pipelines, coordinating interactions becomes the primary engineering challenge. Without a formal orchestration pattern, developers fal"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Agent Orchestration Patterns: Supervisor, Hierarchical, and Network Routing
 
 ## The Coordination Chaos Problem

@@ -1,3 +1,11 @@
+---
+title: "Agentic AI: The ReAct (Reason + Act) Loop Pattern"
+description: "**The Problem:** Standard LLMs suffer from hallucinations, outdated information, and an inability to affect the real world. They are passive text generators. To build autonomous agents that solve comp"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Agentic AI: The ReAct (Reason + Act) Loop Pattern
 
 **The Problem:** Standard LLMs suffer from hallucinations, outdated information, and an inability to affect the real world. They are passive text generators. To build autonomous agents that solve complex, multi-step problems, the model needs a cognitive architecture that interleaves thinking with execution.

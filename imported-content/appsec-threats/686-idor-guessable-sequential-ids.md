@@ -1,3 +1,11 @@
+---
+title: "Insecure Direct Object References (IDOR): Mitigating Guessable Sequential Primary Keys"
+description: "Insecure Direct Object References (IDOR) happen when an application exposes a direct reference to an internal database row identifier—such as an auto-incrementing integer (`1`, `2`, `3`)—directly with"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Insecure Direct Object References (IDOR): Mitigating Guessable Sequential Primary Keys
 
 ## The Problem: Trivial Data Harvesting via Parameter Tampering

@@ -1,3 +1,11 @@
+---
+title: "AES-CBC Padding Oracles: How POODLE and Lucky13 Exploit Block Padding"
+description: "The Cipher Block Chaining (CBC) mode of operation for symmetric encryption (such as AES-CBC) requires the input plaintext to be a multiple of the cipher's block size (16 bytes for AES). To achieve thi"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # AES-CBC Padding Oracles: How POODLE and Lucky13 Exploit Block Padding
 
 ## The Problem: Malleability and Validation Leakage in CBC Mode

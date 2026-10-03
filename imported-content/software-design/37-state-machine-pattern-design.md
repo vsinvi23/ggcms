@@ -1,3 +1,11 @@
+---
+title: "The State Machine Design Pattern: Implementing Clear Workflows"
+description: "In enterprise software engineering, business processes are almost always stateful. Consider a typical `Order` workflow with multiple states: `Draft`, `Paid`, `Shipped`, and `Cancelled`."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The State Machine Design Pattern: Implementing Clear Workflows
 
 ## The Problem: The Nested "If-Else" Nightmare

@@ -1,3 +1,11 @@
+---
+title: "Cassandra Gossip Protocol: Decentralized Node Failure Detection"
+description: "In many distributed databases, cluster state is managed by a centralized \"master\" node or a separate consensus cluster (like ZooKeeper or etcd). If node A wants to know if node B is dead, it asks the "
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Gossip Protocol: Decentralized Node Failure Detection
 
 ## The Problem: The Single Point of Failure in Cluster Management

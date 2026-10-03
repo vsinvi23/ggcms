@@ -1,3 +1,11 @@
+---
+title: "Use-After-Free (UAF) Explained"
+description: "Use-After-Free (UAF) is a critical memory safety vulnerability. It occurs when a program continues to use a pointer to heap memory after that memory has been deallocated via `free()`. Because the heap"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Use-After-Free (UAF) Explained
 
 ## The Problem

@@ -1,3 +1,11 @@
+---
+title: "HTTP Request Smuggling and Desync Attacks: Bypassing WAFs and Reverse Proxies"
+description: "Unpack the mechanics of HTTP/1.1 request desynchronization, dissect the byte-level parsing discrepancies between reverse proxies and backends, and master the architecture-level defenses to shield connection pools from hijacking and cache poisoning."
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # HTTP Request Smuggling and Desync Attacks: Bypassing WAFs and Reverse Proxies
 
 > Unpack the mechanics of HTTP/1.1 request desynchronization, dissect the byte-level parsing discrepancies between reverse proxies and backends, and master the architecture-level defenses to shield connection pools from hijacking and cache poisoning.

@@ -1,3 +1,11 @@
+---
+title: "Deserialization Attacks: How Java Object Streams Lead to Remote Code Execution"
+description: "Java's native serialization mechanism allows developers to convert in-memory object graphs into a byte stream (typically identified by the magic bytes `AC ED 00 05`) and reconstruct them later via `Ob"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Deserialization Attacks: How Java Object Streams Lead to Remote Code Execution
 
 ## The Problem: Implicit Trust in Object State

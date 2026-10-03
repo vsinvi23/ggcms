@@ -1,3 +1,11 @@
+---
+title: "Java Generics: Why Do They Exist? Type Erasure and Compile-Time Safety"
+description: "Before Java 5 (released in 2004), writing reusable, generic containers was inherently unsafe and plagued by runtime fragility. Collections like `ArrayList` could only store references to `java.lang.Ob"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Generics: Why Do They Exist? Type Erasure and Compile-Time Safety
 
 ## The Problem: Pre-Generics Heterogeneous Chaos and Cast Overhead

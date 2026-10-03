@@ -1,3 +1,11 @@
+---
+title: "Advanced Go Profiling: Finding CPU Bottlenecks and Memory Leaks with pprof and runtime/trace"
+description: "When a Go application scales, performance degradation rarely manifests as a clean panic. Instead, it hides in slow memory leaks, unexpected garbage collection (GC) pauses, and inefficient CPU utilizat"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Advanced Go Profiling: Finding CPU Bottlenecks and Memory Leaks with pprof and runtime/trace
 
 ## The Observability Problem in Go

@@ -1,3 +1,11 @@
+---
+title: "Kafka Partitioning: Horizontal Scaling of Message Brokering and Rebalancing"
+description: "In real-time streaming architectures, processing millions of write events per second on a single, centralized message broker is physically impossible. Storage bandwidth limits, disk capacity ceilings,"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Partitioning: Horizontal Scaling of Message Brokering and Rebalancing
 
 ## The Problem: High-Throughput Storage Bottlenecks and Total Ordering

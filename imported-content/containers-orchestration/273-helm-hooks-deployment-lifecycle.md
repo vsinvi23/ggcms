@@ -1,3 +1,11 @@
+---
+title: "Advanced Helm: Hooks for Database Migrations in Deployment Lifecycles"
+description: "In microservice architectures, applications often manage their own database schemas. A common, yet dangerous, anti-pattern is executing database migrations (like Liquibase, Flyway, or custom scripts) "
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Advanced Helm: Hooks for Database Migrations in Deployment Lifecycles
 
 ## The Problem: The Startup Migration Anti-Pattern

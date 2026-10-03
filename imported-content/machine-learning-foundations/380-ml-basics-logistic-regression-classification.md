@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Logistic Regression and the Sigmoid Activation Function"
+description: "In binary classification tasks (such as identifying fraudulent financial transactions, detecting spam emails, or predicting server node failure), we require a model that outputs a well-calibrated prob"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Logistic Regression and the Sigmoid Activation Function
 
 In binary classification tasks (such as identifying fraudulent financial transactions, detecting spam emails, or predicting server node failure), we require a model that outputs a well-calibrated probability rather than a continuous, unbounded number. Trying to use Linear Regression for binary targets fails because its predictions can go below 0 or exceed 1, and its decision boundary is highly vulnerable to outliers. Logistic Regression solves this by mapping linear predictions into a closed interval of $(0, 1)$ using the Sigmoid activation function.

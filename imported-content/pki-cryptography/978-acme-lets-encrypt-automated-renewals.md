@@ -1,3 +1,11 @@
+---
+title: "ACME Let's Encrypt: Configuring Certbot Timers for Automated Seamless Renewals"
+description: "Historically, managing SSL/TLS certificates was a manual process: buying files from a CA, verifying domains, and pasting keys into servers. With the introduction of Let's Encrypt and the **ACME (Autom"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # ACME Let's Encrypt: Configuring Certbot Timers for Automated Seamless Renewals
 
 ## The Problem: Outages Triggered by Manual Certificate Renewals

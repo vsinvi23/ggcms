@@ -1,3 +1,11 @@
+---
+title: "Agentic Software Engineering: From Prompt to Production"
+description: "Integrating AI coding agents into production-grade systems introduces severe quality-assurance challenges. If agent-generated pull requests (PRs) are merged without structured oversight, they can intr"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Agentic Software Engineering: From Prompt to Production
 
 Integrating AI coding agents into production-grade systems introduces severe quality-assurance challenges. If agent-generated pull requests (PRs) are merged without structured oversight, they can introduce security flaws, architectural regressions, and dependency conflicts. Moving safely from a natural language prompt to a production deployment requires a continuous integration (CI) pipeline optimized for machine-generated code.

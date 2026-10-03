@@ -1,3 +1,11 @@
+---
+title: "Deciphering TLS Cipher Suites: Key Exchange, Bulk Encryption, and MACs"
+description: "**Problem:** A TLS cipher suite like `TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384` appears as an impenetrable string of cryptographic acronyms. Without understanding its anatomical structure, engineers cann"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Deciphering TLS Cipher Suites: Key Exchange, Bulk Encryption, and MACs
 
 **Problem:** A TLS cipher suite like `TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384` appears as an impenetrable string of cryptographic acronyms. Without understanding its anatomical structure, engineers cannot audit transport security, enforce compliance, or prevent downgrade attacks.

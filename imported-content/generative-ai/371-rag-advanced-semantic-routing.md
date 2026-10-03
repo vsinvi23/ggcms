@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Semantic Routing and Intent Classification"
+description: "**The Problem:** Standard RAG pipelines treat every query as a nail and vector search as a hammer. If a user asks, \"Summarize the document,\" doing a chunk-level top-K vector search returns isolated fr"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Semantic Routing and Intent Classification
 
 **The Problem:** Standard RAG pipelines treat every query as a nail and vector search as a hammer. If a user asks, "Summarize the document," doing a chunk-level top-K vector search returns isolated fragments, resulting in a fractured, incoherent summary.

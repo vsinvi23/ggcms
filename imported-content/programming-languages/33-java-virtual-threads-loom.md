@@ -1,3 +1,11 @@
+---
+title: "Project Loom: Virtual Threads and Concurrency in Java 21"
+description: "For decades, Java followed a simple and intuitive execution model: the **Thread-per-Request** paradigm. Each incoming web request or transaction was processed by a dedicated execution thread. Writing,"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Project Loom: Virtual Threads and Concurrency in Java 21
 
 For decades, Java followed a simple and intuitive execution model: the **Thread-per-Request** paradigm. Each incoming web request or transaction was processed by a dedicated execution thread. Writing, debugging, and tracing synchronous code was straightforward because stack traces matched the logical sequence of operations.

@@ -1,3 +1,11 @@
+---
+title: "Docker Resource Constraints: Hardening Host Stability with cgroups Resource Boundaries"
+description: "When containers run without resource limits, they pose a significant threat to host stability. By default, a container has unrestricted access to the host's physical memory and CPU scheduling cycles. "
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Resource Constraints: Hardening Host Stability with cgroups Resource Boundaries
 
 When containers run without resource limits, they pose a significant threat to host stability. By default, a container has unrestricted access to the host's physical memory and CPU scheduling cycles. If an application encounters a memory leak or a thread deadlock, it can consume all available RAM and CPU. This triggers a "Noisy Neighbor" crisis, starving adjacent services of execution power and forcing the Linux host's Out-Of-Memory (OOM) killer to terminate vital system daemons, rendering the entire host unresponsive.

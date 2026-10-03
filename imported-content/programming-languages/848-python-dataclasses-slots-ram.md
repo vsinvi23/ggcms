@@ -1,3 +1,11 @@
+---
+title: "Python Memory Optimization: How __slots__ Drastically Reduces Dataclass RAM Footprints"
+description: "A data engineering team designs a Python graph-processing service to analyze real-time transactional fraud. The service models users and transactions as individual nodes in an in-memory graph."
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Memory Optimization: How __slots__ Drastically Reduces Dataclass RAM Footprints
 
 ## The Problem: Memory Starvation from Millions of Objects

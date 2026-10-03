@@ -1,3 +1,11 @@
+---
+title: "Distributed Caching Strategies: Cache-Aside, Write-Through, and Write-Behind"
+description: "As a system scales, databases inevitably become the primary bottleneck. Disk I/O, network latency, and complex query execution add up, resulting in sluggish response times for end users. Throwing hard"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed Caching Strategies: Cache-Aside, Write-Through, and Write-Behind
 
 ## The Problem: Database Bottlenecks

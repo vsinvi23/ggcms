@@ -1,3 +1,11 @@
+---
+title: "CSRF Explained: Forging State-Changing Requests"
+description: "Cross-Site Request Forgery (CSRF) is an attack that forces an end user to execute unwanted actions on a web application in which they are currently authenticated."
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # CSRF Explained: Forging State-Changing Requests
 
 ## The Problem: The Confused Deputy

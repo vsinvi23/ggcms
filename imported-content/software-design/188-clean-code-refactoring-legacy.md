@@ -1,3 +1,11 @@
+---
+title: "Refactoring Legacy Code: The Sprout Method and Feature Toggles"
+description: "Every engineer eventually inherits a legacy codebase. It usually contains massive, 3,000-line \"God classes\" with tightly coupled logic, global state, and zero automated tests."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Refactoring Legacy Code: The Sprout Method and Feature Toggles
 
 ## The Problem: The Spaghetti Code Fear

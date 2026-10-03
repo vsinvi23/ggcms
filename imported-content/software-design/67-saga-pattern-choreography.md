@@ -1,3 +1,11 @@
+---
+title: "Event-Driven Sagas: Choreography and Distributed Rollbacks"
+description: "In a monolithic application backed by a single relational database, ensuring data consistency is easy. We use ACID transactions. If a user places an order, we deduct inventory and charge their credit "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Event-Driven Sagas: Choreography and Distributed Rollbacks
 
 ## The Problem: The Distributed Transaction

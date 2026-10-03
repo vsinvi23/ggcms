@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Pod Security Standards (PSS) and Admission Controllers"
+description: "Historically, Kubernetes administrators relied on `PodSecurityPolicy` (PSP) to prevent developers from deploying highly privileged, dangerous pods. PSPs could block containers from running as root, mo"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Pod Security Standards (PSS) and Admission Controllers
 
 ## The Problem: The Death of PodSecurityPolicies (PSP)

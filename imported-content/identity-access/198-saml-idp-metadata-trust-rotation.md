@@ -1,3 +1,11 @@
+---
+title: "Managing SAML Trust: Automated IdP Metadata and Certificate Rotation"
+description: "A Security Assertion Markup Language (SAML) single sign-on (SSO) integration relies on a tight cryptographic trust anchor. The Service Provider (SP) validates incoming user assertions by signing them "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Managing SAML Trust: Automated IdP Metadata and Certificate Rotation
 
 ## The Problem

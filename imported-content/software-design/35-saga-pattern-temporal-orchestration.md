@@ -1,3 +1,11 @@
+---
+title: "Saga Pattern: Centralized Orchestration with Temporal"
+description: "In a traditional monolithic system, ensuring that a series of operations either all succeed or all fail is trivial. You wrap the database calls inside a standard ACID transaction, and the database gua"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Saga Pattern: Centralized Orchestration with Temporal
 
 ## The Problem: The Distributed Transaction Disaster

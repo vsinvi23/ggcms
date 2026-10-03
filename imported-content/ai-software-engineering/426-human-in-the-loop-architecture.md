@@ -1,3 +1,11 @@
+---
+title: "Human-in-the-Loop AI Architecture: Engineering Reliable Approval Gates"
+description: "When deploying AI agents in production environments, granting them direct write access to external systems—such as database modification, email transmission, or financial transfers—presents severe ope"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Human-in-the-Loop AI Architecture: Engineering Reliable Approval Gates
 
 ## The Autonomy Hazard in Production Agents

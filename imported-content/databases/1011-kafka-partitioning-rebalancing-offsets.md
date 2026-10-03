@@ -1,3 +1,11 @@
+---
+title: "Kafka Partitioning: Horizontal Scaling of Message Brokering and Rebalancing"
+description: "In high-throughput message architectures, single-broker systems fail due to disk I/O, network bandwidth, and CPU bottlenecks. Traditional message queues also struggle to scale out horizontally while p"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Partitioning: Horizontal Scaling of Message Brokering and Rebalancing
 
 ## The Problem: Scalability and the "Stop-the-World" Rebalance Bottleneck

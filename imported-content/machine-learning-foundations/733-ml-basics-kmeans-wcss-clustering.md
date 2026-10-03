@@ -1,3 +1,11 @@
+---
+title: "Unsupervised Learning: K-Means Clustering and the Elbow Method"
+description: "When operating on unlabelled datasets (e.g., customer segmentation, anomaly detection, image compression), there is no target variable $y$ to predict. The engineering objective shifts from prediction "
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Unsupervised Learning: K-Means Clustering and the Elbow Method
 
 ## The Problem

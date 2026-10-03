@@ -1,3 +1,11 @@
+---
+title: "Why Kubernetes Exists: Self-Healing and Network Load Balancing"
+description: "Running a containerized application in production using raw engines (like standalone Docker or containerd) works well for small development projects. However, when deployed at enterprise scale, raw co"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Why Kubernetes Exists: Self-Healing and Network Load Balancing
 
 ## The Problem: The High Operational Overhead of Raw Containers

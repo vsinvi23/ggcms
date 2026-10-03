@@ -1,3 +1,11 @@
+---
+title: "AI Coding Agents Explained: What Really Happens When an Agent Writes Your Code?"
+description: "Applying manual or localized code changes in complex systems often results in regression. Traditional autocomplete tools suggest immediate tokens but lack global awareness. When an autonomous AI codin"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # AI Coding Agents Explained: What Really Happens When an Agent Writes Your Code?
 
 Applying manual or localized code changes in complex systems often results in regression. Traditional autocomplete tools suggest immediate tokens but lack global awareness. When an autonomous AI coding agent writes or refactors code, it does not merely guess the next characters; it coordinates context windows, token generation loops, and Abstract Syntax Tree (AST) validation.

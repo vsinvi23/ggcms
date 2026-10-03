@@ -1,3 +1,11 @@
+---
+title: "Kafka Log Compaction: Retaining the Latest Key State for KTables and CDC Streams"
+description: "Apache Kafka is fundamentally an append-only distributed commit log. By default, it retains data based on a time limit (e.g., 7 days) or a size limit (e.g., 50GB per partition). When these limits are "
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Log Compaction: Retaining the Latest Key State for KTables and CDC Streams
 
 ### The Problem: Unbounded Streams vs. Current State

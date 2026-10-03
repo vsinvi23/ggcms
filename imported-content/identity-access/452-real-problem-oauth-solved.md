@@ -1,3 +1,11 @@
+---
+title: "The Real Problem OAuth Was Created to Solve: Delegated Authorization Without Credential Exposure"
+description: "Many developers assume OAuth was created to let people log in using Google or Facebook. This is a historical misconception. OAuth was not designed as an authentication protocol; it was created to solv"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # The Real Problem OAuth Was Created to Solve: Delegated Authorization Without Credential Exposure
 
 Many developers assume OAuth was created to let people log in using Google or Facebook. This is a historical misconception. OAuth was not designed as an authentication protocol; it was created to solve a highly specific, high-friction integration problem: **delegated authorization without credential exposure**.

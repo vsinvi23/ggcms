@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Pod Security Standards (PSS) and Admission Controllers"
+description: "With the deprecation and eventual removal of PodSecurityPolicy (PSP) in Kubernetes v1.25, many clusters were left without a native mechanism to enforce runtime container security limits. Without secur"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Pod Security Standards (PSS) and Admission Controllers
 
 With the deprecation and eventual removal of PodSecurityPolicy (PSP) in Kubernetes v1.25, many clusters were left without a native mechanism to enforce runtime container security limits. Without security admission controllers in place, users can deploy pods that run as `root`, share host namespaces, execute in privileged mode, or mount dangerous host directories.

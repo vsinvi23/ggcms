@@ -1,3 +1,11 @@
+---
+title: "OAuth for Microservices: Token Relay and Validation Gating"
+description: "When shifting from monoliths to microservices, identity context propagation becomes a massive challenge. A client request reaches an API Gateway, which then calls Service A, which calls Service B, and"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth for Microservices: Token Relay and Validation Gating
 
 ## The Problem

@@ -1,3 +1,11 @@
+---
+title: "HTTP Request Smuggling: Exploiting Frontend/Backend Desync Vulnerabilities"
+description: "HTTP Request Smuggling (HRS) occurs when a frontend server (like a load balancer, reverse proxy, or WAF) and a backend server disagree on where a single HTTP request ends and the next one begins. This"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # HTTP Request Smuggling: Exploiting Frontend/Backend Desync Vulnerabilities
 
 ## The Problem: Architectural Desynchronization

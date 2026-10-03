@@ -1,3 +1,11 @@
+---
+title: "TLS 1.2 vs TLS 1.3: Analyzing the 2-RTT to 1-RTT Handshake Reduction"
+description: "**Problem:** In globally distributed systems, latency is dictated by the speed of light. TLS 1.2 imposes a mandatory 2 Round-Trip Time (RTT) penalty before application data can flow, heavily penalizin"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS 1.2 vs TLS 1.3: Analyzing the 2-RTT to 1-RTT Handshake Reduction
 
 **Problem:** In globally distributed systems, latency is dictated by the speed of light. TLS 1.2 imposes a mandatory 2 Round-Trip Time (RTT) penalty before application data can flow, heavily penalizing high-latency mobile and transcontinental connections.

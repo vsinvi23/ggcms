@@ -1,3 +1,11 @@
+---
+title: "Deep Learning 101: Feedforward Neural Networks and Backpropagation"
+description: "While linear models and decision tree ensembles excel at analyzing structured, tabular data, they struggle to model unstructured, high-dimensional inputs like raw images, speech, or text. Stacking lin"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Deep Learning 101: Feedforward Neural Networks and Backpropagation
 
 While linear models and decision tree ensembles excel at analyzing structured, tabular data, they struggle to model unstructured, high-dimensional inputs like raw images, speech, or text. Stacking linear predictors with non-linear activation functions forms a Multi-Layer Perceptron (MLP), or a Feedforward Neural Network. These networks can act as universal function approximators, learning nested, hierarchical representations. The core algorithm that enables deep models to learn from data is **Backpropagation**, an elegant, vectorized application of the mathematical **Chain Rule**.

@@ -1,3 +1,11 @@
+---
+title: "Java Concurrency: Memory Barriers, Volatile Semantics, and Instruction Reordering in the JMM"
+description: "In high-throughput, multi-threaded Java applications, a common and insidious class of bugs involves thread communication failure. A background worker thread polls a boolean flag to decide when to shut"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Concurrency: Memory Barriers, Volatile Semantics, and Instruction Reordering in the JMM
 
 ## The Problem: The Invisible Update Bug

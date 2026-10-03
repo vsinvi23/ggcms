@@ -1,3 +1,11 @@
+---
+title: "Unsupervised Learning: K-Means Clustering and the Elbow Method"
+description: "Enterprise systems often handle vast amounts of unlabeled data, such as customer behavioral logs, network traffic profiles, or product inventories. Without predefined target categories ($y$), supervis"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Unsupervised Learning: K-Means Clustering and the Elbow Method
 
 ## The Problem

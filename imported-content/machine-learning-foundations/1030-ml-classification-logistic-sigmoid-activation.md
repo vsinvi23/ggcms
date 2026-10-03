@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Logistic Regression and the Sigmoid Activation Function"
+description: "Binary classification is a fundamental task in industrial machine learning, with critical use cases in transaction fraud detection, network intrusion classification, and email spam filtering. For thes"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Logistic Regression and the Sigmoid Activation Function
 
 ## The Problem

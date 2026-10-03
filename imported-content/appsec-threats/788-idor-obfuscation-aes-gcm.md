@@ -1,3 +1,11 @@
+---
+title: "Insecure Direct Object References: Obfuscating Database Primary Keys using AES-GCM"
+description: "Insecure Direct Object References (IDOR) remain one of the most widespread and severe web vulnerability patterns. The core flaw lies in exposing internal sequential database primary keys (e.g., auto-i"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Insecure Direct Object References: Obfuscating Database Primary Keys using AES-GCM
 
 ## The Problem

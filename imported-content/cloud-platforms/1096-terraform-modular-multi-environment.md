@@ -1,3 +1,11 @@
+---
+title: "DRY Terraform: Designing Reusable Modules and Multi-Environment Workspaces"
+description: "As organizations adopt Infrastructure as Code (IaC) with Terraform, a common anti-pattern emerges: directory-based environments. Teams create separate folders for `dev`, `staging`, and `prod`, copying"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # DRY Terraform: Designing Reusable Modules and Multi-Environment Workspaces
 
 ## The Problem: Copy-Paste Infrastructure

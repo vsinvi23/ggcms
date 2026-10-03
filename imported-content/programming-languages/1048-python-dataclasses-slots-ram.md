@@ -1,3 +1,11 @@
+---
+title: "Python Memory Optimization: How `__slots__` Drastically Reduces Dataclass RAM Footprints"
+description: "Python is highly dynamic. You can add new attributes to an object at any time. To facilitate this, Python inherently backs every object instance with a dictionary (`__dict__`) to store its attributes."
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Memory Optimization: How `__slots__` Drastically Reduces Dataclass RAM Footprints
 
 ## The Problem: The Dictionary Overhead

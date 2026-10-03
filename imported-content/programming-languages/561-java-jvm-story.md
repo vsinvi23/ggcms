@@ -1,3 +1,11 @@
+---
+title: "The JVM's Execution Engine: A Story of Interpretation, JIT, and OS Interfacing"
+description: "When you run a Java application, you are not executing native machine instructions directly on your hardware. Instead, you are executing bytecode on a highly optimized, virtualized execution environme"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # The JVM's Execution Engine: A Story of Interpretation, JIT, and OS Interfacing
 
 When you run a Java application, you are not executing native machine instructions directly on your hardware. Instead, you are executing bytecode on a highly optimized, virtualized execution environment: the Java Virtual Machine (JVM). To understand how the JVM balances portability, startup latency, and peak performance, we must trace the lifecycle of a Java program from raw source down to OS-level system calls.

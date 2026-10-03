@@ -1,3 +1,11 @@
+---
+title: "Deep Learning 101: Feedforward Neural Networks and Backpropagation"
+description: "While traditional machine learning algorithms (such as linear regression, logistic regression, or decision trees) perform exceptionally well on structured tabular data, they suffer from a major struct"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Deep Learning 101: Feedforward Neural Networks and Backpropagation
 
 ## The Problem

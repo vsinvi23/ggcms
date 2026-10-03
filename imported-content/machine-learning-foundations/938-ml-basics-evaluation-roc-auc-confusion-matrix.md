@@ -1,3 +1,11 @@
+---
+title: "Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC"
+description: "In commercial applications, classifiers are frequently evaluated using accuracy. However, accuracy is a highly deceptive metric for imbalanced datasets. For instance, in credit card fraud detection wh"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC
 
 ## The Problem

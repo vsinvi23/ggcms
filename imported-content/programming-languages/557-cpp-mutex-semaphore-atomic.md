@@ -1,3 +1,11 @@
+---
+title: "Mutex vs Semaphore vs Atomic: Lock-Based vs Lock-Free Memory Protection"
+description: "When multiple threads execute concurrently within the same process, they share the heap. If Thread A and Thread B simultaneously attempt to modify the same integer, a Data Race occurs. Assembly instru"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Mutex vs Semaphore vs Atomic: Lock-Based vs Lock-Free Memory Protection
 
 ## Problem Statement

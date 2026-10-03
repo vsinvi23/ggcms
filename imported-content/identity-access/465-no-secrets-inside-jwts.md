@@ -1,3 +1,11 @@
+---
+title: "Why You Should Never Put Secrets Inside JWTs (and How to Encrypt Them via JWE)"
+description: "A staggering number of developers treat standard JSON Web Tokens (JWTs) as a secure vault for confidential information. They store internal database IDs, third-party API keys, system IP addresses, or "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Why You Should Never Put Secrets Inside JWTs (and How to Encrypt Them via JWE)
 
 ## The Problem: The Signing vs. Encryption Fallacy

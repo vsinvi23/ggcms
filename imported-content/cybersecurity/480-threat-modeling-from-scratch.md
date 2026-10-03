@@ -1,3 +1,11 @@
+---
+title: "Threat Modeling from Scratch: DFDs and Trust Boundaries"
+description: "Security is historically bolted onto applications right before deployment. Penetration testers are hired to hack a nearly finished product. Finding a fundamental architectural flaw at this stage is ca"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Threat Modeling from Scratch: DFDs and Trust Boundaries
 
 ## The Problem

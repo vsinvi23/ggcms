@@ -1,3 +1,11 @@
+---
+title: "TLS 1.3 0-RTT: The Dangers of Early Data Replay Attacks and Non-Idempotent APIs"
+description: "TLS 1.3 brought sweeping improvements to internet cryptography, drastically reducing latency by streamlining the handshake process. For returning clients, TLS 1.3 introduced Zero Round Trip Time (0-RT"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS 1.3 0-RTT: The Dangers of Early Data Replay Attacks and Non-Idempotent APIs
 
 TLS 1.3 brought sweeping improvements to internet cryptography, drastically reducing latency by streamlining the handshake process. For returning clients, TLS 1.3 introduced Zero Round Trip Time (0-RTT) resumption, allowing clients to send encrypted application data in their very first flight of packets. While 0-RTT provides significant performance gains, especially for high-latency mobile networks, it introduces a severe cryptographic caveat: early data is inherently vulnerable to replay attacks.

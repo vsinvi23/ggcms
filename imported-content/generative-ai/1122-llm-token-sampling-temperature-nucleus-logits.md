@@ -1,3 +1,11 @@
+---
+title: "LLM Decoding Strategies: Temperature, Top-K, and Top-P (Nucleus) Sampling"
+description: "**The Problem:** An LLM does not inherently generate text; it outputs a probability distribution (logits) over its entire vocabulary for the next token. How we select the next token from this distribu"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Decoding Strategies: Temperature, Top-K, and Top-P (Nucleus) Sampling
 
 **The Problem:** An LLM does not inherently generate text; it outputs a probability distribution (logits) over its entire vocabulary for the next token. How we select the next token from this distribution drastically affects the model's creativity, coherence, and accuracy.

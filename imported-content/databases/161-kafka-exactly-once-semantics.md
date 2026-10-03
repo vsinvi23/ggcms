@@ -1,3 +1,11 @@
+---
+title: "Apache Kafka: Achieving Exactly-Once Semantics (EOS) and Transactions"
+description: "In distributed stream processing, network volatility is a guarantee. When a producer sends a message to Apache Kafka, it expects an acknowledgment (ACK). If the network drops the ACK, the producer fac"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Apache Kafka: Achieving Exactly-Once Semantics (EOS) and Transactions
 
 ## The Problem: The Duplicate Data Dilemma

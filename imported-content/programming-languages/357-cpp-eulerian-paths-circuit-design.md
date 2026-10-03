@@ -1,3 +1,11 @@
+---
+title: "Eulerian Paths in C++: Hierholzer's Algorithm for DNA Sequencing and Circuits"
+description: "While the Hamiltonian Path problem (visiting every *node* exactly once) is NP-Complete, the Eulerian Path problem (visiting every *edge* exactly once) is beautifully solvable in $O(E)$ time. Eulerian "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Eulerian Paths in C++: Hierholzer's Algorithm for DNA Sequencing and Circuits
 
 ## The Problem: Visiting Every Edge Exactly Once

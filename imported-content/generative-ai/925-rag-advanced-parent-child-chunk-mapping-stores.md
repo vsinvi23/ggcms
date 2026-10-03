@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Parent-Child Document Retrieval for Context Integrity"
+description: "**The Problem:** Standard Retrieval-Augmented Generation (RAG) pipelines chunk documents into fixed-size segments (e.g., 500 tokens) and embed them into a Vector Database. During retrieval, the exact "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Parent-Child Document Retrieval for Context Integrity
 
 **The Problem:** Standard Retrieval-Augmented Generation (RAG) pipelines chunk documents into fixed-size segments (e.g., 500 tokens) and embed them into a Vector Database. During retrieval, the exact chunk that matches the semantic query is pulled. However, small chunks lack the surrounding context required by the LLM to generate a coherent answer, while large chunks dilute the embedding density, reducing retrieval accuracy. 

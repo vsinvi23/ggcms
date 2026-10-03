@@ -1,3 +1,11 @@
+---
+title: "Ensemble Learning: From Decision Trees to Random Forests (Bagging)"
+description: "Many real-world machine learning tasks are governed by highly non-linear relationships. While linear models struggle to represent complex boundaries without manual interaction or polynomial features, "
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Ensemble Learning: From Decision Trees to Random Forests (Bagging)
 
 Many real-world machine learning tasks are governed by highly non-linear relationships. While linear models struggle to represent complex boundaries without manual interaction or polynomial features, Decision Trees recursively partition the feature space to make predictions. However, a single decision tree is notorious for high variance—it easily overfits and is highly sensitive to minor perturbations in the training data. Ensemble learning solves this vulnerability. Specifically, Random Forests combine multiple trees using Bootstrap Aggregating (Bagging) to construct a highly resilient model.

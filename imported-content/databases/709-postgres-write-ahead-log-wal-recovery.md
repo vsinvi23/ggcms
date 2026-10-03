@@ -1,3 +1,11 @@
+---
+title: "Postgres WAL Internals: Crash Recovery and Physical Replication Streams"
+description: "In any relational database, writing data directly to disk for every transaction is prohibitively slow due to random I/O and page flushing overhead. To achieve high throughput, databases modify data in"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres WAL Internals: Crash Recovery and Physical Replication Streams
 
 ## The Problem: Data Durability vs. Performance

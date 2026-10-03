@@ -1,3 +1,11 @@
+---
+title: "Distributed ID Generation: Designing Twitter Snowflake for Monotonic 64-bit Sorting"
+description: "When building a distributed system, generating unique identifiers for entities (users, tweets, orders) across thousands of concurrent nodes is a fundamental requirement."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed ID Generation: Designing Twitter Snowflake for Monotonic 64-bit Sorting
 
 ## The Problem: The Inefficiency of UUIDs in Databases

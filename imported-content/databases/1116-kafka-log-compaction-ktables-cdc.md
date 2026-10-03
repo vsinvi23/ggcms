@@ -1,3 +1,11 @@
+---
+title: "Kafka Log Compaction: Retaining the Latest Key State for KTables"
+description: "Kafka was initially designed as an immutable, time-based, append-only log. In a standard topic, messages are retained for a fixed duration (e.g., 7 days) or up to a fixed size limit. Once the threshol"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Log Compaction: Retaining the Latest Key State for KTables
 
 ## The Problem: Unbounded Event Sourcing

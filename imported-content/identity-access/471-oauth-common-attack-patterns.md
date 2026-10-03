@@ -1,3 +1,11 @@
+---
+title: "OAuth Common Attack Patterns: State Bypass and Code Reuse"
+description: "Developers frequently implement OAuth 2.0 assuming the protocol guarantees out-of-the-box security. In reality, the OAuth specification provides a framework, leaving critical state management and para"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth Common Attack Patterns: State Bypass and Code Reuse
 
 ## The Problem

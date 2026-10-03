@@ -1,3 +1,11 @@
+---
+title: "Python Dunder Methods: Customizing Object Collection, Representation, and Context Protocols"
+description: "Python's elegance is largely derived from its consistent data model. Built-in operations like addition (`+`), length checking (`len()`), and iteration (`for x in y`) are not hardcoded parser rules. In"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Dunder Methods: Customizing Object Collection, Representation, and Context Protocols
 
 ## The Python Data Model

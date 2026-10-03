@@ -1,3 +1,11 @@
+---
+title: "Postgres BRIN Indexes: Block Range Indexing for Time-Series Datasets"
+description: "When managing massive time-series datasets or log databases in PostgreSQL (e.g., hundreds of millions of rows of IoT sensor metrics or application audit trails), index size becomes a primary storage a"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres BRIN Indexes: Block Range Indexing for Time-Series Datasets
 
 ## The Problem: Large-Scale Time-Series Storage and B-Tree Overhead

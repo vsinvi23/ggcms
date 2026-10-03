@@ -1,3 +1,11 @@
+---
+title: "Kafka Explained Through a Real System"
+description: "If you read the documentation for Apache Kafka, you are immediately bombarded with jargon: Brokers, Topics, Partitions, Consumer Groups, Offsets, and Zookeeper (or KRaft)."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Kafka Explained Through a Real System
 
 ## The Problem: Scaling State

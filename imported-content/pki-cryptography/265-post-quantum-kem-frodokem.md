@@ -1,3 +1,11 @@
+---
+title: "Post-Quantum Cryptography: FrodoKEM and the Conservative Security of Unstructured Lattices"
+description: "Shor's algorithm, running on a sufficiently powerful quantum computer, will break RSA, ECC, and Diffie-Hellman by solving integer factorization and discrete logarithms in polynomial time. In response,"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Post-Quantum Cryptography: FrodoKEM and the Conservative Security of Unstructured Lattices
 
 Shor's algorithm, running on a sufficiently powerful quantum computer, will break RSA, ECC, and Diffie-Hellman by solving integer factorization and discrete logarithms in polynomial time. In response, NIST initiated a massive standardization process for Post-Quantum Cryptography (PQC). While NIST ultimately selected structured lattice schemes like Kyber (ML-KEM) for their speed and small key sizes, FrodoKEM stands apart as the conservative, ultra-secure alternative championed by security purists.

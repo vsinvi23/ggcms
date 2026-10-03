@@ -1,3 +1,11 @@
+---
+title: "Concurrency from First Principles: Shared State, Race Conditions, and Thread Contention"
+description: "Multi-threaded programming is often treated as a collection of recipes—developers learn to apply synchronization or lock APIs without understanding the mechanics underneath. To write safe, high-perfor"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Concurrency from First Principles: Shared State, Race Conditions, and Thread Contention
 
 Multi-threaded programming is often treated as a collection of recipes—developers learn to apply synchronization or lock APIs without understanding the mechanics underneath. To write safe, high-performance parallel code, you must analyze concurrency from first principles: hardware execution, memory sharing, and scheduling structures.

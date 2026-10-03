@@ -1,3 +1,11 @@
+---
+title: "Circuit Breaker Mechanics: State transitions (Closed, Open, Half-Open) and fallback metrics"
+description: "In a distributed architecture, services rely on downstream dependencies (databases, external APIs, other microservices). When a downstream dependency degrades—becoming slow or unresponsive—the calling"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Circuit Breaker Mechanics: State transitions (Closed, Open, Half-Open) and fallback metrics
 
 ## The Problem: Cascading System Failures

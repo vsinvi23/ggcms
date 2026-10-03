@@ -1,3 +1,11 @@
+---
+title: "C++ Object Lifetime Explained: Storage Duration and Memory Layout"
+description: "In C++, an object’s lifetime is a rigorous, language-guaranteed span of time that starts when its constructor completes and ends when its destructor finishes executing. Reading or writing to an object"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Object Lifetime Explained: Storage Duration and Memory Layout
 
 In C++, an object’s lifetime is a rigorous, language-guaranteed span of time that starts when its constructor completes and ends when its destructor finishes executing. Reading or writing to an object outside this span results in **undefined behavior**. Managing these lifecycles requires an understanding of C++'s four **storage durations**: automatic, dynamic, static, and thread.

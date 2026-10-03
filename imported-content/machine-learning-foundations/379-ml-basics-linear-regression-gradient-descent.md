@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Linear Regression and the Gradient Descent Algorithm"
+description: "In data engineering and machine learning pipelines, predicting a continuous target metric (such as query execution latency, API request throughput, or server power consumption) is a ubiquitous task. T"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Linear Regression and the Gradient Descent Algorithm
 
 In data engineering and machine learning pipelines, predicting a continuous target metric (such as query execution latency, API request throughput, or server power consumption) is a ubiquitous task. The foundational approach for this is Linear Regression. While analytical solutions like the Normal Equation exist, they become computationally intractable ($O(D^3)$ matrix inversion complexity) as the number of features ($D$) grows. This is where Gradient Descent, a first-order iterative optimization algorithm, becomes essential for training models at scale.

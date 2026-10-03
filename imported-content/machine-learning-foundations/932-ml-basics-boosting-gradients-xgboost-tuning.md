@@ -1,3 +1,11 @@
+---
+title: "Gradient Boosting Machines: Why XGBoost Dominates Tabular Data"
+description: "While bagging architectures like Random Forests build independent, parallel estimators to reduce variance, they do not systematically address bias. Underperforming trees cannot communicate their error"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Gradient Boosting Machines: Why XGBoost Dominates Tabular Data
 
 ## The Problem

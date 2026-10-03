@@ -1,3 +1,11 @@
+---
+title: "Evaluating RAG/Agents: Automated Metrics using RAGAS and LLM-as-a-Judge"
+description: "**The Problem:** \"Vibes\" are not a metric. When you tweak chunk sizes, change embedding models, or update the agent's system prompt, how do you know if the system got better or worse? Human evaluation"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Evaluating RAG/Agents: Automated Metrics using RAGAS and LLM-as-a-Judge
 
 **The Problem:** "Vibes" are not a metric. When you tweak chunk sizes, change embedding models, or update the agent's system prompt, how do you know if the system got better or worse? Human evaluation is too slow, too expensive, and impossible to integrate into a CI/CD pipeline.

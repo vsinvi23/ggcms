@@ -1,3 +1,11 @@
+---
+title: "Certificate Transparency (CT) Logs: Preventing Rogue CAs from Issuing Fake Certs"
+description: "The Web PKI ecosystem is built on the X.509 standard, where browsers and operating systems maintain a trust store of hundreds of Root Certificate Authorities (CAs). The fundamental flaw in this archit"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Certificate Transparency (CT) Logs: Preventing Rogue CAs from Issuing Fake Certs
 
 ## The Problem: The Implicit Trust Model of X.509

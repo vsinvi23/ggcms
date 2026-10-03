@@ -1,3 +1,11 @@
+---
+title: "AES-CBC Padding Oracles: How POODLE and Lucky13 Exploit Block Padding"
+description: "Advanced Encryption Standard (AES) in Cipher Block Chaining (CBC) mode is a block cipher. It operates on fixed-size blocks of data—specifically 16 bytes (128 bits) for AES. If an application needs to "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # AES-CBC Padding Oracles: How POODLE and Lucky13 Exploit Block Padding
 
 ## The Problem: Block Ciphers and PKCS#7 Padding

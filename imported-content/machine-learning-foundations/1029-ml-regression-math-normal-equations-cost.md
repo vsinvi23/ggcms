@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Linear Regression, Cost Functions, and Normal Equations"
+description: "In modern predictive analytics, forecasting continuous variables—such as server latency, dynamic cloud compute pricing, or real-time customer lifetime value—is critical. When handling small-to-medium "
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Linear Regression, Cost Functions, and Normal Equations
 
 ## The Problem

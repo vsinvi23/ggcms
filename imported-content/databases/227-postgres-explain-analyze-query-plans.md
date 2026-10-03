@@ -1,3 +1,11 @@
+---
+title: "Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Heap Scans"
+description: "When a PostgreSQL query takes 30 seconds to execute, developers often resort to blind optimizations. They slap indexes on random columns, rewrite subqueries, and hope for the best."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Heap Scans
 
 ### The Problem: Guessing at Performance

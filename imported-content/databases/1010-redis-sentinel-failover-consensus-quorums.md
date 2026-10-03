@@ -1,3 +1,11 @@
+---
+title: "Redis Sentinel: Cluster Failover, Consensus Protocols, and Quorums"
+description: "In a standard master-replica Redis deployment, failover is a manual, error-prone task. If the primary write node crashes, application clients are blocked from writing, leading to downtime."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Sentinel: Cluster Failover, Consensus Protocols, and Quorums
 
 ## The Problem: The High Availability & Partitioning Challenge

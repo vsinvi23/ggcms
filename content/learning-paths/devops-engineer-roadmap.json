@@ -12,7 +12,7 @@
       "sequenceOrder": 1,
       "courseSlug": "cloud-native-kubernetes-masterclass",
       "courseTitle": "Cloud-Native Infrastructure & Kubernetes Masterclass",
-      "categorySlug": "containers-and-orchestration",
+      "categorySlug": "containers-orchestration",
       "required": true
     },
     {

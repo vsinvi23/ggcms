@@ -1,3 +1,11 @@
+---
+title: "Docker vs. Virtual Machines: Shared Kernels vs. Hardware Hypervisors"
+description: "Isolation is the cornerstone of robust system administration. To run multiple services reliably on the same physical host, engineers must isolate resources to prevent memory collisions, port conflicts"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker vs. Virtual Machines: Shared Kernels vs. Hardware Hypervisors
 
 ## The Problem: The High Cost of Isolated Compute

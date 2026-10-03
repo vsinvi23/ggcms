@@ -1,3 +1,11 @@
+---
+title: "Securing Model Context Protocol (MCP) with OAuth 2.0"
+description: "As Large Language Models (LLMs) transition from passive text generators to active agents, the Model Context Protocol (MCP) has emerged as an open standard for connecting AI hosts (e.g., Cursor, Claude"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # Securing Model Context Protocol (MCP) with OAuth 2.0
 
 ## Problem Statement

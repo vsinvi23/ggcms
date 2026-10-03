@@ -1,3 +1,11 @@
+---
+title: "C++ Move Semantics: Under the Hood of std::move and std::forward"
+description: "Before C++11, passing large objects—such as dynamic arrays, matrices, or network buffers—by value resulted in deep copies. This duplicated dynamic memory allocations and degraded system performance. W"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Move Semantics: Under the Hood of std::move and std::forward
 
 ## The Problem

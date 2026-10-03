@@ -1,3 +1,11 @@
+---
+title: "Project Loom Internals: Carrier Threads, Virtual Thread Scheduling, and Pinning Hazards"
+description: "Historically, Java concurrency followed a 1:1 mapping: every `java.lang.Thread` mapped directly to an operating system (OS) thread. OS threads are heavy; they require ~1MB of allocated stack space and"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Project Loom Internals: Carrier Threads, Virtual Thread Scheduling, and Pinning Hazards
 
 ## The High Cost of Platform Threads

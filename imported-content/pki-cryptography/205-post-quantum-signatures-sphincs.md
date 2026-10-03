@@ -1,3 +1,11 @@
+---
+title: "Post-Quantum Hash-Based Signatures: SPHINCS+ and Winternitz One-Time Signatures"
+description: "Virtually all modern digital signatures—whether RSA, ECDSA, or EdDSA—rely on the computational difficulty of mathematical problems like integer factorization or the discrete logarithm. In 1994, Peter "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Post-Quantum Hash-Based Signatures: SPHINCS+ and Winternitz One-Time Signatures
 
 ## The Problem: The Quantum Threat to RSA and ECC

@@ -1,3 +1,11 @@
+---
+title: "C++ RTTI: Run-Time Type Identification and the Performance Cost of dynamic_cast"
+description: "In object-oriented C++, polymorphism allows us to write elegant, decoupled code. We write functions that operate on pointers or references to base classes, letting the virtual method table (vtable) di"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ RTTI: Run-Time Type Identification and the Performance Cost of dynamic_cast
 
 In object-oriented C++, polymorphism allows us to write elegant, decoupled code. We write functions that operate on pointers or references to base classes, letting the virtual method table (vtable) dispatch execution to the correct derived implementation.

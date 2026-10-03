@@ -1,3 +1,11 @@
+---
+title: "Deep Learning 101: Feedforward Neural Networks and Backpropagation"
+description: "Linear models, logistic classifiers, and decision trees excel at processing structured tabular features where the relationship is relatively flat. However, they struggle with unstructured data (e.g., "
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Deep Learning 101: Feedforward Neural Networks and Backpropagation
 
 ## The Problem

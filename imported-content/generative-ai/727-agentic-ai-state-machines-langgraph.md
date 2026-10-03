@@ -1,3 +1,11 @@
+---
+title: "Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph"
+description: "Simple agent architectures rely on linear, sequential execution loops. For example, a basic ReAct agent follows a strict `Thought -> Action -> Observation` cycle until it produces a final answer."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph
 
 ### The Problem: The Brittleness of Linear Agentic Workflows

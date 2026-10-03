@@ -1,3 +1,11 @@
+---
+title: "Red-Black Trees in C++: The Engine Behind `std::map` and `std::set`"
+description: "While AVL trees strictly enforce depth to optimize read times, they require frequent rotations during insertions and deletions. System libraries like the C++ STL require a balanced tree with cheaper m"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Red-Black Trees in C++: The Engine Behind `std::map` and `std::set`
 
 ## The Problem: Rebalancing Overhead

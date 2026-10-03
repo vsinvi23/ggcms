@@ -1,3 +1,11 @@
+---
+title: "Distributed ID Generation: Designing Twitter Snowflake for Monotonic 64-bit Sorting"
+description: "In a centralized relational database, generating unique identifiers is trivial: use an `AUTO_INCREMENT` or `SERIAL` primary key. This approach provides unique, dense, and naturally sortable IDs. Howev"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed ID Generation: Designing Twitter Snowflake for Monotonic 64-bit Sorting
 
 ## The Problem: UUIDs vs. Auto-Increment

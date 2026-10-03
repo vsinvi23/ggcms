@@ -1,3 +1,11 @@
+---
+title: "OWASP Top 10: Mapping Vulnerabilities to Software Architecture Layers"
+description: "Standard security implementations frequently treat the OWASP Top 10 as an arbitrary checklist applied solely during final quality assurance. Developers throw a generic Web Application Firewall (WAF) a"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # OWASP Top 10: Mapping Vulnerabilities to Software Architecture Layers
 
 ## The Problem: Superficial Security Checklists

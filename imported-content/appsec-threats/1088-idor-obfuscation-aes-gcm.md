@@ -1,3 +1,11 @@
+---
+title: "Insecure Direct Object References (IDOR): Obfuscating Database Primary Keys using AES-GCM"
+description: "In insecure web applications, resources are frequently identified by their internal database primary keys, which are often sequential integers (e.g., `1001`, `1002`). When these keys are exposed direc"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Insecure Direct Object References (IDOR): Obfuscating Database Primary Keys using AES-GCM
 
 ## The Problem: Predictable Resource Handles

@@ -1,3 +1,11 @@
+---
+title: "CQRS Architecture: Building an Append-Only Event Store with Apache Kafka Log Segments"
+description: "Traditional enterprise systems rely on a single relational database for both operational writes and complex analytical reads. This dual-purpose design creates severe architectural friction."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # CQRS Architecture: Building an Append-Only Event Store with Apache Kafka Log Segments
 
 ## The Problem: Dual-Purpose Database Contention

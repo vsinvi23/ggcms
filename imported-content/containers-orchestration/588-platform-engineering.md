@@ -1,3 +1,11 @@
+---
+title: "Platform Engineering Explained: Bridging DevOps and Dev UX"
+description: "A decade ago, the DevOps movement revolutionized software delivery by tearing down the wall between developers and operations. The mantra became: *\"You build it, you run it.\"*"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Platform Engineering Explained: Bridging DevOps and Dev UX
 
 ### The Problem with "You Build It, You Run It"

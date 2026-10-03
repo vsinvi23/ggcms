@@ -8,6 +8,7 @@ import (
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/interfaces/http/middleware"
 	"github.com/serenya/go-cms/pkg/response"
+	"github.com/serenya/go-cms/pkg/slugify"
 )
 
 type LearningPathHandler struct {
@@ -28,6 +29,7 @@ type learningPathResponse struct {
 	Kind        string                       `json:"kind"`
 	Title       string                       `json:"title"`
 	Description string                       `json:"description"`
+	Slug        string                       `json:"slug"`
 	CreatedByID uint                         `json:"createdById"`
 	CourseCount int                          `json:"courseCount"`
 	Courses     []learningPathCourseResponse `json:"courses"`
@@ -40,11 +42,16 @@ func mapLearningPath(lp *entity.LearningPath) learningPathResponse {
 	for i, c := range lp.Courses {
 		courses[i] = learningPathCourseResponse{CourseID: c.CourseID, SortOrder: c.SortOrder}
 	}
+	pathSlug := lp.Slug
+	if pathSlug == "" {
+		pathSlug = slugify.Slug(lp.Title)
+	}
 	return learningPathResponse{
 		ID:          lp.ID,
 		Kind:        lp.Kind,
 		Title:       lp.Title,
 		Description: lp.Description,
+		Slug:        pathSlug,
 		CreatedByID: lp.CreatedByID,
 		CourseCount: len(lp.Courses),
 		Courses:     courses,
@@ -70,12 +77,12 @@ func (h *LearningPathHandler) GetAll(c *gin.Context) {
 
 // GET /api/learning-paths/:id
 func (h *LearningPathHandler) GetByID(c *gin.Context) {
-	id, err := parseID(c, "id")
-	if err != nil {
-		response.BadRequest(c, "invalid ID")
+	idOrSlug := c.Param("id")
+	if idOrSlug == "" {
+		response.BadRequest(c, "invalid ID or slug")
 		return
 	}
-	lp, err := h.service.GetByID(c.Request.Context(), id)
+	lp, err := h.service.GetByIDOrSlug(c.Request.Context(), idOrSlug)
 	if err != nil {
 		response.NotFound(c, "learning path not found")
 		return

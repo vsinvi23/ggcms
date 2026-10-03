@@ -1,4 +1,4 @@
----
+--- 
 title: "Confidential Computing Explained: Protecting Data in Use"
 slug: "confidential-computing-explained-protecting-data-in-use"
 category: "Security"
@@ -42,7 +42,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "pki-cryptography"
 ---
+
 
 # Confidential Computing Explained: Protecting Data in Use
 

@@ -1,3 +1,11 @@
+---
+title: "Diffie-Hellman Parameters: Mitigating Logjam Attacks via Safe Prime Generation"
+description: "Finite-Field Diffie-Hellman (FFDHE) key exchange allows two parties to establish a shared secret over an insecure channel. However, its security is highly dependent on the mathematical properties of t"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Diffie-Hellman Parameters: Mitigating Logjam Attacks via Safe Prime Generation
 
 ## The Problem: The Logjam Attack and Weak Parameter Exploitation

@@ -1,3 +1,11 @@
+---
+title: "Terraform State Hardening: Encryption-at-Rest and DynamoDB Concurrency Locks"
+description: "Terraform maintains a record of mapped infrastructure in a state file (`terraform.tfstate`). This file acts as a database mapping your declarative code to real-world cloud resources."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Terraform State Hardening: Encryption-at-Rest and DynamoDB Concurrency Locks
 
 ## The Problem: State Corruption and Plaintext Secret Exposure

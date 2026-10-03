@@ -1,3 +1,11 @@
+---
+title: "The Microservice Chassis Pattern: Decentralizing Log, Telemetry, and Auth Configurations"
+description: "In a distributed microservices architecture, building a new service should ideally be a matter of writing business logic. However, the reality is often vastly different. Developers find themselves rep"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The Microservice Chassis Pattern: Decentralizing Log, Telemetry, and Auth Configurations
 
 ## The Problem: The Boilerplate Tax

@@ -1,3 +1,11 @@
+---
+title: "Terraform State Drift: Reconciling Manual Console Changes using `terraform import`"
+description: "Terraform operates on a declarative model: you write configuration code defining your desired infrastructure, and Terraform creates it, recording the result in a state file (`terraform.tfstate`). This"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Terraform State Drift: Reconciling Manual Console Changes using `terraform import`
 
 ## The Problem: The Inevitability of State Drift

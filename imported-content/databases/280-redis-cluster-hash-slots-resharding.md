@@ -1,3 +1,11 @@
+---
+title: "Redis Cluster: Navigating the 16384 Hash Slots and Live Node Resharding"
+description: "When an application's dataset outgrows the physical memory limit of a single Redis server, scaling vertically becomes cost-prohibitive. While manually partitioning keys on the client side solves the b"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Cluster: Navigating the 16384 Hash Slots and Live Node Resharding
 
 ## The Scaling and Rebalancing Problem

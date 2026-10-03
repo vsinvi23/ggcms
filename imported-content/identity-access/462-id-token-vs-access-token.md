@@ -1,3 +1,11 @@
+---
+title: "The Architectural Boundary: ID Tokens vs. Access Tokens"
+description: "A critical vulnerability in modern web applications is the misuse of JSON Web Tokens (JWTs) by treating an **ID Token** as an **Access Token**, or vice versa."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # The Architectural Boundary: ID Tokens vs. Access Tokens
 
 ## The Problem: Confusing Identity with Authorization

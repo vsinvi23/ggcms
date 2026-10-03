@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Network Policies: Hardening Pod-to-Pod Traffic and Default-Deny"
+description: "By default, Kubernetes network plugins operate under a flat, non-isolated network model. Every Pod in a cluster can communicate with every other Pod, across all namespaces, without any restriction. Wh"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Network Policies: Hardening Pod-to-Pod Traffic and Default-Deny
 
 By default, Kubernetes network plugins operate under a flat, non-isolated network model. Every Pod in a cluster can communicate with every other Pod, across all namespaces, without any restriction. While this accelerates initial development, it introduces severe security risks in production. If a single public-facing frontend Pod is compromised, an attacker can move laterally across the network, scanning and accessing backend services, database instances, and cluster metadata endpoints.

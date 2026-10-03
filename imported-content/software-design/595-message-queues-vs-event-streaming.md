@@ -1,3 +1,11 @@
+---
+title: "Message Queues vs Event Streaming"
+description: "When architects decide to adopt asynchronous communication, they immediately face a tooling choice: \"Should we use RabbitMQ or Kafka?\""
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Message Queues vs Event Streaming
 
 ## The Problem: All Brokers Are Not Created Equal

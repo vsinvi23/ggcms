@@ -1,3 +1,11 @@
+---
+title: "Kubernetes OPA Gatekeeper: Validating Admission Webhooks and Rego Constraints"
+description: "Kubernetes is incredibly flexible, allowing developers to define exactly how their applications should run. However, without guardrails, this flexibility becomes a severe operational and security liab"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes OPA Gatekeeper: Validating Admission Webhooks and Rego Constraints
 
 ## The Problem: The Wild West of Kubernetes Configurations

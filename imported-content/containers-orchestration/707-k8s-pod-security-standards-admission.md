@@ -1,3 +1,11 @@
+---
+title: "Securing Workloads with Kubernetes Pod Security Standards and Admission Controllers"
+description: "Kubernetes workloads are highly configurable, which makes them inherently vulnerable to misconfiguration. If container parameters are left unhardened, developers can easily deploy containers that run "
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Securing Workloads with Kubernetes Pod Security Standards and Admission Controllers
 
 Kubernetes workloads are highly configurable, which makes them inherently vulnerable to misconfiguration. If container parameters are left unhardened, developers can easily deploy containers that run as root, share host PID or network namespaces, or run with escalated capabilities. This creates immediate pathways for container breakout, host filesystem access, and full nodes takeover.

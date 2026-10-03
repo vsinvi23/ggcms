@@ -1,3 +1,11 @@
+---
+title: "Model Supply Chain Attacks: Securing PyTorch and Safetensors Runtimes"
+description: "The rapid adoption of pre-trained machine learning models from public hubs has introduced a critical vector in software supply chains. Security teams often treat deep learning models as benign data fi"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # Model Supply Chain Attacks: Securing PyTorch and Safetensors Runtimes
 
 The rapid adoption of pre-trained machine learning models from public hubs has introduced a critical vector in software supply chains. Security teams often treat deep learning models as benign data files containing floating-point weights. In reality, legacy serialization formats—specifically Python’s `pickle` protocol—are fully capable of executing arbitrary code upon loading, turning simple model ingestion into a remote code execution (RCE) vulnerability.

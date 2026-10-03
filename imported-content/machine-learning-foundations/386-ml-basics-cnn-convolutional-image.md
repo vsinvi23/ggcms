@@ -1,3 +1,11 @@
+---
+title: "Computer Vision: Convolutional Neural Networks (CNNs) and Feature Extraction"
+description: "When processing grid-structured data like images, classical fully connected neural networks suffer from severe structural design flaws. Flattening a $256 \times 256 \times 3$ color image into a single"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Computer Vision: Convolutional Neural Networks (CNNs) and Feature Extraction
 
 When processing grid-structured data like images, classical fully connected neural networks suffer from severe structural design flaws. Flattening a $256 \times 256 \times 3$ color image into a single vector yields $196,608$ input nodes. Stacking just one hidden layer with $1,024$ neurons creates over $200\text{ million}$ weights. This design ignores the 2D spatial relationships of pixels and causes immediate, massive overfitting. Convolutional Neural Networks (CNNs) solve this problem by leveraging **local receptive fields**, **parameter sharing**, and **spatial downsampling (pooling)** to extract translation-invariant features.

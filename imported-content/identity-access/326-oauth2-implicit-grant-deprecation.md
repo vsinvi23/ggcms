@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Implicit Grant: Why Browser Fragment Leaks Caused Its Deprecation"
+description: "**Problem:** Single-Page Applications (SPAs) lacked backend servers, preventing them from securely storing a `client_secret`. The OAuth 2.0 Implicit Grant was invented to accommodate them, but inheren"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Implicit Grant: Why Browser Fragment Leaks Caused Its Deprecation
 
 **Problem:** Single-Page Applications (SPAs) lacked backend servers, preventing them from securely storing a `client_secret`. The OAuth 2.0 Implicit Grant was invented to accommodate them, but inherent architectural flaws led to critical token leakage, forcing its deprecation in OAuth 2.1.

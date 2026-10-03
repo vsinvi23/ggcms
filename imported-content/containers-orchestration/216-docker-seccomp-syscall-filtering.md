@@ -1,3 +1,11 @@
+---
+title: "Docker Seccomp Profiles: Filtering Linux System Calls to Prevent Container Escapes"
+description: "Containers are not virtual machines. They do not have their own isolated guest operating system or kernel. Instead, all containers running on a host share the exact same underlying Linux kernel."
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Seccomp Profiles: Filtering Linux System Calls to Prevent Container Escapes
 
 ## The Problem: The Attack Surface of the Linux Kernel

@@ -1,3 +1,11 @@
+---
+title: "HTTP Request Smuggling: Exploiting Frontend/Backend Desync Vulnerabilities"
+description: "HTTP Request Smuggling (HRS) is an advanced attack vector that exploits a discrepancy in how RFC compliance is handled across different nodes in a web infrastructure. When an enterprise architecture r"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # HTTP Request Smuggling: Exploiting Frontend/Backend Desync Vulnerabilities
 
 ## The Problem

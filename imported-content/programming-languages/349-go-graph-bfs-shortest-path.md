@@ -1,3 +1,11 @@
+---
+title: "Graph BFS in Go: Finding Shortest Paths with Channels and Queues"
+description: "In social network analysis or peer-to-peer routing, a fundamental operation is finding the shortest path between two nodes in an unweighted graph. For unweighted graphs, Breadth-First Search (BFS) is "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Graph BFS in Go: Finding Shortest Paths with Channels and Queues
 
 ## The Problem: Unweighted Shortest Path Discovery

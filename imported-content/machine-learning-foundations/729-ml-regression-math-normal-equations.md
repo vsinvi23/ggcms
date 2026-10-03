@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Linear Regression, Cost Functions, and Normal Equations"
+description: "Predicting continuous numerical outcomes—such as pricing models, temperature forecasts, or risk assessments—requires a fundamental mapping between input features and target variables. While modern Dee"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Linear Regression, Cost Functions, and Normal Equations
 
 ## The Problem

@@ -1,3 +1,11 @@
+---
+title: "TLS Certificate Pinning: Defeating Rogue CAs and MitM Attacks in Mobile Apps"
+description: "By default, operating systems (iOS, Android, Windows) trust hundreds of root Certificate Authorities (CAs). If any single one of these root CAs is compromised, or if a user is tricked into installing "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS Certificate Pinning: Defeating Rogue CAs and MitM Attacks in Mobile Apps
 
 ## The Problem: The Fragility of the Public CA Trust Model

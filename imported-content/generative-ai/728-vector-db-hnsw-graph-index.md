@@ -1,3 +1,11 @@
+---
+title: "Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs"
+description: "In Retrieval-Augmented Generation (RAG) and semantic search pipelines, data is represented as high-dimensional vector embeddings (e.g., $d=1536$ for OpenAI `text-embedding-3-large`)."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs
 
 ### The Problem: The High-Dimensional Nearest Neighbor Search Bottleneck

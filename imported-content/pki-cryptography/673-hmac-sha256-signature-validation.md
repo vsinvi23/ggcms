@@ -1,3 +1,11 @@
+---
+title: "HMAC-SHA256: Preventing Length Extension Attacks with Hash-based Message Authentication Codes"
+description: "A common engineering requirement is verifying that a payload has not been modified in transit. A natural but highly insecure design pattern is to concatenate a private key with the message and run it "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # HMAC-SHA256: Preventing Length Extension Attacks with Hash-based Message Authentication Codes
 
 ## The Problem: The Vulnerability of Naive Hashing for Message Integrity

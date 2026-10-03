@@ -1,3 +1,11 @@
+---
+title: "Shamir's Secret Sharing: Polynomial Interpolation over Finite Fields"
+description: "In cryptography, the security of an entire system often hinges on a single \"Root Key.\" If a Certificate Authority's root private key is lost, the organization can no longer issue certificates. If the "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Shamir's Secret Sharing: Polynomial Interpolation over Finite Fields
 
 ## The Problem: The Single Point of Failure

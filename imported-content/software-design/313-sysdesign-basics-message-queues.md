@@ -1,3 +1,11 @@
+---
+title: "System Design Basics: Asynchronous Processing with Message Queues"
+description: "In a synchronous architecture, when Service A calls Service B, Service A must wait for a response. If Service B is doing heavy image processing, Service A is blocked. If Service B crashes, Service A f"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # System Design Basics: Asynchronous Processing with Message Queues
 
 ## The Problem

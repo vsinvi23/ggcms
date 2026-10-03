@@ -1,3 +1,11 @@
+---
+title: "Pointers Explained Like You're Looking at Memory"
+description: "Pointers are often taught using abstract analogies like \"mailboxes,\" \"street addresses,\" or \"labels.\" These abstractions, while well-intentioned, often create confusion. To understand pointers, you mu"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Pointers Explained Like You're Looking at Memory
 
 Pointers are often taught using abstract analogies like "mailboxes," "street addresses," or "labels." These abstractions, while well-intentioned, often create confusion. To understand pointers, you must discard the analogies and look directly at physical reality. A pointer is not a mailbox; **a pointer is simply an unsigned integer whose value is a memory address.**

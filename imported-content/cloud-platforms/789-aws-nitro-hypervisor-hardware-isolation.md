@@ -1,3 +1,11 @@
+---
+title: "AWS Nitro System: Decoupling Virtualization Overhead onto Dedicated Hardware Cards"
+description: "In traditional Type-1 hypervisor architectures (such as legacy Xen or standard KVM on x86 servers), the hypervisor does far more than just slice CPU and memory. It is responsible for the entire manage"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Nitro System: Decoupling Virtualization Overhead onto Dedicated Hardware Cards
 
 ## The Problem: The Hypervisor Tax in Legacy Virtualization

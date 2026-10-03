@@ -1,3 +1,11 @@
+---
+title: "dbt Pipelines: Optimizing Incremental Table Materialization"
+description: "In the modern data stack (dbt + Snowflake/BigQuery), analytics engineering often starts with simple `table` materializations. Every time a dbt model runs, it drops the target table and recreates it fr"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # dbt Pipelines: Optimizing Incremental Table Materialization
 
 ## The Problem: The Cost of Full Refreshes

@@ -1,3 +1,11 @@
+---
+title: "Docker Resource Constraints: Enforcing cgroups v2 Memory and CPU CFS Slices"
+description: "When multiple containers run on a single host without resource limits, they compete for the same pool of CPU and RAM. A poorly written application with a memory leak, or a CPU-intensive background job"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Resource Constraints: Enforcing cgroups v2 Memory and CPU CFS Slices
 
 ### The Problem: The "Noisy Neighbor" and OOM Kills

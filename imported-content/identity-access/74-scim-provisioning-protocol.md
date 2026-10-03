@@ -1,3 +1,11 @@
+---
+title: "SCIM 2.0: Orchestrating User Provisioning and Lifecycle Management"
+description: "In modern enterprise environments, managing identity lifecycles manually across dozens of disparate Software-as-a-Service (SaaS) applications is an operational nightmare and a severe security risk. Wh"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SCIM 2.0: Orchestrating User Provisioning and Lifecycle Management
 
 ### The Problem: Orphaned Accounts and Lifecycle Friction

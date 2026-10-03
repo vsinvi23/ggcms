@@ -1,3 +1,11 @@
+---
+title: "Scaling Infrastructure as Code: Terraform Modules and Multi-Environment Workspaces"
+description: "As infrastructure expands, engineering teams must maintain identical architectural patterns across multiple environments (such as `development`, `staging`, and `production`). A common but highly fragi"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Scaling Infrastructure as Code: Terraform Modules and Multi-Environment Workspaces
 
 ## The Problem: Drifting Environments and the Fragility of Copy-Paste IaC

@@ -1,3 +1,11 @@
+---
+title: "Homomorphic Encryption Libraries: Comparing Microsoft SEAL (BFV/CKKS) implementations"
+description: "Homomorphic Encryption (HE) represents a holy grail in cryptography: the ability to compute on encrypted data without ever decrypting it. For decades, HE was a purely theoretical construct. Today, lib"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Homomorphic Encryption Libraries: Comparing Microsoft SEAL (BFV/CKKS) implementations
 
 Homomorphic Encryption (HE) represents a holy grail in cryptography: the ability to compute on encrypted data without ever decrypting it. For decades, HE was a purely theoretical construct. Today, libraries like Microsoft SEAL (Simple Encrypted Arithmetic Library) have made it practical. However, navigating the landscape requires understanding the fundamental differences between its two primary schemes: BFV (Brakerski/Fan-Vercauteren) and CKKS (Cheon-Kim-Kim-Song).

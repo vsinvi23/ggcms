@@ -1,3 +1,11 @@
+---
+title: "Designing Netflix: Video Transcoding Pipelines, CDN Caching, and DASH Adaptive Streaming"
+description: "When a content creator uploads a 4K, 50GB master video file in ProRes format, that file cannot be streamed directly to end-users. A user watching on a 4K Smart TV with a 1Gbps fiber connection require"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing Netflix: Video Transcoding Pipelines, CDN Caching, and DASH Adaptive Streaming
 
 ## The Problem: The Multi-Device Video Delivery Challenge

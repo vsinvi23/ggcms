@@ -1,3 +1,11 @@
+---
+title: "AWS IAM Permission Boundaries: Delegating Role Creation Safely to Developers"
+description: "In fast-paced cloud environments, developers constantly need to create new AWS IAM Roles. A microservice needs a role to access an S3 bucket; a Lambda function needs a role to read from DynamoDB."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # AWS IAM Permission Boundaries: Delegating Role Creation Safely to Developers
 
 ## The Problem: The Privilege Escalation Trap

@@ -1,3 +1,11 @@
+---
+title: "Designing Traffic Shapers: Implementing the Leaky Bucket Algorithm for Rate Limiting"
+description: "Public-facing APIs and internal microservices must defend against volumetric abuse. Whether from malicious DDoS attacks, poorly written client scripts, or legitimate traffic spikes (thundering herds),"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing Traffic Shapers: Implementing the Leaky Bucket Algorithm for Rate Limiting
 
 ## The Problem: Thundering Herds and Resource Exhaustion

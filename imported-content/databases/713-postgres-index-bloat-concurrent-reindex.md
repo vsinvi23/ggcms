@@ -1,3 +1,11 @@
+---
+title: "Postgres Index Bloat: Reclaiming Disk Space with REINDEX CONCURRENTLY"
+description: "PostgreSQL implements Multi-Version Concurrency Control (MVCC). When a row is updated or deleted, Postgres does not overwrite the existing data. Instead, it creates a new version of the row and marks "
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres Index Bloat: Reclaiming Disk Space with REINDEX CONCURRENTLY
 
 ## The Problem: Dead Tuples and Index Fragmentation

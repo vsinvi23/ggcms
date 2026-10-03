@@ -1,3 +1,11 @@
+---
+title: "LLM Decoding Strategies: Temperature, Top-K, and Top-P (Nucleus) Sampling"
+description: "An LLM's final feedforward layer outputs a vector of raw, unnormalized real values called **logits** ($z$), with one value for each token in the model's vocabulary."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Decoding Strategies: Temperature, Top-K, and Top-P (Nucleus) Sampling
 
 ### The Problem: Balancing Creativity and Coherence in LLM Decoding

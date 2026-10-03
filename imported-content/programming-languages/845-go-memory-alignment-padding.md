@@ -1,3 +1,11 @@
+---
+title: "Go Memory Alignment: Struct Padding and CPU Word-aligned Fetching Optimizations"
+description: "An engineering team builds a high-performance in-memory key-value database in Go. Calculating the size of their structs mathematically, they expect each record to consume exactly 18 bytes of memory:"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Memory Alignment: Struct Padding and CPU Word-aligned Fetching Optimizations
 
 ## The Problem: The Phantom Memory Bloat

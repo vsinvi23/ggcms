@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Gateway API vs Ingress Controllers: Dynamic Weighted Canary Routing"
+description: "For years, the `Ingress` API was the standard for routing external HTTP/S traffic into Kubernetes clusters. However, `Ingress` is notoriously limited. It natively supports only basic host and path-bas"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Gateway API vs Ingress Controllers: Dynamic Weighted Canary Routing
 
 ### The Problem: The Limitations of the Ingress API

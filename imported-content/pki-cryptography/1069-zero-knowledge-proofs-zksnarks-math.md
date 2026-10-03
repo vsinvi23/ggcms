@@ -1,3 +1,11 @@
+---
+title: "Zero-Knowledge Proofs (ZK-SNARKs): Verifying Secrets Without Revealing Them"
+description: "Modern decentralized protocols and privacy-preserving systems require a client (the **Prover**) to prove to a server or contract (the **Verifier**) that they possess a specific secret (the **Witness**"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Zero-Knowledge Proofs (ZK-SNARKs): Verifying Secrets Without Revealing Them
 
 ## The Problem: Trustless Verification of Private State

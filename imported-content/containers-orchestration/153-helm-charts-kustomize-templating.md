@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Deployments: Helm Charts vs Kustomize Patching"
+description: "Managing raw Kubernetes resource manifests across multiple environments (such as development, staging, and production) is a notorious operational challenge. A standard deployment requires a deployment"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Deployments: Helm Charts vs Kustomize Patching
 
 ## The Problem: The YAML Duplication Trap

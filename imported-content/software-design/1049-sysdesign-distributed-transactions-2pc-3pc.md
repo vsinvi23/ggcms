@@ -1,3 +1,11 @@
+---
+title: "Distributed Transactions: The Latency and Blocking Costs of Two-Phase Commit (2PC) and Three-Phase Commit (3PC)"
+description: "In a monolithic application, maintaining data integrity is straightforward: a single relational database provides ACID guarantees. When a transaction spans multiple tables, the database ensures that a"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed Transactions: The Latency and Blocking Costs of Two-Phase Commit (2PC) and Three-Phase Commit (3PC)
 
 ## The Problem: Atomicity Across Distributed Boundaries

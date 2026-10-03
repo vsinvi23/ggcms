@@ -1,3 +1,11 @@
+---
+title: "Cassandra Gossip Protocol: Decentralized Node Failure Detection and Repairs"
+description: "In a highly distributed, multi-datacenter database cluster, nodes frequently go down due to network blips, hardware failures, or GC pauses. Traditional systems use a centralized configuration manager "
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Gossip Protocol: Decentralized Node Failure Detection and Repairs
 
 ## The Problem: Centralized Master Vulnerability

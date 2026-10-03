@@ -1,3 +1,11 @@
+---
+title: "Postgres BRIN Indexes: Shrinking Index Size by 99% for Time-Series Data"
+description: "In traditional OLTP workloads, B-Tree indexes are the default choice. They provide incredibly fast point lookups and range scans. However, when dealing with time-series data—such as IoT sensor reading"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres BRIN Indexes: Shrinking Index Size by 99% for Time-Series Data
 
 ### The Problem: B-Tree Index Bloat

@@ -1,3 +1,11 @@
+---
+title: "Positional Encoding: Giving Sequence Order to Stateless Transformers"
+description: "In recurrent neural networks (RNNs), sequence order is implicitly baked into the sequential, step-by-step state transition. In self-attention, however, all tokens are processed simultaneously in paral"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Positional Encoding: Giving Sequence Order to Stateless Transformers
 
 ## The Problem: Permutation Invariance in Self-Attention

@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Secrets: What Are You Actually Protecting?"
+description: "Let's look at a standard Kubernetes Secret:"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Secrets: What Are You Actually Protecting?
 
 ### The Illusion of Security

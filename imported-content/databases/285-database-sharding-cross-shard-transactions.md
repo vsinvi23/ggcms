@@ -1,3 +1,11 @@
+---
+title: "Distributed Transactions: The High Cost of Two-Phase Commit (2PC) Across Shards"
+description: "Database sharding is the standard approach for horizontally scaling transactional relational databases. By partitioning a massive table across multiple physical database instances (shards) using a sha"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Distributed Transactions: The High Cost of Two-Phase Commit (2PC) Across Shards
 
 ## The Shard Boundary Isolation Problem

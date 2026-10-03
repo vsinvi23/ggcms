@@ -1,3 +1,11 @@
+---
+title: "PKI Certificate Revocation: Sizing CRLs vs Enforcing OCSP Stapling"
+description: "When a private key is compromised, the issuing Certificate Authority (CA) must invalidate the corresponding public key certificate before its natural expiration date. To communicate this status to cli"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # PKI Certificate Revocation: Sizing CRLs vs Enforcing OCSP Stapling
 
 ## The Problem: The Latency and Privacy Dilemma of Revocation Checks

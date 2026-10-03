@@ -1,3 +1,11 @@
+---
+title: "Gradient Boosting Machines: Why XGBoost Dominates Tabular Data"
+description: "While Random Forests reduce variance by averaging independent trees in parallel, they do not structurally optimize model bias. Enterprise machine learning tasks are dominated by tabular datasets (e.g."
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Gradient Boosting Machines: Why XGBoost Dominates Tabular Data
 
 ## The Problem

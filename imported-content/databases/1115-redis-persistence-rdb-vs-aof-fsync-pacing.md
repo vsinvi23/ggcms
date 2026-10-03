@@ -1,3 +1,11 @@
+---
+title: "Redis Persistence: Snapshotting (RDB) vs Append-Only Files (AOF) Fsync Policies"
+description: "Redis is an in-memory data store. Its blistering performance (capable of millions of operations per second) comes from avoiding disk I/O entirely during the hot path of read/write operations. However,"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Persistence: Snapshotting (RDB) vs Append-Only Files (AOF) Fsync Policies
 
 ## The Problem: In-Memory Volatility vs Disk Latency

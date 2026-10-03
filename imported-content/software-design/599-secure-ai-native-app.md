@@ -1,3 +1,11 @@
+---
+title: "Designing a Secure, Scalable AI-Native Application"
+description: "When building applications powered by Large Language Models (LLMs), developers often start by putting a React frontend directly over the OpenAI API."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing a Secure, Scalable AI-Native Application
 
 ## The Problem: Wrapping an API is Not Architecture

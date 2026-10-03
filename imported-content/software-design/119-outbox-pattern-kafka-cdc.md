@@ -1,3 +1,11 @@
+---
+title: "The Transactional Outbox Pattern: Dual-Writes and CDC with Debezium"
+description: "In modern distributed systems, a single user action often requires updating the local database and notifying other services via a message broker (like Kafka or RabbitMQ). For example, when an order is"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The Transactional Outbox Pattern: Dual-Writes and CDC with Debezium
 
 ## The Problem: The Dual-Write Dilemma

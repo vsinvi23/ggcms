@@ -1,3 +1,11 @@
+---
+title: "Dataform on BigQuery: Injecting Dynamic Logic and Loops via Javascript Blocks"
+description: "Enterprise data warehouses frequently manage repetitive SQL transformation patterns. For example, a global retail business might need to generate distinct, aggregated sales reporting tables across fif"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Dataform on BigQuery: Injecting Dynamic Logic and Loops via Javascript Blocks
 
 ## The Repetitive SQL Boilerplate Problem

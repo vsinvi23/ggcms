@@ -1,3 +1,11 @@
+---
+title: "TLS 1.3 Session Resumption: PSK and Session Tickets"
+description: "Establishing a secure connection over Transport Layer Security (TLS) is not cheap. In legacy TLS 1.2, every new connection requires two full network round-trips (2-RTT) just to perform the handshake b"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS 1.3 Session Resumption: PSK and Session Tickets
 
 ## The Core Problem: Handshake Latency and CPU Overhead

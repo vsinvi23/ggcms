@@ -1,3 +1,11 @@
+---
+title: "Dijkstra's Algorithm in C++: Using `std::priority_queue` for Network Routing"
+description: "Network routers using protocols like OSPF (Open Shortest Path First) need to determine the fastest route for data packets across a network where links have varying latencies or costs. Dijkstra's Algor"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Dijkstra's Algorithm in C++: Using `std::priority_queue` for Network Routing
 
 ## The Problem: Shortest Path on Weighted Graphs

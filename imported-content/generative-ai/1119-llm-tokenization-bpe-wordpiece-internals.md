@@ -1,3 +1,11 @@
+---
+title: "LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece Under the Hood"
+description: "**The Problem:** Neural networks only understand numbers, not raw text. However, splitting text into raw bytes loses semantic meaning and creates excessively long sequences, while splitting into whole"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece Under the Hood
 
 **The Problem:** Neural networks only understand numbers, not raw text. However, splitting text into raw bytes loses semantic meaning and creates excessively long sequences, while splitting into whole words leads to an unmanageable vocabulary size and Out-Of-Vocabulary (OOV) errors. The solution is subword tokenization, but two dominant algorithms—Byte-Pair Encoding (BPE) and WordPiece—achieve this differently.

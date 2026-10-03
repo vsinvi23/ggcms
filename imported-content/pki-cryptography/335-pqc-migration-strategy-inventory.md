@@ -1,3 +1,11 @@
+---
+title: "PQC Migration: Designing a Cryptographic Bill of Materials (CBOM)"
+description: "Transitioning an enterprise to Post-Quantum Cryptography (PQC) is not primarily a mathematical problem; it is a massive software engineering and discovery problem. You cannot migrate what you cannot s"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # PQC Migration: Designing a Cryptographic Bill of Materials (CBOM)
 
 ## The Problem: The Invisible Cryptographic Surface

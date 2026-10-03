@@ -1,3 +1,11 @@
+---
+title: "Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Scans"
+description: "As application databases grow, queries that executed in milliseconds during development can suddenly degrade to multi-second bottlenecks in production. When database performance drops, developers ofte"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Scans
 
 ## The Problem: The Query Optimization Black Box

@@ -1,3 +1,11 @@
+---
+title: "bcrypt Cost Factors: Adaptive Key Stretching to Outpace Moore's Law"
+description: "When designing authentication systems, developers must assume their database will eventually be breached. If passwords are plain text, the game is over. If they are hashed with fast algorithms like MD"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # bcrypt Cost Factors: Adaptive Key Stretching to Outpace Moore's Law
 
 When designing authentication systems, developers must assume their database will eventually be breached. If passwords are plain text, the game is over. If they are hashed with fast algorithms like MD5 or SHA-256, the game is still over, just slightly delayed. Modern GPUs and ASICs can calculate billions of SHA-256 hashes per second, making offline dictionary and brute-force attacks trivial. 

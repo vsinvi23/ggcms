@@ -1,3 +1,11 @@
+---
+title: "The SSO Handshake: Analyzing SAML 2.0 Assertion Profiles"
+description: "Single Sign-On (SSO) is essential for modern enterprise operations, allowing employees to access diverse application ecosystems with a single identity credential. However, a major architectural challe"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # The SSO Handshake: Analyzing SAML 2.0 Assertion Profiles
 
 ### The Problem: Cross-Domain Trust Without Shared Credentials

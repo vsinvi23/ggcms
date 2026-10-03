@@ -1,3 +1,11 @@
+---
+title: "Lattice-Based Post-Quantum Cryptography: Preparing Production Systems for Crystals-Kyber (ML-KEM)"
+description: "Learn how quantum computers running Shor's Algorithm will threaten public-key cryptography, explore the mathematics of Module Lattice-Based Key Encapsulation (ML-KEM), and understand how to migrate modern applications to crystals-kyber."
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Lattice-Based Post-Quantum Cryptography: Preparing Production Systems for Crystals-Kyber (ML-KEM)
 
 > Learn how quantum computers running Shor's Algorithm will threaten public-key cryptography, explore the mathematics of Module Lattice-Based Key Encapsulation (ML-KEM), and understand how to migrate modern applications to crystals-kyber.

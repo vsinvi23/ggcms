@@ -1,3 +1,11 @@
+---
+title: "Insecure Direct Object References (IDOR): Obfuscating Database Primary Keys using AES-GCM"
+description: "Insecure Direct Object References (IDOR) occur when an application exposes a reference to an internal implementation object, such as a database primary key, without enforcing strict authorization chec"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Insecure Direct Object References (IDOR): Obfuscating Database Primary Keys using AES-GCM
 
 ## The Problem: Predictable Resource Identifiers

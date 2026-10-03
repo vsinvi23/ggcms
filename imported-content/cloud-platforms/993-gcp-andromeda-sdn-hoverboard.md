@@ -1,3 +1,11 @@
+---
+title: "GCP Andromeda SDN: Kernel Bypass and Virtual Switch Packet Processing"
+description: "In traditional cloud networking, virtual machines (VMs) send and receive network packets through a software-defined networking (SDN) stack managed by the physical host's hypervisor."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Andromeda SDN: Kernel Bypass and Virtual Switch Packet Processing
 
 ## The Problem: The Performance Bottleneck of Kernel-Space Networking

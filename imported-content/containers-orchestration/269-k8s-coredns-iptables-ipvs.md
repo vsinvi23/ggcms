@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Services: CoreDNS Routing, iptables Bottlenecks, and the IPVS Upgrade"
+description: "As Kubernetes clusters scale to host hundreds of Services and thousands of Pods, the default `kube-proxy` networking mode—built on `iptables`—becomes a severe performance bottleneck. Every Service and"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Services: CoreDNS Routing, iptables Bottlenecks, and the IPVS Upgrade
 
 ## The Problem: The O(N) Scaling Limit of iptables

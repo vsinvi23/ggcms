@@ -1,3 +1,11 @@
+---
+title: "Principal Component Analysis (PCA): Covariance Matrix and Eigenvectors"
+description: "High-dimensional datasets introduce severe engineering obstacles, a phenomenon known as the **curse of dimensionality**. As the feature space $n$ expands, the volume of the space increases exponential"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Principal Component Analysis (PCA): Covariance Matrix and Eigenvectors
 
 ## The Problem

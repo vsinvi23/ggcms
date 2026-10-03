@@ -1,3 +1,11 @@
+---
+title: "Non-Human Identities: Managing Credential Sprawl in Multi-Agent Swarms"
+description: "In complex, multi-agent frameworks, specialized agents (e.g., Researcher, Database Coder, Infrastructure Deployer) cooperate as an autonomous swarm to achieve high-level goals. To complete their objec"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # Non-Human Identities: Managing Credential Sprawl in Multi-Agent Swarms
 
 ## Problem Statement

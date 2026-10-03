@@ -1,3 +1,11 @@
+---
+title: "Building a Secure Login System from Scratch: Lockouts, Session Tokens, and Timing Defenses"
+description: "Authentication is the primary gateway to your application's data. A naive login implementation—merely checking a username against a hashed password—is functionally equivalent to a screen door on a ban"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Building a Secure Login System from Scratch: Lockouts, Session Tokens, and Timing Defenses
 
 ## The Problem: The Inherent Vulnerability of Authentication

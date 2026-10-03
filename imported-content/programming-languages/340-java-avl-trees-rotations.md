@@ -1,3 +1,11 @@
+---
+title: "AVL Trees in Java: Implementing Self-Balancing Left and Right Rotations"
+description: "A standard Binary Search Tree (BST) provides no structural guarantees. Sequential insertions transform it into a linked list, dropping lookup performance from $O(\log N)$ to $O(N)$. The AVL tree (Adel"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # AVL Trees in Java: Implementing Self-Balancing Left and Right Rotations
 
 ## The Problem: Degenerate Trees

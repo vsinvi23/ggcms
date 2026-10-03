@@ -1,4 +1,4 @@
----
+--- 
 title: "Understanding AI Supercomputing: Networking, Storage, and Scheduling for Training"
 slug: "ai-supercomputing-networking-storage-scheduling"
 category: "AI Infrastructure"
@@ -43,7 +43,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "generative-ai"
 ---
+
 
 # Understanding AI Supercomputing: Networking, Storage, and Scheduling for Training
 

@@ -1,4 +1,4 @@
----
+--- 
 title: "The New Software Engineering Skill: Managing AI Agents"
 slug: "new-software-engineering-skill-managing-ai-agents"
 category: "AI Software Engineering"
@@ -44,7 +44,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # The New Software Engineering Skill: Managing AI Agents
 

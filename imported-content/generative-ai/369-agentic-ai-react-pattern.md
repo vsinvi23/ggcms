@@ -1,3 +1,11 @@
+---
+title: "Agentic AI: The ReAct (Reason + Act) Loop Pattern"
+description: "**The Problem:** LLMs are static instruction followers. When faced with multi-step problems, they hallucinate or stall because they cannot dynamically interact with the world, query databases, or exec"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Agentic AI: The ReAct (Reason + Act) Loop Pattern
 
 **The Problem:** LLMs are static instruction followers. When faced with multi-step problems, they hallucinate or stall because they cannot dynamically interact with the world, query databases, or execute code based on intermediate observations.

@@ -1,3 +1,11 @@
+---
+title: "AI Agent Memory: Sliding Context Windows vs. Persistent Vector State"
+description: "In production AI agent development, the fundamental bottleneck is the stateless nature of Large Language Models (LLMs). Every API call to an LLM is independent. Without a memory mechanism, an agent ca"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # AI Agent Memory: Sliding Context Windows vs. Persistent Vector State
 
 ## The Statelessness Problem in Autonomous Agents

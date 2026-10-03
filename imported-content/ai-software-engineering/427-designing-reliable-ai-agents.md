@@ -1,3 +1,11 @@
+---
+title: "Designing Reliable AI Agents: Fallbacks, Validation, and Backoff"
+description: "When software engineers transition from standard APIs to Large Language Model (LLM) APIs, they encounter a fundamental challenge: non-determinism. Standard services return structured payloads with pre"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Designing Reliable AI Agents: Fallbacks, Validation, and Backoff
 
 ## The Brittleness of Raw LLM Integrations

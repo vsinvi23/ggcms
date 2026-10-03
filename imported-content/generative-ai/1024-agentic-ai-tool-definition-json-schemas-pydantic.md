@@ -1,3 +1,11 @@
+---
+title: "LLM Tool Calling: Wiring APIs and JSON Function Definitions"
+description: "Historically, connecting an LLM to an external API required complex string parsing. The model would generate text (e.g., `Action: get_weather(\"New York\")`), and the application layer would rely on bri"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tool Calling: Wiring APIs and JSON Function Definitions
 
 ## The Problem: The Fragility of Text-Parsing

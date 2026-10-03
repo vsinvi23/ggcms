@@ -1,3 +1,11 @@
+---
+title: "Stack vs. Heap Explained (in C): Scope Frames vs. Dynamic OS Allocations"
+description: "To write safe, high-performance C programs, you must possess a rigorous, mechanical understanding of the **Stack** and the **Heap**. While both represent regions of a process's virtual memory, they ar"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Stack vs. Heap Explained (in C): Scope Frames vs. Dynamic OS Allocations
 
 To write safe, high-performance C programs, you must possess a rigorous, mechanical understanding of the **Stack** and the **Heap**. While both represent regions of a process's virtual memory, they are governed by entirely different lifetime rules, allocation hardware, and performance profiles. Mismanaging this divide leads directly to memory leaks, dangling pointers, and catastrophic stack overflow crashes.

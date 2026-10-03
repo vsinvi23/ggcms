@@ -1,3 +1,11 @@
+---
+title: "Hardening the Docker Daemon: Securing /var/run/docker.sock and rootless user namespaces"
+description: "Historically, the Docker daemon (`dockerd`) runs as the `root` user on the host system. It listens for API requests on a Unix socket, typically located at `/var/run/docker.sock`."
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Hardening the Docker Daemon: Securing /var/run/docker.sock and rootless user namespaces
 
 ### The Problem: The Root Equivalent Daemon

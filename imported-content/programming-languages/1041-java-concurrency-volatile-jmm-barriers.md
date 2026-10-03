@@ -1,3 +1,11 @@
+---
+title: "Java Concurrency: Memory Barriers, Volatile Semantics, and Instruction Reordering in the JMM"
+description: "In concurrent Java applications, multiple threads accessing shared variables without explicit synchronization often observe inconsistent states. A thread may loop indefinitely waiting for a boolean fl"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Concurrency: Memory Barriers, Volatile Semantics, and Instruction Reordering in the JMM
 
 ## The Problem: Stale Data and Out-of-Order Execution

@@ -1,3 +1,11 @@
+---
+title: "LLM Tool Calling: Wiring APIs and JSON Function Definitions"
+description: "Before 2023, giving tools to Large Language Models required intense \"prompt engineering\" to coerce the model into outputting specific text formats (e.g., `Action: GET /users/123`). Developers had to w"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tool Calling: Wiring APIs and JSON Function Definitions
 
 ### The Problem: Parsing Hell in Multi-Agent Systems

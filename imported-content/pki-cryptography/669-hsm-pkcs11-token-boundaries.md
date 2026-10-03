@@ -1,3 +1,11 @@
+---
+title: "Hardware Security Modules (HSMs): Invoking Cryptographic Operations over the PKCS#11 API"
+description: "In traditional software-based cryptography, private keys are loaded into application memory space. If a process is compromised via buffer overflow, remote code execution (RCE), or cold-boot attacks, p"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Hardware Security Modules (HSMs): Invoking Cryptographic Operations over the PKCS#11 API
 
 ## The Problem: Memory-Safe Key Boundaries and API Overhead

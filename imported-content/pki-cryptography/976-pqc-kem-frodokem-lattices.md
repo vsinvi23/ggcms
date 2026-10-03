@@ -1,3 +1,11 @@
+---
+title: "Post-Quantum Cryptography: FrodoKEM and the Conservative Security of Unstructured Lattices"
+description: "The security of modern PKI systems rests on the hardness of two mathematical problems: Integer Factorization (RSA) and Discrete Logarithms (ECC, Diffie-Hellman). In 1994, Peter Shor published **Shor's"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Post-Quantum Cryptography: FrodoKEM and the Conservative Security of Unstructured Lattices
 
 ## The Problem: The Impending Quantum Threat to Public-Key Schemes

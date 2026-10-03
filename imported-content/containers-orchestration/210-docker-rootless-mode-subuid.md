@@ -1,3 +1,11 @@
+---
+title: "Rootless Docker: Hardening Daemons with User Namespaces and subuid/subgid Mapping"
+description: "Historically, the Docker daemon (`dockerd`) has required `root` privileges to operate. It needs these high-level permissions to interact with the Linux kernel to create network interfaces, mount files"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Rootless Docker: Hardening Daemons with User Namespaces and subuid/subgid Mapping
 
 ## The Problem: The Daemon Privilege Escalation Vector

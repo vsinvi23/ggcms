@@ -1,3 +1,11 @@
+---
+title: "GraphQL vs REST: Solving the N+1 Query Problem with DataLoaders"
+description: "GraphQL provides incredible flexibility, allowing clients to query exactly the data they need in a single request. However, this flexibility comes with a dangerous architectural trap: the **N+1 Query "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # GraphQL vs REST: Solving the N+1 Query Problem with DataLoaders
 
 ## The Problem: The N+1 Query Dilemma

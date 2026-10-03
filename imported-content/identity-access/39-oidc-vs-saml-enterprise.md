@@ -1,3 +1,11 @@
+---
+title: "OIDC vs. SAML 2.0: Architectural Trade-offs in Enterprise Single Sign-On"
+description: "Enterprise Single Sign-On (SSO) and federated identity are the cornerstones of modern identity and access management (IAM). When connecting heterogeneous applications across trust boundaries, security"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OIDC vs. SAML 2.0: Architectural Trade-offs in Enterprise Single Sign-On
 
 Enterprise Single Sign-On (SSO) and federated identity are the cornerstones of modern identity and access management (IAM). When connecting heterogeneous applications across trust boundaries, security architects and developers must choose between two prominent standards: **Security Assertion Markup Language (SAML 2.0)** and **OpenID Connect (OIDC)**. 

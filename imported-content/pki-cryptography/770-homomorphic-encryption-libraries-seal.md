@@ -1,3 +1,11 @@
+---
+title: "Homomorphic Encryption Libraries: Comparing Microsoft SEAL (BFV/CKKS) Implementations"
+description: "Standard encryption schemes (AES, RSA) secure data at rest and in transit. However, to process or compute upon that data, it must first be decrypted in memory. This exposes the plaintext to memory-scr"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Homomorphic Encryption Libraries: Comparing Microsoft SEAL (BFV/CKKS) Implementations
 
 ## The Problem: Data Privacy During Computation

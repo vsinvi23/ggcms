@@ -1,3 +1,11 @@
+---
+title: "GCP Cloud Run Internals: Sandboxing Containers with gVisor"
+description: "Standard container deployment models (such as Docker, native Kubernetes, or ECS) rely on the host Linux kernel to enforce process isolation via namespaces and cgroups. While highly efficient, this sha"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Cloud Run Internals: Sandboxing Containers with gVisor
 
 ## The Problem: The Shared-Kernel Vulnerability of Multi-Tenant Containers

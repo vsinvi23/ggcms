@@ -1,3 +1,11 @@
+---
+title: "Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Scans"
+description: "SQL is a declarative language; you tell the database *what* you want, not *how* to get it. The PostgreSQL Query Planner acts as the compiler, translating your SQL into a physical execution plan."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Scans
 
 ## The Problem: The SQL Black Box

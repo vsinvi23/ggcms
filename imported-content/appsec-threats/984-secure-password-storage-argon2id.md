@@ -1,3 +1,11 @@
+---
+title: "Secure Password Storage: Tuning Argon2id Parameters for Optimal ASIC/GPU Resistance"
+description: "Password hashes stored in a database inevitably leak during a breach. The security of these passwords relies entirely on how computationally expensive it is for an attacker to crack them offline."
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Secure Password Storage: Tuning Argon2id Parameters for Optimal ASIC/GPU Resistance
 
 ## The Problem: The Arms Race Against Hardware

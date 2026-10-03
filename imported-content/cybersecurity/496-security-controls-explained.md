@@ -1,3 +1,11 @@
+---
+title: "Security Controls Decoded: Integrating Administrative, Technical, and Physical Safeguards"
+description: "In security engineering, an \"eggshell\" architecture is hard on the outside but completely soft on the inside. Companies often build high-performance technical perimeters—such as next-generation web ap"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Security Controls Decoded: Integrating Administrative, Technical, and Physical Safeguards
 
 ## The Problem: The Single Point of Failure (The Eggshell Security Model)

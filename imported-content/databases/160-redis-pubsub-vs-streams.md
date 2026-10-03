@@ -1,3 +1,11 @@
+---
+title: "Redis Messaging: Ephemeral Pub/Sub vs Persistent Redis Streams"
+description: "Redis is universally recognized as a blazing-fast, in-memory data store. When engineers need to implement messaging, event-driven architectures, or real-time notifications, Redis is often the first to"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Messaging: Ephemeral Pub/Sub vs Persistent Redis Streams
 
 ## The Problem: The High Cost of Lost Messages

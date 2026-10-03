@@ -1,3 +1,11 @@
+---
+title: "STL Containers: What Happens Under the Hood? Allocators and Iterators"
+description: "A container must manage data elements dynamically. However, tightly coupling the data structure logic (like tree balancing or vector resizing) with the operating system's memory allocation (like `mall"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # STL Containers: What Happens Under the Hood? Allocators and Iterators
 
 ## Problem Statement

@@ -1,3 +1,11 @@
+---
+title: "Apache Cassandra Internals: LSM Trees, SSTables, and Bloom Filters"
+description: "Analyze the write-optimized storage engine of Apache Cassandra, explore how Log-Structured Merge (LSM) Trees and SSTables eliminate random disk I/O, and learn how Bloom Filters prevent expensive read-amplification scans on disk."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Apache Cassandra Internals: LSM Trees, SSTables, and Bloom Filters
 
 > Analyze the write-optimized storage engine of Apache Cassandra, explore how Log-Structured Merge (LSM) Trees and SSTables eliminate random disk I/O, and learn how Bloom Filters prevent expensive read-amplification scans on disk.

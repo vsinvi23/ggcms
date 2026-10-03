@@ -1,3 +1,11 @@
+---
+title: "Python Dunder Methods: Customizing Object Behaviors"
+description: "In Python, custom user-defined classes often feel clunky and isolated compared to built-in types like lists, dictionaries, and strings. For example, if you build a custom `Vector2D` class, you cannot "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Dunder Methods: Customizing Object Behaviors
 
 ### The Problem: The Standard Class vs. Native Integration Gap

@@ -1,3 +1,11 @@
+---
+title: "Securing AWS S3: Inside the Signature Version 4 (SigV4) Pre-Signed URL Lifecycle"
+description: "When designing cloud-native storage interfaces, applications frequently need to grant clients temporary read or write access to private objects in Amazon S3. For example, a web frontend might need to "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Securing AWS S3: Inside the Signature Version 4 (SigV4) Pre-Signed URL Lifecycle
 
 ## The Problem: Secure Object Sharing without Credential Leakage

@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Pods Explained: Co-Scheduled Containers and Shared Namespaces"
+description: "A fundamental tenant of container design is **\"one process per container.\"** Running multiple disjoint services (such as a web application and its database, or an API and its logging daemon) inside a "
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Pods Explained: Co-Scheduled Containers and Shared Namespaces
 
 ## The Problem: The Single-Process Limitation of Container Design

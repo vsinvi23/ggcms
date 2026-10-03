@@ -1,3 +1,11 @@
+---
+title: "Fine-Tuning LLMs: Parameter-Efficient LoRA and QLoRA NF4 Quantization"
+description: "**The Problem:** Fine-tuning large language models (LLMs) via full-parameter updates requires updating billions of weights. This demands massive VRAM for the optimizer states (e.g., Adam uses 2 additi"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Fine-Tuning LLMs: Parameter-Efficient LoRA and QLoRA NF4 Quantization
 
 **The Problem:** Fine-tuning large language models (LLMs) via full-parameter updates requires updating billions of weights. This demands massive VRAM for the optimizer states (e.g., Adam uses 2 additional parameters per model parameter) and gradients. Fine-tuning a 70B parameter model in FP16 would require over 1.5 TB of VRAM. Parameter-Efficient Fine-Tuning (PEFT) methods are required to democratize AI.

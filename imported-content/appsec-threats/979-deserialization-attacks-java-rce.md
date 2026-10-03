@@ -1,3 +1,11 @@
+---
+title: "Deserialization Attacks: How Java Object Streams Lead to Remote Code Execution"
+description: "In distributed systems, moving objects across network boundaries or persisting them to disk requires transforming in-memory state into a byte stream—a process known as serialization. The reverse proce"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Deserialization Attacks: How Java Object Streams Lead to Remote Code Execution
 
 ## The Problem: Trusting Opaque Binary Blobs

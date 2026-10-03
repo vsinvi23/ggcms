@@ -1,3 +1,11 @@
+---
+title: "SAML Parsing Security: Mitigating XML Signature Wrapping (XSW) and XML Bombs"
+description: "Security Assertion Markup Language (SAML) relies heavily on XML and XML Signatures (XMLDSig). Because XML is incredibly complex and flexible, poorly configured SAML parsers are vulnerable to devastati"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SAML Parsing Security: Mitigating XML Signature Wrapping (XSW) and XML Bombs
 
 ## The Problem

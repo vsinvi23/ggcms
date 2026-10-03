@@ -1,3 +1,11 @@
+---
+title: "Securing AWS S3: Generating and Enforcing Pre-Signed URLs"
+description: "Exposing raw assets directly to the public internet is one of the most common causes of cloud data breaches. For applications that handle user-generated files—such as medical records, personal avatars"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Securing AWS S3: Generating and Enforcing Pre-Signed URLs
 
 ## The Problem: The Vulnerability of Public S3 Buckets

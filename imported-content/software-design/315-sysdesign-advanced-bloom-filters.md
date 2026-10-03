@@ -1,3 +1,11 @@
+---
+title: "Advanced System Design: Probabilistic Data Structures"
+description: "At a certain scale, deterministic data structures (HashMaps, Trees, Sets) run out of memory."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Advanced System Design: Probabilistic Data Structures
 
 ## The Problem

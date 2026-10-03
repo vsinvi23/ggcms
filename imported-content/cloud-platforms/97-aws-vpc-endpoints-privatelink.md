@@ -1,3 +1,11 @@
+---
+title: "AWS PrivateLink: Interfacing with Services without Internet Transit"
+description: "In a traditional AWS architecture, a Virtual Private Cloud (VPC) is isolated from the outside world. However, if your private EC2 instances need to interact with AWS managed services (like S3, DynamoD"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS PrivateLink: Interfacing with Services without Internet Transit
 
 ## The Data Exfiltration Problem

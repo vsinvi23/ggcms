@@ -1,3 +1,11 @@
+---
+title: "AES-CBC Padding Oracles: How POODLE and Lucky13 Exploit Block Padding"
+description: "Cipher Block Chaining (CBC) has been a workhorse of symmetric encryption for decades. However, its decryption pipeline relies on a dangerous assumption: that decryption errors are handled uniformly."
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # AES-CBC Padding Oracles: How POODLE and Lucky13 Exploit Block Padding
 
 ## The Problem: Cryptographic Side-Channels in CBC Decryption

@@ -1,3 +1,11 @@
+---
+title: "Resilient Microservices: Exponential Backoff and Jitter Algorithms"
+description: "In a distributed microservice architecture, transient failures are a mathematical certainty. A downstream database might momentarily restart, a network switch might drop packets, or an API rate limit "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Resilient Microservices: Exponential Backoff and Jitter Algorithms
 
 ## The Problem: The Thundering Herd

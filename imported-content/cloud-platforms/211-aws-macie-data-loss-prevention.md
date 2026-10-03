@@ -1,3 +1,11 @@
+---
+title: "AWS Macie: ML-Driven Data Loss Prevention (DLP) for Amazon S3"
+description: "Amazon S3 has become the de facto storage layer for enterprise data lakes, aggregating petabytes of logs, backups, and user uploads. As the volume of data grows, organizations lose visibility into wha"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Macie: ML-Driven Data Loss Prevention (DLP) for Amazon S3
 
 ## The Problem: The Blind Spot in Massive Data Lakes

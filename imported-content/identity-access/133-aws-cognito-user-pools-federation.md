@@ -1,3 +1,11 @@
+---
+title: "AWS Cognito: User Pools vs Identity Pools and External Federation"
+description: "When designing application security on AWS, developers frequently confuse AWS Cognito User Pools (CUP) and AWS Cognito Identity Pools (CIP). This confusion often leads to major architectural anti-patt"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # AWS Cognito: User Pools vs Identity Pools and External Federation
 
 ## The Problem: The Cognitive Friction of AWS Cognito Dual Architectures

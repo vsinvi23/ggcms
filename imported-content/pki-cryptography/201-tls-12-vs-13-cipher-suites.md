@@ -1,3 +1,11 @@
+---
+title: "TLS Cipher Suites: The Deprecation of CBC, RC4, and RSA Key Exchange in TLS 1.3"
+description: "The Transport Layer Security (TLS) protocol evolved over decades from its ancestor, SSL. By the time TLS 1.2 was standardized in 2008, it carried immense technical debt. The protocol supported a massi"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS Cipher Suites: The Deprecation of CBC, RC4, and RSA Key Exchange in TLS 1.3
 
 ## The Problem: The Cryptographic Bloat of TLS 1.2

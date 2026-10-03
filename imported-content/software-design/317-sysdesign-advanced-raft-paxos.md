@@ -1,3 +1,11 @@
+---
+title: "Advanced System Design: Distributed Consensus (Raft vs Paxos)"
+description: "When building a distributed, highly available database, you replicate data across multiple nodes so that if one dies, the data survives. But what happens if two users try to update the exact same reco"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Advanced System Design: Distributed Consensus (Raft vs Paxos)
 
 ## The Problem

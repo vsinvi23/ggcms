@@ -1,3 +1,11 @@
+---
+title: "Distributed Locking: Redlock vs Single-instance Redis locks"
+description: "In a single-process application, protecting a critical section of code from concurrent modification is trivial. You use standard operating system primitives like Mutexes or Semaphores provided by your"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed Locking: Redlock vs Single-instance Redis locks
 
 ## The Problem: Concurrency in Distributed Systems

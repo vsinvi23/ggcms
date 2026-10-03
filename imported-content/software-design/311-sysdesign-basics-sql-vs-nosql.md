@@ -1,3 +1,11 @@
+---
+title: "System Design Basics: SQL vs NoSQL"
+description: "State must be stored. For decades, the Relational Database Management System (RDBMS/SQL) was the default choice. However, as the internet scaled and unstructured data exploded, relational databases hi"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # System Design Basics: SQL vs NoSQL
 
 ## The Problem

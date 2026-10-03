@@ -1,3 +1,11 @@
+---
+title: "The Liskov Substitution Principle: Preventing Fragile Inheritance Trees"
+description: "*If S is a subtype of T, then objects of type T may be replaced with objects of type S without altering any of the desirable properties of the program (correctness, task performed, etc.).*"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The Liskov Substitution Principle: Preventing Fragile Inheritance Trees
 
 ## The Problem: The Inheritance Trap

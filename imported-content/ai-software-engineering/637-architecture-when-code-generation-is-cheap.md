@@ -1,4 +1,4 @@
----
+--- 
 title: "What Happens to Software Architecture When Code Generation Becomes Cheap?"
 slug: "software-architecture-when-code-generation-becomes-cheap"
 category: "AI-Native Software Engineering"
@@ -46,7 +46,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # What Happens to Software Architecture When Code Generation Becomes Cheap?
 

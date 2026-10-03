@@ -1,3 +1,11 @@
+---
+title: "Advanced Go Profiling: Finding CPU Bottlenecks and Memory Leaks with pprof and runtime/trace"
+description: "A high-throughput API gateway written in Go is experiencing unexplained performance degradation. Under a steady load of 10,000 requests per second, the service exhibits latency spikes where p99 latenc"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Advanced Go Profiling: Finding CPU Bottlenecks and Memory Leaks with pprof and runtime/trace
 
 ## The Problem: Mysterious Latency Spikes and Memory Growth

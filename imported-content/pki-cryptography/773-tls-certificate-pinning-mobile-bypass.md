@@ -1,3 +1,11 @@
+---
+title: "TLS Certificate Pinning: Defeating Rogue CAs and MitM Attacks in Mobile Apps"
+description: "Standard TLS validation relies on a chain of trust. When a mobile application connects to an API, the server presents a certificate. The operating system (iOS or Android) checks if this certificate wa"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS Certificate Pinning: Defeating Rogue CAs and MitM Attacks in Mobile Apps
 
 ## The Problem: The Fragility of the Public PKI Trust Store

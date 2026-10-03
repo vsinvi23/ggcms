@@ -1,3 +1,11 @@
+---
+title: "Fully Homomorphic Encryption (FHE): Bootstrapping and Noise Reduction"
+description: "For decades, cryptography provided a solid shield for data in transit (TLS) and data at rest (AES/RSA). However, data in use remained a glaring vulnerability. To perform computations on encrypted data"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Fully Homomorphic Encryption (FHE): Bootstrapping and Noise Reduction
 
 ## The Problem: The Data Privacy Paradox

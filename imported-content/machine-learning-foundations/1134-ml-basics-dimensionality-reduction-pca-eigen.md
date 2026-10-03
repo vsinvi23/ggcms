@@ -1,3 +1,11 @@
+---
+title: "Principal Component Analysis (PCA): Covariance Matrix and Eigenvectors"
+description: "High-dimensional data suffers from the \"Curse of Dimensionality.\" As the number of features grows, distance metrics lose meaning, visualization becomes impossible, and models severely overfit. The cha"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Principal Component Analysis (PCA): Covariance Matrix and Eigenvectors
 
 ## The Problem

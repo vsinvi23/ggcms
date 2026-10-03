@@ -1,3 +1,11 @@
+---
+title: "Unsupervised Learning: K-Means Clustering and the Elbow Method"
+description: "In real-world data engineering and machine learning workflows, a significant portion of incoming data lacks pre-labeled targets. Organizations must categorize user behaviors, detect network anomalies,"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Unsupervised Learning: K-Means Clustering and the Elbow Method
 
 ## The Problem

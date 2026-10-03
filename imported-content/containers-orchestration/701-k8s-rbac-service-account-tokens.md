@@ -1,3 +1,11 @@
+---
+title: "Hardening Kubernetes RBAC: Securing Roles, Bindings, and Service Account Tokens"
+description: "Kubernetes Role-Based Access Control (RBAC) is the primary line of defense inside a cluster. However, many deployments suffer from severe configuration drift: wildcards (`*`) are applied to API groups"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Hardening Kubernetes RBAC: Securing Roles, Bindings, and Service Account Tokens
 
 Kubernetes Role-Based Access Control (RBAC) is the primary line of defense inside a cluster. However, many deployments suffer from severe configuration drift: wildcards (`*`) are applied to API groups, cluster-wide permissions are given to localized microservices, and default ServiceAccount tokens are automatically mounted into pods. If a pod with an over-privileged ServiceAccount token is compromised, the attacker can leverage the mounted credentials to query the API server, mutate cluster state, or even escalate privileges to cluster-admin.

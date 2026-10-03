@@ -1,3 +1,11 @@
+---
+title: "Resolving GraphQL N+1 Query Loops: Request Coalescing and Ticking Batch Queues"
+description: "GraphQL’s primary strength is enabling clients to specify exactly the shape of the data they need. However, this hierarchical, graph-based execution model naturally leads to the dreaded N+1 query prob"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Resolving GraphQL N+1 Query Loops: Request Coalescing and Ticking Batch Queues
 
 ## The Problem: The Graph Expansion Trap

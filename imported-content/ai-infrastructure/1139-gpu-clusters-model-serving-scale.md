@@ -1,4 +1,4 @@
----
+--- 
 title: "GPU Clusters and Model Serving: How AI Compute Actually Scales"
 slug: "gpu-clusters-model-serving-scale"
 category: "AI Infrastructure"
@@ -41,7 +41,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "generative-ai"
 ---
+
 
 # GPU Clusters and Model Serving: How AI Compute Actually Scales
 

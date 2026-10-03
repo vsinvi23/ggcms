@@ -1,3 +1,11 @@
+---
+title: "Docker Layer Caching: Structuring Multi-Stage Dockerfiles and BuildKit Cache Mounts"
+description: "Containerizing applications often results in agonizingly slow CI/CD pipelines and degraded local developer experience. The root cause is typically a poorly structured `Dockerfile` that busts the Docke"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Layer Caching: Structuring Multi-Stage Dockerfiles and BuildKit Cache Mounts
 
 ## The Problem: The Inefficient Build Loop

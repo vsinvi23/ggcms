@@ -1,3 +1,11 @@
+---
+title: "SOAR Explained: Orchestration and Automated Playbooks"
+description: "Your SIEM is highly tuned. It generates 50 high-fidelity alerts per day. However, investigating a single alert—say, a suspicious email attachment—requires an analyst to:"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # SOAR Explained: Orchestration and Automated Playbooks
 
 ## The Problem: The Analyst Bottleneck

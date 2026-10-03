@@ -1,3 +1,11 @@
+---
+title: "Copy Constructor vs. Move Constructor: Deep Copies vs. Pointer Reassignment"
+description: "When designing resource-managing classes in C++, developers must carefully declare how objects are created and transferred. This is governed by two key constructor types: the **Copy Constructor** and "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Copy Constructor vs. Move Constructor: Deep Copies vs. Pointer Reassignment
 
 When designing resource-managing classes in C++, developers must carefully declare how objects are created and transferred. This is governed by two key constructor types: the **Copy Constructor** and the **Move Constructor**. Failing to implement these correctly leads to silent memory corruption, double-free bugs, or massive performance degradations.

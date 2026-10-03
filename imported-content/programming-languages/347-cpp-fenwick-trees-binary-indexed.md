@@ -1,3 +1,11 @@
+---
+title: "Fenwick Trees (BIT) in C++: Bitwise Magic for Fast Cumulative Frequencies"
+description: "While Segment Trees process range queries in $O(\log N)$, they require $4N$ memory and recursively branch down the tree, polluting the call stack. If the problem is strictly about cumulative frequenci"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Fenwick Trees (BIT) in C++: Bitwise Magic for Fast Cumulative Frequencies
 
 ## The Problem: The Segment Tree Overhead

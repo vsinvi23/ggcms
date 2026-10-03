@@ -1,3 +1,11 @@
+---
+title: "Attack Surface vs. Attack Vector: The Target vs. The Weapon"
+description: "In cybersecurity discussions, the terms \"attack surface\" and \"attack vector\" are frequently used interchangeably. Engineers will state, \"SQL injection is a large attack surface for us,\" or \"Our new AP"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Attack Surface vs. Attack Vector: The Target vs. The Weapon
 
 ## The Problem: Confusing the Terminology

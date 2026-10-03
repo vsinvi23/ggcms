@@ -1,3 +1,11 @@
+---
+title: "C Compilation: From Source Code to Executable"
+description: "When a developer runs `gcc main.c -o main`, it feels like a single magical step. However, the C compilation process is actually a pipeline of four distinct, sequential tools. Understanding this pipeli"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C Compilation: From Source Code to Executable
 
 ## The Problem

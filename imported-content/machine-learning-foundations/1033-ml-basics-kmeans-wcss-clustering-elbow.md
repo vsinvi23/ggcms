@@ -1,3 +1,11 @@
+---
+title: "Unsupervised Learning: K-Means Clustering and the Elbow Method"
+description: "In real-world data engineering workloads, labels are frequently missing, incomplete, or prohibitively expensive to collect. Use cases like user cohort segmentation, cloud resource anomaly detection, a"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Unsupervised Learning: K-Means Clustering and the Elbow Method
 
 ## The Problem

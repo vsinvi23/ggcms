@@ -1,3 +1,11 @@
+---
+title: "Mutual TLS (mTLS): Enforcing Certificate-based Client Auth"
+description: "Standard Transport Layer Security (TLS) is inherently unidirectional. When your browser connects to `https://banking.com`, the TLS handshake ensures the client can cryptographically verify the identit"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Mutual TLS (mTLS): Enforcing Certificate-based Client Auth
 
 ## The Problem: Unidirectional Trust in a Zero-Trust World

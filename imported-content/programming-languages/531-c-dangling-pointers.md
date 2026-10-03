@@ -1,3 +1,11 @@
+---
+title: "Dangling Pointers Explained"
+description: "A dangling pointer occurs when a pointer references a memory location that has already been deallocated or returned to the operating system. Dereferencing this pointer leads to undefined behavior, whi"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Dangling Pointers Explained
 
 ## The Problem

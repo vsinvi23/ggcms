@@ -1,3 +1,11 @@
+---
+title: "Python Asyncio: Non-blocking Coroutines under the Global Interpreter Lock (GIL)"
+description: "When developers need to improve the performance of their Python applications, they often reach for the standard library's `asyncio` package. There is a common belief that importing `asyncio` and decor"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Asyncio: Non-blocking Coroutines under the Global Interpreter Lock (GIL)
 
 When developers need to improve the performance of their Python applications, they often reach for the standard library's `asyncio` package. There is a common belief that importing `asyncio` and decorating functions with `async` and `await` will automatically speed up execution and make the application "concurrent."

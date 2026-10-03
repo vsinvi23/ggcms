@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Authentication and Authorization: Gating the API"
+description: "The Kubernetes API server (`kube-apiserver`) is the brain of the cluster. It manages the state of all nodes, Pods, secrets, and configurations. If an attacker gains unrestricted access to the API serv"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Authentication and Authorization: Gating the API
 
 ### The Problem

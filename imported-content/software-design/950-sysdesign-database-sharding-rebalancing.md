@@ -1,3 +1,11 @@
+---
+title: "Sharded Database Rebalancing: Moving Terabytes of Data Without Database Downtime"
+description: "Database sharding distributes data across multiple independent nodes to scale horizontally. However, data growth is rarely uniform. Over time, a subset of shards may receive a disproportionate amount "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Database Rebalancing: Moving Terabytes of Data Without Database Downtime
 
 ## The Problem: The Hot Shard and Capacity Limits

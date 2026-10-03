@@ -1,3 +1,11 @@
+---
+title: "JWT Security: Critical Exploits and Architecture Pitfalls"
+description: "JSON Web Tokens (JWTs) delegate authentication state entirely to the client. This shifts the security burden to the Resource Server (API). Because of this decentralized nature, minor implementation ov"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Security: Critical Exploits and Architecture Pitfalls
 
 ## The Problem: Structural Fragility in Token Verification

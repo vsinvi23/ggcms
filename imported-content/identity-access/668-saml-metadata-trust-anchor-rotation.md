@@ -1,3 +1,11 @@
+---
+title: "SAML Trust Management: Automated IdP Metadata Fetching and Certificate Rotation"
+description: "SAML 2.0 relies on asymmetric cryptography (usually RSA) to establish trust. The Identity Provider (IdP) signs the SAML Assertions using its private key, and the Service Provider (SP) verifies the sig"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SAML Trust Management: Automated IdP Metadata Fetching and Certificate Rotation
 
 ## The Problem: The Ticking Time Bomb of Hardcoded Certificates

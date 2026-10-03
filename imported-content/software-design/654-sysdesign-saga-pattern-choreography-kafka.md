@@ -1,3 +1,11 @@
+---
+title: "Decentralized Sagas: Designing Event-Driven Choreography Workflows over Kafka"
+description: "In monolithic architectures, a multi-step workflow spanning different domains (e.g., placing an order, reserving inventory, charging a card) is handled via a single ACID database transaction. If charg"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Decentralized Sagas: Designing Event-Driven Choreography Workflows over Kafka
 
 ## The Problem: Distributed Transactions Without Locking

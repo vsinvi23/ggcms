@@ -1,3 +1,11 @@
+---
+title: "Role-Based vs Attribute-Based Access Control: Policy Decision Points (PDP) in Microservices"
+description: "In early application development, Role-Based Access Control (RBAC) is the standard. Users are assigned roles (e.g., `Admin`, `Editor`, `Viewer`), and application logic checks these roles before perfor"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Role-Based vs Attribute-Based Access Control: Policy Decision Points (PDP) in Microservices
 
 ## The Problem: Role Explosion and Static Permissions

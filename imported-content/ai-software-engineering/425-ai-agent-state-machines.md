@@ -1,3 +1,11 @@
+---
+title: "AI Agent State Machines: LangGraph, Determinism, and Cyclic Loops"
+description: "Standard LLM agent orchestration relies on linear Chain-of-Thought execution. The agent receives a task, breaks it down, and attempts to execute it in a straight sequence. While this works for simple "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # AI Agent State Machines: LangGraph, Determinism, and Cyclic Loops
 
 ## The Fragility of Linear Chains

@@ -1,3 +1,11 @@
+---
+title: "Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs"
+description: "The foundation of Retrieval-Augmented Generation (RAG) is semantic search. An embedding model converts a document into a high-dimensional vector (e.g., 1536 dimensions). When a query arrives, it is al"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs
 
 ## The Problem: The Bottleneck of Exact KNN

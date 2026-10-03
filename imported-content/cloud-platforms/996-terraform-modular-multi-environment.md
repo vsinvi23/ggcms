@@ -1,3 +1,11 @@
+---
+title: "DRY Terraform: Designing Reusable Modules and Multi-Environment Workspaces"
+description: "As organizations scale their cloud infrastructure, they typically maintain multiple isolated staging environments (such as `dev`, `staging`, and `production`)."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # DRY Terraform: Designing Reusable Modules and Multi-Environment Workspaces
 
 ## The Problem: The Copy-Paste Antipattern and Configuration Drift

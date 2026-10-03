@@ -1,3 +1,11 @@
+---
+title: "Broken Access Control: Bypassing UI Security Filters on API Endpoints"
+description: "Modern Single Page Applications (SPAs) built with frameworks like React, Angular, or Vue offer fluid user interfaces. To enforce privilege levels, front-end developers typically use client-side router"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Broken Access Control: Bypassing UI Security Filters on API Endpoints
 
 ## The Problem: The Client-Server Security Illusion

@@ -1,3 +1,11 @@
+---
+title: "Authorization Architecture Explained: Enforcement vs. Decision Points"
+description: "Once an application knows *who* a user is (Authentication), it must determine *what* they are allowed to do (Authorization)."
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Authorization Architecture Explained: Enforcement vs. Decision Points
 
 ## The Problem: Spaghetti Authorization

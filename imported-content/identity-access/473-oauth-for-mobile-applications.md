@@ -1,3 +1,11 @@
+---
+title: "OAuth for Mobile Applications: AppAuth and Custom Scheme Hijacking"
+description: "Mobile applications are classified as \"Public Clients\" in the OAuth 2.0 specification because they cannot securely store a `client_secret`. Embedded secrets can be easily extracted by reverse-engineer"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth for Mobile Applications: AppAuth and Custom Scheme Hijacking
 
 ## The Problem

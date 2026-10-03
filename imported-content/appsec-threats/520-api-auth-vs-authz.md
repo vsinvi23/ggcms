@@ -1,3 +1,11 @@
+---
+title: "API Authentication vs API Authorization: Mitigating BOLA and BOPLA"
+description: "In modern application security, mixing up **Authentication (AuthN)** and **Authorization (AuthZ)** is a fatal engineering error."
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # API Authentication vs API Authorization: Mitigating BOLA and BOPLA
 
 In modern application security, mixing up **Authentication (AuthN)** and **Authorization (AuthZ)** is a fatal engineering error. 

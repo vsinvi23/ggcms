@@ -1,3 +1,11 @@
+---
+title: "AWS Nitro System: Decoupling Virtualization Overhead onto Dedicated Hardware Cards"
+description: "In legacy cloud environments, the hypervisor (like Xen or KVM) was a monolithic software layer running on the same physical CPU as the guest operating systems. It was responsible for everything: CPU/m"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Nitro System: Decoupling Virtualization Overhead onto Dedicated Hardware Cards
 
 ## The Problem: Hypervisor Monoliths and Context Switching

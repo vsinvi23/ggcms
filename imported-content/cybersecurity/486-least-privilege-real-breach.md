@@ -1,3 +1,11 @@
+---
+title: "Least Privilege Explained Through a Real Breach: Preventing Blast Radiuses"
+description: "In fast-paced engineering environments, resolving \"Access Denied\" errors is seen as friction. When a developer's script fails to read from an S3 bucket, the quickest fix is often to attach an `AmazonS"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Least Privilege Explained Through a Real Breach: Preventing Blast Radiuses
 
 ## The Problem: Over-Provisioning by Default

@@ -1,3 +1,11 @@
+---
+title: "The Math of Self-Attention: Queries, Keys, Values, and Softmax"
+description: "In standard Feed-Forward Neural Networks (FFNs), weights are fixed after training. When processing a sequence, a traditional dense layer applies the same transformation to every token $x_i$, completel"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # The Math of Self-Attention: Queries, Keys, Values, and Softmax
 
 ## The Problem: Static Routing vs Dynamic Contextual Alignment

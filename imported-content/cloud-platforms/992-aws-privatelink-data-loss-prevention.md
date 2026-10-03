@@ -1,3 +1,11 @@
+---
+title: "AWS PrivateLink: Interface Endpoint Security and Blocking Data Exfiltration"
+description: "A common misconception in cloud security is that placing a workload inside a VPC private subnet with no Route Table entry to an Internet Gateway makes it secure from data leakage."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS PrivateLink: Interface Endpoint Security and Blocking Data Exfiltration
 
 ## The Problem: Private Subnet Exfiltration Vectors

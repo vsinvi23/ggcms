@@ -1,3 +1,11 @@
+---
+title: "Secure Token Storage in SPAs: Comparing HttpOnly Cookies vs In-Memory Refresh Rotation"
+description: "Single-Page Applications (SPAs) must persist identity tokens across page reloads and browser closures. Traditionally, developers stored JWT access and refresh tokens inside browser `localStorage` or `"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Secure Token Storage in SPAs: Comparing HttpOnly Cookies vs In-Memory Refresh Rotation
 
 ## The Problem: Mitigating XSS and CSRF Attack Vectors in Frontend Storage

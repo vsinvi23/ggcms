@@ -1,3 +1,11 @@
+---
+title: "Java JVM Internals: Surviving Garbage Collection, G1GC, and Metaspace Leaks"
+description: "Step beneath the Java code to understand how the Java Virtual Machine (JVM) manages memory layouts, tracks object lifecycles, and executes Tri-Color Mark-and-Sweep Garbage Collection."
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java JVM Internals: Surviving Garbage Collection, G1GC, and Metaspace Leaks
 
 > Step beneath the Java code to understand how the Java Virtual Machine (JVM) manages memory layouts, tracks object lifecycles, and executes Tri-Color Mark-and-Sweep Garbage Collection.

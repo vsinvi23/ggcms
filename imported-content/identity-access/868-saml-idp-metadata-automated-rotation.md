@@ -1,3 +1,11 @@
+---
+title: "Managing SAML Trust: Automated IdP Metadata Parsing and Certificate Rotation"
+description: "SAML Single Sign-On (SSO) depends on asymmetric cryptography to establish trust between the Identity Provider (IdP) and the Service Provider (SP). The IdP signs its SAML assertions with a private key,"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Managing SAML Trust: Automated IdP Metadata Parsing and Certificate Rotation
 
 ## The Problem: Expiring IdP Certificates and Operational Downtime

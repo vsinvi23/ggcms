@@ -1,3 +1,11 @@
+---
+title: "Stack vs. Heap in Modern C++: Keeping Allocations on the Stack"
+description: "In C++, developers have direct access to physical memory. Where you allocate an object in memory—the stack or the heap—has a massive impact on the security, stability, and runtime performance of your "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Stack vs. Heap in Modern C++: Keeping Allocations on the Stack
 
 In C++, developers have direct access to physical memory. Where you allocate an object in memory—the stack or the heap—has a massive impact on the security, stability, and runtime performance of your application. While modern languages completely hide this boundary, writing high-performance C++ requires choosing the stack over the heap whenever possible.

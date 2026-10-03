@@ -1,3 +1,11 @@
+---
+title: "How Hackers Think: Automated Web Application Scanning and Fuzzing Pipelines"
+description: "Manual code reviews and periodic penetration tests are static, point-in-time assessments. They cannot keep pace with continuous deployment pipelines and rapidly expanding API attack surfaces. Modern a"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # How Hackers Think: Automated Web Application Scanning and Fuzzing Pipelines
 
 ## The Problem: The Automation Gap in Modern Application Security

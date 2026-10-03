@@ -1,3 +1,11 @@
+---
+title: "RBAC vs. ABAC: Architectural Tradeoffs in Scalable Access Control"
+description: "In the early stages of a system, access control is simple. You assign users a role—such as `Admin`, `Editor`, or `Viewer`—and gate API endpoints accordingly. This is Role-Based Access Control (RBAC)."
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # RBAC vs. ABAC: Architectural Tradeoffs in Scalable Access Control
 
 ## The Problem: The Role Explosion Crisis

@@ -1,3 +1,11 @@
+---
+title: "GCP Identity-Aware Proxy (IAP): Securing Internal Web Apps Without VPNs"
+description: "For decades, the standard architectural pattern for securing internal corporate applications—such as HR portals, internal wikis, or staging environments—has been the Virtual Private Network (VPN). To "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Identity-Aware Proxy (IAP): Securing Internal Web Apps Without VPNs
 
 ## The Problem: The Friction and Fragility of Corporate VPNs

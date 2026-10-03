@@ -1,3 +1,11 @@
+---
+title: "Function Calling Explained from First Principles"
+description: "Before native function calling was introduced, extracting structured actions from unstructured text models was incredibly fragile. Software engineers had to write complex system instructions (e.g., \"O"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Function Calling Explained from First Principles
 
 ## The Problem: Brittle Structured Data Extraction

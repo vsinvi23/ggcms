@@ -1,3 +1,11 @@
+---
+title: "DRY Terraform: Designing Reusable Modules and Multi-Environment Workspaces"
+description: "When organizations scale their cloud footprints, they must replicate infrastructure across multiple environments (such as `development`, `staging`, and `production`). A common but highly flawed approa"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # DRY Terraform: Designing Reusable Modules and Multi-Environment Workspaces
 
 ## The Problem: The Copy-Paste Drift and Environment Leakage

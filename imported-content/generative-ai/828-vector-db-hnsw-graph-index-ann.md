@@ -1,3 +1,11 @@
+---
+title: "Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs"
+description: "Generative AI relies heavily on vector embeddings to represent text, images, and audio. To find similar concepts, we perform a K-Nearest Neighbors (KNN) search."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs
 
 ### The Problem: The K-Nearest Neighbors Bottleneck

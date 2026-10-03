@@ -1,3 +1,11 @@
+---
+title: "AWS PrivateLink: Interface Endpoint Security and Blocking Data Exfiltration"
+description: "In traditional AWS Virtual Private Cloud (VPC) architectures, accessing AWS services like S3, DynamoDB, or KMS required resources to route traffic over the public internet. If a private subnet instanc"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS PrivateLink: Interface Endpoint Security and Blocking Data Exfiltration
 
 ## The Problem: Internet Gateways and the Exfiltration Vector

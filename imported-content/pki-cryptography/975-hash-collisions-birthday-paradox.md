@@ -1,3 +1,11 @@
+---
+title: "The Birthday Paradox: Why a 128-bit Hash Collides in 2^64 Attempts"
+description: "Symmetric keys and cryptographic hash functions form the core of modern identity verification. When assessing security posture, developers often equate the output bit-length of a hash function directl"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # The Birthday Paradox: Why a 128-bit Hash Collides in 2^64 Attempts
 
 ## The Problem: Overestimating Hash Security Margins

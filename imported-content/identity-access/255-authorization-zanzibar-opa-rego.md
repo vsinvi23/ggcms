@@ -1,3 +1,11 @@
+---
+title: "Google Zanzibar vs OPA: Relationship-Based Access Control (ReBAC) at Global Scale"
+description: "As applications scale from monoliths to globally distributed microservices, authorization becomes a bottleneck."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Google Zanzibar vs OPA: Relationship-Based Access Control (ReBAC) at Global Scale
 
 ## The Problem: The Limits of RBAC and ABAC in Microservices

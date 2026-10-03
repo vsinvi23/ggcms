@@ -1,3 +1,11 @@
+---
+title: "Hardening the Docker Daemon: Securing /var/run/docker.sock and Rootless User Namespaces"
+description: "The standard Docker installation runs the Docker daemon (`dockerd`) as the system `root` user. To allow developers and applications to interact with the daemon, Docker exposes a Unix domain socket at "
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Hardening the Docker Daemon: Securing /var/run/docker.sock and Rootless User Namespaces
 
 The standard Docker installation runs the Docker daemon (`dockerd`) as the system `root` user. To allow developers and applications to interact with the daemon, Docker exposes a Unix domain socket at `/var/run/docker.sock`. Because anyone with write access to this socket can command the daemon to spin up privileged containers, mount the host's root filesystem, and execute commands as host `root`, this socket represents a major security vulnerability.

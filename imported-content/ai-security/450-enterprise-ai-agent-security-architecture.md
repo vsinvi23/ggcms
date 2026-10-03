@@ -1,3 +1,11 @@
+---
+title: "The Security Architecture of an Enterprise AI Agent: IAM, Sandboxing, and DLP Guardrails"
+description: "Deploying autonomous AI agents into enterprise environments requires a delicate balance between capability and control. Agents must retrieve corporate data and call specialized tools to execute comple"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # The Security Architecture of an Enterprise AI Agent: IAM, Sandboxing, and DLP Guardrails
 
 Deploying autonomous AI agents into enterprise environments requires a delicate balance between capability and control. Agents must retrieve corporate data and call specialized tools to execute complex tasks, yet they must remain bounded by strict data privacy and compliance frameworks. Without rigorous security design patterns, agents are highly susceptible to manipulation, resulting in unauthorized action execution or sensitive data exfiltration.

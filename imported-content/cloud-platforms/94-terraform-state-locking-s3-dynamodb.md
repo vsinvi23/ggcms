@@ -1,3 +1,11 @@
+---
+title: "Terraform State Hardening: Locking State with S3 and DynamoDB"
+description: "Terraform relies on a state file (`terraform.tfstate`) to map your declarative configuration to real-world cloud resources. By default, Terraform stores this state locally. In a team environment or a "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Terraform State Hardening: Locking State with S3 and DynamoDB
 
 ## The State Corruption Problem

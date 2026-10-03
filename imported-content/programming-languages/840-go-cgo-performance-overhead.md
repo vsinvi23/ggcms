@@ -1,3 +1,11 @@
+---
+title: "CGO Internals: The Hidden Performance Costs of Transitioning Between Go and C boundaries"
+description: "A development team integrates a highly optimized C library for image transformation or cryptography into their Go-based media service. Developers expect massive performance gains. However, when loaded"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # CGO Internals: The Hidden Performance Costs of Transitioning Between Go and C boundaries
 
 ## The Problem: The CGO Bottleneck

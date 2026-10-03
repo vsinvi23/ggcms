@@ -1,3 +1,11 @@
+---
+title: "AWS Nitro System Architecture: Hardware Hypervisors, Enclaves, and Chip-Level Security Isolation"
+description: "Unpack the hardware-offloaded virtualization model of the AWS Nitro System. Learn how Amazon decoupled virtualized networking, storage, and management into custom PCIe cards, examine the security mechanics of Nitro Enclaves, and analyze the silicon-level hardware root of trust."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Nitro System Architecture: Hardware Hypervisors, Enclaves, and Chip-Level Security Isolation
 
 > Unpack the hardware-offloaded virtualization model of the AWS Nitro System. Learn how Amazon decoupled virtualized networking, storage, and management into custom PCIe cards, examine the security mechanics of Nitro Enclaves, and analyze the silicon-level hardware root of trust.

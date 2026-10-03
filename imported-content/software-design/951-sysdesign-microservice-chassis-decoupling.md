@@ -1,3 +1,11 @@
+---
+title: "Microservice Chassis: Standardizing Logging, Tracing, and Authorization across Polyglot Services"
+description: "In a microservices architecture, every service requires foundational capabilities: structured logging, distributed tracing, metrics collection, health checks, rate limiting, and authorization. When en"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Microservice Chassis: Standardizing Logging, Tracing, and Authorization across Polyglot Services
 
 ## The Problem: The Boilerplate Tax

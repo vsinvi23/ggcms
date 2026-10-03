@@ -1,3 +1,11 @@
+---
+title: "JWT Revocation Strategies: Real-Time Token Blacklisting via Redis"
+description: "JSON Web Tokens (JWTs) are inherently stateless, containing their cryptographic signature and expiration times within the token payload itself. While this architecture minimizes database overhead and "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Revocation Strategies: Real-Time Token Blacklisting via Redis
 
 ## The Problem: Stateless JWT Expiration vs. Immediate Revocation

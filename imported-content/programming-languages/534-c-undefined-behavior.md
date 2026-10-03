@@ -1,3 +1,11 @@
+---
+title: "Undefined Behavior (UB) in C"
+description: "Undefined Behavior (UB) is a scenario where the C standard imposes no requirements on the compiler or runtime. When UB is triggered, the program can do *literally anything*: crash, run correctly, form"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Undefined Behavior (UB) in C
 
 ## The Problem

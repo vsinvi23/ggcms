@@ -1,3 +1,11 @@
+---
+title: "Multi-Factor Authentication: The TOTP Algorithm Under the Hood"
+description: "Modern identity systems require Multi-Factor Authentication (MFA) to mitigate credential theft. While SMS-based MFA is susceptible to SIM-swapping, Time-Based One-Time Password (TOTP) authenticators ("
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Multi-Factor Authentication: The TOTP Algorithm Under the Hood
 
 ### The Problem: Cryptographic Synchronization Without Connectivity

@@ -1,3 +1,11 @@
+---
+title: "Mitigating Cache Stampedes: Dynamic Probabilistic Key Expiration via XFetch"
+description: "In high-traffic web applications, caching is essential to shield the primary database. However, caching introduces a vulnerability known as the **Cache Stampede** (or thundering herd)."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Mitigating Cache Stampedes: Dynamic Probabilistic Key Expiration via XFetch
 
 ## The Problem: The Thundering Herd at Expiry

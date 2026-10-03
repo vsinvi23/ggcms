@@ -1,4 +1,4 @@
----
+--- 
 title: "Observability for LLM Applications: Tracing Prompts, Tokens, and Failures"
 slug: "observability-llm-applications-tracing-prompts-tokens"
 category: "Observability"
@@ -41,7 +41,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "observability-monitoring"
 ---
+
 
 # Observability for LLM Applications: Tracing Prompts, Tokens, and Failures
 

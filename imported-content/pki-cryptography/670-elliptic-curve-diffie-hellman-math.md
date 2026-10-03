@@ -1,3 +1,11 @@
+---
+title: "Elliptic Curve Diffie-Hellman (ECDH): Finite Field Mathematics and Key Agreement"
+description: "Securely exchanging symmetric keys over an untrusted channel is a fundamental requirement of modern transport security. While classical Diffie-Hellman (DH) based on multiplicative groups of integers m"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Elliptic Curve Diffie-Hellman (ECDH): Finite Field Mathematics and Key Agreement
 
 ## The Problem: Classical Diffie-Hellman Scalability and Attack Vectors

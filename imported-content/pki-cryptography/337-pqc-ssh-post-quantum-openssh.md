@@ -1,3 +1,11 @@
+---
+title: "Post-Quantum SSH: Configuring OpenSSH with `sntrup761x25519-sha512`"
+description: "Secure Shell (SSH) is the ubiquitous protocol for remote system administration. An SSH session relies on two distinct cryptographic operations:"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Post-Quantum SSH: Configuring OpenSSH with `sntrup761x25519-sha512`
 
 ## The Problem: Persistent SSH Vulnerability

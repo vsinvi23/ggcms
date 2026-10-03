@@ -1,3 +1,11 @@
+---
+title: "Redis Sentinel: Cluster Failover, Consensus Protocols, and Quorums"
+description: "In a master-replica Redis deployment, the master instance is a single point of failure for write operations. If the master process crashes, becomes unresponsive due to hardware failure, or suffers net"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Sentinel: Cluster Failover, Consensus Protocols, and Quorums
 
 ## The Problem: High-Availability Failures and Split-Brain Scenarios

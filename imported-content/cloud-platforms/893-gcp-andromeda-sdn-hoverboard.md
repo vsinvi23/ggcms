@@ -1,3 +1,11 @@
+---
+title: "GCP Andromeda SDN: Kernel Bypass and Virtual Switch Packet Processing"
+description: "In the early days of cloud computing, virtualized networking relied heavily on the standard Linux kernel network stack (e.g., `iptables`, `netfilter`, bridge devices) running on the hypervisor host. W"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Andromeda SDN: Kernel Bypass and Virtual Switch Packet Processing
 
 ## The Problem: The Latency Bottleneck of Linux Kernel Networking

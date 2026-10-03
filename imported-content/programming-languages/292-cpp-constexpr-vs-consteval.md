@@ -1,3 +1,11 @@
+---
+title: "C++ `constexpr` vs `consteval`: Enforcing Immediate Compile-Time Evaluation"
+description: "Modern C++ has placed a massive emphasis on shifting computation away from runtime and into compile-time. Calculating values, parsing strings, and configuring static data structures during compilation"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ `constexpr` vs `consteval`: Enforcing Immediate Compile-Time Evaluation
 
 ## The Problem: The Ambiguity of `constexpr`

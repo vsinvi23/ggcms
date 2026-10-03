@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Linear Regression, Cost Functions, and Normal Equations"
+description: "Predicting a continuous target variable from high-dimensional inputs is a ubiquitous task in production systems—ranging from dynamic pricing engines to resource utilization forecasting. While modern d"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Linear Regression, Cost Functions, and Normal Equations
 
 ## The Problem

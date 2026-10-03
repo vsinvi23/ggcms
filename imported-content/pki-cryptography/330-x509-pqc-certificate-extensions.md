@@ -1,3 +1,11 @@
+---
+title: "X.509 PQC Extensions: Encoding Hybrid Kyber/Dilithium Keys in ASN.1"
+description: "The transition to Post-Quantum Cryptography (PQC) introduces a stark reality: Lattice-based algorithms like ML-DSA (formerly Dilithium) have massive public keys and signatures compared to ECDSA."
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # X.509 PQC Extensions: Encoding Hybrid Kyber/Dilithium Keys in ASN.1
 
 ## The Problem: The Certificate Size and Structure Paradox

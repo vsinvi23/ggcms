@@ -1,3 +1,11 @@
+---
+title: "Sharded Database Routing: Stabilizing Node Failures with Consistent Hashing and VNodes"
+description: "When scaling a database horizontally, developers often shard data across multiple physical nodes. A common initial routing strategy is simple **modulo hashing**:"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Database Routing: Stabilizing Node Failures with Consistent Hashing and VNodes
 
 ## The Problem: The Modulo Hashing Migration Nightmare

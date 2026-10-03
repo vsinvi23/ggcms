@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Explained Through a Real Application: Deploying a Web API with a Database"
+description: "Deploying a single isolated container (such as a stateless frontend) is relatively simple. However, real-world enterprise applications are composite systems. A typical architecture consists of a state"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Explained Through a Real Application: Deploying a Web API with a Database
 
 ## The Problem: The Complexity of Multi-Tier Container Orchestration

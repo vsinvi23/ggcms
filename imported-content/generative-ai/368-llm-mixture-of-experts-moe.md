@@ -1,3 +1,11 @@
+---
+title: "Mixture of Experts (MoE): Scaling Parameters Without Scaling Compute"
+description: "In standard dense Transformer architectures, every token in a sequence must pass through every single weight tensor in the network. As models scale from 7 billion to 700 billion parameters, the floati"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Mixture of Experts (MoE): Scaling Parameters Without Scaling Compute
 
 ## The Problem: The Computational Cost of Dense Scaling

@@ -1,3 +1,11 @@
+---
+title: "LLM Tool Calling: Wiring APIs and Function Definitions to GPT/Gemini"
+description: "**The Problem:** Parsing raw text output from an LLM to trigger code execution (like in basic ReAct) is brittle. Regex parsers fail when the LLM deviates slightly from the requested string formatting,"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tool Calling: Wiring APIs and Function Definitions to GPT/Gemini
 
 **The Problem:** Parsing raw text output from an LLM to trigger code execution (like in basic ReAct) is brittle. Regex parsers fail when the LLM deviates slightly from the requested string formatting, leading to catastrophic pipeline failures.

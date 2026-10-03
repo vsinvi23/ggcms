@@ -1,3 +1,11 @@
+---
+title: "AI Security Explained: What Changed When Software Became Autonomous?"
+description: "The paradigm shift from traditional deterministic systems to autonomous, Large Language Model (LLM)-driven agents has shattered established security boundaries. For decades, software engineering relie"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # AI Security Explained: What Changed When Software Became Autonomous?
 
 The paradigm shift from traditional deterministic systems to autonomous, Large Language Model (LLM)-driven agents has shattered established security boundaries. For decades, software engineering relied on predictable input-validation-execution models. Autonomous software, however, operates within a probabilistic execution paradigm. This transition invalidates traditional threat modeling and security validation methodologies, requiring a fundamental redesign of security architectures.

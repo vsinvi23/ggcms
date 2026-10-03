@@ -1,3 +1,11 @@
+---
+title: "RSA Vulnerabilities: Coppersmith's Attack on Low Public Exponents (e=3)"
+description: "In the RSA cryptosystem, public key generation involves choosing a public exponent $e$, a prime factor pair $p$ and $q$, and calculating the modulus $N = p \cdot q$. The public key consists of the pai"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # RSA Vulnerabilities: Coppersmith's Attack on Low Public Exponents (e=3)
 
 ## The Problem: The Siren Song of Small Public Exponents

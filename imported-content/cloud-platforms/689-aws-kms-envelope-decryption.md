@@ -1,3 +1,11 @@
+---
+title: "AWS KMS Envelope Encryption: Protecting Keys with KEKs and Data Encryption Keys"
+description: "In high-throughput cloud applications, securing sensitive data at rest is a foundational requirement. A naive approach is to send raw data directly to the AWS Key Management Service (KMS) via the `Enc"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS KMS Envelope Encryption: Protecting Keys with KEKs and Data Encryption Keys
 
 ## The Problem: The Latency and Size Limits of Direct KMS Encryption

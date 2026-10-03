@@ -1,3 +1,11 @@
+---
+title: "Cloud Native Explained from First Principles: Microservices, Containers, and Dynamic Orchestration"
+description: "Traditional enterprise deployments were defined by **Static Architecture**. Applications were monolithic, compiled into a single massive binary, and deployed on long-running, hand-carved Virtual Machi"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Cloud Native Explained from First Principles: Microservices, Containers, and Dynamic Orchestration
 
 ## The Problem: Static Infrastructure and the Fragility of Monoliths

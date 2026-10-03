@@ -1,3 +1,11 @@
+---
+title: "Cybersecurity from Scratch: How Should a Beginner Think Like a Security Engineer?"
+description: "Most beginners entering cybersecurity are immediately introduced to tools: Nmap for scanning, Burp Suite for interception, Metasploit for exploitation. This creates a dangerous paradigm where security"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Cybersecurity from Scratch: How Should a Beginner Think Like a Security Engineer?
 
 ## The Problem

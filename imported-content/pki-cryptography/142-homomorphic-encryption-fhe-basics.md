@@ -1,3 +1,11 @@
+---
+title: "Fully Homomorphic Encryption (FHE): Computing on Encrypted Data"
+description: "Traditional encryption protects data at rest (stored on a hard drive) and data in transit (moving over a network). However, when you want a cloud service to actually process your data—such as running "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Fully Homomorphic Encryption (FHE): Computing on Encrypted Data
 
 ## The Problem: The Data Privacy Paradox in Cloud Computing

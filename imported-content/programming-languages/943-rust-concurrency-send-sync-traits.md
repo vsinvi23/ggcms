@@ -1,3 +1,11 @@
+---
+title: "Rust Concurrency: Deciphering the Compiler-enforced Send and Sync Thread-safety Traits"
+description: "Data races are the bane of systems programming—notoriously difficult to reproduce and debug. While C++ and C rely on developer discipline to avoid race conditions, Rust guarantees thread safety at com"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Concurrency: Deciphering the Compiler-enforced Send and Sync Thread-safety Traits
 
 ## The Promise of Fearless Concurrency

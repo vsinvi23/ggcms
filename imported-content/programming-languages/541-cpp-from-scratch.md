@@ -1,3 +1,11 @@
+---
+title: "Modern C++ from Scratch: How to Think in C++"
+description: "Developers transitioning to Modern C++ from garbage-collected ecosystems (like Java, C#, or Go) often face a steep learning curve. The primary barrier is not the syntax, but the fundamental mental mod"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Modern C++ from Scratch: How to Think in C++
 
 Developers transitioning to Modern C++ from garbage-collected ecosystems (like Java, C#, or Go) often face a steep learning curve. The primary barrier is not the syntax, but the fundamental mental model. In managed environments, almost everything is a reference pointing to an object residing on a managed heap. In C++, value semantics reign supreme. To write high-performance, robust, and safe modern C++, you must stop thinking in "references" and start thinking in "values" and "deterministic lifecycles."

@@ -1,3 +1,11 @@
+---
+title: "Graph DFS in Java: Recursion, Call Stacks, and Topological Sorting"
+description: "In build systems (like Maven or Gradle) and task schedulers, tasks are modeled as directed acyclic graphs (DAGs). Before execution, we must ensure there are no circular dependencies and generate a val"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Graph DFS in Java: Recursion, Call Stacks, and Topological Sorting
 
 ## The Problem: Dependency Resolution and Cycle Detection

@@ -1,3 +1,11 @@
+---
+title: "Why AI Agents Need Least Privilege: Mitigating Prompt Injection Blast Radius"
+description: "Autonomous AI agents leverage Large Language Models (LLMs) to dynamically plan and execute actions. However, because LLMs treat user-supplied data and system instructions as part of the same flat cont"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # Why AI Agents Need Least Privilege: Mitigating Prompt Injection Blast Radius
 
 Autonomous AI agents leverage Large Language Models (LLMs) to dynamically plan and execute actions. However, because LLMs treat user-supplied data and system instructions as part of the same flat context window, they are inherently vulnerable to prompt injection. When an agent reads an untrusted document, email, or database record containing a malicious payload, the attacker can hijack the agent’s execution flow. To prevent catastrophic compromise, we must design agentic architectures around the principle of least privilege.

@@ -1,3 +1,11 @@
+---
+title: "Secure Password Storage Explained: Argon2, Salts, Peppers, and Offline Attacks"
+description: "In the event of a database breach, user passwords must remain completely unrecoverable. Storing passwords in plaintext, or even using simple cryptographic hash functions like MD5, SHA-1, or SHA-256, i"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Secure Password Storage Explained: Argon2, Salts, Peppers, and Offline Attacks
 
 In the event of a database breach, user passwords must remain completely unrecoverable. Storing passwords in plaintext, or even using simple cryptographic hash functions like MD5, SHA-1, or SHA-256, is a critical security failure. Modern graphics cards (GPUs) and specialized mining chips (ASICs) can calculate SHA-256 hashes at rates of billions of attempts per second, making offline brute-force and precomputed "rainbow table" attacks trivial. Resilient system design demands password-hashing algorithms that are slow, memory-hard, and peppered.

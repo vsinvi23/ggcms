@@ -1,3 +1,11 @@
+---
+title: "Content Security Policy (CSP): Deploying Strict Nonce-Based Policies to Neutralize XSS"
+description: "Cross-Site Scripting (XSS) occurs when an application renders untrusted, unescaped user input inside the browser context, allowing an attacker to execute malicious client-side JavaScript. While defens"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Content Security Policy (CSP): Deploying Strict Nonce-Based Policies to Neutralize XSS
 
 Cross-Site Scripting (XSS) occurs when an application renders untrusted, unescaped user input inside the browser context, allowing an attacker to execute malicious client-side JavaScript. While defensive encoding and context-aware escaping are necessary, the complexity of modern DOM templating engines means slip-ups are inevitable. 

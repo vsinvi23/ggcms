@@ -1,3 +1,11 @@
+---
+title: "Designing a Global CDN: Edge Caching and Cache Invalidation"
+description: "No matter how perfectly optimized your backend servers are, you cannot cheat the speed of light. Data traveling over fiber-optic cables from a server in Virginia to a user in Tokyo takes time—typicall"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing a Global CDN: Edge Caching and Cache Invalidation
 
 ## The Problem: The Speed of Light

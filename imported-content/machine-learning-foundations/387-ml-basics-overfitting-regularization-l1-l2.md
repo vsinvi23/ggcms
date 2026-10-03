@@ -1,3 +1,11 @@
+---
+title: "ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization"
+description: "A central challenge in machine learning is designing models that generalize well to unseen data. When we train a model, it can easily overfit the training dataset, memorizing the noise instead of lear"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization
 
 A central challenge in machine learning is designing models that generalize well to unseen data. When we train a model, it can easily overfit the training dataset, memorizing the noise instead of learning the underlying distribution. This dynamic is governed by the **Bias-Variance Tradeoff**. To prevent overfitting in highly complex models, developers use regularization. By mathematically penalizing large parameter weights, **L1 (Lasso)** and **L2 (Ridge)** regularization restrict model capacity, improving generalization performance.

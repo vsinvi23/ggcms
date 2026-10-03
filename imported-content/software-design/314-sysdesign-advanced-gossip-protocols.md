@@ -1,3 +1,11 @@
+---
+title: "Advanced System Design: Epidemic Gossip Protocols"
+description: "In a centralized system, a single master node keeps track of the health and state of all worker nodes. But in massive, decentralized peer-to-peer systems (like DynamoDB, Cassandra, or Consul clusters "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Advanced System Design: Epidemic Gossip Protocols
 
 ## The Problem

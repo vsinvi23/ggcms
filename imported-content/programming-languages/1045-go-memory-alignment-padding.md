@@ -1,3 +1,11 @@
+---
+title: "Go Memory Alignment: Struct Padding and CPU Word-aligned Fetching Optimizations"
+description: "In Go, it is common to assume that the memory footprint of a `struct` is exactly the sum of the sizes of its fields. However, examining the layout often reveals unexpected overhead."
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Memory Alignment: Struct Padding and CPU Word-aligned Fetching Optimizations
 
 ## The Problem: The Hidden Memory Bloat

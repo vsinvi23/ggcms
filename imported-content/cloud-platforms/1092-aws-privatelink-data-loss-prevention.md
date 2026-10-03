@@ -1,3 +1,11 @@
+---
+title: "AWS PrivateLink: Interface Endpoint Security and Blocking Data Exfiltration"
+description: "In a standard AWS Virtual Private Cloud (VPC) design, instances in a private subnet requiring access to AWS services (like S3, Kinesis, or DynamoDB) typically route traffic through a NAT Gateway locat"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS PrivateLink: Interface Endpoint Security and Blocking Data Exfiltration
 
 ## The Problem: Internet Gateways and the Exfiltration Threat

@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Deployments: Helm Charts vs Kustomize Declarative Overlays"
+description: "Deploying an application to multiple Kubernetes clusters (e.g., Development, Staging, Production) introduces a major configuration management challenge. While the core application architecture remains"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Deployments: Helm Charts vs Kustomize Declarative Overlays
 
 Deploying an application to multiple Kubernetes clusters (e.g., Development, Staging, Production) introduces a major configuration management challenge. While the core application architecture remains identical, environment-specific details—such as replica counts, resource allocations, environment variables, ingress hostnames, and secret configurations—vary.

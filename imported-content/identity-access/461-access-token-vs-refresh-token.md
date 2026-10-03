@@ -1,3 +1,11 @@
+---
+title: "Mitigating Token Theft: Access Token vs. Refresh Token Lifespans and Rotation"
+description: "In stateless distributed architectures, securing APIs with tokens creates a fundamental tension:"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Mitigating Token Theft: Access Token vs. Refresh Token Lifespans and Rotation
 
 ## The Problem: The Latency vs. Security Trade-Off

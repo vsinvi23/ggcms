@@ -1,3 +1,11 @@
+---
+title: "Session Security: Engineering High-Entropy, Expirable Identity Tokens"
+description: "HTTP is fundamentally a stateless protocol. To preserve identity across multiple requests, web applications must issue a persistent token—a session ID—to validated users. If this session ID is predict"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Session Security: Engineering High-Entropy, Expirable Identity Tokens
 
 HTTP is fundamentally a stateless protocol. To preserve identity across multiple requests, web applications must issue a persistent token—a session ID—to validated users. If this session ID is predictable, easily stolen, or lives indefinitely, an attacker can effortlessly impersonate any user on the platform without ever knowing their credentials. Secure session engineering is the first line of active defense against account takeover.

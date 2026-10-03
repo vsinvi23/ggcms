@@ -1,3 +1,11 @@
+---
+title: "CORS Without Confusion: Mastering Preflight, Origin Constraints, and SOP"
+description: "Cross-Origin Resource Sharing (CORS) is one of the most widely misunderstood security topics in web development. Many developers view CORS as an API security barrier, but it is actually the exact oppo"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # CORS Without Confusion: Mastering Preflight, Origin Constraints, and SOP
 
 Cross-Origin Resource Sharing (CORS) is one of the most widely misunderstood security topics in web development. Many developers view CORS as an API security barrier, but it is actually the exact opposite: **CORS is a browser-enforced mechanism that relaxes the Same-Origin Policy (SOP)**. 

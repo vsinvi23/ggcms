@@ -1,3 +1,11 @@
+---
+title: "Homomorphic Encryption Libraries: Comparing Microsoft SEAL (BFV/CKKS) Implementations"
+description: "Traditional encryption mechanisms (AES, RSA) protect data at rest and data in transit. However, to perform any computation (such as running analytics, processing machine learning inferences, or runnin"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Homomorphic Encryption Libraries: Comparing Microsoft SEAL (BFV/CKKS) Implementations
 
 ## The Problem: Securing Data-in-Use

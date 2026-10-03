@@ -1,3 +1,11 @@
+---
+title: "Distributed Transactions: The Latency and Blocking Costs of Two-Phase Commit (2PC) and Three-Phase Commit (3PC)"
+description: "When an application spans multiple databases or microservices, a single logical operation often requires modifying data in multiple places. If one modification succeeds while another fails, the system"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed Transactions: The Latency and Blocking Costs of Two-Phase Commit (2PC) and Three-Phase Commit (3PC)
 
 ## The Problem: Atomicity Across Partitioned Data

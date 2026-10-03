@@ -1,3 +1,11 @@
+---
+title: "Advanced System Design: Resolving Partitions with Vector Clocks"
+description: "In active-active distributed databases (like Amazon DynamoDB or Riak), a system favors Availability over strict Consistency (AP in the CAP theorem). If a network partition occurs, Node A and Node B mi"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Advanced System Design: Resolving Partitions with Vector Clocks
 
 ## The Problem

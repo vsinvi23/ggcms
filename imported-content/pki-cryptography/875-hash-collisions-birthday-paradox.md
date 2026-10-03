@@ -1,3 +1,11 @@
+---
+title: "The Birthday Paradox: Why a 128-bit Hash Collides in 2^64 Attempts"
+description: "When developers select a hash function for data integrity, deduplication, or digital signatures, they often evaluate its security strength by its output length. For instance, a 128-bit hash function ("
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # The Birthday Paradox: Why a 128-bit Hash Collides in 2^64 Attempts
 
 ## The Problem: The Misleading Security of Bit-Width

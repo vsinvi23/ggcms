@@ -1,3 +1,11 @@
+---
+title: "OAuth PKCE Explained: The Anatomy of a Real Code Interception Attack"
+description: "The **Proof Key for Code Exchange (PKCE, pronounced \"pixie\")** extension (RFC 7636) is often viewed as a niche enhancement for mobile apps. In reality, it is a critical security countermeasure that mi"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth PKCE Explained: The Anatomy of a Real Code Interception Attack
 
 The **Proof Key for Code Exchange (PKCE, pronounced "pixie")** extension (RFC 7636) is often viewed as a niche enhancement for mobile apps. In reality, it is a critical security countermeasure that mitigates a devastating real-world attack: **Authorization Code Interception**.

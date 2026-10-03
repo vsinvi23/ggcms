@@ -1,3 +1,11 @@
+---
+title: "Security Logging and Monitoring: WORM Logs and Actionable Alerts"
+description: "Most organizations log everything: debug traces, HTTP 200s, load balancer health checks. Yet, when a breach occurs, they lack the specific telemetry needed to answer basic questions: *Who authenticate"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Security Logging and Monitoring: WORM Logs and Actionable Alerts
 
 ## The Problem: Data Rich, Information Poor

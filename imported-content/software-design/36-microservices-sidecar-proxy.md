@@ -1,3 +1,11 @@
+---
+title: "The Sidecar Pattern: Service Meshes, Envoy, and Proxies"
+description: "In a modern microservices architecture, application code is only a small fraction of what needs to be written. To make a distributed service resilient, secure, and observable, engineers must implement"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The Sidecar Pattern: Service Meshes, Envoy, and Proxies
 
 ## The Problem: The "SDK Bloat" and Polyglot Friction

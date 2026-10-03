@@ -1,3 +1,11 @@
+---
+title: "Java ThreadLocal: Safely Managing State and Avoiding Tomcat Memory Leaks"
+description: "In multi-threaded Java applications, developers frequently use `ThreadLocal` to maintain thread-confined state. By storing variables within a `ThreadLocal` container, each thread gains access to its o"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java ThreadLocal: Safely Managing State and Avoiding Tomcat Memory Leaks
 
 In multi-threaded Java applications, developers frequently use `ThreadLocal` to maintain thread-confined state. By storing variables within a `ThreadLocal` container, each thread gains access to its own independent, isolated copy of that variable, bypassing the need for explicit synchronized locks or thread-unsafe global variables. 

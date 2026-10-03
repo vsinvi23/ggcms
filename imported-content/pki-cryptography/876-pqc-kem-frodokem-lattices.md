@@ -1,3 +1,11 @@
+---
+title: "Post-Quantum Cryptography: FrodoKEM and the Conservative Security of Unstructured Lattices"
+description: "Traditional public-key cryptography—including RSA, Diffie-Hellman, and Elliptic Curve Cryptography (ECDH/ECDSA)—relies on the mathematical hardness of prime factorization and discrete logarithms. In 1"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Post-Quantum Cryptography: FrodoKEM and the Conservative Security of Unstructured Lattices
 
 ## The Problem: The Cryptographic Collapse of Shor's Algorithm

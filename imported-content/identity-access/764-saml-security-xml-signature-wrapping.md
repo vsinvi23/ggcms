@@ -1,3 +1,11 @@
+---
+title: "SAML Parsing Security: Mitigating XML Signature Wrapping (XSW) and XML Bombs"
+description: "Security architectures implementing SAML 2.0 frequently face severe vulnerabilities due to the complexity of the underlying XML standards. Two of the most devastating vulnerabilities in SAML Service P"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SAML Parsing Security: Mitigating XML Signature Wrapping (XSW) and XML Bombs
 
 ## The Problem: The Disconnect Between XML Signature Validation and Document Consumption

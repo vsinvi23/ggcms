@@ -1,3 +1,11 @@
+---
+title: "Postgres GIN Indexes: Accelerating Full-Text Search and JSONB Array Queries"
+description: "Relational databases are traditionally optimized for scalar types. In a standard B-Tree, a column value maps directly to a specific row identifier (TID). This model breaks down when querying multi-val"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres GIN Indexes: Accelerating Full-Text Search and JSONB Array Queries
 
 ## The Multi-Value Query Bottleneck

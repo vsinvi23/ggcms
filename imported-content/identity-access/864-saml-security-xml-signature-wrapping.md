@@ -1,3 +1,11 @@
+---
+title: "SAML Parsing Security: Mitigating XML Signature Wrapping (XSW) and XML Bombs"
+description: "Security Assertion Markup Language (SAML) remains a foundational pillar for enterprise Single Sign-On (SSO). However, because SAML relies strictly on Extensible Markup Language (XML), it inherits XML'"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SAML Parsing Security: Mitigating XML Signature Wrapping (XSW) and XML Bombs
 
 ## The Problem: The Inherent Complexity of XML Parsing and Verification

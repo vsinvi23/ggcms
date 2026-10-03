@@ -1,3 +1,11 @@
+---
+title: "AES-CBC Padding Oracles: How POODLE and Lucky13 Exploit Block Padding"
+description: "Many legacy applications and implementations of TLS 1.2 rely on symmetric encryption using **AES in Cipher Block Chaining (CBC) mode**. Because block ciphers operate on discrete blocks of fixed sizes "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # AES-CBC Padding Oracles: How POODLE and Lucky13 Exploit Block Padding
 
 ## The Problem: The Cryptographic Decrypt-then-MAC Trap

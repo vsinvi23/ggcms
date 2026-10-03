@@ -1,3 +1,11 @@
+---
+title: "Shamir's Secret Sharing: Splitting Cryptographic Keys Mathematically"
+description: "In high-security environments, a master cryptographic key (such as a Certificate Authority root signing key, a cold-storage cryptocurrency master wallet, or a database master encryption key) represent"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Shamir's Secret Sharing: Splitting Cryptographic Keys Mathematically
 
 ## The Problem: The Single Point of Failure

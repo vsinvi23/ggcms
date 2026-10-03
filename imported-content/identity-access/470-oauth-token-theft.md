@@ -1,3 +1,11 @@
+---
+title: "OAuth Token Theft: Defending Single-Page Applications Against XSS and Referrer Leakage"
+description: "Single-Page Applications (SPAs) are inherently hostile execution environments. Because SPAs run entirely within the user's browser, they are highly vulnerable to **Cross-Site Scripting (XSS)**."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth Token Theft: Defending Single-Page Applications Against XSS and Referrer Leakage
 
 ## The Problem: Storage Exposure in Client-Side JavaScript

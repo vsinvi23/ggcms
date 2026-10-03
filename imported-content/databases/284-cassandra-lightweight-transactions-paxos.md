@@ -1,3 +1,11 @@
+---
+title: "Cassandra Lightweight Transactions (LWT): Achieving Linearizable Consistency with Paxos"
+description: "Apache Cassandra's primary design goal is high-throughput write scalability and eventual consistency. Operating as a masterless peer-to-peer system, it relies on a last-write-wins (LWW) resolution pol"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Lightweight Transactions (LWT): Achieving Linearizable Consistency with Paxos
 
 ## The Race Condition and Masterless Paradox

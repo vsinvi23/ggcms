@@ -1,3 +1,11 @@
+---
+title: "Deep Dive into JSON Web Tokens (JWTs): Signature Stripping, Header Injections, and JKU Attacks"
+description: "Explore the security architecture of JSON Web Tokens, analyze critical implementation flaws like the \"None\" algorithm vulnerability, and learn how to defend your microservices against JKU header injection attacks."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Deep Dive into JSON Web Tokens (JWTs): Signature Stripping, Header Injections, and JKU Attacks
 
 > Explore the security architecture of JSON Web Tokens, analyze critical implementation flaws like the "None" algorithm vulnerability, and learn how to defend your microservices against JKU header injection attacks.

@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 mTLS: Binding Access Tokens to Client Certificates (RFC 8705)"
+description: "In standard OAuth 2.0, access tokens are **Bearer Tokens**. A bearer token acts exactly like a cash bill: whoever holds the token can spend it. If an attacker intercepts an active token—whether throug"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 mTLS: Binding Access Tokens to Client Certificates (RFC 8705)
 
 ## The Problem: The Threat of Stolen Bearer Tokens

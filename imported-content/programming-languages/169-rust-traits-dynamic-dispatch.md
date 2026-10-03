@@ -1,3 +1,11 @@
+---
+title: "Rust Trait Objects: Dynamic Dispatch, Vtables, and `Box<dyn Trait>`"
+description: "By default, the Rust compiler prefers static dispatch when resolving trait methods. Through a process called **monomorphization**, the compiler generates a copy of the generic function for each concre"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Trait Objects: Dynamic Dispatch, Vtables, and `Box<dyn Trait>`
 
 By default, the Rust compiler prefers static dispatch when resolving trait methods. Through a process called **monomorphization**, the compiler generates a copy of the generic function for each concrete type that implements the trait. This results in zero-overhead, highly optimized execution, allowing the CPU to inline calls and predict branches efficiently.

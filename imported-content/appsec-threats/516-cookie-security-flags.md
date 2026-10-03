@@ -1,3 +1,11 @@
+---
+title: "Cookie Security: Programmatic Hardening of HttpOnly, Secure, and SameSite Flags"
+description: "Cookies remain the most resilient transport layer for managing stateful session tokens in web browsers. However, cookies are a dual-edged sword. If deployed without explicit cryptographic boundary att"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Cookie Security: Programmatic Hardening of HttpOnly, Secure, and SameSite Flags
 
 Cookies remain the most resilient transport layer for managing stateful session tokens in web browsers. However, cookies are a dual-edged sword. If deployed without explicit cryptographic boundary attributes, they are highly susceptible to exfiltration via Cross-Site Scripting (XSS), intercept during transit over cleartext channels, and abuse through Cross-Site Request Forgery (CSRF) vectors.

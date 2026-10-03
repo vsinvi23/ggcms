@@ -1,3 +1,11 @@
+---
+title: "Broken Access Control: Bypassing UI Security Filters on API Endpoints"
+description: "Broken Access Control consistently ranks as the #1 vulnerability on the OWASP Top 10. The most prevalent manifestation of this flaw is a misalignment between User Interface (UI) restrictions and Backe"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Broken Access Control: Bypassing UI Security Filters on API Endpoints
 
 ## The Problem: The "Hidden Button" Fallacy

@@ -1,3 +1,11 @@
+---
+title: "Apollo GraphQL Federation: Composing a Unified Supergraph from Microservices"
+description: "GraphQL revolutionized API design by providing a unified, single-graph experience for client applications. However, as organizations scale, the monolithic GraphQL server quickly becomes a bottleneck. "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Apollo GraphQL Federation: Composing a Unified Supergraph from Microservices
 
 GraphQL revolutionized API design by providing a unified, single-graph experience for client applications. However, as organizations scale, the monolithic GraphQL server quickly becomes a bottleneck. A single codebase managing the entire schema leads to massive merge conflicts, tightly coupled deployments, and domain ownership disputes.

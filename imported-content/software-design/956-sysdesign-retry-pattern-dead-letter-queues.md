@@ -1,3 +1,11 @@
+---
+title: "Microservice Resilience: Processing Poison Pills and Implementing Dead Letter Queues (DLQ)"
+description: "In event-driven architectures, services communicate via message brokers (Kafka, RabbitMQ, SQS). When a consumer fails to process a message, the standard approach is to retry. However, some messages fa"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Microservice Resilience: Processing Poison Pills and Implementing Dead Letter Queues (DLQ)
 
 ## The Problem: Asynchronous Failure and Poison Pills

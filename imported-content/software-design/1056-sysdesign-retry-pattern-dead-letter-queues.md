@@ -1,3 +1,11 @@
+---
+title: "Microservice Resilience: Processing Poison Pills and Implementing Dead Letter Queues (DLQ)"
+description: "In event-driven architectures utilizing message brokers (like RabbitMQ, Kafka, or AWS SQS), decoupling services via asynchronous queues ensures high throughput and system isolation. However, message p"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Microservice Resilience: Processing Poison Pills and Implementing Dead Letter Queues (DLQ)
 
 ## The Problem: Transient Failures vs. Poison Pills

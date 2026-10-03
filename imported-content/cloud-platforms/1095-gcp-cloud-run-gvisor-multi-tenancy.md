@@ -1,3 +1,11 @@
+---
+title: "GCP Cloud Run Internals: Sandboxing Container Runtimes with gVisor"
+description: "Containers (like Docker) are not virtual machines; they are merely isolated processes running on a shared Linux kernel. They utilize kernel features like `cgroups` for resource limits and `namespaces`"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Cloud Run Internals: Sandboxing Container Runtimes with gVisor
 
 ## The Problem: The Shared Kernel Vulnerability

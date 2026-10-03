@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 PKCE: Mathematical Proofs for Mobile App Interception Defenses"
+description: "**Problem:** Mobile applications utilize custom URI schemes (e.g., `myapp://`) to receive OAuth authorization codes. Malicious apps installed on the same device can register the same URI scheme, inter"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 PKCE: Mathematical Proofs for Mobile App Interception Defenses
 
 **Problem:** Mobile applications utilize custom URI schemes (e.g., `myapp://`) to receive OAuth authorization codes. Malicious apps installed on the same device can register the same URI scheme, intercept the code, and hijack the user's session.

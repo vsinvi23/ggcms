@@ -1,3 +1,11 @@
+---
+title: "How Modern C++ Prevents Memory Bugs: AddressSanitizer and Smart Pointers"
+description: "C++ requires explicit manual memory management. Without a Garbage Collector, a developer can accidentally read memory after deleting it (Use-After-Free), access indices outside an array (Buffer Overfl"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # How Modern C++ Prevents Memory Bugs: AddressSanitizer and Smart Pointers
 
 ## Problem Statement

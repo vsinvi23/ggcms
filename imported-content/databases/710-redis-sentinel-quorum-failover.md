@@ -1,3 +1,11 @@
+---
+title: "Redis Sentinel: Cluster Failover, Consensus Protocols, and Quorums"
+description: "Redis is predominantly single-threaded and notoriously fast, making it the de-facto standard for caching and real-time state. However, a standard Redis Master-Replica architecture suffers from a fatal"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Sentinel: Cluster Failover, Consensus Protocols, and Quorums
 
 ## The Problem: Single Point of Failure

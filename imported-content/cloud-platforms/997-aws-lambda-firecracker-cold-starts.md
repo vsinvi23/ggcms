@@ -1,3 +1,11 @@
+---
+title: "AWS Lambda Internals: Firecracker MicroVMs, Cold Starts, and SnapStart"
+description: "In serverless architectures, execution environments are created dynamically on-demand. When a function has not been called recently or experiences a sudden burst of concurrent requests, AWS Lambda mus"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Lambda Internals: Firecracker MicroVMs, Cold Starts, and SnapStart
 
 ## The Problem: The Latency of Cold Starts in Serverless Compute

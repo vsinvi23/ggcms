@@ -1,3 +1,11 @@
+---
+title: "API Gateway Architecture Explained"
+description: "Imagine a microservices architecture for an e-commerce platform consisting of an `Inventory Service`, a `User Service`, and an `Order Service`."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # API Gateway Architecture Explained
 
 ## The Problem: Client-Side Spaghetti

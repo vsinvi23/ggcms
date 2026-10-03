@@ -1,3 +1,11 @@
+---
+title: "C++ constexpr: Executing Complex Mathematical Calculations at Compile Time"
+description: "In high-performance C++ systems—such as game engines, high-frequency trading, and embedded firmware—shifting computational overhead from runtime to compile time is a standard optimization strategy. Hi"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ constexpr: Executing Complex Mathematical Calculations at Compile Time
 
 ## The Shift to Compile-Time Computing

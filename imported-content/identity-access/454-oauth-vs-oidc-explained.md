@@ -1,3 +1,11 @@
+---
+title: "OAuth vs OIDC: Why Developers Confuse Them (Access vs. Identity)"
+description: "One of the most pervasive myths in software development is that you can use OAuth 2.0 to log a user in. In reality, **using raw OAuth 2.0 for authentication is a severe security anti-pattern** that ha"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth vs OIDC: Why Developers Confuse Them (Access vs. Identity)
 
 One of the most pervasive myths in software development is that you can use OAuth 2.0 to log a user in. In reality, **using raw OAuth 2.0 for authentication is a severe security anti-pattern** that has led to countless account takeover vulnerabilities. 

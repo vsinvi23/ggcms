@@ -1,4 +1,4 @@
----
+--- 
 title: "Physical AI and Edge AI Explained: When Intelligence Leaves the Cloud"
 slug: "physical-ai-edge-ai-intelligence-leaves-cloud"
 category: "Physical & Edge AI"
@@ -42,7 +42,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "autonomous-ai-agents"
 ---
+
 
 # Physical AI and Edge AI Explained: When Intelligence Leaves the Cloud
 

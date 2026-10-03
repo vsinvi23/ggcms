@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Device Code Flow: Securing Smart TVs and CLI Tools"
+description: "Modern development workflows and entertainment setups involve devices with severely limited input interfaces, such as command-line interface (CLI) tools running in SSH sessions, Smart TVs, IoT applian"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Device Code Flow: Securing Smart TVs and CLI Tools
 
 ## The Problem: The Insecure UI Gap on Input-Constrained Devices

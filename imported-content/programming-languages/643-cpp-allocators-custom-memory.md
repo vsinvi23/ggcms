@@ -1,3 +1,11 @@
+---
+title: "C++ Allocators: Implementing Custom Memory Arenas for High-Frequency Systems"
+description: "In high-frequency trading (HFT) platforms, game engines, and low-latency systems, predictability is as critical as throughput. Standard memory allocation via `operator new` or `malloc` is non-determin"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Allocators: Implementing Custom Memory Arenas for High-Frequency Systems
 
 ## The Problem

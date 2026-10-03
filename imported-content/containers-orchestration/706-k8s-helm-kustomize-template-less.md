@@ -1,3 +1,11 @@
+---
+title: "Declarative Kubernetes Manifests: Helm Parameterized Charts vs Kustomize Template-less Patching"
+description: "As software progresses from development to staging and into production, deployment requirements vary. Ports, replica counts, ingress domains, and environment configurations must adapt dynamically. Man"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Declarative Kubernetes Manifests: Helm Parameterized Charts vs Kustomize Template-less Patching
 
 As software progresses from development to staging and into production, deployment requirements vary. Ports, replica counts, ingress domains, and environment configurations must adapt dynamically. Managing these variations with duplicate raw YAML manifests leads to configuration drift, errors, and delivery bottlenecks.

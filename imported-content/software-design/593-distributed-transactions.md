@@ -1,3 +1,11 @@
+---
+title: "Distributed Transactions Explained"
+description: "In a monolithic architecture, managing state changes across different entities is straightforward. You wrap the operations in a database transaction. If anything fails, the database rolls back the ent"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed Transactions Explained
 
 ## The Problem: The Cross-Database Rollback

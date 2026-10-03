@@ -1,3 +1,11 @@
+---
+title: "Unsupervised Learning: K-Means Clustering and the Elbow Method"
+description: "In unsupervised learning, datasets lack explicit target labels ($y$). The objective is to discover inherent structural groupings within the feature space ($X$). The challenge is two-fold: algorithmica"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Unsupervised Learning: K-Means Clustering and the Elbow Method
 
 ## The Problem

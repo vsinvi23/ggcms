@@ -1,3 +1,11 @@
+---
+title: "Security Logging: Implementing Immutable WORM Audit Trails"
+description: "A sophisticated threat actor operates in stages. After establishing persistence and escalating privileges, the immediate next step is defense evasion: wiping or modifying system, application, and acce"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Security Logging: Implementing Immutable WORM Audit Trails
 
 ## The Problem: The Post-Compromise Wipe

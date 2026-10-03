@@ -1,4 +1,4 @@
----
+--- 
 title: "AI Infrastructure Explained: The Stack Behind Every LLM Call"
 slug: "ai-infrastructure-explained-stack-behind-llm-call"
 category: "AI Infrastructure"
@@ -39,7 +39,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # AI Infrastructure Explained: The Stack Behind Every LLM Call
 

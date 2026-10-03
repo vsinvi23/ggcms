@@ -1,3 +1,11 @@
+---
+title: "Database Isolation Levels: Dirty Reads, Phantom Reads, and Serializable"
+description: "Relational databases guarantee ACID properties (Atomicity, Consistency, Isolation, Durability). While Atomicity ensures an operation is all-or-nothing, **Isolation** dictates how concurrent transactio"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Database Isolation Levels: Dirty Reads, Phantom Reads, and Serializable
 
 ## The Problem: Concurrency Anomalies in ACID

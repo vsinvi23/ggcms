@@ -1,3 +1,11 @@
+---
+title: "Min/Max Heaps in Java: Array-Based Complete Binary Trees for Priority Queues"
+description: "Operating systems scheduling threads or pathfinding algorithms like Dijkstra's repeatedly demand the \"highest priority\" element from a dynamically changing pool. Finding the max in an unsorted array t"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Min/Max Heaps in Java: Array-Based Complete Binary Trees for Priority Queues
 
 ## The Problem: Dynamic Priority

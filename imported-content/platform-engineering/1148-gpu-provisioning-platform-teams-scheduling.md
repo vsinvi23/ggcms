@@ -1,4 +1,4 @@
----
+--- 
 title: "GPU Provisioning for Platform Teams: Scheduling Scarce AI Compute"
 slug: "gpu-provisioning-platform-teams-scheduling-scarce-ai-compute"
 category: "Platform Engineering"
@@ -45,7 +45,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "site-reliability-engineering"
 ---
+
 
 # GPU Provisioning for Platform Teams: Scheduling Scarce AI Compute
 

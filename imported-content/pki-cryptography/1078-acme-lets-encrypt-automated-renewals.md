@@ -1,3 +1,11 @@
+---
+title: "ACME Let's Encrypt: Configuring Certbot Timers for Automated Seamless Renewals"
+description: "Let's Encrypt revolutionized web security by offering free SSL/TLS certificates. However, to encourage automation and limit the damage of compromised private keys, Let's Encrypt certificates are issue"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # ACME Let's Encrypt: Configuring Certbot Timers for Automated Seamless Renewals
 
 ## The Problem: The 90-Day Outage Cliff

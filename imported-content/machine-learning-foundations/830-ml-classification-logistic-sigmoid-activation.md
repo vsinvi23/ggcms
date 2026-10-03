@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Logistic Regression and the Sigmoid Activation Function"
+description: "In binary classification scenarios—such as spam detection, user churn prediction, or financial fraud detection—the objective is to map input variables to a discrete, binary output ($y \in \{0, 1\}$). "
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Logistic Regression and the Sigmoid Activation Function
 
 ## The Problem

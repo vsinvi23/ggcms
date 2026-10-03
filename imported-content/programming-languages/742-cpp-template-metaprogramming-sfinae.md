@@ -1,3 +1,11 @@
+---
+title: "C++ Template Metaprogramming: SFINAE (Substitution Failure Is Not An Error) and `std::enable_if`"
+description: "In modern C++, we often want to write generic code that changes its behavior depending on the compile-time properties of the type parameters. For example, you might design a high-performance serialize"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Template Metaprogramming: SFINAE (Substitution Failure Is Not An Error) and `std::enable_if`
 
 ## The Problem: Compile-Time Polymorphism and Overload Failures

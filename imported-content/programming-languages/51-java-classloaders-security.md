@@ -1,3 +1,11 @@
+---
+title: "Java Classloaders: Dynamic Loading, Hierarchies, and JVM Runtime Security"
+description: "In enterprise applications, the ability to load classes dynamically at runtime is a major feature. It allows applications to download code over network protocols, compile plugins on the fly, or hot-sw"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Classloaders: Dynamic Loading, Hierarchies, and JVM Runtime Security
 
 ### The Problem: Extensible Code vs. Dynamic Security

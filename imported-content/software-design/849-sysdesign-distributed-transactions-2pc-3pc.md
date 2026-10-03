@@ -1,3 +1,11 @@
+---
+title: "Distributed Transactions: The Latency and Blocking Costs of Two-Phase Commit (2PC) and Three-Phase Commit (3PC)"
+description: "In monolithic applications, maintaining ACID properties is straightforward because a single relational database coordinates transactions. However, when transitioning to a microservices architecture, d"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed Transactions: The Latency and Blocking Costs of Two-Phase Commit (2PC) and Three-Phase Commit (3PC)
 
 ## The Problem: Data Consistency Across Microservices

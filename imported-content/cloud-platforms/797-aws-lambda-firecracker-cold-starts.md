@@ -1,3 +1,11 @@
+---
+title: "AWS Lambda Internals: Firecracker MicroVMs, Cold Starts, and SnapStart"
+description: "In serverless execution environments, applications scale down to zero when idle to conserve costs. When a new invocation arrives, the platform must provision a new execution environment from scratch. "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Lambda Internals: Firecracker MicroVMs, Cold Starts, and SnapStart
 
 ## The Problem: The Latency Penalty of Serverless Cold Starts

@@ -1,4 +1,4 @@
----
+--- 
 title: "Software Supply Chain Security Explained: SBOMs, Provenance, and Trust"
 slug: "software-supply-chain-security-sboms-provenance-trust"
 category: "Software Supply Chain"
@@ -47,7 +47,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "devsecops-supply-chain"
 ---
+
 
 # Software Supply Chain Security Explained: SBOMs, Provenance, and Trust
 

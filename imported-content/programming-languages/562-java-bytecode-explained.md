@@ -1,3 +1,11 @@
+---
+title: "Demystifying Java Bytecode: Reading .class Files and Stack-Based Opcodes"
+description: "Java's \"Write Once, Run Anywhere\" promise relies heavily on an intermediate representation: bytecode. Every `.java` file is compiled into a `.class` binary file containing instructions tailored for a "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Demystifying Java Bytecode: Reading .class Files and Stack-Based Opcodes
 
 Java's "Write Once, Run Anywhere" promise relies heavily on an intermediate representation: bytecode. Every `.java` file is compiled into a `.class` binary file containing instructions tailored for a stack-based virtual machine. To debug deep framework issues, profile performance bottlenecks, or understand classloading, a developer must understand how to read and interpret these byte-level structures.

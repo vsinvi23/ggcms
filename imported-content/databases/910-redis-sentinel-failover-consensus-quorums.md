@@ -1,3 +1,11 @@
+---
+title: "Redis Sentinel: Cluster Failover, Consensus Protocols, and Quorums"
+description: "Redis replicates data asynchronously from a primary master node to one or more read-only replica nodes. If the master node fails, the replication stream stops, and write operations are blocked."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Sentinel: Cluster Failover, Consensus Protocols, and Quorums
 
 ## The Problem: Manual Master Promotion and Split-Brain Risk

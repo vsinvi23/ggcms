@@ -1,3 +1,11 @@
+---
+title: "Engineering Multi-Agent Swarms: Decoupling Research and Writing Workflows"
+description: "In production AI systems, developers often attempt to build a monolithic agent to handle complex, multi-stage workflows. A typical prompt might ask a single model to \"search the web for the latest sta"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Engineering Multi-Agent Swarms: Decoupling Research and Writing Workflows
 
 ## The Cognitive Overload Problem in Single Agents

@@ -1,3 +1,11 @@
+---
+title: "AWS KMS Envelope Encryption: Protecting Keys with KEKs"
+description: "In modern cloud architectures, securing sensitive data at rest is a foundational requirement. However, encrypting large volumes of data directly with a centralized key management service like AWS Key "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS KMS Envelope Encryption: Protecting Keys with KEKs
 
 ## The Key Distribution Problem

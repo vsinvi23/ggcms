@@ -1,3 +1,11 @@
+---
+title: "Zero Trust Identity: Enforcing Workload ID with SPIFFE/SPIRE"
+description: "In legacy network security, perimeter defense was king. Systems assumed that any service running inside the corporate firewall or private Virtual Private Cloud (VPC) was inherently trustworthy. Howeve"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Zero Trust Identity: Enforcing Workload ID with SPIFFE/SPIRE
 
 In legacy network security, perimeter defense was king. Systems assumed that any service running inside the corporate firewall or private Virtual Private Cloud (VPC) was inherently trustworthy. However, the rise of cloud-native infrastructure, dynamic microservices, and multi-tenant Kubernetes clusters has rendered network-based trust obsolete. 

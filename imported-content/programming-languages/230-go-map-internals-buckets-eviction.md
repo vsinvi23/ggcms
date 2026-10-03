@@ -1,3 +1,11 @@
+---
+title: "Go Maps Under the Hood: Hash Buckets, Collisions, and Eviction"
+description: "In Go, the `map` type is a workhorse of daily development. Developers treat map reads and writes as simple, atomic $O(1)$ operations. However, at scale, naive hash map implementations suffer from perf"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Maps Under the Hood: Hash Buckets, Collisions, and Eviction
 
 In Go, the `map` type is a workhorse of daily development. Developers treat map reads and writes as simple, atomic $O(1)$ operations. However, at scale, naive hash map implementations suffer from performance degradation, excessive memory allocations, and stop-the-world rehashing latencies. To maintain fast, predictable performance, Go implements an optimized, bucket-based hash map engine under the hood.

@@ -1,4 +1,4 @@
----
+--- 
 title: "Building an LLM Evaluation Harness From Scratch"
 slug: "building-llm-evaluation-harness-from-scratch"
 category: "AI Evaluation"
@@ -40,7 +40,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "generative-ai"
 ---
+
 
 # Building an LLM Evaluation Harness From Scratch
 

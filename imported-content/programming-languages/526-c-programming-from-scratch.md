@@ -1,3 +1,11 @@
+---
+title: "C Programming from Scratch: What Actually Happens When C Runs?"
+description: "To the modern developer accustomed to virtual machines, garbage collectors, and JIT compilers, C can feel primitive. But C's lack of abstraction is its greatest strength. C code maps directly to the p"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C Programming from Scratch: What Actually Happens When C Runs?
 
 To the modern developer accustomed to virtual machines, garbage collectors, and JIT compilers, C can feel primitive. But C's lack of abstraction is its greatest strength. C code maps directly to the physical hardware and the Operating System's (OS) execution model. Understanding C means understanding how an operating system loads an executable, manages virtual memory, and directs the CPU to execute machine instructions.

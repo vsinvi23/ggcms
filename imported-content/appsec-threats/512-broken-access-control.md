@@ -1,3 +1,11 @@
+---
+title: "Broken Access Control: Bypassing UI Filters to Hit API Endpoints"
+description: "Broken Access Control routinely ranks as the number one risk in the OWASP Top 10. A primary driver of this trend is the modern separation of concern between frontend client applications (React, Angula"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Broken Access Control: Bypassing UI Filters to Hit API Endpoints
 
 Broken Access Control routinely ranks as the number one risk in the OWASP Top 10. A primary driver of this trend is the modern separation of concern between frontend client applications (React, Angular, Vue) and stateless backend APIs. Developers frequently fall into the trap of implementing access controls in the presentation layer—hiding buttons, disabling links, and protecting UI routes—while leaving the raw API endpoints wide open.

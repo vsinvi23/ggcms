@@ -1,3 +1,11 @@
+---
+title: "Terraform State Hardening: Encryption-at-Rest and DynamoDB Concurrency Locks"
+description: "Terraform relies on a state file (`terraform.tfstate`) to map real-world infrastructure to your configuration. By default, this file is stored locally in plaintext. This poses two severe risks for ent"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Terraform State Hardening: Encryption-at-Rest and DynamoDB Concurrency Locks
 
 ## The Problem: State File Vulnerabilities

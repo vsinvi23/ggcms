@@ -1,3 +1,11 @@
+---
+title: "Principal Component Analysis (PCA): The Math of Dimensionality Reduction"
+description: "High-dimensional data presents a major challenge in machine learning, a phenomenon known as the **curse of dimensionality**. As the number of features increases, the volume of space grows exponentiall"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Principal Component Analysis (PCA): The Math of Dimensionality Reduction
 
 High-dimensional data presents a major challenge in machine learning, a phenomenon known as the **curse of dimensionality**. As the number of features increases, the volume of space grows exponentially, making the data sparse. This sparsity causes models to overfit, drastically inflates memory footprint, and increases inference latency. Principal Component Analysis (PCA) is an unsupervised linear dimensionality reduction technique that addresses this problem. It compresses high-dimensional datasets by projecting them onto a lower-dimensional coordinate system of orthogonal axes that capture the maximum variance.

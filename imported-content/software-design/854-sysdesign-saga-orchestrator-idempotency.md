@@ -1,3 +1,11 @@
+---
+title: "Orchestrating Sagas: Writing Commutative and Idempotent Compensating Transactions"
+description: "In a distributed microservice architecture, a single business transaction often spans multiple independent databases. For instance, booking a flight might involve updating a `PaymentService`, an `Inve"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Orchestrating Sagas: Writing Commutative and Idempotent Compensating Transactions
 
 ## The Problem: Rollbacks in a Distributed World

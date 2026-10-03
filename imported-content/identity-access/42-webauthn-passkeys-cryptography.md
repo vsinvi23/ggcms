@@ -1,3 +1,11 @@
+---
+title: "WebAuthn and Passkeys: FIDO2 Passwordless Auth"
+description: "For decades, passwords have been the default authentication mechanism on the web. They are also the single greatest source of security failures. From credential stuffing and phishing to database leaks"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # WebAuthn and Passkeys: FIDO2 Passwordless Auth
 
 For decades, passwords have been the default authentication mechanism on the web. They are also the single greatest source of security failures. From credential stuffing and phishing to database leaks, relying on shared secrets is a fundamental security flaw. 

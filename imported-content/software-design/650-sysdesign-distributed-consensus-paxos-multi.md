@@ -1,3 +1,11 @@
+---
+title: "Multi-Paxos Internals: Log Replication, Proposer Leaders, and Acceptor Majorities"
+description: "In distributed systems, maintaining a consistent state machine across multiple disparate nodes is a fundamental challenge. When network partitions occur, nodes may diverge, leading to a \"split-brain\" "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Multi-Paxos Internals: Log Replication, Proposer Leaders, and Acceptor Majorities
 
 ## The Problem: Distributed State and Split-Brain

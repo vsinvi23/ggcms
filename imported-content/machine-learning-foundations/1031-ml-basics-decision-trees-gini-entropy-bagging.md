@@ -1,3 +1,11 @@
+---
+title: "Ensemble Learning: From Decision Trees to Random Forests (Bagging)"
+description: "Single decision trees are highly intuitive, require minimal data preprocessing, and easily model non-linear relationships. However, in production environments, they are notoriously unstable. Decision "
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Ensemble Learning: From Decision Trees to Random Forests (Bagging)
 
 ## The Problem

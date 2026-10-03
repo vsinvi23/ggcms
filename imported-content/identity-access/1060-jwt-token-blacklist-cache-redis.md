@@ -1,3 +1,11 @@
+---
+title: "JWT Revocation Strategies: Implementing Real-Time Token Blacklisting via Redis Caching"
+description: "One of the foundational design choices of JSON Web Tokens (JWT) is their stateless nature. Once signed, a JWT carries all necessary authentication state. However, this stateless benefit becomes a crit"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Revocation Strategies: Implementing Real-Time Token Blacklisting via Redis Caching
 
 One of the foundational design choices of JSON Web Tokens (JWT) is their stateless nature. Once signed, a JWT carries all necessary authentication state. However, this stateless benefit becomes a critical vulnerability when a token must be revoked immediately—such as during user logout, security credential changes, or immediate account suspension. Relying solely on token expiration (`exp`) leaves a dangerous window of vulnerability.

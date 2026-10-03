@@ -1,3 +1,11 @@
+---
+title: "AI Agent Identity: Who Is Actually Making the API Call?"
+description: "The rapid adoption of autonomous AI agents has introduced a critical security dilemma at the API gateway: when a downstream API is invoked, who is the principal? Is it the human user who prompted the "
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # AI Agent Identity: Who Is Actually Making the API Call?
 
 The rapid adoption of autonomous AI agents has introduced a critical security dilemma at the API gateway: when a downstream API is invoked, who is the principal? Is it the human user who prompted the agent, the agentic system orchestrating the workflow, or a hybrid identity combining both? Failing to cleanly resolve this identity ambiguity leads to unchecked delegation, privilege escalation, and completely untraceable audit trails.

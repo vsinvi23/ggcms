@@ -1,3 +1,11 @@
+---
+title: "Kafka Log Compaction: Retaining the Latest Key State for KTables"
+description: "When using Apache Kafka as an event stream, the default retention policies are size-bound (`log.retention.bytes`) or time-bound (`log.retention.ms`). After these thresholds expire, older segments of t"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Log Compaction: Retaining the Latest Key State for KTables
 
 ## The Problem: Infinite Log Growth in State-Tracking Pipelines

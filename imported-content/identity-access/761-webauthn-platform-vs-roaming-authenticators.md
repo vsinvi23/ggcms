@@ -1,3 +1,11 @@
+---
+title: "WebAuthn: Platform vs Roaming Authenticators and CTAP2 Handshakes"
+description: "WebAuthn (FIDO2) provides strong phishing-resistant authentication by shifting the burden of trust to cryptographic hardware. However, many developers implement WebAuthn without properly constraining "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # WebAuthn: Platform vs Roaming Authenticators and CTAP2 Handshakes
 
 ## The Problem: Policy Bypass via Misconfigured WebAuthn Attachment Enforcements

@@ -1,3 +1,11 @@
+---
+title: "Gradient Boosting Machines: Why XGBoost Dominates Tabular Data"
+description: "While bagging techniques (like Random Forests) reduce variance by averaging parallel, independent trees, they are fundamentally limited in their ability to reduce **bias**. If individual estimators un"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Gradient Boosting Machines: Why XGBoost Dominates Tabular Data
 
 ## The Problem

@@ -1,3 +1,11 @@
+---
+title: "Distributed ID Generation: Designing Twitter Snowflake for Monotonic 64-bit Sorting"
+description: "In a distributed system, relying on a single relational database for auto-incrementing primary keys creates a severe bottleneck and a single point of failure. Conversely, using UUIDs (Universally Uniq"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed ID Generation: Designing Twitter Snowflake for Monotonic 64-bit Sorting
 
 ## The Problem: The MySQL Auto-Increment Bottleneck

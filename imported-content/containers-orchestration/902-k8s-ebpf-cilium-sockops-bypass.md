@@ -1,3 +1,11 @@
+---
+title: "eBPF in Kubernetes: Bypassing TCP stack routing using Cilium and sockops"
+description: "For years, Kubernetes networking relied heavily on `kube-proxy` operating in `iptables` mode. When a Service is created, `kube-proxy` translates it into complex iptables NAT rules on every node."
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # eBPF in Kubernetes: Bypassing TCP stack routing using Cilium and sockops
 
 ## The Problem: The iptables Bottleneck

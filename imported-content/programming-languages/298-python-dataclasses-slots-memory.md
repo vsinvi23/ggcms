@@ -1,3 +1,11 @@
+---
+title: "Python Memory Optimization: How `__slots__` Drastically Reduces Dataclass RAM Footprints"
+description: "Python is renowned for its flexibility and ease of use, but this dynamism comes at a severe cost to memory efficiency. By default, every time you instantiate a class in Python, the interpreter creates"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Memory Optimization: How `__slots__` Drastically Reduces Dataclass RAM Footprints
 
 ## The Problem: The Hidden RAM Cost of `__dict__`

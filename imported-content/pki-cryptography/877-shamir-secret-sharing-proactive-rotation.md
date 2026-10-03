@@ -1,3 +1,11 @@
+---
+title: "Proactive Secret Sharing (PSS): Rotating Key Shares Without Changing the Root Secret"
+description: "Shamir's Secret Sharing (SSS) is a foundational cryptographic primitive that allows a master secret $S$ to be split into $n$ shares, such that any threshold $t$ of those shares can reconstruct $S$. SS"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Proactive Secret Sharing (PSS): Rotating Key Shares Without Changing the Root Secret
 
 ## The Problem: The Mobile Adversary in Threshold Schemes

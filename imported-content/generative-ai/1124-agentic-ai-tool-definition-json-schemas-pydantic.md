@@ -1,3 +1,11 @@
+---
+title: "LLM Tool Calling: Wiring APIs and JSON Function Definitions"
+description: "**The Problem:** While ReAct loops parse text via regex to trigger actions, this approach is brittle. LLMs often hallucinate tool names, forget arguments, or malform JSON strings in free-text generati"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tool Calling: Wiring APIs and JSON Function Definitions
 
 **The Problem:** While ReAct loops parse text via regex to trigger actions, this approach is brittle. LLMs often hallucinate tool names, forget arguments, or malform JSON strings in free-text generation. Modern LLMs (like GPT-4 and Claude 3) solve this natively via **Tool Calling** (or Function Calling), moving tool execution from fragile text parsing to robust, schema-enforced API features.

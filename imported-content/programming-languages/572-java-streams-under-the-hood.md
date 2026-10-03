@@ -1,3 +1,11 @@
+---
+title: "Java Streams: What Actually Happens Under the Hood?"
+description: "Processing data collections in Java historically relied on imperative loops (`for`, `while`) with nested branching. While highly performant, this approach tightly couples \"what\" is being calculated wi"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Streams: What Actually Happens Under the Hood?
 
 ## The Problem: Verbose Imperative Processing vs Naive Eager Evaluation

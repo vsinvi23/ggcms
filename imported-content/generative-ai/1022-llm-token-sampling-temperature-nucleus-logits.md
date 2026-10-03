@@ -1,3 +1,11 @@
+---
+title: "LLM Decoding Strategies: Temperature, Top-K, and Nucleus (Top-P) Sampling"
+description: "At its core, a causal language model predicts a probability distribution over the vocabulary for the next token. The simplest decoding strategy is **Greedy Decoding**, where the model always selects t"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Decoding Strategies: Temperature, Top-K, and Nucleus (Top-P) Sampling
 
 ## The Problem: The Determinism vs. Creativity Trade-off

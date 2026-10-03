@@ -1,3 +1,11 @@
+---
+title: "SCIM Protocol: Implementing Real-Time User Provisioning and De-provisioning APIs"
+description: "In enterprise environments using SaaS applications (e.g., Slack, GitHub, Salesforce), onboarding and offboarding employees is a complex lifecycle. Historically, when an employee was terminated in the "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SCIM Protocol: Implementing Real-Time User Provisioning and De-provisioning APIs
 
 ## The Problem: The Orphaned Account Vulnerability

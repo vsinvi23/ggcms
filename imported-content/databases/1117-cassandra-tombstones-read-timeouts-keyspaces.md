@@ -1,3 +1,11 @@
+---
+title: "Cassandra Deletions: Why Tombstones Cause Read Latency and Timeouts"
+description: "Apache Cassandra is optimized for massive write throughput. To achieve this, it uses a Log-Structured Merge-Tree (LSM-Tree) architecture. Writes are appended to an in-memory structure (Memtable) and e"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Deletions: Why Tombstones Cause Read Latency and Timeouts
 
 ## The Problem: Deleting in an Append-Only System

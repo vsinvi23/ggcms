@@ -1,3 +1,11 @@
+---
+title: "Sharded Database Rebalancing: Moving Terabytes of Data Without Database Downtime"
+description: "Database sharding—partitioning a massive dataset across multiple database instances—is standard practice for scaling beyond the limits of a single machine. Usually, a shard key (e.g., `user_id` or `te"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Database Rebalancing: Moving Terabytes of Data Without Database Downtime
 
 ## The Problem: The Inevitability of Data Skew

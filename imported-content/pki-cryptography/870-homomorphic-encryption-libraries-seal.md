@@ -1,3 +1,11 @@
+---
+title: "Homomorphic Encryption Libraries: Comparing Microsoft SEAL (BFV/CKKS) Implementations"
+description: "When outsourcing data analysis to cloud providers, companies face a zero-sum choice between utility and privacy. Traditional encryption schemes like AES protect data in transit and at rest, but the da"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Homomorphic Encryption Libraries: Comparing Microsoft SEAL (BFV/CKKS) Implementations
 
 ## The Problem: The Privacy-Utility Trade-Off in Cloud Computing

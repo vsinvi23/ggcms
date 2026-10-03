@@ -1,3 +1,11 @@
+---
+title: "Distributed ID Generation: Designing Twitter Snowflake for Monotonic 64-bit Sorting"
+description: "In a distributed system, generating globally unique identifiers at high throughput is a major architectural challenge. Relational databases traditionally rely on auto-incrementing integer keys. Howeve"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed ID Generation: Designing Twitter Snowflake for Monotonic 64-bit Sorting
 
 ## The Problem: The High-Scale Identity Bottleneck

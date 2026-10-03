@@ -1,3 +1,11 @@
+---
+title: "Session Management and Cookie Security: Designing Secure Stateless and Stateful Sessions"
+description: "Master the security architecture of web sessions, compare stateful and stateless (JWT-based) models, and learn how to configure hardened cookie attributes to defeat XSS and CSRF attacks."
+type: "ARTICLE"
+categorySlug: "backend-apis"
+articleType: "GUIDE"
+---
+
 # Session Management and Cookie Security: Designing Secure Stateless and Stateful Sessions
 
 > Master the security architecture of web sessions, compare stateful and stateless (JWT-based) models, and learn how to configure hardened cookie attributes to defeat XSS and CSRF attacks.

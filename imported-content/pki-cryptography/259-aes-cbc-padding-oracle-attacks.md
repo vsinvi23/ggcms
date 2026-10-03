@@ -1,3 +1,11 @@
+---
+title: "AES-CBC Padding Oracles: How POODLE and Lucky13 Exploit Block Padding"
+description: "The Cipher Block Chaining (CBC) mode of operation for block ciphers like AES has historically been the backbone of encrypted communication. However, its reliance on padding to ensure plaintexts align "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # AES-CBC Padding Oracles: How POODLE and Lucky13 Exploit Block Padding
 
 The Cipher Block Chaining (CBC) mode of operation for block ciphers like AES has historically been the backbone of encrypted communication. However, its reliance on padding to ensure plaintexts align with block boundaries introduced a class of vulnerabilities known as padding oracle attacks. Exploits like POODLE (Padding Oracle On Downgraded Legacy Encryption) and Lucky13 devastated CBC mode in SSL/TLS by turning the decryption mechanism itself into an unintended side-channel oracle.

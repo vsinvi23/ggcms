@@ -1,3 +1,11 @@
+---
+title: "Google Cloud Spanner: Achieving Global External Consistency with TrueTime Atomic Clocks"
+description: "For decades, database architecture has been constrained by the CAP Theorem, which states that a distributed data store can provide at most two of the following three guarantees: Consistency, Availabil"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Google Cloud Spanner: Achieving Global External Consistency with TrueTime Atomic Clocks
 
 ## The Problem: The CAP Theorem and Database Scaling

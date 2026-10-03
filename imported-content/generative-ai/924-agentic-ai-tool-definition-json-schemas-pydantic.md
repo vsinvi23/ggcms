@@ -1,3 +1,11 @@
+---
+title: "LLM Tool Calling: Wiring APIs and JSON Function Definitions"
+description: "**The Problem:** In agentic workflows, parsing raw text (like the ReAct pattern) using Regex is brittle. LLMs often generate malformed strings, inject conversational filler, or hallucinate parameters."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tool Calling: Wiring APIs and JSON Function Definitions
 
 **The Problem:** In agentic workflows, parsing raw text (like the ReAct pattern) using Regex is brittle. LLMs often generate malformed strings, inject conversational filler, or hallucinate parameters. For robust API integration, the LLM must natively understand structured data schemas and output deterministic, strictly-typed payloads. Tool Calling (Function Calling) solves this by fine-tuning models to output JSON based on explicit schema definitions.

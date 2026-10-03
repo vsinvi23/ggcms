@@ -1,3 +1,11 @@
+---
+title: "How AI Agents Read, Modify, Test, and Commit Code"
+description: "When an AI agent modifies a codebase, it operates without human intuition. A naive file rewrite can corrupt source files, break critical dependencies, or pollute Git history with failing compilation s"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # How AI Agents Read, Modify, Test, and Commit Code
 
 When an AI agent modifies a codebase, it operates without human intuition. A naive file rewrite can corrupt source files, break critical dependencies, or pollute Git history with failing compilation states. Safely automating code modifications requires a deterministic execution pipeline: structural file diffing, isolated sandbox validation, and atomic version control integration.

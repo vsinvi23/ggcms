@@ -1,3 +1,11 @@
+---
+title: "AI Data Exfiltration: Mitigating LLM Markdown Injection and Out-of-Band Leakage"
+description: "As Large Language Models (LLMs) are integrated into consumer-facing web applications, they are increasingly granted access to sensitive user data, such as private chats, emails, and financial records."
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # AI Data Exfiltration: Mitigating LLM Markdown Injection and Out-of-Band Leakage
 
 As Large Language Models (LLMs) are integrated into consumer-facing web applications, they are increasingly granted access to sensitive user data, such as private chats, emails, and financial records. This access has opened the door to a highly stealthy class of attacks: indirect prompt injection leading to out-of-band data exfiltration. By manipulating the LLM into generating malicious markdown images, attackers can silently exfiltrate private user context via simple HTTP GET requests.

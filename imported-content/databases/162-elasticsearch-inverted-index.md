@@ -1,3 +1,11 @@
+---
+title: "Elasticsearch Internals: How the Inverted Index Powers Full-Text Search"
+description: "Traditional relational databases like PostgreSQL and MySQL are highly optimized for exact matches and range queries. They achieve this using B-Tree indexes. If you query `WHERE author = 'Tolkien'`, th"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Elasticsearch Internals: How the Inverted Index Powers Full-Text Search
 
 ## The Problem: The B-Tree Bottleneck in Text Search

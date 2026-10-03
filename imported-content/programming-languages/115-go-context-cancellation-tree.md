@@ -1,3 +1,11 @@
+---
+title: "Go Context: Propagation, Cancellation Trees, and Request Scoping"
+description: "In Go, concurrency is cheap. It is standard practice to spin up a new goroutine to handle an incoming HTTP request, query a database, or fetch data from a microservice. However, this ease of concurren"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Context: Propagation, Cancellation Trees, and Request Scoping
 
 ## The Problem: Dangling Goroutines and Resource Leaks

@@ -1,3 +1,11 @@
+---
+title: "Database Indexing Internals: B-Trees, Hash Indexes, and Query Optimization in PostgreSQL"
+description: "Explore the byte-level storage layouts, search mechanics, and algorithmic performance of B-Trees and Hash indexes, and learn how to write highly optimized queries in PostgreSQL."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Database Indexing Internals: B-Trees, Hash Indexes, and Query Optimization in PostgreSQL
 
 > Explore the byte-level storage layouts, search mechanics, and algorithmic performance of B-Trees and Hash indexes, and learn how to write highly optimized queries in PostgreSQL.

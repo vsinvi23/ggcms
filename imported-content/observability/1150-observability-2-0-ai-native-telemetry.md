@@ -1,4 +1,4 @@
----
+--- 
 title: "Observability 2.0 Explained: From Logs and Metrics to AI-Native Telemetry"
 slug: "observability-2-0-ai-native-telemetry"
 category: "Observability"
@@ -41,7 +41,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "observability-monitoring"
 ---
+
 
 # Observability 2.0 Explained: From Logs and Metrics to AI-Native Telemetry
 

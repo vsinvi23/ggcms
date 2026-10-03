@@ -1,3 +1,11 @@
+---
+title: "SHA-256 Internals: The Merkle-Damgård Construction and Message Padding"
+description: "A cryptographic hash function must possess three core properties: pre-image resistance, second pre-image resistance, and collision resistance. Furthermore, it must be able to take an input of *any* ar"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # SHA-256 Internals: The Merkle-Damgård Construction and Message Padding
 
 ## The Problem: Hashing Infinite Data to a Finite Space

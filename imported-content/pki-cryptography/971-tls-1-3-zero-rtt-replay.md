@@ -1,3 +1,11 @@
+---
+title: "TLS 1.3 0-RTT: The Dangers of Early Data Replay Attacks and Non-Idempotent APIs"
+description: "In modern networking, standard TLS 1.3 handshakes require 1 round-trip time (1-RTT) to complete key exchange and verify certificates. While a significant improvement over TLS 1.2, this latency overhea"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS 1.3 0-RTT: The Dangers of Early Data Replay Attacks and Non-Idempotent APIs
 
 ## The Problem: Session Resumption and Handshake Latency

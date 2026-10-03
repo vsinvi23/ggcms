@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Explained from Zero: The Anti-Pattern That Built the Modern Web"
+description: "In the early days of the web, if a third-party application wanted to interact with your data on a major platform—say, a printing service wanting to access your photos on a photo-sharing site—there was"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Explained from Zero: The Anti-Pattern That Built the Modern Web
 
 In the early days of the web, if a third-party application wanted to interact with your data on a major platform—say, a printing service wanting to access your photos on a photo-sharing site—there was only one way to make it happen: **you had to give the third-party application your raw username and password.**

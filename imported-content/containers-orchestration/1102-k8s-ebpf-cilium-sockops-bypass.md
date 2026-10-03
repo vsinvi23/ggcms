@@ -1,3 +1,11 @@
+---
+title: "eBPF in Kubernetes: Bypassing TCP Stack Routing Using Cilium and sockops"
+description: "In standard Kubernetes networking, when two Pods residing on the same node communicate via TCP, their packets must traverse the entire Linux kernel TCP/IP stack. Even though the packets never leave th"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # eBPF in Kubernetes: Bypassing TCP Stack Routing Using Cilium and sockops
 
 In standard Kubernetes networking, when two Pods residing on the same node communicate via TCP, their packets must traverse the entire Linux kernel TCP/IP stack. Even though the packets never leave the physical host, they undergo routing lookup, IP encapsulation, connection tracking, iptables filtering, and network interface queuing. 

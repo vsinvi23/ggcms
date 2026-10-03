@@ -1,3 +1,11 @@
+---
+title: "AWS PrivateLink: Interface Endpoint Security and Blocking Data Exfiltration"
+description: "To access native AWS services (such as Amazon S3, SQS, or AWS Secrets Manager) from an isolated, private subnet within an AWS VPC, architects historically provisioned an Internet Gateway (IGW) or a NA"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS PrivateLink: Interface Endpoint Security and Blocking Data Exfiltration
 
 ## The Problem: NAT Gateways and the Outbound Exfiltration Loophole

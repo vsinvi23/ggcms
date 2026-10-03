@@ -1,3 +1,11 @@
+---
+title: "ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization"
+description: "A common pitfall in machine learning is deploying a model that achieves near-perfect accuracy on the training set, only to fail dramatically on out-of-sample production data. This is **overfitting** ("
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization
 
 ## The Problem

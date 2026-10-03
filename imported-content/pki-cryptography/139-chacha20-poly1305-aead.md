@@ -1,3 +1,11 @@
+---
+title: "ChaCha20-Poly1305: High-Speed AEAD for Mobile Processors"
+description: "Advanced Encryption Standard (AES) combined with Galois/Counter Mode (GCM) is the undisputed heavyweight champion of Authenticated Encryption with Associated Data (AEAD). However, AES was designed wit"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # ChaCha20-Poly1305: High-Speed AEAD for Mobile Processors
 
 ## The Problem: The AES Performance and Security Gap on Lightweight Hardware

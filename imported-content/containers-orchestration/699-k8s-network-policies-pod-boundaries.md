@@ -1,3 +1,11 @@
+---
+title: "Hardening Kubernetes Pod-to-Pod Traffic with Default-Deny Network Policies"
+description: "By default, the Kubernetes flat networking model operates under a highly permissive assumption: any pod can communicate with any other pod in the cluster, regardless of namespace or functional tier. W"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Hardening Kubernetes Pod-to-Pod Traffic with Default-Deny Network Policies
 
 By default, the Kubernetes flat networking model operates under a highly permissive assumption: any pod can communicate with any other pod in the cluster, regardless of namespace or functional tier. While this simplifies initial application deployment, it represents a catastrophic security risk. If an attacker compromises a single public-facing frontend web pod, they can easily pivot laterally to internal backend services, databases, or sensitive telemetry endpoints.

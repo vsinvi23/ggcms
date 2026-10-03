@@ -1,3 +1,11 @@
+---
+title: "CQRS Architecture: Implementing a Scalable Event Store Database"
+description: "In traditional CRUD (Create, Read, Update, Delete) architectures, the same data model is used for both updating the state of the system and querying it. As an application scales, this introduces a sev"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # CQRS Architecture: Implementing a Scalable Event Store Database
 
 ## The Problem: The Read/Write Impedance Mismatch

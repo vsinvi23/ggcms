@@ -1,3 +1,11 @@
+---
+title: "GCP Cloud Run Internals: Sandboxing Container Runtimes with gVisor"
+description: "Serverless container platforms like GCP Cloud Run allow developers to deploy arbitrary Docker images without managing infrastructure. Behind the scenes, these platforms achieve massive scale by packin"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Cloud Run Internals: Sandboxing Container Runtimes with gVisor
 
 ## The Problem: The Insecurity of Shared Kernels in Serverless Compute

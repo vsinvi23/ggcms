@@ -1,3 +1,11 @@
+---
+title: "JWT Claim Validation: Enforcing Issuer (iss) and Audience (aud) Boundaries"
+description: "A common security anti-pattern in distributed architectures is trusting a signed JSON Web Token (JWT) based *solely* on cryptographic signature verification. When a microservice imports a public key f"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Claim Validation: Enforcing Issuer (iss) and Audience (aud) Boundaries
 
 ## The Problem: The Confused Deputy Attack via Trust Boundary Bleed

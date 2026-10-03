@@ -1,3 +1,11 @@
+---
+title: "Mutual TLS (mTLS): Certificate-based Client Authentication and SAN Validation"
+description: "Mutual TLS (mTLS) is a cornerstone of zero-trust architecture, establishing cryptographically verified, bidirectional identities between a client and a server. During the handshake, the server request"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Mutual TLS (mTLS): Certificate-based Client Authentication and SAN Validation
 
 ## The Problem: The "CA-Wide Authorization Bypass" Vulnerability

@@ -1,3 +1,11 @@
+---
+title: "Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC"
+description: "Relying solely on Accuracy (Correct Predictions / Total Predictions) to evaluate classification models is a critical engineering flaw when dealing with imbalanced datasets. If a fraud detection datase"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC
 
 ## The Problem

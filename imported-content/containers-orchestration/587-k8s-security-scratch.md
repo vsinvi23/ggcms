@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Security from Scratch: Pod Security Admission"
+description: "Docker containers are not virtual machines. They share the same kernel as the underlying host. If a process inside a container runs as `root`, and it manages to break out of the container (via a kerne"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Security from Scratch: Pod Security Admission
 
 ### The Problem

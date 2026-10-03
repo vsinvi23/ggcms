@@ -1,3 +1,11 @@
+---
+title: "Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs"
+description: "**The Problem:** Finding the closest vector (Cosine Similarity or L2 distance) to a query vector in a database of billions of embeddings requires computing the distance against every single vector. Th"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs
 
 **The Problem:** Finding the closest vector (Cosine Similarity or L2 distance) to a query vector in a database of billions of embeddings requires computing the distance against every single vector. This $O(N)$ Exact Nearest Neighbor (k-NN) search is too slow for production. Vector databases (like Pinecone, Milvus, Qdrant, or pgvector) rely on Approximate Nearest Neighbor (ANN) algorithms to achieve sub-millisecond latencies at scale. HNSW is the undisputed king of ANN algorithms.

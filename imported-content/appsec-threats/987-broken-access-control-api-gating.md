@@ -1,3 +1,11 @@
+---
+title: "Broken Access Control: Bypassing UI Security Filters on API Endpoints"
+description: "Access control determines whether an authenticated user is permitted to perform a specific action or access a specific resource. It is the core of application authorization."
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Broken Access Control: Bypassing UI Security Filters on API Endpoints
 
 ## The Problem: The Client-Side Security Illusion

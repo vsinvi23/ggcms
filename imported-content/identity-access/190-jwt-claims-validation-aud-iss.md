@@ -1,3 +1,11 @@
+---
+title: "JWT Claim Validation: Enforcing Issuer (iss) and Audience (aud) Boundaries"
+description: "Cryptographic validation is only half of the story when securing JSON Web Tokens (JWTs). A common and severe mistake developers make is validating the cryptographic signature of an inbound token while"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Claim Validation: Enforcing Issuer (iss) and Audience (aud) Boundaries
 
 ## The Problem

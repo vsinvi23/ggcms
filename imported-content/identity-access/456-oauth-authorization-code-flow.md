@@ -1,3 +1,11 @@
+---
+title: "OAuth Authorization Code Flow: Step-by-Step Technical Choreography"
+description: "The **Authorization Code Flow** is the gold standard of delegated authorization for server-side web applications. Unlike the deprecated implicit flow, it utilizes a two-channel exchange (front-channel"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth Authorization Code Flow: Step-by-Step Technical Choreography
 
 The **Authorization Code Flow** is the gold standard of delegated authorization for server-side web applications. Unlike the deprecated implicit flow, it utilizes a two-channel exchange (front-channel via the browser, back-channel server-to-server) to prevent token exposure in transit.

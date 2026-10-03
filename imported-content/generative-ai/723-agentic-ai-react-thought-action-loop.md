@@ -1,3 +1,11 @@
+---
+title: "Agentic AI: The ReAct (Reason + Act) Loop Pattern"
+description: "Standard zero-shot or chain-of-thought (CoT) prompting models LLM generation as a static, linear feedforward pass. While CoT encourages step-by-step reasoning, it remains confined to the model's stati"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Agentic AI: The ReAct (Reason + Act) Loop Pattern
 
 ### The Problem: Static Execution vs. Real-World Interaction

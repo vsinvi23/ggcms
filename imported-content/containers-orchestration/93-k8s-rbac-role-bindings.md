@@ -1,3 +1,11 @@
+---
+title: "Kubernetes RBAC: Hardening Cluster Roles and Service Accounts"
+description: "A common, catastrophic mistake in Kubernetes deployments is granting workloads excessive permissions within the cluster. When a pod is scheduled, Kubernetes automatically mounts a Service Account toke"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes RBAC: Hardening Cluster Roles and Service Accounts
 
 ## The Over-Privileged Pod Problem

@@ -1,3 +1,11 @@
+---
+title: "Input Validation vs Output Encoding: Context-Aware Escaping to Defeat XSS"
+description: "Web applications constantly accept input from untrusted sources—such as HTTP request queries, body parameters, or headers—and render it back to users. Cross-Site Scripting (XSS) occurs when malicious "
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Input Validation vs Output Encoding: Context-Aware Escaping to Defeat XSS
 
 ## The Problem: The Injection Paradox

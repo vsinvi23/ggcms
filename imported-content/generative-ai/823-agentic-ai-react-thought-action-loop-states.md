@@ -1,3 +1,11 @@
+---
+title: "Agentic AI: The ReAct (Reason + Act) Loop Pattern"
+description: "Standard Large Language Models are static sequence generators. When asked a question like \"What is the current temperature in Tokyo?\", a standard LLM will either hallucinate a number or apologize for "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Agentic AI: The ReAct (Reason + Act) Loop Pattern
 
 ### The Problem: Static Generation vs. Dynamic Execution

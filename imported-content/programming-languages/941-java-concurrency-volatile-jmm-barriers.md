@@ -1,3 +1,11 @@
+---
+title: "Java Concurrency: Memory Barriers, Volatile Semantics, and Instruction Reordering in the JMM"
+description: "In concurrent Java programming, the most dangerous assumption is that instructions are executed exactly in the order they appear in source code. Modern CPUs and compilers employ aggressive optimizatio"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Concurrency: Memory Barriers, Volatile Semantics, and Instruction Reordering in the JMM
 
 ## The Myth of Sequential Execution

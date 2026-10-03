@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Parent-Child Document Retrieval for Context Integrity"
+description: "**The Problem:** Traditional Retrieval-Augmented Generation (RAG) pipelines chunk large documents into fixed-size texts (e.g., 500 tokens). This creates a fundamental trade-off:"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Parent-Child Document Retrieval for Context Integrity
 
 **The Problem:** Traditional Retrieval-Augmented Generation (RAG) pipelines chunk large documents into fixed-size texts (e.g., 500 tokens). This creates a fundamental trade-off: 

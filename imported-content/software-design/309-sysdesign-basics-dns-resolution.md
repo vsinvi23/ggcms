@@ -1,3 +1,11 @@
+---
+title: "System Design Basics: How DNS Resolution Actually Works"
+description: "Humans read domain names (`serenya.com`); networking hardware routes via IP addresses (`192.0.2.1`). We need a globally distributed, highly available mapping system that can resolve billions of querie"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # System Design Basics: How DNS Resolution Actually Works
 
 ## The Problem

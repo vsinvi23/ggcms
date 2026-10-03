@@ -1,3 +1,11 @@
+---
+title: "Cassandra Deletions: Why Tombstones Cause Read Latency and Timeouts"
+description: "In Log-Structured Merge-tree (LSM) storage architectures like Apache Cassandra, random write performance is prioritized by making disk writes strictly append-only. Disk-based data files (**SSTables**)"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Deletions: Why Tombstones Cause Read Latency and Timeouts
 
 ## The Problem: The LSM-Tree Write-Only Paradox

@@ -1,3 +1,11 @@
+---
+title: "LLM Inference Optimization: The KV Cache and FlashAttention On-Chip Tiling"
+description: "LLM inference is divided into two distinct operational phases: the **prefill** phase and the **decoding** (generation) phase."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Inference Optimization: The KV Cache and FlashAttention On-Chip Tiling
 
 ### The Problem: Memory Bandwidth Bottlenecks in Autoregressive Decoding

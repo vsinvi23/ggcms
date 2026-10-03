@@ -1,3 +1,11 @@
+---
+title: "Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph"
+description: "Basic agentic patterns, like the ReAct (Reason + Act) loop, operate on a linear, while-loop architecture. The agent loops indefinitely until it outputs a \"Final Answer.\" While suitable for simple Q&A,"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph
 
 ### The Problem: The Limits of Linear Agent Loops

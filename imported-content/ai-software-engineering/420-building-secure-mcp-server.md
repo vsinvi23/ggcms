@@ -1,3 +1,11 @@
+---
+title: "Building a Secure MCP Server"
+description: "As developers rush to build custom Model Context Protocol (MCP) servers to expose local resources to AI agents, they frequently introduce severe security flaws. A typical \"developer agent tool\" script"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Building a Secure MCP Server
 
 ### The Problem: Naive Code Execution and Host Exposure

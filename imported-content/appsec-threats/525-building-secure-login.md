@@ -1,3 +1,11 @@
+---
+title: "Building a Secure Login System from Scratch: Session Security and Brute-Force Defense"
+description: "Building an authentication system from scratch is a high-stakes engineering endeavor. A simple misstep can lead to critical vulnerabilities, including SQL Injection (SQLi), Session Hijacking, Session "
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Building a Secure Login System from Scratch: Session Security and Brute-Force Defense
 
 Building an authentication system from scratch is a high-stakes engineering endeavor. A simple misstep can lead to critical vulnerabilities, including SQL Injection (SQLi), Session Hijacking, Session Fixation, and automated credential spraying. To secure a login flow, you must construct a multi-layered defense pipeline covering request throttling, secure credential validation, cryptographically secure session creation, and bulletproof cookie configurations.

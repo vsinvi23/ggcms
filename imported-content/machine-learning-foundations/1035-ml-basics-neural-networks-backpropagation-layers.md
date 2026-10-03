@@ -1,3 +1,11 @@
+---
+title: "Deep Learning 101: Feedforward Neural Networks and Backpropagation"
+description: "While traditional machine learning models (e.g., linear models, decision tree ensembles) excel on structured tabular data, they struggle to model unstructured data like raw audio signals, images, or r"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Deep Learning 101: Feedforward Neural Networks and Backpropagation
 
 ## The Problem

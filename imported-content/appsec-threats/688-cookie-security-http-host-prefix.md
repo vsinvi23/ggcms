@@ -1,3 +1,11 @@
+---
+title: "Cookie Security: HttpOnly, Secure, SameSite, and the `__Host-` Cookie Prefix"
+description: "Session cookies are the standard storage medium for keeping user sessions alive. However, standard cookie setups leave several major security vectors unmitigated. If an attacker identifies a Cross-Sit"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Cookie Security: HttpOnly, Secure, SameSite, and the `__Host-` Cookie Prefix
 
 ## The Problem: Subdomain Hijacking and Ambient Storage Exposure

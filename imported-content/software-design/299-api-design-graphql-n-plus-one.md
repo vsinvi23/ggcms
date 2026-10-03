@@ -1,3 +1,11 @@
+---
+title: "GraphQL API Design: Solving the N+1 Database Query Problem with DataLoaders"
+description: "GraphQL's greatest strength is its client-driven query capability, allowing clients to request precisely the data they need through nested selections. However, this architectural flexibility introduce"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # GraphQL API Design: Solving the N+1 Database Query Problem with DataLoaders
 
 ## The Problem: The Nested Resolver Trap

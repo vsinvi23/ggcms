@@ -1,3 +1,11 @@
+---
+title: "Java String Pool: Memory Optimization and String.intern() Mechanics"
+description: "In enterprise Java applications, strings represent a substantial percentage of total heap memory. Because strings are frequently duplicated (e.g., repeating database column names, JSON keys, or state "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java String Pool: Memory Optimization and String.intern() Mechanics
 
 In enterprise Java applications, strings represent a substantial percentage of total heap memory. Because strings are frequently duplicated (e.g., repeating database column names, JSON keys, or state names), creating a new object for every single occurrence causes massive heap overhead and triggers frequent Garbage Collection (GC) pauses. 

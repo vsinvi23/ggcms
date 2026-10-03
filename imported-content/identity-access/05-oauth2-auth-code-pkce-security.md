@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Authorization Code Grant with PKCE: Deep Technical Protocol Flow and Security Analysis"
+description: "Unpack the mechanics of Proof Key for Code Exchange (PKCE) defined in RFC 7636, and learn how to secure public client architectures (Single Page Apps and Mobile Apps) against Authorization Code Interception attacks."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Authorization Code Grant with PKCE: Deep Technical Protocol Flow and Security Analysis
 
 > Unpack the mechanics of Proof Key for Code Exchange (PKCE) defined in RFC 7636, and learn how to secure public client architectures (Single Page Apps and Mobile Apps) against Authorization Code Interception attacks.

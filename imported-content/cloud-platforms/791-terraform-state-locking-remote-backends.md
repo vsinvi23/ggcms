@@ -1,3 +1,11 @@
+---
+title: "Terraform State Hardening: Encryption-at-Rest and DynamoDB Concurrency Locks"
+description: "In collaborative DevOps teams, the Terraform state file (`terraform.tfstate`) is the absolute source of truth mapping declared resources to physical cloud infrastructure. If stored locally or in an un"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Terraform State Hardening: Encryption-at-Rest and DynamoDB Concurrency Locks
 
 ## The Problem: State Overwrites and Plaintext Secret Exposure

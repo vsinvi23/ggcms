@@ -1,3 +1,11 @@
+---
+title: "Why AI Agents Need Tools"
+description: "Large Language Models (LLMs) are marvels of pattern recognition, yet they are fundamentally crippled when operating as isolated units. At their core, LLMs are autoregressive probability engines; they "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Why AI Agents Need Tools
 
 ## The Problem: The Computational Limits of Autoregressive Models

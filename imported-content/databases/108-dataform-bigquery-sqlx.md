@@ -1,3 +1,11 @@
+---
+title: "Dataform on BigQuery: Declarative SQLX Pipeline Engineering"
+description: "In the early days of a data warehouse, building a pipeline usually means writing a few cron jobs that execute massive, hundreds-of-lines-long SQL scripts."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Dataform on BigQuery: Declarative SQLX Pipeline Engineering
 
 ## The Problem: The SQL Spaghetti Monster

@@ -1,3 +1,11 @@
+---
+title: "Incident Response from First Alert to Recovery: The PICERL Framework"
+description: "When a high-severity alert fires—a domain controller beaconing to an unknown IP, or mass file encryption across endpoints—the default human reaction is panic. Without a structured framework, engineers"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Incident Response from First Alert to Recovery: The PICERL Framework
 
 ## The Problem: Chaos During a Breach

@@ -1,3 +1,11 @@
+---
+title: "Computer Vision: Convolutional Neural Networks (CNNs) and Receptive Fields"
+description: "Standard fully connected feedforward networks (MLPs) perform poorly on spatial grid datasets like high-resolution images. Flattening a modest image of size $512 \times 512 \times 3$ channels produces "
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Computer Vision: Convolutional Neural Networks (CNNs) and Receptive Fields
 
 ## The Problem

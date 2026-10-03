@@ -1,3 +1,11 @@
+---
+title: "AWS Lambda Internals: Firecracker MicroVMs, Cold Starts, and SnapStart"
+description: "Serverless computing (AWS Lambda) abstracts away server provisioning. You upload code, and AWS executes it on demand. However, when a Lambda function hasn't been invoked recently, or when concurrent r"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Lambda Internals: Firecracker MicroVMs, Cold Starts, and SnapStart
 
 ## The Problem: The Serverless Trade-off (Cold Starts)

@@ -1,3 +1,11 @@
+---
+title: "Python Dunder Methods: Customizing Object Collection, Representation, and Context Protocols"
+description: "A data engineering team develops a real-time sliding window analytics engine in Python. The engine represents windowed time-series data using custom objects. Initially, developers manipulate these ser"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Dunder Methods: Customizing Object Collection, Representation, and Context Protocols
 
 ## The Problem: The Overhead of Un-Pythonic APIs

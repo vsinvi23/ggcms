@@ -1,3 +1,11 @@
+---
+title: "Cache Stampedes: Mitigating the Thundering Herd Problem with Probabilistic Early Expiration"
+description: "Caching is the universal band-aid for slow databases. By placing a fast, in-memory key-value store (like Redis or Memcached) in front of an expensive SQL query, we drop latencies from seconds to milli"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Cache Stampedes: Mitigating the Thundering Herd Problem with Probabilistic Early Expiration
 
 Caching is the universal band-aid for slow databases. By placing a fast, in-memory key-value store (like Redis or Memcached) in front of an expensive SQL query, we drop latencies from seconds to milliseconds. But what happens when that cache expires under extreme load? You encounter the **Thundering Herd**.

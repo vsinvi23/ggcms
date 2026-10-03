@@ -1,3 +1,11 @@
+---
+title: "Google Cloud Bigtable Architecture: Key Design to Avoid Row Hotspotting"
+description: "Google Cloud Bigtable is a highly scalable, distributed wide-column NoSQL database designed to handle petabytes of time-series, IoT, or analytical data. To achieve sub-millisecond latencies at scale, "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Google Cloud Bigtable Architecture: Key Design to Avoid Row Hotspotting
 
 ## The Problem: Lexicographical Sorting and the Nightmare of Row Hotspotting

@@ -1,3 +1,11 @@
+---
+title: "Postgres WAL Internals: Crash Recovery, LSN, and Physical Replication Streams"
+description: "In relational database systems, transaction durability (the \"D\" in ACID) requires that once a transaction commits, its modifications are permanently recorded. The naive solution is to write every modi"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres WAL Internals: Crash Recovery, LSN, and Physical Replication Streams
 
 ## The Problem: The In-Memory Durability & Random I/O Bottleneck

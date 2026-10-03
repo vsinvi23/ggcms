@@ -1,3 +1,11 @@
+---
+title: "Terraform State Hardening: Configuring Remote Locking with S3 and DynamoDB"
+description: "In collaborative DevOps teams, managing Infrastructure as Code (IaC) without a secure, shared, and synchronized state backend is a recipe for operational disaster. There are two primary vulnerabilitie"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Terraform State Hardening: Configuring Remote Locking with S3 and DynamoDB
 
 ## The Problem: State Corruption and Plaintext Secret Exposure

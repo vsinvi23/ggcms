@@ -1,3 +1,11 @@
+---
+title: "CGO Internals: The Hidden Performance Costs of Transitioning Between Go and C Boundaries"
+description: "CGO allows Go packages to call C code, providing access to decades of highly optimized C/C++ libraries, from SQLite to TensorFlow. However, developers often assume that invoking a C function from Go c"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # CGO Internals: The Hidden Performance Costs of Transitioning Between Go and C Boundaries
 
 ## The Illusion of Zero-Cost Interop

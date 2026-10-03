@@ -1,3 +1,11 @@
+---
+title: "GCP Cloud Run Internals: Sandboxing Container Runtimes with gVisor"
+description: "In standard Linux container environments (such as Docker or traditional Kubernetes using the default `runc` container runtime), containers are not virtual machines. They are simply isolated groups of "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Cloud Run Internals: Sandboxing Container Runtimes with gVisor
 
 ## The Problem: The Shared Kernel Vulnerability of Standard Containers

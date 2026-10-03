@@ -1,3 +1,11 @@
+---
+title: "Docker Layer Caching: Structuring Multi-Stage Dockerfiles and BuildKit Cache Mounts"
+description: "In modern CI/CD pipelines, container build speed and final image size are critical performance metrics. Poorly structured Dockerfiles lead to bloated production images, security vulnerabilities from l"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Layer Caching: Structuring Multi-Stage Dockerfiles and BuildKit Cache Mounts
 
 In modern CI/CD pipelines, container build speed and final image size are critical performance metrics. Poorly structured Dockerfiles lead to bloated production images, security vulnerabilities from leftover build tools, and slow deployment times. 

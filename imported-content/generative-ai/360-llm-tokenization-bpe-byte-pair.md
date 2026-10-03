@@ -1,3 +1,11 @@
+---
+title: "LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece"
+description: "Deep learning models cannot ingest raw strings; they require a mapping of text to discrete numerical indices. Deciding the granularity of this mapping presents a fundamental trade-off:"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece
 
 ## The Problem: The Out-of-Vocabulary (OOV) Dilemma

@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 mTLS: Binding Access Tokens to Client Certificates (RFC 8705)"
+description: "Standard OAuth 2.0 access tokens are typically \"bearer\" tokens. Under the bearer paradigm, anyone who possesses the token can use it to gain authorized access, regardless of how they obtained it. If a"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 mTLS: Binding Access Tokens to Client Certificates (RFC 8705)
 
 Standard OAuth 2.0 access tokens are typically "bearer" tokens. Under the bearer paradigm, anyone who possesses the token can use it to gain authorized access, regardless of how they obtained it. If a bearer token is exposed via application logging, insecure proxies, or client-side storage exploitation, the security model is compromised. RFC 8705 solves this by introducing Mutual TLS (mTLS) Client Certificate-Bound Access Tokens.

@@ -1,3 +1,11 @@
+---
+title: "OIDC Federated Identity: Managing Multi-Account SSO and ID Token Verification"
+description: "In a multi-account or multi-tenant Software-as-a-Service (SaaS) architecture, supporting OpenID Connect (OIDC) federation with varying external Identity Providers (IdPs)—such as Okta, Azure AD, and Go"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OIDC Federated Identity: Managing Multi-Account SSO and ID Token Verification
 
 ## The Problem: Issuer Confusion and JWKS Exhaustion in Multi-Tenant Federation

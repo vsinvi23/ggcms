@@ -1,3 +1,11 @@
+---
+title: "Beyond the Perimeter: Zero Trust Network Access (ZTNA) vs Legacy VPNs"
+description: "For decades, enterprise security relied on the \"castle-and-moat\" paradigm. Network security teams deployed virtual private networks (VPNs) to establish a secure perimeter. Once a user successfully aut"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Beyond the Perimeter: Zero Trust Network Access (ZTNA) vs Legacy VPNs
 
 ### The Problem: The Myth of the Trusted Network

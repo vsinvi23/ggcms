@@ -1,3 +1,11 @@
+---
+title: "Python Multiprocessing: Bypassing the GIL for CPU-Bound Math"
+description: "When developers need to speed up a program, the natural instinct is to reach for multithreading. If you have a massive array of numbers to process and a modern 8-core CPU, you should be able to spawn "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Multiprocessing: Bypassing the GIL for CPU-Bound Math
 
 ## The Problem: The Threading Illusion in Python

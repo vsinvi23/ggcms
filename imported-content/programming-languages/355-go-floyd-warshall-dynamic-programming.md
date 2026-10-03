@@ -1,3 +1,11 @@
+---
+title: "Floyd-Warshall in Go: $O(V^3)$ All-Pairs Shortest Path using Dynamic Programming"
+description: "When building routing tables for transit networks or solving complex network topology problems, we often need the shortest path between *all possible pairs* of nodes simultaneously, not just from a si"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Floyd-Warshall in Go: $O(V^3)$ All-Pairs Shortest Path using Dynamic Programming
 
 ## The Problem: All-Pairs Shortest Path

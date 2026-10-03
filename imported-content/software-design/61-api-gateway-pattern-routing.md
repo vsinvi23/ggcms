@@ -1,3 +1,11 @@
+---
+title: "The API Gateway Pattern: Rate Limiting, Routing, and Security"
+description: "In a monolithic application, clients communicate with a single backend. There is one domain, one set of IP addresses, and one place to handle authentication."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The API Gateway Pattern: Rate Limiting, Routing, and Security
 
 ## The Problem: The Microservice Sprawl

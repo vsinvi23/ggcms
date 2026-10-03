@@ -1,3 +1,11 @@
+---
+title: "Postgres Connection Scaling: Why PgBouncer is Mandatory in Microservices"
+description: "In modern microservices architectures, it is common to deploy dozens or even hundreds of application instances, each spinning up its own database connection pool. For example, if you have 50 pods of a"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres Connection Scaling: Why PgBouncer is Mandatory in Microservices
 
 ## The Problem: The Connection Explosion

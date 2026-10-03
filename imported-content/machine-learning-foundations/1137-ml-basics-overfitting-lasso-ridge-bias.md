@@ -1,3 +1,11 @@
+---
+title: "ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization"
+description: "The fundamental challenge of machine learning is training a model that not only performs well on training data but generalizes perfectly to unseen data."
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization
 
 ## The Problem

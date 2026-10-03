@@ -1,3 +1,11 @@
+---
+title: "Building a Production-Grade Java Service from Scratch: Tomcat, Spring, and Fat JARs"
+description: "In the early era of enterprise Java, deployment followed an architectural paradigm called \"Application-Server-first.\" Developers built web archives (`.war` files) and handed them to operations teams t"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Building a Production-Grade Java Service from Scratch: Tomcat, Spring, and Fat JARs
 
 ## The Problem: The Legacy Application Server and WAR Deployment Anti-Pattern

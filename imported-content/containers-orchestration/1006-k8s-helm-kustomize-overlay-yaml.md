@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Deployments: Helm Charts vs Kustomize Declarative Overlays"
+description: "Kubernetes relies on declarative YAML files. As an application moves from Development to Staging and into Production, the core components (Deployments, Services) remain mostly the same, but environmen"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Deployments: Helm Charts vs Kustomize Declarative Overlays
 
 ### The Problem: YAML Sprawl and Environment Divergence

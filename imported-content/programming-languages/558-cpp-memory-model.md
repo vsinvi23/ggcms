@@ -1,3 +1,11 @@
+---
+title: "C++ Memory Model Explained: Sequential Consistency and Memory Ordering"
+description: "Even if you use lock-free atomic variables, highly optimized multithreaded code can still fail catastrophically. Compilers aggressively reorder instructions to optimize registers, and CPUs aggressivel"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Memory Model Explained: Sequential Consistency and Memory Ordering
 
 ## Problem Statement

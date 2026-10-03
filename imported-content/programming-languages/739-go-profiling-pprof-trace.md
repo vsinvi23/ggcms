@@ -1,3 +1,11 @@
+---
+title: "Advanced Go Profiling: Finding CPU Bottlenecks and Memory Leaks with pprof and runtime/trace"
+description: "In highly concurrent Go microservices, performance degradation often presents as a dual crisis: a gradual, relentless climb in memory usage (heap growth) alongside CPU starvation that pushes 99th-perc"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Advanced Go Profiling: Finding CPU Bottlenecks and Memory Leaks with pprof and runtime/trace
 
 ## The Problem: High Latency and Runaway Memory in Production Go Services

@@ -1,3 +1,11 @@
+---
+title: "AWS S3 Security: Bucket Policies and IAM Roles Intersection"
+description: "AWS Simple Storage Service (S3) is the backbone of cloud data lakes, but it is also one of the most common vectors for catastrophic data leaks. This vulnerability stems from the complex, multi-layered"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS S3 Security: Bucket Policies and IAM Roles Intersection
 
 ## The Problem: The S3 Authorization Maze and Data Leaks

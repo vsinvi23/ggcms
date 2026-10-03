@@ -1,3 +1,11 @@
+---
+title: "Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Scans"
+description: "When a PostgreSQL query takes 5 seconds instead of 50 milliseconds, developers instinctively start adding indexes to any column mentioned in the `WHERE` clause. This \"guess and check\" strategy is dang"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Reading Postgres Query Plans: Hash Joins, Nested Loops, and Bitmap Scans
 
 ## The Problem: The Guesswork of Slow Queries

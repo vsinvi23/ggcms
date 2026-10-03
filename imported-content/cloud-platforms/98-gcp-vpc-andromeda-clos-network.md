@@ -1,3 +1,11 @@
+---
+title: "GCP Andromeda: Under the Hood of Google's Jupiter Clos Fabric"
+description: "When you provision a Virtual Private Cloud (VPC) in Google Cloud Platform (GCP) and spin up two Compute Engine VMs on opposite sides of the globe, they can communicate using private RFC 1918 IP addres"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Andromeda: Under the Hood of Google's Jupiter Clos Fabric
 
 ## The Network Virtualization Problem

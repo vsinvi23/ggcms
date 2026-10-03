@@ -1,3 +1,11 @@
+---
+title: "Google Zanzibar vs OPA: Relationship-Based Access Control (ReBAC) at Global Scale"
+description: "As enterprise applications grow, standard Role-Based Access Control (RBAC) models fail to handle complex ownership and hierarchical data structures. For example, \"Allow user U to edit folder F if U is"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Google Zanzibar vs OPA: Relationship-Based Access Control (ReBAC) at Global Scale
 
 ## The Problem: Enforcing Fine-Grained Authorization at Scale

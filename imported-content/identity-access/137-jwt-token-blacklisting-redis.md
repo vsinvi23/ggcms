@@ -1,3 +1,11 @@
+---
+title: "JWT Revocation Strategies: Fast Token Blacklisting using Redis"
+description: "One of the most significant trade-offs of using stateless JSON Web Tokens (JWTs) for authentication is the lack of immediate revocation capability. Because a Resource Server (RS) validates a JWT auton"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Revocation Strategies: Fast Token Blacklisting using Redis
 
 ## The Problem: The Instant Revocation Dilemma of Stateless JWTs

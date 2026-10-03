@@ -1,3 +1,11 @@
+---
+title: "Google Zanzibar vs OPA: Relationship-Based Access Control (ReBAC) at Global Scale"
+description: "In modern cloud applications, authorization logic has evolved beyond simple Role-Based Access Control (RBAC). For highly collaborative enterprise platforms, permissions depend on deep, nested relation"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Google Zanzibar vs OPA: Relationship-Based Access Control (ReBAC) at Global Scale
 
 In modern cloud applications, authorization logic has evolved beyond simple Role-Based Access Control (RBAC). For highly collaborative enterprise platforms, permissions depend on deep, nested relationships between users, groups, and resources (e.g., "User A can view Report B because they are a member of Group C, which is granted editor rights on Folder D containing Report B"). 

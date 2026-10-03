@@ -1,3 +1,11 @@
+---
+title: "Redis Persistence: Snapshotting (RDB) vs Append-Only Files (AOF) Fsync Policies"
+description: "Redis is celebrated for its sub-millisecond latency, a feat achieved by storing and serving all data directly from RAM. However, RAM is volatile. If the underlying server suffers a hardware crash, a p"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Persistence: Snapshotting (RDB) vs Append-Only Files (AOF) Fsync Policies
 
 ## The Problem: The Volatility of In-Memory Speed

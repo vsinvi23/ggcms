@@ -1,3 +1,11 @@
+---
+title: "Postgres Index Bloat: Reclaiming Disk Space with REINDEX CONCURRENTLY"
+description: "In PostgreSQL, Multi-Version Concurrency Control (MVCC) dictates that `UPDATE` and `DELETE` queries do not modify records in-place. Instead, they write a new version of the row (a tuple) to the table "
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres Index Bloat: Reclaiming Disk Space with REINDEX CONCURRENTLY
 
 ## The Problem: B-Tree Fragmentation & Write Outages

@@ -1,3 +1,11 @@
+---
+title: "Istio Service Mesh: Implementing Zero-Trust mTLS and Advanced Traffic Routing"
+description: "In standard Kubernetes environments, pod-to-pod communication occurs in cleartext. Any attacker or rogue service inside the cluster network can sniff unencrypted packets or forge client identities to "
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Istio Service Mesh: Implementing Zero-Trust mTLS and Advanced Traffic Routing
 
 In standard Kubernetes environments, pod-to-pod communication occurs in cleartext. Any attacker or rogue service inside the cluster network can sniff unencrypted packets or forge client identities to gain unauthorized access to backend endpoints. Managing cryptographic identities, rotating TLS certificates, and applying weighted canary load-balancing at the application layer introduces significant code duplication and operational complexity.

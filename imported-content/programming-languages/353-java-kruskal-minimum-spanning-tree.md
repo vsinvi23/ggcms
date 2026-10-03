@@ -1,3 +1,11 @@
+---
+title: "Kruskal's MST in Java: Disjoint Set Union (Union-Find) for Network Cabling"
+description: "When laying out fiber optic cables to connect a series of data centers, the goal is to ensure all data centers are connected to each other while minimizing the total miles of cable laid. This is mathe"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Kruskal's MST in Java: Disjoint Set Union (Union-Find) for Network Cabling
 
 ## The Problem: Minimum Spanning Tree

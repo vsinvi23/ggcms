@@ -1,3 +1,11 @@
+---
+title: "Cassandra Entropy: Node Outages, Hinted Handoffs, and Anti-Entropy Node Repair"
+description: "Apache Cassandra is a masterless, decentralized NoSQL database designed for extreme high availability and AP (Availability/Partition Tolerance) under the CAP theorem. In a Cassandra cluster, data is p"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Entropy: Node Outages, Hinted Handoffs, and Anti-Entropy Node Repair
 
 ### The Problem: Entropy in Decentralized Systems

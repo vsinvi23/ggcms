@@ -1,3 +1,11 @@
+---
+title: "Consistent Hashing: Designing Distributed Caches That Survive Node Failures"
+description: "Master the algorithmic foundations of large-scale distributed systems, and learn how Consistent Hashing elegantly solves the \"rehashing problem\" in Redis clusters, DynamoDB, and Content Delivery Networks (CDNs)."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Consistent Hashing: Designing Distributed Caches That Survive Node Failures
 
 > Master the algorithmic foundations of large-scale distributed systems, and learn how Consistent Hashing elegantly solves the "rehashing problem" in Redis clusters, DynamoDB, and Content Delivery Networks (CDNs).

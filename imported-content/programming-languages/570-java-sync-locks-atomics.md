@@ -1,3 +1,11 @@
+---
+title: "Synchronization vs. Locks vs. Atomics: Practical Concurrency Trade-offs in Java"
+description: "When managing access to shared mutable state, Java developers can choose from three main synchronization mechanisms: intrinsic locks (`synchronized`), explicit utility locks (`ReentrantLock`), and loc"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Synchronization vs. Locks vs. Atomics: Practical Concurrency Trade-offs in Java
 
 When managing access to shared mutable state, Java developers can choose from three main synchronization mechanisms: intrinsic locks (`synchronized`), explicit utility locks (`ReentrantLock`), and lock-free atomic variables (`AtomicInteger` / `VarHandle`). Choosing the wrong tool can lead to deadlock, starvation, or unnecessary performance bottlenecks.

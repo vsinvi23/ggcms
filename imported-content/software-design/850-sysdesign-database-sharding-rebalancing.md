@@ -1,3 +1,11 @@
+---
+title: "Sharded Database Rebalancing: Moving Terabytes of Data Without Database Downtime"
+description: "When operating at a planetary scale, a single database instance cannot handle the storage or throughput requirements. Sharding partitions data across multiple nodes based on a Shard Key. However, as t"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Database Rebalancing: Moving Terabytes of Data Without Database Downtime
 
 ## The Problem: Data Imbalance and Hotspots

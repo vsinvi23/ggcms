@@ -1,3 +1,11 @@
+---
+title: "Principal Component Analysis (PCA): Covariance Matrix and Eigenvectors"
+description: "Enterprise machine learning environments are flooded with high-dimensional datasets, including broad genomic profiles, visual pixel features, or detailed user behavioral logs. This high dimensionality"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Principal Component Analysis (PCA): Covariance Matrix and Eigenvectors
 
 ## The Problem

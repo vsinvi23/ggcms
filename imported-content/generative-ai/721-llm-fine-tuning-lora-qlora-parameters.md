@@ -1,3 +1,11 @@
+---
+title: "Fine-Tuning LLMs: Parameter-Efficient LoRA and QLoRA NF4 Quantization"
+description: "Fine-tuning a modern Large Language Model (LLM) using standard backpropagation requires updating every single parameter in the model's weight matrices."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Fine-Tuning LLMs: Parameter-Efficient LoRA and QLoRA NF4 Quantization
 
 ### The Problem: The Computational Cost of Full Parameter Fine-Tuning

@@ -1,3 +1,11 @@
+---
+title: "JWT Revocation Strategies: Implementing Real-Time Token Blacklisting via Redis Caching"
+description: "JSON Web Tokens (JWTs) are stateless by design. Once issued, a JWT is valid until it expires. This statelessness is great for scalability but introduces a massive security flaw: if a user logs out, re"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Revocation Strategies: Implementing Real-Time Token Blacklisting via Redis Caching
 
 ## The Problem

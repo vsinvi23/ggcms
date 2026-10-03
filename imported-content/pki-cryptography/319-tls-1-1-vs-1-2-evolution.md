@@ -1,3 +1,11 @@
+---
+title: "The Evolution of TLS: Why TLS 1.0 and 1.1 Died (BEAST, POODLE) and TLS 1.2 Survived"
+description: "**Problem:** Legacy TLS versions (1.0 and 1.1) relied on cryptographic primitives and cipher constructions that were fundamentally flawed, exposing sensitive plaintext to active network attackers thro"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # The Evolution of TLS: Why TLS 1.0 and 1.1 Died (BEAST, POODLE) and TLS 1.2 Survived
 
 **Problem:** Legacy TLS versions (1.0 and 1.1) relied on cryptographic primitives and cipher constructions that were fundamentally flawed, exposing sensitive plaintext to active network attackers through side-channel leaks.

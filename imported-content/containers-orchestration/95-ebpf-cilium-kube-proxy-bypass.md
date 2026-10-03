@@ -1,3 +1,11 @@
+---
+title: "eBPF in Kubernetes: Bypassing iptables with Cilium"
+description: "For years, Kubernetes network routing has relied on `kube-proxy` operating in `iptables` mode. Whenever a Service is created, `kube-proxy` writes a series of rules into the Linux kernel’s Netfilter fr"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # eBPF in Kubernetes: Bypassing iptables with Cilium
 
 ## The iptables Performance Bottleneck

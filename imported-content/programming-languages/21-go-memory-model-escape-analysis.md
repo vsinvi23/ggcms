@@ -1,3 +1,11 @@
+---
+title: "Demystifying the Go Memory Model: Escape Analysis, Heap vs Stack, and GC Mechanical Sympathy"
+description: "Master Go's compiler optimizations, memory allocation heuristics, escape analysis triggers, and the mechanics of the concurrent tri-color garbage collector to write highly optimized, low-latency Go servers."
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Demystifying the Go Memory Model: Escape Analysis, Heap vs Stack, and GC Mechanical Sympathy
 
 > Master Go's compiler optimizations, memory allocation heuristics, escape analysis triggers, and the mechanics of the concurrent tri-color garbage collector to write highly optimized, low-latency Go servers.

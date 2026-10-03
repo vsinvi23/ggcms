@@ -1,3 +1,11 @@
+---
+title: "LLM Security: Mitigating Direct and Indirect Prompt Injection Attacks"
+description: "In classical software security, we prevent injection attacks (like SQL injection) by strictly separating instructions from data. For instance, in parameterized SQL queries, database engines compile th"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Security: Mitigating Direct and Indirect Prompt Injection Attacks
 
 ## The Problem: The Single-Channel Instruction-Data Vulnerability

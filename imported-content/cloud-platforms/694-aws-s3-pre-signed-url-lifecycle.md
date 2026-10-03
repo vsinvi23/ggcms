@@ -1,3 +1,11 @@
+---
+title: "Securing AWS S3: Generating and Enforcing Pre-Signed URLs"
+description: "When building web applications, users frequently need to download secure files (like invoices or medical records) or upload their own assets (like profile photos or raw data exports). Developers often"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Securing AWS S3: Generating and Enforcing Pre-Signed URLs
 
 ## The Problem: The Security and Cost Pitfalls of Public Buckets and Proxy Servers

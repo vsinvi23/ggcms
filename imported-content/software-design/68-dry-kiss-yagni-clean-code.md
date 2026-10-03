@@ -1,3 +1,11 @@
+---
+title: "Clean Code Principles: Pragmatic Balance of DRY, KISS, and YAGNI"
+description: "As software engineers mature, they naturally adopt design principles to write better code. Three of the most famous acronyms in our industry are **DRY** (Don't Repeat Yourself), **KISS** (Keep It Simp"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Clean Code Principles: Pragmatic Balance of DRY, KISS, and YAGNI
 
 ## The Problem: The Dogmatic Developer

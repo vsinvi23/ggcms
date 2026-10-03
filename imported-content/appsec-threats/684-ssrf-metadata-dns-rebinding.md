@@ -1,3 +1,11 @@
+---
+title: "Server-Side Request Forgery (SSRF): Preventing DNS Rebinding and Metadata Attacks"
+description: "Server-Side Request Forgery (SSRF) occurs when an application receives a user-supplied URL and attempts to fetch this remote resource (e.g., fetching an avatar, scanning a PDF, or parsing an external "
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Server-Side Request Forgery (SSRF): Preventing DNS Rebinding and Metadata Attacks
 
 ## The Problem: Trusting Outbound Network Channels

@@ -1,3 +1,11 @@
+---
+title: "Grover's Algorithm: Why AES-128 is Dead and AES-256 is Post-Quantum Safe"
+description: "When discussing Post-Quantum Cryptography (PQC), the focus is overwhelmingly on asymmetric algorithms (RSA, ECC, Diffie-Hellman) being annihilated by Shor's Algorithm. A common and dangerous misconcep"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Grover's Algorithm: Why AES-128 is Dead and AES-256 is Post-Quantum Safe
 
 ## The Problem: The Symmetric Cryptography Confusion

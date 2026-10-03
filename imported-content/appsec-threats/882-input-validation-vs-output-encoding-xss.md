@@ -1,3 +1,11 @@
+---
+title: "Input Validation vs Output Encoding: Context-Aware Escaping to Defeat XSS"
+description: "When mitigating Cross-Site Scripting (XSS), a common architectural mistake is relying solely on Input Validation or Input Sanitization. Developers often attempt to strip out `<script>` tags, remove an"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Input Validation vs Output Encoding: Context-Aware Escaping to Defeat XSS
 
 ## The Problem: The Failure of Input Sanitization

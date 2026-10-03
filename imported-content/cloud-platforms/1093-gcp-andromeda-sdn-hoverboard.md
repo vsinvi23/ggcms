@@ -1,3 +1,11 @@
+---
+title: "GCP Andromeda SDN: Kernel Bypass and Virtual Switch Packet Processing"
+description: "In cloud environments, physical networks are abstracted away by Software-Defined Networking (SDN). Every packet leaving a Virtual Machine (VM) must be intercepted, encapsulated (e.g., into VXLAN or GR"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Andromeda SDN: Kernel Bypass and Virtual Switch Packet Processing
 
 ## The Problem: The CPU Cost of Software-Defined Networking

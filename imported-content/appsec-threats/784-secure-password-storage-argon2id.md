@@ -1,3 +1,11 @@
+---
+title: "Secure Password Storage: Tuning Argon2id Parameters for Optimal ASIC/GPU Resistance"
+description: "Password cracking technology has advanced exponentially. High-performance GPUs and purpose-built ASICs (Application-Specific Integrated Circuits) can compute standard SHA-256 or MD5 hashes at speeds o"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Secure Password Storage: Tuning Argon2id Parameters for Optimal ASIC/GPU Resistance
 
 ## The Problem

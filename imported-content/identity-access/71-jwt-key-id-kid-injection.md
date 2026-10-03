@@ -1,3 +1,11 @@
+---
+title: "JWT Key ID (KID) Injections: Exploiting Header Metadata"
+description: "JSON Web Tokens (JWTs) are the standard for stateless session representation. Developers understand that the token *payload* must not be trusted until the signature is verified. However, a common arch"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Key ID (KID) Injections: Exploiting Header Metadata
 
 ### The Problem: Implicit Trust in Header Values

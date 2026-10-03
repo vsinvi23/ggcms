@@ -1,3 +1,11 @@
+---
+title: "Go Reflection: Under the Hood of the 'reflect' Package and the Cost of Type Inspection"
+description: "Go is celebrated for its static typing, compilation speed, and predictable execution. However, there are times when programs must inspect, manipulate, or serialize objects whose types are not known at"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Reflection: Under the Hood of the 'reflect' Package and the Cost of Type Inspection
 
 Go is celebrated for its static typing, compilation speed, and predictable execution. However, there are times when programs must inspect, manipulate, or serialize objects whose types are not known at compile-time—such as when parsing JSON payloads or building generic ORM database mappers. To solve this, Go provides the `reflect` package. 

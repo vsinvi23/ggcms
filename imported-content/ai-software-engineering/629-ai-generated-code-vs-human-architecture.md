@@ -1,4 +1,4 @@
----
+--- 
 title: "AI-Generated Code vs Human-Designed Software Architecture"
 slug: "ai-generated-code-vs-human-architecture"
 category: "AI Software Engineering"
@@ -44,7 +44,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # AI-Generated Code vs Human-Designed Software Architecture
 

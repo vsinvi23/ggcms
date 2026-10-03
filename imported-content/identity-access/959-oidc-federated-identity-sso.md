@@ -1,3 +1,11 @@
+---
+title: "OIDC Federated Identity: Managing Multi-Account SSO and ID Token Verification"
+description: "In multi-tenant SaaS environments, users often maintain multiple identities across different organizations, leading to session overlap, incorrect account mapping, and token confusion. Relying purely o"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OIDC Federated Identity: Managing Multi-Account SSO and ID Token Verification
 
 ## The Problem

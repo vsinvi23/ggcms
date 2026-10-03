@@ -1,3 +1,11 @@
+---
+title: "LLM Tool Calling: Wiring APIs and JSON Function Definitions"
+description: "Large Language Models (LLMs) process and generate unstructured natural language. However, external APIs, databases, and microservices require structured, deterministic inputs like JSON or XML."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tool Calling: Wiring APIs and JSON Function Definitions
 
 ### The Problem: Bridging LLM Text Outputs with Deterministic APIs

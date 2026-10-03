@@ -1,3 +1,11 @@
+---
+title: "Post-Quantum Falcon: Fast-Fourier Lattices for Digital Signatures"
+description: "While ML-DSA (FIPS 204) is the flagship lattice-based signature scheme, it suffers from a significant drawback: bandwidth. An ML-DSA-44 public key is 1,312 bytes, and its signature is 2,420 bytes. For"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Post-Quantum Falcon: Fast-Fourier Lattices for Digital Signatures
 
 ## The Problem: ML-DSA's Bloat in Constrained Environments

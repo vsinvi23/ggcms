@@ -1,3 +1,11 @@
+---
+title: "Go Garbage Collection: Pacing, Mark Assists, and the GOGC Variable"
+description: "Garbage collection (GC) is the automated management of memory. The runtime tracks object allocations, determines which objects are no longer reachable (garbage), and reclaims that memory. However, gar"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Garbage Collection: Pacing, Mark Assists, and the GOGC Variable
 
 ## The Problem: The Latency vs. Throughput Tradeoff

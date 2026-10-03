@@ -1,3 +1,11 @@
+---
+title: "Why PKCE Exists: The Death of the Implicit Flow"
+description: "In the early days of OAuth 2.0, the **Implicit Flow** was the default recommendation for browser-based Single Page Applications (SPAs) like React, Angular, and Vue. Today, the Implicit Flow is officia"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Why PKCE Exists: The Death of the Implicit Flow
 
 In the early days of OAuth 2.0, the **Implicit Flow** was the default recommendation for browser-based Single Page Applications (SPAs) like React, Angular, and Vue. Today, the Implicit Flow is officially deprecated (OAuth 2.1), and security standards mandate the **Authorization Code Flow with PKCE**.

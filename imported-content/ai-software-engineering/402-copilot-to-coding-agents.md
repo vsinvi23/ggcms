@@ -1,3 +1,11 @@
+---
+title: "From Copilot to Coding Agents: How Software Development Is Changing"
+description: "The software industry is undergoing a paradigm shift. For years, developers relied on AI autocomplete extensions to speed up typing. While useful, these passive systems struggle with tasks that span m"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # From Copilot to Coding Agents: How Software Development Is Changing
 
 The software industry is undergoing a paradigm shift. For years, developers relied on AI autocomplete extensions to speed up typing. While useful, these passive systems struggle with tasks that span multiple files, require validation, or demand logical planning. The industry is moving from passive autocomplete to autonomous coding agents that can plan, execute, and verify their own modifications.

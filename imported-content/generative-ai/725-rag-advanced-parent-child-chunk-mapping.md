@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Parent-Child Document Retrieval for Context Integrity"
+description: "Standard Retrieval-Augmented Generation (RAG) pipelines split documents into uniform, fixed-size chunks (e.g., 256 or 512 tokens) before indexing them in a vector database. This introduces a fundament"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Parent-Child Document Retrieval for Context Integrity
 
 ### The Problem: The Chunk Size Dilemma in Standard RAG

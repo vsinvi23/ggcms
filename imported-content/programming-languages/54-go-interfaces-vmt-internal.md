@@ -1,3 +1,11 @@
+---
+title: "Go Interfaces: Dynamic VMT and itable Construction"
+description: "Unlike traditional object-oriented languages such as Java or C++, Go does not use explicit interface implementation markers. There is no `implements` keyword. Instead, Go employs structural typing (of"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Interfaces: Dynamic VMT and itable Construction
 
 ### The Problem: Interface Overhead and Duck Typing

@@ -1,3 +1,11 @@
+---
+title: "C++ Resource Management: The Rule of Three, Five, and Zero"
+description: "In C++, managing system resources—such as raw heap memory, file descriptors, database connections, and socket handles—is a critical source of bugs. Unlike garbage-collected languages, C++ places the r"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Resource Management: The Rule of Three, Five, and Zero
 
 In C++, managing system resources—such as raw heap memory, file descriptors, database connections, and socket handles—is a critical source of bugs. Unlike garbage-collected languages, C++ places the responsibility of resource lifetime management squarely on the developer. 

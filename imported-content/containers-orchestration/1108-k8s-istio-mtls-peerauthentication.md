@@ -1,3 +1,11 @@
+---
+title: "Istio Service Mesh: Zero-Trust mTLS, PeerAuthentication, and Sidecar Proxies"
+description: "Standard container communication in Kubernetes occurs over unencrypted channels. If an attacker compromises a cluster node or injects a packet sniffer onto the overlay network, they can intercept sens"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Istio Service Mesh: Zero-Trust mTLS, PeerAuthentication, and Sidecar Proxies
 
 Standard container communication in Kubernetes occurs over unencrypted channels. If an attacker compromises a cluster node or injects a packet sniffer onto the overlay network, they can intercept sensitive application payloads, API keys, and database queries in cleartext.

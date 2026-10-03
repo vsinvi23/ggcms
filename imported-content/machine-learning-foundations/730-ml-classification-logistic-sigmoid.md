@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Logistic Regression and the Sigmoid Activation Function"
+description: "Linear Regression models map inputs to a continuous unbounded domain. However, in binary classification problems (e.g., spam detection, fraud flagging), the target variable is discrete: $y \in \{0, 1\"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Logistic Regression and the Sigmoid Activation Function
 
 ## The Problem

@@ -1,3 +1,11 @@
+---
+title: "Orchestrating Sagas: Writing Commutative and Idempotent Compensating Transactions"
+description: "In microservice architectures, two-phase commit (2PC) distributed locks are too slow and brittle. Instead, when a business transaction spans multiple services (e.g., an E-Commerce Order requiring `Inv"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Orchestrating Sagas: Writing Commutative and Idempotent Compensating Transactions
 
 ## The Problem: The Distributed Transaction Reality

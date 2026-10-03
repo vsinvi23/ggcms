@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 JWT Bearer Profile (RFC 7523): Server-to-Server Assertion Grants"
+description: "**Problem:** Standard OAuth 2.0 flows (Authorization Code, Implicit) require interactive user consent via a browser. When a backend microservice needs to securely call an Identity Provider to obtain t"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 JWT Bearer Profile (RFC 7523): Server-to-Server Assertion Grants
 
 **Problem:** Standard OAuth 2.0 flows (Authorization Code, Implicit) require interactive user consent via a browser. When a backend microservice needs to securely call an Identity Provider to obtain tokens for another service without human intervention, interactive flows fail. 

@@ -1,3 +1,11 @@
+---
+title: "API Security from Scratch: Migrating from Stateful Sessions to Cryptographic Stateless Tokens"
+description: "The architectural transition from monoliths to microservices, mobile apps, and distributed cloud gateways necessitates a fundamental shift in how we track identity. Classic monolithic web apps rely on"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # API Security from Scratch: Migrating from Stateful Sessions to Cryptographic Stateless Tokens
 
 The architectural transition from monoliths to microservices, mobile apps, and distributed cloud gateways necessitates a fundamental shift in how we track identity. Classic monolithic web apps rely on **Stateful Sessions** stored in backend memory or shared relational tables. This model falls apart at scale due to latency, database overhead, and cross-domain limitations.

@@ -1,3 +1,11 @@
+---
+title: "Isogeny-Based Cryptography: The Fall of SIKE and the Search for Quantum-Safe Curves"
+description: "Lattice-based algorithms (like ML-KEM) represent the pragmatic future of key encapsulation, but their public keys measure in the kilobytes. Classical elliptic curve cryptography (ECC) requires a mere "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Isogeny-Based Cryptography: The Fall of SIKE and the Search for Quantum-Safe Curves
 
 ## The Problem: The Key Size Crisis in PQC

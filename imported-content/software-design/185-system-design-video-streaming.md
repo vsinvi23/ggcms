@@ -1,3 +1,11 @@
+---
+title: "Designing Netflix: Video Transcoding Pipelines and DASH Adaptive Streaming"
+description: "Delivering high-definition video to millions of concurrent users is arguably the most complex challenge in modern system design. A naive approach—uploading an `.mp4` file to a server and streaming it "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing Netflix: Video Transcoding Pipelines and DASH Adaptive Streaming
 
 ## The Problem: Variability in Global Video Delivery

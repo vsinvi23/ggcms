@@ -1,3 +1,11 @@
+---
+title: "Zero-Knowledge Proofs (ZK-SNARKs): Verifying Secrets Without Revealing Them"
+description: "In traditional system architectures, validating that a party knows a secret (such as a password, a private key, or an account balance threshold) requires the party to transmit either the secret itself"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Zero-Knowledge Proofs (ZK-SNARKs): Verifying Secrets Without Revealing Them
 
 ## The Problem: The Exposure of Direct Secret Verification

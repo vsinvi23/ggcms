@@ -1,3 +1,11 @@
+---
+title: "Docker Resource Constraints: Enforcing cgroups Memory and CPU Limits"
+description: "In a containerized environment, containers share the host operating system's kernel and hardware resources. By default, a container has no resource limits; it can consume as much CPU, memory, and swap"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Resource Constraints: Enforcing cgroups Memory and CPU Limits
 
 ## The Problem: The Chaos of Noisy Neighbors

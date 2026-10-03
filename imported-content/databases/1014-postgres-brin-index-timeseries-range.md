@@ -1,3 +1,11 @@
+---
+title: "Postgres BRIN Indexes: Block Range Indexing for Time-Series Datasets"
+description: "Time-series tables, such as those storing IoT sensor telemetry, application metrics, or financial transaction logs, grow rapidly, often accumulating billions of rows. Creating a standard B-Tree index "
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres BRIN Indexes: Block Range Indexing for Time-Series Datasets
 
 ## The Problem: The B-Tree RAM & Storage Tax on Time-Series Data

@@ -1,3 +1,11 @@
+---
+title: "Orchestrating Sagas: Writing Commutative and Idempotent Compensating Transactions"
+description: "In a microservices architecture, a single business workflow often spans multiple independent services, each with its own private database. For example, an e-commerce checkout involves charging a credi"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Orchestrating Sagas: Writing Commutative and Idempotent Compensating Transactions
 
 ## The Problem: Distributed Transactions without 2PC

@@ -1,3 +1,11 @@
+---
+title: "Zero-Knowledge Proofs (ZK-SNARKs): Verifying Secrets Without Revealing Them"
+description: "Learn how to authenticate users and verify transactions without transferring sensitive credentials across untrusted networks. Explore the mathematical underpinnings of ZK-SNARKs and ZK-STARKs, understand the circuit compilation pipeline (from arithmetic circuits to R1CS and QAPs), and review a complete interactive Schnorr protocol simulation in Python."
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Zero-Knowledge Proofs (ZK-SNARKs): Verifying Secrets Without Revealing Them
 
 > Learn how to authenticate users and verify transactions without transferring sensitive credentials across untrusted networks. Explore the mathematical underpinnings of ZK-SNARKs and ZK-STARKs, understand the circuit compilation pipeline (from arithmetic circuits to R1CS and QAPs), and review a complete interactive Schnorr protocol simulation in Python.

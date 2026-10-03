@@ -1,3 +1,11 @@
+---
+title: "Event-Driven Architecture: Pub/Sub vs Point-to-Point Message Queues"
+description: "When migrating from synchronous microservices (HTTP/REST) to an Event-Driven Architecture (EDA), engineers often say, \"Let's just put Kafka in the middle\" or \"Let's use RabbitMQ.\" However, simply thro"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Event-Driven Architecture: Pub/Sub vs Point-to-Point Message Queues
 
 ## The Problem: The Ambiguity of "Messaging"

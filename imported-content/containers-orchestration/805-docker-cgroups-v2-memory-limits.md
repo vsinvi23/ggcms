@@ -1,3 +1,11 @@
+---
+title: "Docker Resource Constraints: Enforcing cgroups v2 Memory and CPU CFS Slices"
+description: "Containers, by default, have unrestricted access to the host's memory and CPU resources. If an application within a container experiences a memory leak or a sudden spike in computational demand, it ca"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Resource Constraints: Enforcing cgroups v2 Memory and CPU CFS Slices
 
 ### The Problem: The Noisy Neighbor and OOM Panics

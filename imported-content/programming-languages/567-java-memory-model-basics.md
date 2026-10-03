@@ -1,3 +1,11 @@
+---
+title: "The Java Memory Model (JMM): CPU Caches, Instruction Reordering, and Volatile Mechanics"
+description: "Writing concurrent Java programs is inherently difficult. In a multi-core environment, physical execution properties can yield surprising results: a loop may run forever even after another thread has "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # The Java Memory Model (JMM): CPU Caches, Instruction Reordering, and Volatile Mechanics
 
 Writing concurrent Java programs is inherently difficult. In a multi-core environment, physical execution properties can yield surprising results: a loop may run forever even after another thread has set its termination flag to `false`, or lines of code may execute in a different order than written. To prevent these bugs, you must master the rules of the Java Memory Model (JMM).

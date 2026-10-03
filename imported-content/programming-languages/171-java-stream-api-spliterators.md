@@ -1,3 +1,11 @@
+---
+title: "Java Stream API: Parallel Execution, Spliterators, and ForkJoinPool"
+description: "Java developers frequently invoke `.parallelStream()` or `.parallel()` hoping for a magical, effortless multi-threaded performance boost. While parallel streams can drastically accelerate CPU-bound op"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Stream API: Parallel Execution, Spliterators, and ForkJoinPool
 
 Java developers frequently invoke `.parallelStream()` or `.parallel()` hoping for a magical, effortless multi-threaded performance boost. While parallel streams can drastically accelerate CPU-bound operations on massive datasets, they can also run significantly slower than sequential streams, or worse, completely freeze web servers and application pools. 

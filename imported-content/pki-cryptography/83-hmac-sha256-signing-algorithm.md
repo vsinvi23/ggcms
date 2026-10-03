@@ -1,3 +1,11 @@
+---
+title: "HMAC-SHA256: The Math Behind Cryptographic Signatures"
+description: "When developers need to verify that a message hasn't been tampered with, their first instinct is often to use a standard cryptographic hash function like SHA-256. To prove the message came from an aut"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # HMAC-SHA256: The Math Behind Cryptographic Signatures
 
 ## The Problem: The Naive Hashing Vulnerability

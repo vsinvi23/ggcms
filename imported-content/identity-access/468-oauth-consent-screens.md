@@ -1,3 +1,11 @@
+---
+title: "OAuth Consent Screens: Under the Hood of User Delegation UI"
+description: "To an end-user, an OAuth consent screen is just a modal or web page they click through to grant a third-party app (e.g., an integration tool) access to their account. They see: *\"This app wants to vie"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth Consent Screens: Under the Hood of User Delegation UI
 
 ## The Problem: The Shadow Delegation Layer

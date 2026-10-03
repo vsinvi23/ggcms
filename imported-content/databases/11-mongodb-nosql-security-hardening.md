@@ -1,3 +1,11 @@
+---
+title: "NoSQL Security and Hardening: Implementing Least Privilege and Access Controls in MongoDB"
+description: "Master the security architecture of NoSQL databases, and learn how to secure MongoDB connections, enforce Role-Based Access Control (RBAC), and mitigate Injection attacks in production."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # NoSQL Security and Hardening: Implementing Least Privilege and Access Controls in MongoDB
 
 > Master the security architecture of NoSQL databases, and learn how to secure MongoDB connections, enforce Role-Based Access Control (RBAC), and mitigate Injection attacks in production.

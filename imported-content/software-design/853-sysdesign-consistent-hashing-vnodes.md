@@ -1,3 +1,11 @@
+---
+title: "Sharded Database Routing: Stabilizing Node Failures with Consistent Hashing and Virtual Nodes (VNodes)"
+description: "When scaling a stateful system—such as a distributed cache (Memcached, Redis) or a NoSQL database (Cassandra, DynamoDB)—data must be partitioned across multiple nodes. The simplest routing strategy is"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Database Routing: Stabilizing Node Failures with Consistent Hashing and Virtual Nodes (VNodes)
 
 ## The Problem: The Instability of Modulo Hashing

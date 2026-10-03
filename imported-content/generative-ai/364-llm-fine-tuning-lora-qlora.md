@@ -1,3 +1,11 @@
+---
+title: "Fine-Funing LLMs: Parameter-Efficient LoRA and QLoRA Explained"
+description: "To specialize a pre-trained Large Language Model for a specific domain, we must fine-tune its weights. However, full-parameter fine-tuning (updating all weights) presents a massive memory barrier."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Fine-Funing LLMs: Parameter-Efficient LoRA and QLoRA Explained
 
 ## The Problem: The Memory Barrier of Full-Parameter Fine-Tuning

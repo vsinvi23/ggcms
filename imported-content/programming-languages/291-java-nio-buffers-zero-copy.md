@@ -1,3 +1,11 @@
+---
+title: "Java NIO: ByteBuffer, Direct Memory Allocation, and Zero-Copy OS File Transfers"
+description: "In legacy Java application development (prior to Java 1.4), file and network I/O operations were strictly stream-oriented (`InputStream` and `OutputStream`). When a Java application needed to read a f"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java NIO: ByteBuffer, Direct Memory Allocation, and Zero-Copy OS File Transfers
 
 ## The Problem: The Overhead of Traditional I/O

@@ -1,3 +1,11 @@
+---
+title: "Cassandra Gossip Protocol: Decentralized Node Failure Detection and repairs"
+description: "In highly distributed, multi-datacenter masterless database systems like Apache Cassandra, there is no single point of authority, consensus manager, or metadata server. Scaling a cluster to hundreds o"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Gossip Protocol: Decentralized Node Failure Detection and repairs
 
 ## The Problem: Orchestrating Cluster Topology Without a Coordinator

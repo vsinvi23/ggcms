@@ -1,3 +1,11 @@
+---
+title: "Redis Persistence: Snapshotting (RDB) vs Append-Only Files (AOF) Fsync Policies"
+description: "Redis is an in-memory key-value database designed for high performance, with write latencies measured in microseconds. However, because its active state resides entirely in volatile RAM, an unexpected"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Persistence: Snapshotting (RDB) vs Append-Only Files (AOF) Fsync Policies
 
 ## The Problem: The Performance-Durability Dilemma in In-Memory Datastores

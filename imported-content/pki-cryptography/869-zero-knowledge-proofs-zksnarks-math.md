@@ -1,3 +1,11 @@
+---
+title: "Zero-Knowledge Proofs (ZK-SNARKs): Verifying Secrets Without Revealing Them"
+description: "In a decentralized or zero-trust network, a core paradox arises: how can a system verify that a statement is true without having access to the sensitive private variables (the \"witness\") that make it "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Zero-Knowledge Proofs (ZK-SNARKs): Verifying Secrets Without Revealing Them
 
 ## The Problem: Trustless Verification of Sensitive State

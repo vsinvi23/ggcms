@@ -1,3 +1,11 @@
+---
+title: "AWS Lambda Internals: Firecracker MicroVMs and Execution Contexts"
+description: "Serverless execution environments (like AWS Lambda) must execute untrusted, multi-tenant code on shared physical infrastructure. To run this securely and efficiently, cloud engineers historically face"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Lambda Internals: Firecracker MicroVMs and Execution Contexts
 
 ## The Problem: The Serverless Trade-off Between Isolation and Boot Latency

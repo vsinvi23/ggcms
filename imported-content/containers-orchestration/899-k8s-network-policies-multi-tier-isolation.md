@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Network Policies: Hardening Pod-to-Pod Traffic and Default-Deny"
+description: "By default, Kubernetes implements a flat network model. Every pod can communicate with every other pod across all namespaces without restriction. While this accelerates development and simplifies init"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Network Policies: Hardening Pod-to-Pod Traffic and Default-Deny
 
 ## The Problem: The Flat Network Fallacy

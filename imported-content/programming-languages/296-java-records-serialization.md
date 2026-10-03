@@ -1,3 +1,11 @@
+---
+title: "Java 14+ Records: Immutability Guarantees and Serialization Advantages Over POJOs"
+description: "For decades, the standard way to represent data in Java was the Plain Old Java Object (POJO). If you wanted to create a simple object to hold a user's ID and email, you were forced to write (or auto-g"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java 14+ Records: Immutability Guarantees and Serialization Advantages Over POJOs
 
 ## The Problem: POJO Boilerplate and Serialization Vulnerabilities

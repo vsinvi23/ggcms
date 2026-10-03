@@ -1,3 +1,11 @@
+---
+title: "ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization"
+description: "Developing highly accurate machine learning models requires balancing two opposing sources of error: Bias and Variance. High bias (underfitting) occurs when a model is too simple to capture the underl"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization
 
 ## The Problem

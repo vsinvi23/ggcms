@@ -1,3 +1,11 @@
+---
+title: "C++ Move Semantics: Demystifying Lvalues, Rvalues, and std::move"
+description: "Before C++11, passing large objects by value or returning them from functions was notoriously inefficient. When an object was assigned to another, or passed into a function, a **copy constructor** was"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Move Semantics: Demystifying Lvalues, Rvalues, and std::move
 
 ## The Problem: Unnecessary Deep Copies

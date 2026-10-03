@@ -1,3 +1,11 @@
+---
+title: "Security Logging: Implementing Immutable WORM (Write-Once-Read-Many) Audit Trails"
+description: "When a breach occurs, the incident response team relies entirely on security logs to reconstruct the timeline, identify compromised assets, and determine data exfiltration. However, advanced persisten"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Security Logging: Implementing Immutable WORM (Write-Once-Read-Many) Audit Trails
 
 ## The Problem: The Malleability of Digital Truth

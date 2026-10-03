@@ -1,3 +1,11 @@
+---
+title: "C++ Template Metaprogramming: SFINAE (Substitution Failure Is Not An Error) and `std::enable_if`"
+description: "C++ templates excel at generating generic code. However, situations frequently arise where a template should only instantiate for specific categories of types (e.g., only integral types, or only class"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Template Metaprogramming: SFINAE (Substitution Failure Is Not An Error) and `std::enable_if`
 
 ## The Problem: Generic Code with Specific Constraints

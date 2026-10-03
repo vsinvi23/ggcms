@@ -1,3 +1,11 @@
+---
+title: "FIDO2 Internals: User Presence (UP) vs User Verification (UV) Flags"
+description: "FIDO2 and WebAuthn have revolutionized authentication by replacing phishable passwords with public-key cryptography backed by hardware authenticators (security keys, Touch ID, Windows Hello)."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # FIDO2 Internals: User Presence (UP) vs User Verification (UV) Flags
 
 ## The Problem: Distinguishing Between "Someone is there" and "The Right Person is there"

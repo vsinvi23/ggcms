@@ -1,3 +1,11 @@
+---
+title: "Sharded Database Rebalancing: Moving Terabytes of Data Without Downtime"
+description: "When a monolithic database reaches the limits of vertical scaling, engineers employ **Sharding** (horizontal partitioning). Data is distributed across multiple database nodes based on a Shard Key (e.g"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Database Rebalancing: Moving Terabytes of Data Without Downtime
 
 ## The Problem: The Shard Imbalance

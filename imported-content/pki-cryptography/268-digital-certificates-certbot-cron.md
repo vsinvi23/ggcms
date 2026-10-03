@@ -1,3 +1,11 @@
+---
+title: "ACME Let's Encrypt: Configuring Certbot Timers for Automated Seamless Renewals"
+description: "Before Let's Encrypt, obtaining an X.509 TLS certificate was a manual, expensive, and error-prone ordeal. Certificates lasted for years, and their inevitable expiration often resulted in catastrophic,"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # ACME Let's Encrypt: Configuring Certbot Timers for Automated Seamless Renewals
 
 Before Let's Encrypt, obtaining an X.509 TLS certificate was a manual, expensive, and error-prone ordeal. Certificates lasted for years, and their inevitable expiration often resulted in catastrophic, high-visibility outages because the manual renewal process was forgotten. Let's Encrypt changed the internet by providing free, automated certificates via the ACME (Automated Certificate Management Environment) protocol. 

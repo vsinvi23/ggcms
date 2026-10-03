@@ -1,3 +1,11 @@
+---
+title: "Dependency Inversion vs Dependency Injection: IoC Container Mechanics"
+description: "As codebases grow, classes naturally begin to rely on other classes. A `UserService` needs to save data, so it creates an instance of a `MySQLUserRepository`."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Dependency Inversion vs Dependency Injection: IoC Container Mechanics
 
 ## The Problem: The Concrete Cement of Tight Coupling

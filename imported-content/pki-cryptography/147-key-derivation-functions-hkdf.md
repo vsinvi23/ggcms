@@ -1,3 +1,11 @@
+---
+title: "HKDF: Extracting and Expanding Entropy for Session Keys"
+description: "When two remote parties execute a cryptographic key exchange—such as an Elliptic Curve Diffie-Hellman (ECDHE) handshake in modern TLS 1.3—the resulting mathematical output is a \"shared secret.\""
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # HKDF: Extracting and Expanding Entropy for Session Keys
 
 ## The Problem: The Gap Between Math and Cryptography

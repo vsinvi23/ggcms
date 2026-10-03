@@ -1,3 +1,11 @@
+---
+title: "Postgres Index Bloat: Reclaiming Disk Space with REINDEX"
+description: "In PostgreSQL, updating a row doesn't overwrite the existing data. Because of Multi-Version Concurrency Control (MVCC), an `UPDATE` is actually a `DELETE` of the old row and an `INSERT` of the new row"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres Index Bloat: Reclaiming Disk Space with REINDEX
 
 ## The Problem: The Invisible Disk Eater

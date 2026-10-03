@@ -1,3 +1,11 @@
+---
+title: "Zero Trust Explained from First Principles: Never Trust, Always Verify"
+description: "Historically, network security relied on the \"castle-and-moat\" model. You built a strong perimeter (firewalls, VPNs) to keep the bad guys out. Once a user or device was inside the corporate network, t"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Zero Trust Explained from First Principles: Never Trust, Always Verify
 
 ## The Problem: The Castle-and-Moat Fallacy

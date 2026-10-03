@@ -1,3 +1,11 @@
+---
+title: "OIDC Federated Identity: Managing Multi-Account SSO and ID Token Verification"
+description: "In multi-tenant SaaS platforms or complex enterprise environments, managing identity federation across multiple distinct Identity Providers (IdPs) presents significant security and architectural chall"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OIDC Federated Identity: Managing Multi-Account SSO and ID Token Verification
 
 In multi-tenant SaaS platforms or complex enterprise environments, managing identity federation across multiple distinct Identity Providers (IdPs) presents significant security and architectural challenges. A single application must securely authenticate users from Azure AD, Okta, Google Workspace, and keycloak instances without suffering from issuer confusion attacks, JWK endpoint exhaustion, or key verification bypasses.

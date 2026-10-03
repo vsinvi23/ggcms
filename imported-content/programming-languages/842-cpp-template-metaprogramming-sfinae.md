@@ -1,3 +1,11 @@
+---
+title: "C++ Template Metaprogramming: SFINAE (Substitution Failure Is Not An Error) and std::enable_if"
+description: "A systems architecture team designs a zero-overhead C++ serialization engine. The interface must expose a unified, template-based entry point `serialize(const T& value)` to clients. However, under the"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Template Metaprogramming: SFINAE (Substitution Failure Is Not An Error) and std::enable_if
 
 ## The Problem: Monolithic Interfaces vs. Compile-time Dispatch

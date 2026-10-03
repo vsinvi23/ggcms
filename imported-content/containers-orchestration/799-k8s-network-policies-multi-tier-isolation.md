@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Network Policies: Hardening Pod-to-Pod Traffic and Default-Deny"
+description: "By default, Kubernetes clusters operate on a flat network model. Any pod can communicate with any other pod across any namespace. While this simplifies initial deployment and connectivity, it introduc"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Network Policies: Hardening Pod-to-Pod Traffic and Default-Deny
 
 ### The Problem: A Flat, Open Network

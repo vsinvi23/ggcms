@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Logistic Regression and the Sigmoid Activation Function"
+description: "Linear regression is designed to predict continuous unbounded outputs, making it unsuitable for binary classification problems where the output strictly represents a categorical probability $P(y=1|x) "
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Logistic Regression and the Sigmoid Activation Function
 
 ## The Problem

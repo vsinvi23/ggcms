@@ -1,3 +1,11 @@
+---
+title: "CQRS UI Patterns: Handling Eventual Consistency with WebSockets and Polling"
+description: "The Command Query Responsibility Segregation (CQRS) pattern is a powerful architectural paradigm. By physically and logically separating the write model (Commands) from the read model (Queries), teams"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # CQRS UI Patterns: Handling Eventual Consistency with WebSockets and Polling
 
 The Command Query Responsibility Segregation (CQRS) pattern is a powerful architectural paradigm. By physically and logically separating the write model (Commands) from the read model (Queries), teams can scale ingestion separately from data retrieval, optimize database schemas for specific access patterns, and embrace event-driven architectures.

@@ -1,3 +1,11 @@
+---
+title: "Java JIT Compilers: C1 vs C2, Tiered Compilation, and Deoptimization"
+description: "Java’s fundamental promise has always been portability. To achieve this, Java source code (`.java`) is not compiled directly to machine code (`.exe` or ELF). Instead, it is compiled into an intermedia"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java JIT Compilers: C1 vs C2, Tiered Compilation, and Deoptimization
 
 ## The Problem: The "Write Once, Run Anywhere" Performance Penalty

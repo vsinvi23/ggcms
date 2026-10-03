@@ -1,3 +1,11 @@
+---
+title: "The Architecture of an AI Coding Agent"
+description: "Single-prompt LLM invocations fail when tasked with complex software engineering. As codebases grow, raw neural network inference suffers from context drift, state loss, and an inability to execute ac"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # The Architecture of an AI Coding Agent
 
 Single-prompt LLM invocations fail when tasked with complex software engineering. As codebases grow, raw neural network inference suffers from context drift, state loss, and an inability to execute actions on the physical environment. To build an autonomous coding agent, we must surround the LLM core with a deterministic, multi-layered control system.

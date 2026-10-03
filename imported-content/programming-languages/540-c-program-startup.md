@@ -1,3 +1,11 @@
+---
+title: "How a C Program Actually Starts and Ends"
+description: "Every C programmer is taught that execution begins at `main()`. This is a lie."
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # How a C Program Actually Starts and Ends
 
 ## The Problem

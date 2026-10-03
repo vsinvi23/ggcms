@@ -1,3 +1,11 @@
+---
+title: "Domain-Driven Design (DDD): Aggregates, Entities, and Value Objects"
+description: "In traditional data-driven architectures, systems often suffer from the \"Anemic Domain Model\" anti-pattern. Logic is pushed into bloated service classes, while data objects become mere property bags ("
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Domain-Driven Design (DDD): Aggregates, Entities, and Value Objects
 
 ## The Problem: Data Inconsistency and Anemic Domain Models

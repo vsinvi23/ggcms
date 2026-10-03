@@ -1,3 +1,11 @@
+---
+title: "Python Dunder Methods: Customizing Object Collection, Representation, and Context Protocols"
+description: "In Python, you can calculate the length of a list using `len(my_list)`, add two strings with `\"a\" + \"b\"`, or iterate over a dictionary with a `for` loop. But what happens when you define a custom clas"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Dunder Methods: Customizing Object Collection, Representation, and Context Protocols
 
 ## The Problem: The Magic of Built-in Functions

@@ -1,4 +1,4 @@
----
+--- 
 title: "Platform Engineering 2.0: Building Internal Platforms for AI Agents"
 slug: "platform-engineering-2-0-building-internal-platforms-for-ai-agents"
 category: "Platform Engineering"
@@ -43,7 +43,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "site-reliability-engineering"
 ---
+
 
 # Platform Engineering 2.0: Building Internal Platforms for AI Agents
 

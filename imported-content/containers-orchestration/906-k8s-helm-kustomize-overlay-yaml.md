@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Deployments: Helm Charts vs Kustomize Declarative Overlays"
+description: "Deploying an application to Kubernetes requires YAML—often thousands of lines of it across Deployments, Services, ConfigMaps, and Ingresses. A static YAML file works perfectly for a single environment"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Deployments: Helm Charts vs Kustomize Declarative Overlays
 
 ## The Problem: The Configuration Sprawl

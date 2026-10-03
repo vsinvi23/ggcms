@@ -1,3 +1,11 @@
+---
+title: "TLS Certificate Pinning: Defeating Rogue CAs and MitM Attacks in Mobile Apps"
+description: "By default, mobile operating systems (iOS and Android) delegate trust verification for TLS handshakes to a system-wide trust store containing hundreds of pre-installed root Certificate Authorities (CA"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS Certificate Pinning: Defeating Rogue CAs and MitM Attacks in Mobile Apps
 
 ## The Problem: The Implicit Trust of System-Wide CAs

@@ -1,3 +1,11 @@
+---
+title: "Distributed Transactions: The Saga Pattern (Choreography vs. Orchestration) vs. Two-Phase Commit (2PC)"
+description: "Master the architectural patterns of data consistency in distributed systems. Analyze the locking, blocking mechanics of Two-Phase Commit (2PC) and learn how to design highly scalable, event-driven Choreographed and Orchestrated Sagas with idempotent, resilient compensating transactions."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed Transactions: The Saga Pattern (Choreography vs. Orchestration) vs. Two-Phase Commit (2PC)
 
 > Master the architectural patterns of data consistency in distributed systems. Analyze the locking, blocking mechanics of Two-Phase Commit (2PC) and learn how to design highly scalable, event-driven Choreographed and Orchestrated Sagas with idempotent, resilient compensating transactions.

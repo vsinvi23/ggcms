@@ -1,4 +1,4 @@
----
+--- 
 title: "AI Agents for Security Code Review"
 slug: "ai-agents-security-code-review"
 category: "AI-Native Software Engineering"
@@ -45,7 +45,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # AI Agents for Security Code Review
 

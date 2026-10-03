@@ -1,3 +1,11 @@
+---
+title: "Building a Secure Login System: Lockouts, Tokens, and Timing Defenses"
+description: "A login system is the front door of your application, subject to constant, automated bombardment. The most pervasive threats include:"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Building a Secure Login System: Lockouts, Tokens, and Timing Defenses
 
 ## The Problem: The Brute Force Reality

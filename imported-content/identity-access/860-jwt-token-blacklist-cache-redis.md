@@ -1,3 +1,11 @@
+---
+title: "JWT Revocation Strategies: Implementing Real-Time Token Blacklisting via Redis Caching"
+description: "JSON Web Tokens (JWTs) are widely preferred for their stateless and distributed nature. Once validated cryptographically, a microservice can trust the token without making expensive roundtrips to an i"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Revocation Strategies: Implementing Real-Time Token Blacklisting via Redis Caching
 
 ## The Problem: The Stateless Conundrum of JWT Expiry and Revocation

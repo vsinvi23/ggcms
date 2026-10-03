@@ -1,3 +1,11 @@
+---
+title: "Kafka Partitioning: Horizontal Scaling of Message Brokering and Rebalancing"
+description: "An append-only log is incredibly efficient for disk I/O, but an unpartitioned log bounds system throughput to a single machine's I/O and network limits. If a single topic requires 10 GB/s of ingress, "
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Partitioning: Horizontal Scaling of Message Brokering and Rebalancing
 
 ## The Problem: Breaking the Append-Only Bottleneck

@@ -1,3 +1,11 @@
+---
+title: "Building an Internal Developer Platform: Golden Paths and Self-Service"
+description: "Your engineering organization is scaling. You have 50 microservices across 10 teams. Every team has crafted their own bespoke GitHub Actions pipeline, their own helm charts, and their own way of reque"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Building an Internal Developer Platform: Golden Paths and Self-Service
 
 ### The Problem

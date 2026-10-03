@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Gateway API vs Ingress Controllers: Dynamic Weighted Canary Routing"
+description: "The legacy Kubernetes `Ingress` resource has been the standard for managing external HTTP traffic into clusters for years. However, its simplicity has become its weakness. Modern traffic patterns—such"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Gateway API vs Ingress Controllers: Dynamic Weighted Canary Routing
 
 The legacy Kubernetes `Ingress` resource has been the standard for managing external HTTP traffic into clusters for years. However, its simplicity has become its weakness. Modern traffic patterns—such as blue-green deployments, rate limiting, header manipulation, and weighted canary routing—cannot be natively represented in Ingress. 

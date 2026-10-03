@@ -1,3 +1,11 @@
+---
+title: "Java Memory Architecture: The Mechanics of Stack Frames and the Shared Heap"
+description: "To write high-performance, crash-resistant Java code, you must master how the JVM handles memory allocation. Memory is split into two primary zones: **Thread Stacks** and the **Shared Object Heap**. M"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Memory Architecture: The Mechanics of Stack Frames and the Shared Heap
 
 To write high-performance, crash-resistant Java code, you must master how the JVM handles memory allocation. Memory is split into two primary zones: **Thread Stacks** and the **Shared Object Heap**. Misunderstanding their differences leads to classic resource failures like `StackOverflowError` and `OutOfMemoryError`.

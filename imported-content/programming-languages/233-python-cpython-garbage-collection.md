@@ -1,3 +1,11 @@
+---
+title: "Python CPython Internals: How the Cyclic Garbage Collector Works"
+description: "In CPython (the standard reference implementation of Python), memory management relies primarily on **reference counting**. Every Python object contains a header field called `ob_refcnt`, which tracks"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python CPython Internals: How the Cyclic Garbage Collector Works
 
 In CPython (the standard reference implementation of Python), memory management relies primarily on **reference counting**. Every Python object contains a header field called `ob_refcnt`, which tracks how many references point to that object. When `ob_refcnt` drops to zero, CPython immediately deallocates the object's memory.

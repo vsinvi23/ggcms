@@ -1,3 +1,11 @@
+---
+title: "Cassandra Deletions: Why Tombstones Cause Read Latency and Timeouts"
+description: "In Apache Cassandra, write performance is astonishingly fast because all writes are sequentially appended to a memory structure (Memtable) and subsequently flushed to immutable disk files (SSTables)."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Deletions: Why Tombstones Cause Read Latency and Timeouts
 
 ## The Problem: The Cost of Deleting Immutable Data

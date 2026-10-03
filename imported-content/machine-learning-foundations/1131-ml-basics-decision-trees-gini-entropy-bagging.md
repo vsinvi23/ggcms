@@ -1,3 +1,11 @@
+---
+title: "Ensemble Learning: From Decision Trees to Random Forests (Bagging)"
+description: "Single decision trees are highly interpretable but notoriously prone to overfitting. They build deep, complex structures that perfectly memorize the training data, capturing the underlying noise rathe"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Ensemble Learning: From Decision Trees to Random Forests (Bagging)
 
 ## The Problem

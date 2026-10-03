@@ -1,3 +1,11 @@
+---
+title: "LLM Inference Optimization: The KV Cache and FlashAttention On-Chip Tiling"
+description: "Large Language Models (LLMs) generate text autoregressively—one token at a time. During each generation step, the attention mechanism must recalculate attention scores across the entire sequence histo"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Inference Optimization: The KV Cache and FlashAttention On-Chip Tiling
 
 ### The Problem: Autoregressive Bottlenecks

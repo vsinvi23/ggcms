@@ -1,3 +1,11 @@
+---
+title: "TLS Certificate Pinning: Defeating Rogue CAs and MitM Attacks in Mobile Apps"
+description: "The standard Public Key Infrastructure (PKI) ecosystem operates on a model of transitive trust. Your device trusts a root Certificate Authority (CA), and therefore trusts any certificate signed by tha"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS Certificate Pinning: Defeating Rogue CAs and MitM Attacks in Mobile Apps
 
 The standard Public Key Infrastructure (PKI) ecosystem operates on a model of transitive trust. Your device trusts a root Certificate Authority (CA), and therefore trusts any certificate signed by that CA. While this scales globally, it introduces a massive attack surface: if any one of the hundreds of trusted root or intermediate CAs is compromised or coerced into issuing a rogue certificate, the entire trust chain shatters. For mobile applications, where API endpoints are fixed and known in advance, this systemic risk is unacceptable. The solution is TLS Certificate Pinning.

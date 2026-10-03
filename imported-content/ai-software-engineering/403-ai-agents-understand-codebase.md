@@ -1,3 +1,11 @@
+---
+title: "How AI Coding Agents Understand an Entire Codebase"
+description: "Modern codebases often span hundreds of thousands of lines across thousands of directories. This scale presents a fundamental challenge for AI systems: a language model's context window is finite, exp"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # How AI Coding Agents Understand an Entire Codebase
 
 Modern codebases often span hundreds of thousands of lines across thousands of directories. This scale presents a fundamental challenge for AI systems: a language model's context window is finite, expensive, and subject to attention degradation when overloaded. If an agent attempts to ingest a repository raw, it runs out of memory. If it relies solely on basic keyword search, it misses critical code dependencies. To solve this, advanced agents use a hybrid approach that combines semantic vector databases with structural syntax tree graph traversals.

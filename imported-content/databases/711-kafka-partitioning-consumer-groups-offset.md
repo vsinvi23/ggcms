@@ -1,3 +1,11 @@
+---
+title: "Kafka Partitioning: Horizontal Scaling of Message Brokering and Rebalancing"
+description: "Message brokers traditionally struggle when consumers cannot process messages as fast as producers generate them. If a single topic is processed by a single consumer thread, the entire system's throug"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Partitioning: Horizontal Scaling of Message Brokering and Rebalancing
 
 ## The Problem: Throughput Bottlenecks

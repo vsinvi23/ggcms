@@ -1,3 +1,11 @@
+---
+title: "Computer Vision: Convolutional Neural Networks (CNNs) and Receptive Fields"
+description: "Processing high-resolution images using standard Feedforward Neural Networks (MLPs) is mathematically intractable. A standard 1080p RGB image flattened into a 1D vector contains over 6 million inputs."
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Computer Vision: Convolutional Neural Networks (CNNs) and Receptive Fields
 
 ## The Problem

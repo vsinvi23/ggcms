@@ -1,3 +1,11 @@
+---
+title: "Kubernetes RBAC: Hardening Cluster Roles, Roles, and Service Account Tokens"
+description: "Kubernetes manages authorization via Role-Based Access Control (RBAC). Historically, Kubernetes assigned a default ServiceAccount to every Pod, mounting its token into the container. If developers ass"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes RBAC: Hardening Cluster Roles, Roles, and Service Account Tokens
 
 ### The Problem: Over-Privileged Workloads

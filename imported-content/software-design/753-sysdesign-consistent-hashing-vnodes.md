@@ -1,3 +1,11 @@
+---
+title: "Sharded Database Routing: Stabilizing Node Failures with Consistent Hashing and Virtual Nodes (VNodes)"
+description: "In distributed systems, caching layers (like Memcached or Redis) and partitioned databases distribute data across a cluster of nodes. The simplest routing approach is modular hashing:"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Database Routing: Stabilizing Node Failures with Consistent Hashing and Virtual Nodes (VNodes)
 
 ## The Problem: The Rehashing Cascade

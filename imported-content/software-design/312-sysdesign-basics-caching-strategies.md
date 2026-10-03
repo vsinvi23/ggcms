@@ -1,3 +1,11 @@
+---
+title: "System Design Basics: Caching Strategies"
+description: "Databases are fundamentally constrained by disk I/O. As read traffic scales, continuously querying the database for the same data causes latency spikes and eventual system failure. We solve this by in"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # System Design Basics: Caching Strategies
 
 ## The Problem

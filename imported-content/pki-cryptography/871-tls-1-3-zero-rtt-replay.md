@@ -1,3 +1,11 @@
+---
+title: "TLS 1.3 0-RTT: The Dangers of Early Data Replay Attacks and Non-Idempotent APIs"
+description: "In high-frequency networks, latency is the ultimate bottleneck. Standard TLS 1.2 requires two network round-trips (2-RTT) to complete a handshake before application data can be sent. TLS 1.3 optimized"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS 1.3 0-RTT: The Dangers of Early Data Replay Attacks and Non-Idempotent APIs
 
 ## The Problem: The Latency vs. Security Trade-Off

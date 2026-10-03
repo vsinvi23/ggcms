@@ -1,3 +1,11 @@
+---
+title: "AES-GCM Authenticated Encryption: The Catastrophic Security Risks of Nonce Reuse"
+description: "AES-GCM (Galois/Counter Mode) is the most widely adopted Authenticated Encryption with Associated Data (AEAD) algorithm in modern networks, securing TLS 1.3, SSH, and IPSec. It simultaneously guarante"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # AES-GCM Authenticated Encryption: The Catastrophic Security Risks of Nonce Reuse
 
 ## The Problem: The Fragile "Forbidden Attack" of GCM Nonce Reuse

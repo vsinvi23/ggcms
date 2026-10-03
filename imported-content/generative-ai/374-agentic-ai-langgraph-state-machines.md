@@ -1,3 +1,11 @@
+---
+title: "Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph"
+description: "**The Problem:** The standard ReAct loop is a single `while True` statement executing a single LLM over and over. When scaling to complex enterprise tasks, a single prompt cannot hold the instructions"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph
 
 **The Problem:** The standard ReAct loop is a single `while True` statement executing a single LLM over and over. When scaling to complex enterprise tasks, a single prompt cannot hold the instructions for 50 tools, and a single LLM cannot maintain focus across 20 intermediate steps without getting confused.

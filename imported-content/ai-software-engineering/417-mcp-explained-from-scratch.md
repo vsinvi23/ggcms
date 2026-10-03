@@ -1,3 +1,11 @@
+---
+title: "Model Context Protocol (MCP) Explained from Scratch"
+description: "Before the Model Context Protocol (MCP), integrating AI models with external software was a chaotic engineering task. If you had $N$ different IDEs or agent frameworks (VS Code, Cursor, LangChain, Aut"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Model Context Protocol (MCP) Explained from Scratch
 
 ### The Problem: The Integrations N-to-M Nightmare

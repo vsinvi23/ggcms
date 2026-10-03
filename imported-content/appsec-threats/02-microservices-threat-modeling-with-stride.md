@@ -1,3 +1,11 @@
+---
+title: "Practical Threat Modeling with STRIDE: Architecting Secure Trust Boundaries for Microservices"
+description: "Learn how to systematically identify, classify, and mitigate security threats in modern distributed architectures using Data Flow Diagrams (DFDs), STRIDE threat taxonomy, and engineering-level security controls."
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Practical Threat Modeling with STRIDE: Architecting Secure Trust Boundaries for Microservices
 
 > Learn how to systematically identify, classify, and mitigate security threats in modern distributed architectures using Data Flow Diagrams (DFDs), STRIDE threat taxonomy, and engineering-level security controls.

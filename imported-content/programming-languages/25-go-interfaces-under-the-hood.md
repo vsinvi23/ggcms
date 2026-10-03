@@ -1,3 +1,11 @@
+---
+title: "Go Interfaces Under the Hood: Virtual Method Tables, efaces, and ifaces"
+description: "Master Go's runtime dynamic dispatch system, structural typing engine, empty and non-empty interface binary layouts (`eface` and `iface`), escape analysis rules, and compiler-level optimizations to build highly optimized backend systems."
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Interfaces Under the Hood: Virtual Method Tables, efaces, and ifaces
 
 > Master Go's runtime dynamic dispatch system, structural typing engine, empty and non-empty interface binary layouts (`eface` and `iface`), escape analysis rules, and compiler-level optimizations to build highly optimized backend systems.

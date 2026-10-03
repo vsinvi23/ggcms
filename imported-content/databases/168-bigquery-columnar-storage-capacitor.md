@@ -1,3 +1,11 @@
+---
+title: "Google BigQuery Internals: The Capacitor Columnar Storage Engine"
+description: "Traditional relational databases (PostgreSQL, MySQL) utilize a row-oriented storage architecture. Data is written to disk blocks sequentially by row. If you have a `Users` table with 50 columns, all 5"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Google BigQuery Internals: The Capacitor Columnar Storage Engine
 
 ## The Problem: The Row-Based Bottleneck in Analytics

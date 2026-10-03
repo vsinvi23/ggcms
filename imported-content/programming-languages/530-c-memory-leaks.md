@@ -1,3 +1,11 @@
+---
+title: "Memory Leaks Explained: The Mechanics of Lost Heap Pointers"
+description: "A memory leak is one of the most insidious bugs in systems programming. Unlike a null pointer dereference which crashes a program immediately, a memory leak is a silent, creeping defect. It does not c"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Memory Leaks Explained: The Mechanics of Lost Heap Pointers
 
 A memory leak is one of the most insidious bugs in systems programming. Unlike a null pointer dereference which crashes a program immediately, a memory leak is a silent, creeping defect. It does not cause a crash today or tomorrow, but over days of continuous operation, it slowly consumes physical RAM, degrades system performance, and eventually triggers the operating system's nuclear option: the Out-Of-Memory (OOM) Killer.

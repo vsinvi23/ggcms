@@ -1,3 +1,11 @@
+---
+title: "Secure File Upload Architecture: Defeating Polyglot Files and Execute Bypass"
+description: "File upload endpoints represent one of the most critical attack surfaces in web applications. A flawed implementation allows attackers to upload executable scripts (e.g., PHP, JSP, ASP, Python) and tr"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Secure File Upload Architecture: Defeating Polyglot Files and Execute Bypass
 
 ## The Problem: The Illusion of Magic Bytes and Extensions

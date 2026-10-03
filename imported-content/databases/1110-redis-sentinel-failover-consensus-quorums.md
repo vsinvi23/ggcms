@@ -1,3 +1,11 @@
+---
+title: "Redis Sentinel: Cluster Failover, Consensus Protocols, and Quorums"
+description: "Redis is phenomenally fast, primarily because it is an in-memory data structure store utilizing a single-threaded event loop. However, standard Redis replication is asynchronous and requires manual in"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Sentinel: Cluster Failover, Consensus Protocols, and Quorums
 
 ## The Problem: The Single Point of Failure

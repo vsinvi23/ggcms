@@ -1,3 +1,11 @@
+---
+title: "Python Memory Management: Reference Counting vs Cycle Detection"
+description: "Every programming language must manage memory. When a developer creates an object, the system allocates RAM. But when the object is no longer needed, how does the system know it is safe to free that R"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Memory Management: Reference Counting vs Cycle Detection
 
 ## The Problem: When to Free Memory

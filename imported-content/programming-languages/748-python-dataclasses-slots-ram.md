@@ -1,3 +1,11 @@
+---
+title: "Python Memory Optimization: How `__slots__` Drastically Reduces Dataclass RAM Footprints"
+description: "When building high-throughput Python data pipelines or microservices, developers often process millions of structured objects simultaneously in memory (e.g., GPS coordinates, user session tokens, or f"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Memory Optimization: How `__slots__` Drastically Reduces Dataclass RAM Footprints
 
 ## The Problem: High Memory Bloat in Scaled Python Services

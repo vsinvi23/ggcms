@@ -1,3 +1,11 @@
+---
+title: "C++ Templates from First Principles: Code Generation and Monomorphization"
+description: "In strongly-typed systems, writing generic algorithms traditionally forces a choice between two evils: code duplication (rewriting the same logic for `int`, `float`, `MyStruct`) or type erasure (casti"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Templates from First Principles: Code Generation and Monomorphization
 
 ## Problem Statement

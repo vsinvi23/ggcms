@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Token Introspection (RFC 7662): Validating Opaque Tokens"
+description: "Modern distributed applications face a key dilemma when selecting token formats: self-contained JSON Web Tokens (JWTs) simplify validation but leak internal metadata and cannot be easily revoked befor"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Token Introspection (RFC 7662): Validating Opaque Tokens
 
 ## The Problem

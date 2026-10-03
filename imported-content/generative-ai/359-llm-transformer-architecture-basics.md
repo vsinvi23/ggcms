@@ -1,3 +1,11 @@
+---
+title: "The Transformer Architecture: Encoder-Decoder Blocks and Self-Attention"
+description: "Prior to the introduction of the Transformer architecture, state-of-the-art sequence-to-sequence modeling relied on recurrent neural networks (RNNs), Long Short-Term Memory (LSTM) networks, and Gated "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # The Transformer Architecture: Encoder-Decoder Blocks and Self-Attention
 
 ## The Problem: Sequential Bottlenecks in Sequence Processing

@@ -1,3 +1,11 @@
+---
+title: "A* Pathfinding in Go: Heuristics and Manhattan Distance for AI Navigation"
+description: "Dijkstra's algorithm searches equally in all directions, wasting CPU cycles exploring irrelevant paths. In game development (like NPC navigation) or robotic pathing on a 2D grid, we know the spatial c"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # A* Pathfinding in Go: Heuristics and Manhattan Distance for AI Navigation
 
 ## The Problem: Directed Search in Game Grids

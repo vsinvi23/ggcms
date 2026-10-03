@@ -1,3 +1,11 @@
+---
+title: "The OWASP Top 10 Explained Through One Vulnerable Application"
+description: "The OWASP Top 10 is the definitive list of web application security risks. However, reading abstract definitions like \"Broken Access Control\" doesn't help developers write secure code."
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # The OWASP Top 10 Explained Through One Vulnerable Application
 
 ## The Problem: Abstract Vulnerabilities

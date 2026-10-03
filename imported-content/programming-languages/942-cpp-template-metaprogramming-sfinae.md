@@ -1,3 +1,11 @@
+---
+title: "C++ Template Metaprogramming: SFINAE and `std::enable_if`"
+description: "void serialize(const T& obj) {"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Template Metaprogramming: SFINAE and `std::enable_if`
 
 ## The Compilation Phase Battlefield

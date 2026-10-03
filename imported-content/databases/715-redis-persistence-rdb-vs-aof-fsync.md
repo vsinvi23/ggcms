@@ -1,3 +1,11 @@
+---
+title: "Redis Persistence: Snapshotting (RDB) vs Append-Only Files (AOF) Fsync Policies"
+description: "Redis operates entirely in memory, delivering sub-millisecond read/write latency. The architectural trade-off is volatility: a process crash, server reboot, or power failure results in total data loss"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Persistence: Snapshotting (RDB) vs Append-Only Files (AOF) Fsync Policies
 
 ## The Problem: Data Volatility in In-Memory Datastores

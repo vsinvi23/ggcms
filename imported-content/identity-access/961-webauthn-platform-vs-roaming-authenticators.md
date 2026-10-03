@@ -1,3 +1,11 @@
+---
+title: "WebAuthn: Platform vs Roaming Authenticators and CTAP2 Protocol Handshakes"
+description: "Traditional passwords and SMS OTPs are inherently vulnerable to phishing. Web Authentication (WebAuthn) eliminates this by utilizing public key cryptography. However, developers integrating WebAuthn f"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # WebAuthn: Platform vs Roaming Authenticators and CTAP2 Protocol Handshakes
 
 ## The Problem

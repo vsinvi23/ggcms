@@ -1,4 +1,4 @@
----
+--- 
 title: "How AI Coding Agents Are Changing the Software Development Lifecycle"
 slug: "ai-coding-agents-changing-sdlc"
 category: "AI-Native Software Engineering"
@@ -45,7 +45,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # How AI Coding Agents Are Changing the Software Development Lifecycle
 

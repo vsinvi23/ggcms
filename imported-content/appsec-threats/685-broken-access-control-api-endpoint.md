@@ -1,3 +1,11 @@
+---
+title: "Broken Access Control: Bypassing UI Security Filters on API Endpoints"
+description: "Modern single-page applications (React, Angular, Vue) decouple the presentation layer from the data layer. In many legacy or poorly designed architectures, developers implement authorization controls "
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Broken Access Control: Bypassing UI Security Filters on API Endpoints
 
 ## The Problem: The Cosmetic Security Illusion

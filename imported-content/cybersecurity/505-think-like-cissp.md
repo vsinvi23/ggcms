@@ -1,3 +1,11 @@
+---
+title: "How to Think Like a CISSP: Human Safety and Risk Management"
+description: "Engineers solve technical problems. If there is an exposed RDP port, an engineer will close it. If data is unencrypted, an engineer will apply AES-256."
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # How to Think Like a CISSP: Human Safety and Risk Management
 
 ## The Problem: The Engineering Mindset vs. The Business Mindset

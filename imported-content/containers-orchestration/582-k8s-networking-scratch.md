@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Networking from Scratch: Pod-to-Pod and the CNI"
+description: "Container orchestration requires a unified network. In a standard Docker setup, containers on the same host can communicate via bridge networks, but containers on different hosts cannot easily reach e"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Networking from Scratch: Pod-to-Pod and the CNI
 
 ### The Problem

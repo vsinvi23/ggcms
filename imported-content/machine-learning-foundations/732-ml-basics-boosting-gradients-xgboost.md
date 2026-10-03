@@ -1,3 +1,11 @@
+---
+title: "Gradient Boosting Machines: Why XGBoost Dominates Tabular Data"
+description: "While Bagging (Random Forests) reduces variance by averaging independent trees, it fundamentally limits the ability to correct systemic bias within individual predictors. If a dataset has complex, sub"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Gradient Boosting Machines: Why XGBoost Dominates Tabular Data
 
 ## The Problem

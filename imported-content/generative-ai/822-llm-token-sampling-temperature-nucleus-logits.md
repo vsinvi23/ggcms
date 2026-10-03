@@ -1,3 +1,11 @@
+---
+title: "LLM Decoding Strategies: Temperature, Top-K, and Top-P (Nucleus) Sampling"
+description: "At the end of an LLM's forward pass, the model outputs a vector of raw, unnormalized scores called *logits*—one for every token in the vocabulary. To pick the next word, these logits must be converted"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Decoding Strategies: Temperature, Top-K, and Top-P (Nucleus) Sampling
 
 ### The Problem: Determinism vs. Creativity

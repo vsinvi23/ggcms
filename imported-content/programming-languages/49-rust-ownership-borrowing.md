@@ -1,3 +1,11 @@
+---
+title: "Mastering Rust’s Ownership, Borrowing, and Lifetimes: The Mechanics of Zero-Cost Safety"
+description: "For decades, systems languages forced a compromise. C and C++ provide manual memory control (`malloc` and `free`), giving raw execution speed but inviting catastrophic safety hazards like double-frees"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Mastering Rust’s Ownership, Borrowing, and Lifetimes: The Mechanics of Zero-Cost Safety
 
 ### The Problem: Memory Safety vs. Performance

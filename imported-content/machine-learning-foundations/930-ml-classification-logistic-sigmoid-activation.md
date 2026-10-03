@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Logistic Regression and the Sigmoid Activation Function"
+description: "In enterprise applications, binary classification is an essential capability—enabling use cases like real-time transaction fraud detection, email spam filtering, and server failure prediction. A naive"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Logistic Regression and the Sigmoid Activation Function
 
 ## The Problem

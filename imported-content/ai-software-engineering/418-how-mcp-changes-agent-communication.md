@@ -1,3 +1,11 @@
+---
+title: "How MCP Changes the Way AI Agents Talk to Software"
+description: "Traditionally, AI developer assistants and software agents are built as monolithic, tightly coupled systems. A VS Code AI extension, for example, contains hard-coded Node.js routines to read local fil"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # How MCP Changes the Way AI Agents Talk to Software
 
 ### The Problem: Monolithic Coupling and Local Data Silos

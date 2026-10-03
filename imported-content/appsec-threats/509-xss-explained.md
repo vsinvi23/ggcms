@@ -1,3 +1,11 @@
+---
+title: "Cross-Site Scripting (XSS) Explained"
+description: "Cross-Site Scripting (XSS) occurs when an application includes untrusted data in a web page without proper validation or escaping. This allows an attacker to execute malicious JavaScript in the victim"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Cross-Site Scripting (XSS) Explained
 
 ## The Problem: Malicious JavaScript in the Browser

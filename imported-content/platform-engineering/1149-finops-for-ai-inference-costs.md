@@ -1,4 +1,4 @@
----
+--- 
 title: "FinOps for AI: Understanding and Controlling LLM Inference Costs"
 slug: "finops-for-ai-understanding-controlling-llm-inference-costs"
 category: "Platform Engineering"
@@ -42,7 +42,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "site-reliability-engineering"
 ---
+
 
 # FinOps for AI: Understanding and Controlling LLM Inference Costs
 

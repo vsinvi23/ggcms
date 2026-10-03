@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking"
+description: "**The Problem:** Traditional RAG pipelines rely on bi-encoders (dense embedding models like OpenAI's `text-embedding-3`) combined with Approximate Nearest Neighbor (ANN) search (like HNSW). Bi-encoder"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking
 
 **The Problem:** Traditional RAG pipelines rely on bi-encoders (dense embedding models like OpenAI's `text-embedding-3`) combined with Approximate Nearest Neighbor (ANN) search (like HNSW). Bi-encoders map queries and documents into a shared vector space independently. While fast, this independence prevents the model from understanding the deep semantic interaction between the query and the document. This leads to the "Lost in the Middle" problem and suboptimal retrieval accuracy (low recall) for complex queries.

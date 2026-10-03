@@ -1,3 +1,11 @@
+---
+title: "GCP Andromeda SDN: Under the Hood of Google's Jupiter Clos Fabric"
+description: "In a hyperscale cloud environment, virtual machines (VMs) are provisioned, migrated, and destroyed within seconds. Traditional hardware-defined networks (using physical switches, hardware VLANs, and s"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Andromeda SDN: Under the Hood of Google's Jupiter Clos Fabric
 
 ## The Problem: The Hard Limits of Physical Network Hardware

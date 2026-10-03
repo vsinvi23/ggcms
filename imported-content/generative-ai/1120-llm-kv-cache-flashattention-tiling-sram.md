@@ -1,3 +1,11 @@
+---
+title: "LLM Inference Optimization: The KV Cache and FlashAttention On-Chip Tiling"
+description: "**The Problem:** LLM inference (autoregressive decoding) is memory-bandwidth bound. Standard self-attention has a quadratic time and memory complexity $O(N^2)$. Furthermore, predicting the $N+1$ token"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Inference Optimization: The KV Cache and FlashAttention On-Chip Tiling
 
 **The Problem:** LLM inference (autoregressive decoding) is memory-bandwidth bound. Standard self-attention has a quadratic time and memory complexity $O(N^2)$. Furthermore, predicting the $N+1$ token requires recomputing attention over all previous $N$ tokens, which wastes immense compute.

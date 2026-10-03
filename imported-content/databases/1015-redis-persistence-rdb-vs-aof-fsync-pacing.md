@@ -1,3 +1,11 @@
+---
+title: "Redis Persistence: Snapshotting (RDB) vs Append-Only Files (AOF) Fsync Policies"
+description: "Redis is a sub-millisecond, in-memory key-value database. Because its active state lives entirely in RAM, any unexpected server crash, power failure, or operating system panic results in instant, tota"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Persistence: Snapshotting (RDB) vs Append-Only Files (AOF) Fsync Policies
 
 ## The Problem: The High-Performance Persistence Paradox

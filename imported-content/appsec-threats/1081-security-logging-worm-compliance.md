@@ -1,3 +1,11 @@
+---
+title: "Security Logging: Implementing Immutable WORM (Write-Once-Read-Many) Audit Trails"
+description: "During a security incident, the system's audit trails are the primary source of truth for forensic teams. They reconstruct timelines, trace lateral movement, and verify which customer records were exp"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Security Logging: Implementing Immutable WORM (Write-Once-Read-Many) Audit Trails
 
 ## The Problem: Log Alteration and Forensic Erasure

@@ -1,3 +1,11 @@
+---
+title: "Observability for AI Agents: Logs, Traces, Decisions, and Actions"
+description: "In conventional microservice architectures, observability is a solved problem. Systems like OpenTelemetry collect CPU utilization, memory pressure, HTTP status codes, and database query latency. If a "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Observability for AI Agents: Logs, Traces, Decisions, and Actions
 
 ## The Cognitive Black Box

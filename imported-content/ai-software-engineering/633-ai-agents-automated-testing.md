@@ -1,4 +1,4 @@
----
+--- 
 title: "AI Agents for Automated Testing"
 slug: "ai-agents-automated-testing"
 category: "AI Software Engineering"
@@ -42,7 +42,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # AI Agents for Automated Testing
 

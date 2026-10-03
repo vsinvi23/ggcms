@@ -1,3 +1,11 @@
+---
+title: "Python Memory Optimization: How `__slots__` Drastically Reduces Dataclass RAM Footprints"
+description: "Python is highly dynamic. By default, you can add new attributes to any object instance on the fly (`user.age = 30`). This flexibility is powered by storing object attributes in a hidden dictionary na"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Memory Optimization: How `__slots__` Drastically Reduces Dataclass RAM Footprints
 
 ## The Cost of Dynamic Attributes

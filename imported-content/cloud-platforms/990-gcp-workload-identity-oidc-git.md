@@ -1,3 +1,11 @@
+---
+title: "GCP Workload Identity Federation: Eliminating Static Keys in GitHub Actions Pipelines"
+description: "In modern DevOps, pipelines frequently deploy infrastructure, push container images, or upload build artifacts to Google Cloud Platform (GCP). Traditionally, this integration was achieved by creating "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Workload Identity Federation: Eliminating Static Keys in GitHub Actions Pipelines
 
 ## The Problem: The Danger of Static Service Account Keys

@@ -1,3 +1,11 @@
+---
+title: "Rust Concurrency: Deciphering the Send and Sync Marker Traits"
+description: "Writing safe concurrent code is one of the most challenging tasks in software engineering. In languages like C and C++, the compiler will gladly compile code that shares non-thread-safe pointers acros"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Concurrency: Deciphering the Send and Sync Marker Traits
 
 ### The Problem: Fearless Concurrency vs. Undefined Behavior

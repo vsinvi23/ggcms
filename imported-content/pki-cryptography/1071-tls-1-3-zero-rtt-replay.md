@@ -1,3 +1,11 @@
+---
+title: "TLS 1.3 0-RTT: The Dangers of Early Data Replay Attacks and Non-Idempotent APIs"
+description: "TLS 1.3 introduced **0-RTT (Zero Round-Trip Time)** connection resumption to eliminate the handshake latency overhead for returning visitors. By caching session keys (using a Pre-Shared Key, or PSK, t"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS 1.3 0-RTT: The Dangers of Early Data Replay Attacks and Non-Idempotent APIs
 
 ## The Problem: Speed at the Cost of Replay Protection

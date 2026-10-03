@@ -1,3 +1,11 @@
+---
+title: "LLM Inference Optimization: The KV Cache and FlashAttention"
+description: "During autoregressive generation, a Large Language Model generates text one token at a time. To generate token $t$, the model must attend to all preceding tokens $1 \dots t-1$. In a naive implementati"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Inference Optimization: The KV Cache and FlashAttention
 
 ## The Problem: The Autoregressive Generation Bottleneck

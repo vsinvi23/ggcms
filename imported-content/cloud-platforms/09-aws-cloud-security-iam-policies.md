@@ -1,3 +1,11 @@
+---
+title: "AWS Cloud Security and IAM: Designing Principle of Least Privilege, Roles, and Resource Policies"
+description: "Learn the evaluation logic of AWS IAM policies, design cryptographically secure resource-level bounds, and implement temporary credential architectures for containers and workloads."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Cloud Security and IAM: Designing Principle of Least Privilege, Roles, and Resource Policies
 
 > Learn the evaluation logic of AWS IAM policies, design cryptographically secure resource-level bounds, and implement temporary credential architectures for containers and workloads.

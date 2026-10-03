@@ -1,3 +1,11 @@
+---
+title: "LLM Inference Optimization: The KV Cache and FlashAttention On-Chip Tiling"
+description: "**The Problem:** Transformer inference is heavily memory-bound, not compute-bound. Generating text token-by-token (autoregressive decoding) requires recomputing attention over all previous tokens at e"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Inference Optimization: The KV Cache and FlashAttention On-Chip Tiling
 
 **The Problem:** Transformer inference is heavily memory-bound, not compute-bound. Generating text token-by-token (autoregressive decoding) requires recomputing attention over all previous tokens at each step. This leads to quadratic time complexity $O(N^2)$ and massive redundant memory reads. Without optimization, LLM deployment is prohibitively expensive and suffers from high latency (Time to First Token & Time per Output Token).

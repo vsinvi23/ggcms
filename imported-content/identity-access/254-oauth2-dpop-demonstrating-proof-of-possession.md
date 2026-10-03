@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 DPoP: Preventing Token Theft with Demonstrating Proof of Possession"
+description: "The standard OAuth 2.0 framework relies heavily on **Bearer Tokens**. A bearer token is like cash or a hotel room keycard: whoever holds it can use it."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 DPoP: Preventing Token Theft with Demonstrating Proof of Possession
 
 ## The Problem: The Vulnerability of Bearer Tokens

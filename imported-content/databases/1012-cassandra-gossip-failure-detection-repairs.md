@@ -1,3 +1,11 @@
+---
+title: "Cassandra Gossip Protocol: Decentralized Node Failure Detection and Repairs"
+description: "In fully decentralized, peer-to-peer database systems like Apache Cassandra, there are no master nodes to manage cluster topology, routing tables, or active node states. If every node were to broadcas"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Gossip Protocol: Decentralized Node Failure Detection and Repairs
 
 ## The Problem: The Peer-to-Peer Membership & Scaling Storms

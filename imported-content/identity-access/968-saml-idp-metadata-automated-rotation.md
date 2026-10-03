@@ -1,3 +1,11 @@
+---
+title: "Managing SAML Trust: Automated IdP Metadata Parsing and Certificate Rotation"
+description: "In SAML 2.0 architectures, the Service Provider (SP) verifies the authenticity of SAML Assertions using the public X.509 certificate of the Identity Provider (IdP). Traditionally, this certificate is "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Managing SAML Trust: Automated IdP Metadata Parsing and Certificate Rotation
 
 ## The Problem

@@ -1,3 +1,11 @@
+---
+title: "Distributed Transactions: The Latency and Blocking Costs of Two-Phase Commit (2PC) and Three-Phase Commit (3PC)"
+description: "In a monolithic database, ACID transactions are trivial. The database engine acquires local locks, writes to a write-ahead log (WAL), and commits or aborts. However, when data is partitioned across mu"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed Transactions: The Latency and Blocking Costs of Two-Phase Commit (2PC) and Three-Phase Commit (3PC)
 
 ## The Problem: Achieving Atomicity Across Network Boundaries

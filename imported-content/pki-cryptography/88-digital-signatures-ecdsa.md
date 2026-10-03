@@ -1,3 +1,11 @@
+---
+title: "Digital Signatures: The Mathematics of ECDSA Verification"
+description: "In modern cryptography, it is not enough to simply encrypt data; we must relentlessly prove who we are. When your browser downloads a software update from Microsoft, how does it know the binary wasn't"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Digital Signatures: The Mathematics of ECDSA Verification
 
 ## The Problem: Proving Identity in a Trustless Network

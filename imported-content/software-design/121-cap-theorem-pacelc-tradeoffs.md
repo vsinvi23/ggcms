@@ -1,3 +1,11 @@
+---
+title: "Demystifying CAP Theorem and PACELC in Distributed Databases"
+description: "When engineers first move from single-node relational databases to distributed NoSQL systems (like Cassandra, DynamoDB, or MongoDB), they often expect the same guarantees: perfect consistency and zero"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Demystifying CAP Theorem and PACELC in Distributed Databases
 
 ## The Problem: The Fallacy of Perfect Distributed Systems

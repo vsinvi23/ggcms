@@ -1,3 +1,11 @@
+---
+title: "What Really Happens During malloc()? Free Lists, Allocators, and System Calls"
+description: "To most developers, calling `malloc(size)` is a black-box operation: you ask for bytes, and a pointer to memory magically returns. But under the hood, `malloc` is not a magic wand—it is a sophisticate"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # What Really Happens During malloc()? Free Lists, Allocators, and System Calls
 
 To most developers, calling `malloc(size)` is a black-box operation: you ask for bytes, and a pointer to memory magically returns. But under the hood, `malloc` is not a magic wand—it is a sophisticated user-space memory management library (such as `dlmalloc`, `ptmalloc` in glibc, or `jemalloc`) that sits between your application and the operating system kernel. Its job is to minimize slow system calls and combat heap fragmentation.

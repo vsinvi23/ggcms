@@ -1,3 +1,11 @@
+---
+title: "Go Context Values: Safely Passing Request-Scoped Data vs The Global Variable Anti-Pattern"
+description: "In Go web services, an incoming HTTP request rarely touches just one function. It flows through routing middleware, authentication handlers, business logic, and database repositories. Often, a deeply "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Context Values: Safely Passing Request-Scoped Data vs The Global Variable Anti-Pattern
 
 ## The Problem: Passing Contextual Data Across API Boundaries

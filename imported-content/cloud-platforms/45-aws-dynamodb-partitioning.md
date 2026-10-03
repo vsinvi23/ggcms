@@ -1,3 +1,11 @@
+---
+title: "AWS DynamoDB Internals: Partition Keys, Sort Keys, and Replication"
+description: "Explore the underlying storage architecture of AWS DynamoDB, analyze how data is sharded across physical partitions, evaluate eventual vs. strong read consistency, and understand global replication mechanics."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS DynamoDB Internals: Partition Keys, Sort Keys, and Replication
 
 > Explore the underlying storage architecture of AWS DynamoDB, analyze how data is sharded across physical partitions, evaluate eventual vs. strong read consistency, and understand global replication mechanics.

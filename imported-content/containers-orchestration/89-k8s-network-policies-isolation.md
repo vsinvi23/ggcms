@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Network Policies: Hardening Pod-to-Pod Traffic"
+description: "By default, Kubernetes clusters operate on a \"flat network\" model. Every pod can communicate with every other pod across all namespaces without restriction. While this accelerates initial development "
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Network Policies: Hardening Pod-to-Pod Traffic
 
 ## The Flat Network Problem

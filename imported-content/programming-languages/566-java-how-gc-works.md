@@ -1,3 +1,11 @@
+---
+title: "How Java Garbage Collectors Work: Generational Hypothesis, Mark, Sweep, and Copy"
+description: "Modern enterprise software handles terabytes of dynamic allocations. If a Garbage Collector (GC) had to scan every object on a 128GB heap during every run, application response latency would skyrocket"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # How Java Garbage Collectors Work: Generational Hypothesis, Mark, Sweep, and Copy
 
 Modern enterprise software handles terabytes of dynamic allocations. If a Garbage Collector (GC) had to scan every object on a 128GB heap during every run, application response latency would skyrocket. To prevent this, JVM garbage collectors leverage physical memory structures optimized around the natural behavior of software objects.

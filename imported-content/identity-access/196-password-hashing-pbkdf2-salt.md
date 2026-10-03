@@ -1,3 +1,11 @@
+---
+title: "Legacy Password Hashing: The Risks of PBKDF2 and the Importance of Unique Salts"
+description: "Many legacy production applications still secure user passwords using obsolete algorithms such as MD5, SHA-1, or unsalted SHA-256. Worse, some that attempted to modernize adopted PBKDF2 (Password-Base"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Legacy Password Hashing: The Risks of PBKDF2 and the Importance of Unique Salts
 
 ## The Problem

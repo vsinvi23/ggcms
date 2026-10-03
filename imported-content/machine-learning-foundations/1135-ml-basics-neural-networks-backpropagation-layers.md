@@ -1,3 +1,11 @@
+---
+title: "Deep Learning 101: Feedforward Neural Networks and Backpropagation"
+description: "Linear models and shallow trees struggle to learn highly abstract, hierarchical features from raw data (like pixels or audio waves). To solve complex non-linear problems, a system must algorithmically"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Deep Learning 101: Feedforward Neural Networks and Backpropagation
 
 ## The Problem

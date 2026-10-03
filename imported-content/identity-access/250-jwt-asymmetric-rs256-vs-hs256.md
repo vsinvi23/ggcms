@@ -1,3 +1,11 @@
+---
+title: "JWT Cryptography: Why Asymmetric RS256 is Safer than Symmetric HS256 for Microservices"
+description: "JSON Web Tokens (JWTs) are the standard bearer tokens in modern web architectures. When signing a JWT to guarantee its integrity, developers must choose an algorithm. The two most common are HS256 (HM"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Cryptography: Why Asymmetric RS256 is Safer than Symmetric HS256 for Microservices
 
 ## The Problem: The Shared Secret Bottleneck in HS256

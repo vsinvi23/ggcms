@@ -1,3 +1,11 @@
+---
+title: "Designing WhatsApp: WebSockets, XMPP, and Actor-Based Scalability"
+description: "When building a chat application, the naive architectural approach is to rely on standard stateless HTTP patterns. Developers attempt to achieve real-time messaging by having client devices poll a RES"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing WhatsApp: WebSockets, XMPP, and Actor-Based Scalability
 
 ## The Problem: The Stateless HTTP Fallacy at Billion-User Scale

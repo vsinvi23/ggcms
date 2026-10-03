@@ -1,3 +1,11 @@
+---
+title: "eBPF and XDP: Express Data Path for Ultra-Fast DDoS Mitigation at the NIC Level"
+description: "When a high-volume Distributed Denial of Service (DDoS) attack hits a Linux server, traditional firewall mechanisms like `iptables` or `nftables` often fail to keep the server online, even if they suc"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # eBPF and XDP: Express Data Path for Ultra-Fast DDoS Mitigation at the NIC Level
 
 ## The Problem: The Bottleneck of the Linux Network Stack

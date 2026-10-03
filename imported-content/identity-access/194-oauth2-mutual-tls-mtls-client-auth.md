@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 mTLS: Binding Access Tokens to Client Certificates (RFC 8705)"
+description: "By default, OAuth 2.0 access tokens are \"bearer tokens.\" This means that any entity in possession of the token string can use it to gain authorized access, regardless of who originally requested it. I"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 mTLS: Binding Access Tokens to Client Certificates (RFC 8705)
 
 ## The Problem

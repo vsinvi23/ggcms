@@ -1,3 +1,11 @@
+---
+title: "Post-Quantum Cryptography: FrodoKEM and the Conservative Security of Unstructured Lattices"
+description: "Virtually all modern public-key cryptography (RSA, ECDH, ECDSA) relies on mathematical problems that are hard for classical computers: integer factorization and the discrete logarithm problem."
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Post-Quantum Cryptography: FrodoKEM and the Conservative Security of Unstructured Lattices
 
 ## The Problem: Shor's Algorithm and the Quantum Threat

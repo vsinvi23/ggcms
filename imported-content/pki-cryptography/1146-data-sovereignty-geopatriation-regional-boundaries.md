@@ -1,4 +1,4 @@
----
+--- 
 title: "Data Sovereignty and Geopatriation: Engineering for Regional Data Boundaries"
 slug: "data-sovereignty-geopatriation-regional-boundaries"
 category: "Security"
@@ -44,7 +44,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "pki-cryptography"
 ---
+
 
 # Data Sovereignty and Geopatriation: Engineering for Regional Data Boundaries
 

@@ -1,3 +1,11 @@
+---
+title: "Cassandra Gossip Protocol: Decentralized Node Failure Detection and Repairs"
+description: "In large distributed databases, relying on a centralized coordinator or coordinator group (such as ZooKeeper or a master node) introduces a Single Point of Failure (SPOF) and a hard scalability bottle"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Gossip Protocol: Decentralized Node Failure Detection and Repairs
 
 ## The Problem: Centralized Master Failure and Heartbeat Congestion

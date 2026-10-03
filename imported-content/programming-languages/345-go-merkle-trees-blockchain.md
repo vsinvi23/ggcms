@@ -1,3 +1,11 @@
+---
+title: "Merkle Trees in Go: Cryptographic Proofs for Blockchains and Git"
+description: "In decentralized systems (Git, BitTorrent, Blockchains), data is split into chunks and distributed. Before consuming a chunk from an untrusted peer, a node must verify its integrity without downloadin"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Merkle Trees in Go: Cryptographic Proofs for Blockchains and Git
 
 ## The Problem: Distributed Verification

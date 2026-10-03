@@ -1,3 +1,11 @@
+---
+title: "RSA Vulnerabilities: Coppersmith's Attack on Low Public Exponents (e=3)"
+description: "RSA encryption and signature verification rely on modular exponentiation. The public key consists of the modulus $N$ and the public exponent $e$. The encryption of a message $M$ is defined as $C \equi"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # RSA Vulnerabilities: Coppersmith's Attack on Low Public Exponents (e=3)
 
 ## The Problem: The Desire for Speed in RSA

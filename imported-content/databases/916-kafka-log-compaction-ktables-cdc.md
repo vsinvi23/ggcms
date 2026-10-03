@@ -1,3 +1,11 @@
+---
+title: "Kafka Log Compaction: Retaining the Latest Key State for KTables"
+description: "In event streaming, there are two primary classes of data:"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Log Compaction: Retaining the Latest Key State for KTables
 
 ## The Problem: Infinite Log Growth in State-Based Streams

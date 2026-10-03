@@ -1,3 +1,11 @@
+---
+title: "GCP Andromeda SDN: Kernel Bypass and Virtual Switch Packet Processing"
+description: "In high-performance cloud environments, virtual machines must communicate across physical networks at extreme line rates (exceeding 100 Gbps). In legacy software-defined networking (SDN) models, virtu"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Andromeda SDN: Kernel Bypass and Virtual Switch Packet Processing
 
 ## The Problem: The Interrupt Overhead of Legacy Linux Networking

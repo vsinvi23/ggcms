@@ -1,3 +1,11 @@
+---
+title: "Agentic AI: The ReAct (Reason + Act) Loop Pattern"
+description: "Large Language Models (LLMs) are exceptionally powerful at reasoning over text, but out-of-the-box, they are static. They cannot interact with the real world, fetch live data, or execute code."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Agentic AI: The ReAct (Reason + Act) Loop Pattern
 
 ## The Problem: The Hallucination of Agency

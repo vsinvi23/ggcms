@@ -1,3 +1,11 @@
+---
+title: "Google Zanzibar vs OPA: Relationship-Based Access Control (ReBAC) at Global Scale"
+description: "As SaaS applications grow, Role-Based Access Control (RBAC) quickly breaks down. Granular permissions (\"Alice can edit Document A because she is in Group B which is a member of Folder C\") require trav"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Google Zanzibar vs OPA: Relationship-Based Access Control (ReBAC) at Global Scale
 
 ## The Problem

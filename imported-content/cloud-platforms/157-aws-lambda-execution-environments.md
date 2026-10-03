@@ -1,3 +1,11 @@
+---
+title: "AWS Lambda Internals: Firecracker MicroVMs and Execution Contexts"
+description: "In multi-tenant serverless hosting, cloud providers face a critical dilemma: security vs. startup speed."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Lambda Internals: Firecracker MicroVMs and Execution Contexts
 
 ## The Problem: The Serverless Isolation Dilemma

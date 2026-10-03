@@ -1,3 +1,11 @@
+---
+title: "Fine-Tuning LLMs: Parameter-Efficient LoRA and QLoRA NF4 Quantization"
+description: "Training an LLM from scratch requires vast compute. Fine-tuning an existing model (like LLaMA-3-70B) is cheaper but still intractably expensive if approached naively. Full parameter fine-tuning requir"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Fine-Tuning LLMs: Parameter-Efficient LoRA and QLoRA NF4 Quantization
 
 ## The Problem: The Intractable Cost of Full Fine-Tuning

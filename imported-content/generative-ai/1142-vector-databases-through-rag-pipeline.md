@@ -1,4 +1,4 @@
----
+--- 
 title: "Vector Databases Explained Through a Real RAG Pipeline"
 slug: "vector-databases-through-rag-pipeline"
 category: "Generative AI"
@@ -42,7 +42,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "generative-ai"
 ---
+
 
 # Vector Databases Explained Through a Real RAG Pipeline
 

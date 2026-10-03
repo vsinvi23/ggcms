@@ -1,3 +1,11 @@
+---
+title: "Deserialization Attacks: How Java Object Streams Lead to Remote Code Execution"
+description: "In Java application security, untrusted deserialization remains one of the most critical and devastating vectors, often culminating in Remote Code Execution (RCE). The fundamental vulnerability lies i"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Deserialization Attacks: How Java Object Streams Lead to Remote Code Execution
 
 ## The Problem

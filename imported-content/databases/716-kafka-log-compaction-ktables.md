@@ -1,3 +1,11 @@
+---
+title: "Kafka Log Compaction: Retaining the Latest Key State for KTables"
+description: "Apache Kafka topics are typically configured with time-based or size-based retention policies (e.g., delete messages older than 7 days). This works for event streams (like page views or clicks)."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Log Compaction: Retaining the Latest Key State for KTables
 
 ## The Problem: Infinite Log Growth for State Stores

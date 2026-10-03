@@ -1,3 +1,11 @@
+---
+title: "ACME Protocol: How Let's Encrypt Automates DNS-01 and HTTP-01 Challenges"
+description: "Before 2015, securing a website with a TLS/SSL certificate was a manual, expensive, and error-prone process. A system administrator had to generate a private key and a Certificate Signing Request (CSR"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # ACME Protocol: How Let's Encrypt Automates DNS-01 and HTTP-01 Challenges
 
 ## The Problem: The Manual PKI Nightmare

@@ -1,3 +1,11 @@
+---
+title: "Java Concurrency: Memory Barriers, Volatile Semantics, and Instruction Reordering in the JMM"
+description: "A software architecture team builds a highly optimized, lock-free ring buffer in Java using standard double-checked locking and non-blocking CAS (Compare-And-Swap) mechanisms. The system operates flaw"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Concurrency: Memory Barriers, Volatile Semantics, and Instruction Reordering in the JMM
 
 ## The Problem: The ARM vs. x86 Concurrency Divergence

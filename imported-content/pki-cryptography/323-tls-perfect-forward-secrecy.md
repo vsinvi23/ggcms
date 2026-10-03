@@ -1,3 +1,11 @@
+---
+title: "Perfect Forward Secrecy (PFS): Why Static RSA Key Exchange was Banned in TLS 1.3"
+description: "**Problem:** In legacy TLS configurations using static RSA key exchange, a server's private key acts as a master skeleton key. If an adversary records years of encrypted network traffic and later comp"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Perfect Forward Secrecy (PFS): Why Static RSA Key Exchange was Banned in TLS 1.3
 
 **Problem:** In legacy TLS configurations using static RSA key exchange, a server's private key acts as a master skeleton key. If an adversary records years of encrypted network traffic and later compromises the server's private key, they can retroactively decrypt every single historical session.

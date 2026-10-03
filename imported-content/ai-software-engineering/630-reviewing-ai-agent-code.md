@@ -1,4 +1,4 @@
----
+--- 
 title: "How to Review Code Written by AI Agents"
 slug: "how-to-review-code-written-by-ai-agents"
 category: "AI Software Engineering"
@@ -43,7 +43,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # How to Review Code Written by AI Agents
 

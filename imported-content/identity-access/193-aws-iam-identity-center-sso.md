@@ -1,3 +1,11 @@
+---
+title: "AWS IAM Identity Center: Managing Multi-Account SSO and Permission Sets"
+description: "In modern enterprise environments, managing access to cloud infrastructure across tens or hundreds of AWS accounts is a monumental challenge. Legacy architectures rely on creating individual IAM users"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # AWS IAM Identity Center: Managing Multi-Account SSO and Permission Sets
 
 ## The Problem

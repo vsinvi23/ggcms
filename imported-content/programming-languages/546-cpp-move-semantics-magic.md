@@ -1,3 +1,11 @@
+---
+title: "Move Semantics Explained Without Magic: Stealing Guts from Temporary Objects"
+description: "Move semantics, introduced in C++11, is often treated like syntactic magic. Many developers know it speeds up execution and uses `std::move`, but they are unclear on what occurs under the hood. In rea"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Move Semantics Explained Without Magic: Stealing Guts from Temporary Objects
 
 Move semantics, introduced in C++11, is often treated like syntactic magic. Many developers know it speeds up execution and uses `std::move`, but they are unclear on what occurs under the hood. In reality, move semantics is a straightforward, low-level optimization. It is the art of **stealing raw pointers** from temporary objects that are destined for destruction, bypasses expensive deep-copy operations entirely.

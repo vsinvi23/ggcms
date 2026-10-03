@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 mTLS: Binding Access Tokens to Client Certificates (RFC 8705)"
+description: "Standard OAuth 2.0 Bearer tokens are vulnerable to theft. If a malicious actor intercepts a token (via network sniffing, log leaks, or Cross-Site Scripting), they can replay it against the Resource Se"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 mTLS: Binding Access Tokens to Client Certificates (RFC 8705)
 
 ## The Problem

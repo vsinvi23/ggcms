@@ -1,3 +1,11 @@
+---
+title: "Input Validation vs. Output Encoding: Sanitization vs. Context-Aware Escaping"
+description: "Conflating input validation, data sanitization, and output encoding is one of the most common mistakes in secure software engineering. Developers often attempt to \"clean\" input to prevent Cross-Site S"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Input Validation vs. Output Encoding: Sanitization vs. Context-Aware Escaping
 
 Conflating input validation, data sanitization, and output encoding is one of the most common mistakes in secure software engineering. Developers often attempt to "clean" input to prevent Cross-Site Scripting (XSS) or SQL Injection (SQLi) upon arrival. This strategy is fundamentally flawed. To build resilient applications, you must understand a core security axiom: **Validate on input; encode on output.**

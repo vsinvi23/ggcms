@@ -1,3 +1,11 @@
+---
+title: "dbt Jinja Templating: Writing Reusable SQL Macros for Data Warehouses"
+description: "SQL is a powerful, declarative language for querying and transforming data. However, it lacks the standard programming constructs required for software engineering best practices—specifically, abstrac"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # dbt Jinja Templating: Writing Reusable SQL Macros for Data Warehouses
 
 ## The Problem: The WET Code Crisis in Data Engineering

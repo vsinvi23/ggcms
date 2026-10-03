@@ -1,4 +1,4 @@
----
+--- 
 title: "Trusted Execution Environments: How Hardware Enforces Data Privacy"
 slug: "trusted-execution-environments-hardware-privacy"
 category: "Security"
@@ -43,7 +43,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "pki-cryptography"
 ---
+
 
 # Trusted Execution Environments: How Hardware Enforces Data Privacy
 

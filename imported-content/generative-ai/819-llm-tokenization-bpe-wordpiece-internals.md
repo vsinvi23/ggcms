@@ -1,3 +1,11 @@
+---
+title: "LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece Under the Hood"
+description: "Language models cannot natively process raw text. Text must be converted into discrete numerical IDs. Traditional word-level tokenization struggles with rare words, morphological variations, and typos"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece Under the Hood
 
 ### The Problem: Out-of-Vocabulary (OOV) and Vocabulary Bloat

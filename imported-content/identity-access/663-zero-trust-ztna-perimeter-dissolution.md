@@ -1,3 +1,11 @@
+---
+title: "Zero Trust Network Access (ZTNA): Demolishing Legacy Castle-and-Moat VPNs"
+description: "Legacy network security operates on a \"Castle and Moat\" perimeter model. Remote workers authenticate once via a Virtual Private Network (VPN) and are subsequently granted broad, implicitly trusted acc"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Zero Trust Network Access (ZTNA): Demolishing Legacy Castle-and-Moat VPNs
 
 ## The Problem: The VPN Flat Network Fallacy

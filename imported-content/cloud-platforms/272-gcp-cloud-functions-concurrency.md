@@ -1,3 +1,11 @@
+---
+title: "GCP Cloud Functions v2: Thread-Safe Concurrency Scaling vs v1 Container Limits"
+description: "Under Google Cloud Functions (GCF) v1, the execution model was strictly single-concurrency: a single container instance could handle only one request at a time. If 50 requests arrived simultaneously, "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Cloud Functions v2: Thread-Safe Concurrency Scaling vs v1 Container Limits
 
 ## The Problem: The Cost and Performance Penalties of v1 Single-Concurrency

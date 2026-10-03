@@ -1,3 +1,11 @@
+---
+title: "C++ Smart Pointers: Measuring the Cost of std::unique_ptr and std::shared_ptr"
+description: "Modern C++ (C++11 and beyond) strongly discourages manual memory management via raw `new` and `delete` operators. Instead, developers are instructed to use Resource Acquisition Is Initialization (RAII"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Smart Pointers: Measuring the Cost of std::unique_ptr and std::shared_ptr
 
 ### The Problem: Manual Memory vs. The Zero-Overhead Illusion

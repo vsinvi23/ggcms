@@ -1,3 +1,11 @@
+---
+title: "Docker Container Security: Hardening Images, Rootless Execution, and Linux Namespaces"
+description: "Unpack the underlying Linux Kernel primitives (Namespaces, Cgroups, and Capabilities) that define container boundaries, and learn how to engineer hardened, non-root, minimal image architectures in production."
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Container Security: Hardening Images, Rootless Execution, and Linux Namespaces
 
 > Unpack the underlying Linux Kernel primitives (Namespaces, Cgroups, and Capabilities) that define container boundaries, and learn how to engineer hardened, non-root, minimal image architectures in production.

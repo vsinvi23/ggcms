@@ -1,3 +1,11 @@
+---
+title: "DRY Terraform: Designing Reusable Modules and Multi-Environment Workspaces"
+description: "As organizations adopt Infrastructure as Code (IaC) using Terraform, they often begin by writing monolithic configuration files for a single environment (e.g., Development). When the time comes to dep"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # DRY Terraform: Designing Reusable Modules and Multi-Environment Workspaces
 
 ## The Problem: The "Copy-Paste" Infrastructure Anti-Pattern

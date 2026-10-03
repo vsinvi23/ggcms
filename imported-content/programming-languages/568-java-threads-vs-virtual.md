@@ -1,3 +1,11 @@
+---
+title: "Java Threads vs. Virtual Threads: Understanding Platform OS Threads and Project Loom Fibers"
+description: "For decades, Java applications relied on native Operating System (OS) threads to handle concurrent workloads. With the release of Virtual Threads (Project Loom) in JDK 21, the JVM introduced a massive"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Threads vs. Virtual Threads: Understanding Platform OS Threads and Project Loom Fibers
 
 For decades, Java applications relied on native Operating System (OS) threads to handle concurrent workloads. With the release of Virtual Threads (Project Loom) in JDK 21, the JVM introduced a massive architectural shift in how applications scale. To choose the right concurrency model, we must compare their technical structures.

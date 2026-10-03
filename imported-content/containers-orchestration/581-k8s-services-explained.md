@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Services Explained: The Problem with Ephemeral IPs"
+description: "In Kubernetes, Pods are mortal. They are created, they die, and they are replaced. Every time a Pod spins up, it is assigned a new IP address from the cluster's internal network pool."
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Services Explained: The Problem with Ephemeral IPs
 
 ### The Problem

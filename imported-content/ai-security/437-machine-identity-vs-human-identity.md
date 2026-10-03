@@ -1,3 +1,11 @@
+---
+title: "Machine Identity vs. Human Identity: Rethinking Credentials for Autonomous AI"
+description: "As autonomous systems replace deterministic scripts, security engineering faces a critical architecture gap: treating AI agents like human users. Many organizations issue long-lived personal access to"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # Machine Identity vs. Human Identity: Rethinking Credentials for Autonomous AI
 
 As autonomous systems replace deterministic scripts, security engineering faces a critical architecture gap: treating AI agents like human users. Many organizations issue long-lived personal access tokens or standard OAuth 2.0 user tokens to agents. This approach conflates machine identity with human identity, creating major security holes. 

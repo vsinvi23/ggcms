@@ -1,3 +1,11 @@
+---
+title: "Mitigating JWT Replay Attacks: Enforcing JTI and Nonces"
+description: "JSON Web Tokens (JWTs) are widely celebrated for enabling stateless authentication. Because a Resource Server (RS) can verify a JWT entirely by checking its cryptographic signature and expiration clai"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Mitigating JWT Replay Attacks: Enforcing JTI and Nonces
 
 ## The Problem: The Stateless Liability of JSON Web Tokens

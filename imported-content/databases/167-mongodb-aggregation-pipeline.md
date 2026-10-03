@@ -1,3 +1,11 @@
+---
+title: "MongoDB Performance: Structuring Highly Optimized Aggregation Pipelines"
+description: "MongoDB’s document model provides immense flexibility for developers, allowing complex nested arrays and flexible schemas. When simple CRUD operations are no longer sufficient, developers turn to the "
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # MongoDB Performance: Structuring Highly Optimized Aggregation Pipelines
 
 ## The Problem: The Infinite RAM Illusion

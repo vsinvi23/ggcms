@@ -1,3 +1,11 @@
+---
+title: "SAML Parsing Security: Mitigating XML Signature Wrapping (XSW) and XML Bombs"
+description: "Security Assertion Markup Language (SAML 2.0) remains the bedrock of enterprise single sign-on (SSO). However, because SAML relies extensively on XML and XML Digital Signatures (XMLDSig), it inherits "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SAML Parsing Security: Mitigating XML Signature Wrapping (XSW) and XML Bombs
 
 Security Assertion Markup Language (SAML 2.0) remains the bedrock of enterprise single sign-on (SSO). However, because SAML relies extensively on XML and XML Digital Signatures (XMLDSig), it inherits structural vulnerabilities that can result in total authentication bypass or catastrophic denial of service. The two most severe threats are XML Signature Wrapping (XSW) and XML Entity Expansion attacks (XML Bombs).

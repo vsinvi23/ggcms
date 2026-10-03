@@ -1,3 +1,11 @@
+---
+title: "Kafka Partitioning: Horizontal Scaling of Message Brokering"
+description: "In traditional message queues (like RabbitMQ or ActiveMQ in older configurations), a queue resides on a single physical machine. When the message volume exceeds the disk I/O, network bandwidth, or CPU"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Partitioning: Horizontal Scaling of Message Brokering
 
 ## The Problem: The Single-Node Bottleneck

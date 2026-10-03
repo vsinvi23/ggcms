@@ -1,3 +1,11 @@
+---
+title: "BCP vs. DR: Architectural Strategies for Business Resiliency and Failover"
+description: "When a major cloud provider suffered a massive, multi-region database degradation, a popular fintech company discovered a critical error in their resiliency planning."
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # BCP vs. DR: Architectural Strategies for Business Resiliency and Failover
 
 ## The Problem: The Technology-Only Resiliency Fallacy

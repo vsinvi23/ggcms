@@ -1,3 +1,11 @@
+---
+title: "Managing SAML Trust: Automated IdP Metadata Parsing and Certificate Rotation"
+description: "In enterprise Single Sign-On (SSO) systems implementing SAML 2.0, the cryptographic trust between the Service Provider (SP, your application) and the Identity Provider (IdP, e.g., Okta, Ping Identity)"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Managing SAML Trust: Automated IdP Metadata Parsing and Certificate Rotation
 
 ## The Problem: The Brittle Nature of Static SAML Trust

@@ -1,3 +1,11 @@
+---
+title: "Rust Interior Mutability: Deconstructing RefCell, Rc, and Mutex Synchronization"
+description: "Rust enforces strict memory safety guarantees at compile-time through its aliasing rules: you can have either one mutable reference (`&mut T`) OR any number of immutable references (`&T`) to an object"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Interior Mutability: Deconstructing RefCell, Rc, and Mutex Synchronization
 
 ## The Problem

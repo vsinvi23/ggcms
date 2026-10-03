@@ -1,3 +1,11 @@
+---
+title: "Google Cloud Andromeda SDN Internals: Kernel Bypass and Virtual Switches"
+description: "Explore the low-level architecture of Google Cloud's Andromeda Software-Defined Network (SDN), analyze how kernel bypass and virtual switches enable near-line-rate on-host packet processing, and learn how bypass stacks like DPDK optimize cloud network throughput."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Google Cloud Andromeda SDN Internals: Kernel Bypass and Virtual Switches
 
 > Explore the low-level architecture of Google Cloud's Andromeda Software-Defined Network (SDN), analyze how kernel bypass and virtual switches enable near-line-rate on-host packet processing, and learn how bypass stacks like DPDK optimize cloud network throughput.

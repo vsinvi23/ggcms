@@ -1,3 +1,11 @@
+---
+title: "Designing Netflix: Video Transcoding Pipelines, CDN Caching, and DASH Adaptive Streaming"
+description: "Delivering video at scale requires serving content to thousands of device types (4K Smart TVs, older smartphones, web browsers) over highly volatile network conditions. Serving a single massive 4K vid"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing Netflix: Video Transcoding Pipelines, CDN Caching, and DASH Adaptive Streaming
 
 ## The Problem: Heterogeneous Devices and Variable Bandwidth

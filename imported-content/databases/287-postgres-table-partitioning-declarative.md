@@ -1,3 +1,11 @@
+---
+title: "Postgres Declarative Partitioning: Archiving Time-Series Data Fast and Bypassing DELETE Locks"
+description: "In high-volume applications like log collection or IoT time-series tracking, datasets grow by millions of rows daily. To stay within storage limits and control database costs, organizations enforce re"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres Declarative Partitioning: Archiving Time-Series Data Fast and Bypassing DELETE Locks
 
 ## The Administrative Nightmare of Massive Time-Series Deletes

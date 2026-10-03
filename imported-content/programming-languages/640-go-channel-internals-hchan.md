@@ -1,3 +1,11 @@
+---
+title: "Go Channels Internals: Deconstructing the hchan Struct, Ring Buffers, and Lock Queues"
+description: "Go's channels are often presented as high-level concurrency primitives that implement the CSP (Communicating Sequential Processes) model. However, developers frequently treat them as lightweight, lock"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Channels Internals: Deconstructing the hchan Struct, Ring Buffers, and Lock Queues
 
 ## The Problem

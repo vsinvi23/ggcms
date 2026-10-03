@@ -1,3 +1,11 @@
+---
+title: "Principal Component Analysis (PCA): Covariance Matrix and Eigenvectors"
+description: "When deploying machine learning systems on tabular or image datasets, developers frequently encounter the **curse of dimensionality**. As the number of features ($n$) scales into hundreds or thousands"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Principal Component Analysis (PCA): Covariance Matrix and Eigenvectors
 
 ## The Problem

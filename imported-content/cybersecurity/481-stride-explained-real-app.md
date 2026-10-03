@@ -1,3 +1,11 @@
+---
+title: "STRIDE Explained with a Real Application: From Spoofing to Elevation of Privilege"
+description: "When engineering teams build new features, the question \"Is this secure?\" often leads to unstructured brainstorming. Developers guess at vulnerabilities based on recent news or past traumas. This ad-h"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # STRIDE Explained with a Real Application: From Spoofing to Elevation of Privilege
 
 ## The Problem: Unstructured Threat Modeling

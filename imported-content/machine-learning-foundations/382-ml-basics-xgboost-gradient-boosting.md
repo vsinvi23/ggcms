@@ -1,3 +1,11 @@
+---
+title: "Gradient Boosting Machines: Why XGBoost Dominates Tabular Data"
+description: "In machine learning on tabular data (structured databases, CSVs), deep learning models often underperform compared to decision tree ensembles, which are highly efficient at learning axis-aligned step "
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Gradient Boosting Machines: Why XGBoost Dominates Tabular Data
 
 In machine learning on tabular data (structured databases, CSVs), deep learning models often underperform compared to decision tree ensembles, which are highly efficient at learning axis-aligned step functions. While Random Forests build trees in parallel to reduce variance, Gradient Boosting Machines (GBMs) build trees sequentially. Each new tree is trained to predict the residual errors (gradients) of the existing ensemble. **XGBoost (Extreme Gradient Boosting)** is an ultra-optimized, regularized implementation of this paradigm that provides unparalleled accuracy and speed on tabular datasets.

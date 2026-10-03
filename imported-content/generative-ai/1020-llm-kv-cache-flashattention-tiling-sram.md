@@ -1,3 +1,11 @@
+---
+title: "LLM Inference Optimization: The KV Cache and FlashAttention On-Chip Tiling"
+description: "Standard multi-head attention suffers from two critical bottlenecks during LLM inference:"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Inference Optimization: The KV Cache and FlashAttention On-Chip Tiling
 
 ## The Problem: The Quadratic Bottleneck of Attention

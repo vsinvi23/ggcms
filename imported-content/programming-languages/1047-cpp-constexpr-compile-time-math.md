@@ -1,3 +1,11 @@
+---
+title: "C++ constexpr: Executing Complex Mathematical Calculations at Compile Time"
+description: "In high-performance domains—such as game engines, quantitative finance, or embedded systems—every CPU cycle matters. Traditional C++ initializes variables and computes mathematical constants (like sin"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ constexpr: Executing Complex Mathematical Calculations at Compile Time
 
 ## The Problem: Runtime Initialization Overhead

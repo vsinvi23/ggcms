@@ -1,3 +1,11 @@
+---
+title: "C++ constexpr: Executing Logic at Compile Time"
+description: "In performance-critical C++ applications (game engines, high-frequency trading, embedded systems), every CPU cycle counts. A common source of wasted cycles is computing values at runtime that could th"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ constexpr: Executing Logic at Compile Time
 
 ## The Problem: The Runtime Tax of Constants

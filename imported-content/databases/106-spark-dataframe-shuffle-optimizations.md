@@ -1,3 +1,11 @@
+---
+title: "Apache Spark: Mitigating Shuffle Partition Disk Spills"
+description: "Apache Spark is celebrated for its in-memory processing speeds. However, when executing wide transformations—like `groupByKey`, `join`, or `distinct`—Spark must redistribute data across the cluster to"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Apache Spark: Mitigating Shuffle Partition Disk Spills
 
 ## The Problem: Out-of-Memory and Disk Spills

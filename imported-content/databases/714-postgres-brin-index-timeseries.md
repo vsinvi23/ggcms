@@ -1,3 +1,11 @@
+---
+title: "Postgres BRIN Indexes: Block Range Indexing for Time-Series Datasets"
+description: "When storing massive, append-only datasets—such as IoT sensor metrics, application access logs, or financial tick data—tables quickly grow into the multi-terabyte range."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres BRIN Indexes: Block Range Indexing for Time-Series Datasets
 
 ## The Problem: B-Tree Memory Exhaustion on Big Data

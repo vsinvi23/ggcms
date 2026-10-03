@@ -1,3 +1,11 @@
+---
+title: "Rust Lifetimes: Deciphering the Compiler's Implicit Elision Rules"
+description: "To guarantee memory safety without a garbage collector, the Rust compiler utilizes **lifetimes**. Lifetimes are parameters that describe how long references remain valid, preventing dangling pointers "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Lifetimes: Deciphering the Compiler's Implicit Elision Rules
 
 To guarantee memory safety without a garbage collector, the Rust compiler utilizes **lifetimes**. Lifetimes are parameters that describe how long references remain valid, preventing dangling pointers and use-after-free bugs at compile time. 

@@ -1,3 +1,11 @@
+---
+title: "Istio Service Mesh: Zero-Trust mTLS, PeerAuthentication, and Sidecar Proxies"
+description: "In a default Kubernetes cluster, traffic between pods is unencrypted (cleartext) and identity relies merely on IP addresses. If a bad actor gains access to a node or a container, they can utilize pack"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Istio Service Mesh: Zero-Trust mTLS, PeerAuthentication, and Sidecar Proxies
 
 ### The Problem: Cleartext Internal Traffic and Weak Identity

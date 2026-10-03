@@ -1,3 +1,11 @@
+---
+title: "Designing Netflix: Video Transcoding Pipelines, CDN Caching, and DASH Adaptive Streaming"
+description: "Streaming video is highly bandwidth-intensive and latency-sensitive. A single 4K movie can easily exceed 20GB. Delivering this file directly from a central server in Virginia to millions of users acro"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing Netflix: Video Transcoding Pipelines, CDN Caching, and DASH Adaptive Streaming
 
 ## The Problem: Delivering High-Quality Video globally

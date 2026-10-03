@@ -1,3 +1,11 @@
+---
+title: "MFA Security: Inside the TOTP (Time-Based One-Time Password) HMAC Truncation Math"
+description: "Multi-Factor Authentication (MFA) is essential for mitigating credential stuffing and phishing. While SMS and email OTPs are vulnerable to SIM swapping and network interception, authenticator apps (li"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # MFA Security: Inside the TOTP (Time-Based One-Time Password) HMAC Truncation Math
 
 ## The Problem: Securely Generating Offline Codes

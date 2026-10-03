@@ -1,3 +1,11 @@
+---
+title: "Tool Calling vs API Calling: What's Really Happening?"
+description: "Many engineers starting with AI agents make a fundamental category error: they believe that when a Large Language Model (LLM) \"calls a tool,\" it is directly initiating an outbound network request or e"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Tool Calling vs API Calling: What's Really Happening?
 
 ### The Problem: The Direct-Execution Illusion

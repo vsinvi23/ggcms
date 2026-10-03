@@ -1,3 +1,11 @@
+---
+title: "Zero-Knowledge Proofs (ZK-SNARKs): Verifying Secrets Without Revealing Them"
+description: "In traditional authentication and verification systems, proving knowledge of a secret requires exposing that secret to a verifier. When a client authenticates with a server, they transmit a password ("
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Zero-Knowledge Proofs (ZK-SNARKs): Verifying Secrets Without Revealing Them
 
 ## The Problem: The Paradox of Verification

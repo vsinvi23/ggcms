@@ -1,3 +1,11 @@
+---
+title: "Testing AI Agents Like Software: Evaluators, Judges, and Deterministic Mocks"
+description: "In classical software engineering, testing is deterministic. Given an input $X$, a function executes a fixed sequence of operations and returns an output $Y$. Developers assert correctness using simpl"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Testing AI Agents Like Software: Evaluators, Judges, and Deterministic Mocks
 
 ## The Indeterminacy of Cognitive Testing

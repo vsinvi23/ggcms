@@ -1,3 +1,11 @@
+---
+title: "Server-Side Request Forgery (SSRF): Preventing Cloud Metadata Extraction (IMDSv1/v2)"
+description: "Modern applications frequently interact with external resources. Features like webhooks, PDF generation from URLs, or image fetching require the server to make outbound HTTP requests based on user inp"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Server-Side Request Forgery (SSRF): Preventing Cloud Metadata Extraction (IMDSv1/v2)
 
 ## The Problem: The Server as a Proxy

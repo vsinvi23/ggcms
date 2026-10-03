@@ -1,3 +1,11 @@
+---
+title: "C++ Inheritance: The Critical Need for Virtual Destructors to Prevent Leaks"
+description: "Dynamic polymorphism is one of C++'s most powerful object-oriented features. It allows a developer to manipulate objects of various derived types through a single base-class pointer. However, this fle"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Inheritance: The Critical Need for Virtual Destructors to Prevent Leaks
 
 Dynamic polymorphism is one of C++'s most powerful object-oriented features. It allows a developer to manipulate objects of various derived types through a single base-class pointer. However, this flexibility introduces a dangerous memory-management trap: if a base-class pointer is deleted while the base class lacks a `virtual` destructor, the program will suffer from undefined behavior, typically manifesting as massive, silent memory leaks.

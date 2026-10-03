@@ -1,3 +1,11 @@
+---
+title: "Linkers Explained from Scratch"
+description: "You compile your C program and receive the dreaded `undefined reference to 'foo'` error. The compiler succeeded, but the build failed. Why?"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Linkers Explained from Scratch
 
 ## The Problem

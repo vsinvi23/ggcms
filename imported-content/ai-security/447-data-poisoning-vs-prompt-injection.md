@@ -1,3 +1,11 @@
+---
+title: "Data Poisoning vs. Prompt Injection: Threat Vectors at the Core of AI Security"
+description: "Securing artificial intelligence applications requires a clear understanding of where and when an attack can occur in the model lifecycle. Security teams often conflate training-time vulnerabilities w"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # Data Poisoning vs. Prompt Injection: Threat Vectors at the Core of AI Security
 
 Securing artificial intelligence applications requires a clear understanding of where and when an attack can occur in the model lifecycle. Security teams often conflate training-time vulnerabilities with inference-time exploits. However, Data Poisoning and Prompt Injection represent entirely different paradigms of compromise. Data poisoning attacks target the model's static weights during training, while prompt injection exploits the model’s dynamic context window during inference.

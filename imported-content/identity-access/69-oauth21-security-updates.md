@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.1: Modernizing Delegation and Hardening Security"
+description: "For over a decade, OAuth 2.0 (RFC 6749) has served as the industry standard for delegated authorization. However, its immense flexibility also became its primary security vulnerability. To accommodate"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.1: Modernizing Delegation and Hardening Security
 
 ### The Problem: Legacy Complexity and Dangerous Defaults

@@ -1,3 +1,11 @@
+---
+title: "Java Pattern Matching: Exhaustive Switches over Sealed Records"
+description: "For decades, object-oriented programming in Java relied on the Visitor pattern or cumbersome `instanceof` checks to execute logic based on the specific subtype of an object."
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Pattern Matching: Exhaustive Switches over Sealed Records
 
 ## The Problem: The Boilerplate of Polymorphism

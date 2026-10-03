@@ -1,3 +1,11 @@
+---
+title: "ML Foundations: Linear Regression, Cost Functions, and Normal Equations"
+description: "Predicting continuous target variables is a cornerstone of operational machine learning systems, appearing in workloads such as dynamic price optimization, power grid load forecasting, and network lat"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Foundations: Linear Regression, Cost Functions, and Normal Equations
 
 ## The Problem

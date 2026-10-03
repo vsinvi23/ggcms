@@ -1,3 +1,11 @@
+---
+title: "dbt Data Quality: Implementing Generic, Singular, and Great Expectations Tests"
+description: "In modern ELT (Extract, Load, Transform) architectures, the extraction phase is often handled by automated tools (Fivetran, Airbyte) that blindly dump raw source data into a data warehouse (BigQuery, "
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # dbt Data Quality: Implementing Generic, Singular, and Great Expectations Tests
 
 ### The Problem: Silent Data Corruption

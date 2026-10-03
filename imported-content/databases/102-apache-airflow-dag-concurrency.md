@@ -1,3 +1,11 @@
+---
+title: "Airflow Scheduler: Tuning Concurrency, Pools, and Executors"
+description: "Apache Airflow orchestrates complex Directed Acyclic Graphs (DAGs) of tasks. As organizations scale, they often encounter pipeline gridlock: tasks are stuck in a \"queued\" state, DAGs refuse to trigger"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Airflow Scheduler: Tuning Concurrency, Pools, and Executors
 
 ## The Problem: Gridlock in Data Pipelines

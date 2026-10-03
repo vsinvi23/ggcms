@@ -1,3 +1,11 @@
+---
+title: "ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization"
+description: "A primary objective when training machine learning models is ensuring they generalize to unseen, out-of-sample data. When a model fails, it typically falls into one of two traps: **underfitting** (hig"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization
 
 ## The Problem

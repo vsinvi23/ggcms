@@ -1,3 +1,11 @@
+---
+title: "Authentication vs Authorization: Finally Explained Clearly"
+description: "In security engineering, confusing **Authentication (AuthN)** with **Authorization (AuthZ)** is one of the most common causes of architectural vulnerability. While they sound similar and often occur s"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Authentication vs Authorization: Finally Explained Clearly
 
 In security engineering, confusing **Authentication (AuthN)** with **Authorization (AuthZ)** is one of the most common causes of architectural vulnerability. While they sound similar and often occur sequentially in a single user journey, they are entirely distinct operations governed by different rules, data structures, and threat profiles.

@@ -1,4 +1,4 @@
----
+--- 
 title: "AI-Assisted vs AI-Augmented vs AI-Native Software Engineering"
 slug: "ai-assisted-vs-ai-augmented-vs-ai-native-software-engineering"
 category: "Software Engineering"
@@ -42,7 +42,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # AI-Assisted vs AI-Augmented vs AI-Native Software Engineering
 

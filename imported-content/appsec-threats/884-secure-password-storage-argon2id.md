@@ -1,3 +1,11 @@
+---
+title: "Secure Password Storage: Tuning Argon2id for Optimal ASIC/GPU Resistance"
+description: "For decades, developers relied on MD5, SHA-1, and later SHA-256 to hash passwords. As hardware advanced, it became clear that cryptographic hash functions—designed to be computationally fast—were enti"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Secure Password Storage: Tuning Argon2id for Optimal ASIC/GPU Resistance
 
 ## The Problem: The Obsolescence of Fast Hashing

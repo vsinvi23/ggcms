@@ -1,3 +1,11 @@
+---
+title: "JWT vs. Opaque Tokens: Solving the Stateless Revocation Dilemma"
+description: "When designing API authentication, developers face a critical architectural choice between two token formats: **JWTs (Self-Contained/Stateless)** or **Opaque Tokens (Reference/Stateful)**."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT vs. Opaque Tokens: Solving the Stateless Revocation Dilemma
 
 ## The Problem: The Scalability vs. Control Paradox

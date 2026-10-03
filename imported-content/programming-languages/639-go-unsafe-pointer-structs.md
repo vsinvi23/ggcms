@@ -1,3 +1,11 @@
+---
+title: "Go Unsafe: Direct Memory Manipulation and Struct Casting via unsafe.Pointer"
+description: "Go's type system is designed around strict memory safety, enforcing clear boundaries between types and preventing arbitrary pointer arithmetic. However, in low-latency systems—such as high-performance"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Unsafe: Direct Memory Manipulation and Struct Casting via unsafe.Pointer
 
 ## The Problem

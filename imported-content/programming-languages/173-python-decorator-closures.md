@@ -1,3 +1,11 @@
+---
+title: "Python Decorators: Closures, `functools.wraps`, and Metaprogramming"
+description: "Python decorators are an elegant tool for executing cross-cutting concerns—such as logging, caching, authentication, and performance profiling—without cluttering your core business logic. However, man"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Decorators: Closures, `functools.wraps`, and Metaprogramming
 
 Python decorators are an elegant tool for executing cross-cutting concerns—such as logging, caching, authentication, and performance profiling—without cluttering your core business logic. However, many developers write naive decorators that accidentally break their codebases. 

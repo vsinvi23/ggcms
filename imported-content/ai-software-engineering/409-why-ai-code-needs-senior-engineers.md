@@ -1,3 +1,11 @@
+---
+title: "Why AI-Generated Code Still Needs Senior Engineers"
+description: "The widespread availability of AI coding agents leads to an optimization paradox: while localized developer velocity increases, system-wide maintainability often degrades. AI models excel at generatin"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Why AI-Generated Code Still Needs Senior Engineers
 
 The widespread availability of AI coding agents leads to an optimization paradox: while localized developer velocity increases, system-wide maintainability often degrades. AI models excel at generating immediate, syntactically correct code blocks, but they lack holistic, multi-year systems thinking. Without senior oversight, automated code generation accelerates architectural drift, bypasses security controls, and crashes against the physical limits of LLM context windows.

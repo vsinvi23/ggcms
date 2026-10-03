@@ -1,3 +1,11 @@
+---
+title: "Migrating to Kubernetes Gateway API: Role-Oriented Infrastructure and Weighted Canary Routing"
+description: "The Kubernetes `Ingress` resource has been the standard method for exposing web services to the outside world for years. However, as cluster structures scaled, Ingress reached its structural limits. I"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Migrating to Kubernetes Gateway API: Role-Oriented Infrastructure and Weighted Canary Routing
 
 The Kubernetes `Ingress` resource has been the standard method for exposing web services to the outside world for years. However, as cluster structures scaled, Ingress reached its structural limits. Ingress is a single monolithic resource that combines global infrastructure routing (TLS certificates, load-balancer IPs) with application-specific configuration. This forces cluster operators and application developers to modify the same resource, leading to namespace collisions, configuration drift, and vendor-specific annotations that make configuration fragile and non-portable.

@@ -1,3 +1,11 @@
+---
+title: "Advanced System Design: Consistent Hashing"
+description: "Imagine you are building a distributed Redis cache with 5 servers. To decide which server holds a specific piece of data (e.g., `user_123`), you use a simple modulo hash: `server_index = hash(\"user_12"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Advanced System Design: Consistent Hashing
 
 ## The Problem

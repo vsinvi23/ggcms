@@ -1,3 +1,11 @@
+---
+title: "SSRF Explained: The Server That Became the Attacker"
+description: "Server-Side Request Forgery (SSRF) represents a catastrophic breakdown in trust boundaries. It occurs when a web application fetches a remote resource without validating the user-supplied URL. In doin"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # SSRF Explained: The Server That Became the Attacker
 
 Server-Side Request Forgery (SSRF) represents a catastrophic breakdown in trust boundaries. It occurs when a web application fetches a remote resource without validating the user-supplied URL. In doing so, the server is coerced into acting as a proxy—becoming an attacker that can bypass network perimeters, scan internal resources, and plunder cloud metadata endpoints.

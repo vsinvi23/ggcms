@@ -1,3 +1,11 @@
+---
+title: "Quantitative Risk Management: Evaluating Risk Acceptance vs. Mitigation with ALE/SLE"
+description: "Many security organizations present risk using subjective 5x5 color-coded \"heat maps\" (Red/Yellow/Green) representing qualitative metrics like \"High Probability\" and \"Severe Impact\"."
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Quantitative Risk Management: Evaluating Risk Acceptance vs. Mitigation with ALE/SLE
 
 ## The Problem: The Ineffectiveness of Qualitative "Heat Maps"

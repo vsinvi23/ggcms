@@ -1,3 +1,11 @@
+---
+title: "Docker Resource Constraints: Enforcing cgroups v2 Memory and CPU CFS Slices"
+description: "A container is simply an isolated Linux process. Without explicit resource constraints, a container has unrestricted access to the host machine's total CPU cycles and RAM."
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Resource Constraints: Enforcing cgroups v2 Memory and CPU CFS Slices
 
 ## The Problem: The Noisy Neighbor and the OOM Reaper

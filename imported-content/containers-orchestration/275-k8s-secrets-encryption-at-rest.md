@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Secrets: Enabling etcd Encryption-at-Rest with KMS"
+description: "A dangerous misconception among cloud developers is that Kubernetes Secrets are inherently secure. In reality, Kubernetes Secrets are stored in `etcd` as plain text encoded in Base64. Base64 is a seri"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Secrets: Enabling etcd Encryption-at-Rest with KMS
 
 ## The Problem: The Base64 Security Illusion

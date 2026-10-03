@@ -1,3 +1,11 @@
+---
+title: "Docker Resource Constraints: Enforcing cgroups v2 Memory and CPU CFS Slices"
+description: "When running containerized workloads on a shared Linux host, a single poorly optimized or malicious container can consume all available CPU cycles or memory. This \"noisy neighbor\" effect causes perfor"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Resource Constraints: Enforcing cgroups v2 Memory and CPU CFS Slices
 
 When running containerized workloads on a shared Linux host, a single poorly optimized or malicious container can consume all available CPU cycles or memory. This "noisy neighbor" effect causes performance degradation, application lag, and system-wide instability. If memory consumption goes unchecked, the Linux kernel Out-Of-Memory (OOM) killer will trigger, terminated critical system processes.

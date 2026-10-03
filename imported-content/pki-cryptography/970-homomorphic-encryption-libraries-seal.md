@@ -1,3 +1,11 @@
+---
+title: "Homomorphic Encryption Libraries: Comparing Microsoft SEAL (BFV/CKKS) Implementations"
+description: "Cloud storage and processing platforms must typically decrypt sensitive datasets before executing functions or queries on them. This decrypt-to-compute step exposes cleartext data to several threats:"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Homomorphic Encryption Libraries: Comparing Microsoft SEAL (BFV/CKKS) Implementations
 
 ## The Problem: Data Decryption During Cloud Computation

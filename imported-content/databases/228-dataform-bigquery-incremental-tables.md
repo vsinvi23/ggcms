@@ -1,3 +1,11 @@
+---
+title: "Dataform Incremental Updates: Optimizing BigQuery Cost by Scanning Delta Dates"
+description: "In modern data warehousing platforms like Google BigQuery, compute costs are intrinsically linked to the volume of data scanned."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Dataform Incremental Updates: Optimizing BigQuery Cost by Scanning Delta Dates
 
 ### The Problem: The Cost of Full Recomputation

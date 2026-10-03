@@ -1,3 +1,11 @@
+---
+title: "Hardening the Docker Daemon: Securing docker.sock and Rootless Execution"
+description: "The standard Docker installation runs as a highly privileged system service. To manage containers, Docker exposes an unauthenticated Unix domain socket at `/var/run/docker.sock`. Because the Docker da"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Hardening the Docker Daemon: Securing docker.sock and Rootless Execution
 
 The standard Docker installation runs as a highly privileged system service. To manage containers, Docker exposes an unauthenticated Unix domain socket at `/var/run/docker.sock`. Because the Docker daemon executes commands with root privileges, any process that can write to this socket possesses effective root access to the entire host. Mounting `/var/run/docker.sock` inside a container—a common practice in monitoring and CI/CD tools—represents a massive security risk, permitting simple host-escape and total server compromise.

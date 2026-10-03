@@ -1,3 +1,11 @@
+---
+title: "SAML XML Signature Wrapping (XSW): Attack Mechanics and Defenses"
+description: "Security Assertion Markup Language (SAML) 2.0 remains a foundational standard for enterprise Single Sign-On (SSO). However, SAML relies heavily on XML, a format notorious for its semantic complexity a"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SAML XML Signature Wrapping (XSW): Attack Mechanics and Defenses
 
 ### The Problem: Schema Flexibility and Decoupled Processing

@@ -1,3 +1,11 @@
+---
+title: "AWS Nitro System: Decoupling Virtualization Overhead onto Dedicated Hardware Cards"
+description: "Traditional virtualization architectures rely on software hypervisors (like Xen or KVM) running on the host machine's main CPU. These hypervisors are responsible for managing CPU, memory, storage, and"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Nitro System: Decoupling Virtualization Overhead onto Dedicated Hardware Cards
 
 ## The Problem: Hypervisor Tax and Shared Resource Contention

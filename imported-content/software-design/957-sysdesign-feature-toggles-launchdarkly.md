@@ -1,3 +1,11 @@
+---
+title: "Feature Toggles: Branch by Abstraction and Decoupling Deployment from Software Release"
+description: "Historically, developing a large feature took weeks. Developers would create a long-lived feature branch. When it was finally time to merge, they faced \"Merge Hell\"—massive conflicts, broken tests, an"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Feature Toggles: Branch by Abstraction and Decoupling Deployment from Software Release
 
 ## The Problem: The Perils of Long-Lived Feature Branches

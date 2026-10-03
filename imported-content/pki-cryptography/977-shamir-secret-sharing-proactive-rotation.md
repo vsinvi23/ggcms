@@ -1,3 +1,11 @@
+---
+title: "Proactive Secret Sharing (PSS): Rotating Key Shares Without Changing the Root Secret"
+description: "To protect high-value root secrets (like CA private keys or cold wallet keys), organizations use **Shamir's Secret Sharing (SSS)**. This splitting mechanism divides a master secret $S$ into $n$ shares"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Proactive Secret Sharing (PSS): Rotating Key Shares Without Changing the Root Secret
 
 ## The Problem: The Mobile Adversary Threat

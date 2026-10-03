@@ -1,3 +1,11 @@
+---
+title: "The Liskov Substitution Principle: Diagnosing and Fixing Fragile Base Class Hierarchies"
+description: "Inheritance is one of the most overused mechanisms in object-oriented design. Developers frequently subclass existing components simply to reuse a few lines of code. This practice often leads directly"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The Liskov Substitution Principle: Diagnosing and Fixing Fragile Base Class Hierarchies
 
 ## The Problem: The Inheritance reuse Trap

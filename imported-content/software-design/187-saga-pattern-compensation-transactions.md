@@ -1,3 +1,11 @@
+---
+title: "The Saga Pattern: Designing Idempotent Compensating Transactions"
+description: "In a monolithic application with a single relational database, maintaining data consistency is trivial. You wrap multiple SQL statements in an ACID transaction (`BEGIN; ... COMMIT;`). If anything fail"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The Saga Pattern: Designing Idempotent Compensating Transactions
 
 ## The Problem: Distributed Transactions

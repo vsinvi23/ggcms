@@ -1,3 +1,11 @@
+---
+title: "Smart Pointers Explained: Transitioning from Raw Pointers to Modern Memory Safety"
+description: "In legacy C++, managing heap memory required manual coordination. Developers used `new` to allocate memory and `delete` to free it. This approach is notoriously fragile. A single missed `delete`, an e"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Smart Pointers Explained: Transitioning from Raw Pointers to Modern Memory Safety
 
 In legacy C++, managing heap memory required manual coordination. Developers used `new` to allocate memory and `delete` to free it. This approach is notoriously fragile. A single missed `delete`, an early return statement, or an unexpected exception instantly results in memory leaks or undefined behavior. Modern C++ solves this entirely through **Smart Pointers**, which wrap raw pointers in resource-managing objects.

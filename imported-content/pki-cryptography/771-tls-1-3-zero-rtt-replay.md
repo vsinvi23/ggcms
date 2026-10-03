@@ -1,3 +1,11 @@
+---
+title: "TLS 1.3 0-RTT: The Dangers of Early Data Replay Attacks and Non-Idempotent APIs"
+description: "In TLS 1.2, establishing a secure connection requires two full round trips (2-RTT) before any application data can be sent. For geographically distant clients, this handshake latency is highly noticea"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS 1.3 0-RTT: The Dangers of Early Data Replay Attacks and Non-Idempotent APIs
 
 ## The Problem: The Latency vs. Security Trade-off

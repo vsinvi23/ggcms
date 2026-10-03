@@ -1,3 +1,11 @@
+---
+title: "Kubernetes RBAC: Hardening Cluster Roles, Roles, and Service Account Tokens"
+description: "In Kubernetes, every pod is provisioned with a default ServiceAccount token mounted at `/var/run/secrets/kubernetes.io/serviceaccount/token`. By default, this token might be bound to a highly permissi"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes RBAC: Hardening Cluster Roles, Roles, and Service Account Tokens
 
 ### The Problem: Over-Privileged Pods and Token Theft

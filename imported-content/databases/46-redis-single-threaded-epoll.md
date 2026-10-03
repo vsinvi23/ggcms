@@ -1,3 +1,11 @@
+---
+title: "Redis Architecture: Single-Threaded Event Loop and the Epoll API"
+description: "Discover why Redis uses a single-threaded execution model to achieve over a million operations per second, analyze how the non-blocking Epoll API multiplexes thousands of active socket connections, and learn how to benchmark its event loop."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Redis Architecture: Single-Threaded Event Loop and the Epoll API
 
 > Discover why Redis uses a single-threaded execution model to achieve over a million operations per second, analyze how the non-blocking Epoll API multiplexes thousands of active socket connections, and learn how to benchmark its event loop.

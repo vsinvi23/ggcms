@@ -1,3 +1,11 @@
+---
+title: "Go Memory Alignment: Struct Padding and CPU Word-aligned Fetching Optimizations"
+description: "Suppose you are writing a high-performance database engine or processing billions of logs in Go. To save memory, you carefully select the smallest primitive types for your metadata struct: a single-by"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Memory Alignment: Struct Padding and CPU Word-aligned Fetching Optimizations
 
 ## The Problem: The Mystery of the Bloated Struct

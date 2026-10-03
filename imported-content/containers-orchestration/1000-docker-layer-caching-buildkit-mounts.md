@@ -1,3 +1,11 @@
+---
+title: "Docker Layer Caching: Structuring Multi-Stage Dockerfiles and BuildKit Cache Mounts"
+description: "A standard Docker build process executes instructions top-down. Whenever an instruction yields a change (e.g., modifying source code or adding a dependency), that layer and all subsequent layers are i"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Layer Caching: Structuring Multi-Stage Dockerfiles and BuildKit Cache Mounts
 
 ### The Problem: Slow CI/CD Pipelines due to Inefficient Builds

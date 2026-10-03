@@ -1,3 +1,11 @@
+---
+title: "Snowflake ID Generation: Handling System Clock Drift and Preventing Duplicate Collisions"
+description: "In high-scale distributed systems, auto-incrementing integer IDs provided by relational databases become a severe bottleneck. Relying on a single database sequence generator creates a single point of "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Snowflake ID Generation: Handling System Clock Drift and Preventing Duplicate Collisions
 
 ## The Problem: Distributed Unique Identifiers

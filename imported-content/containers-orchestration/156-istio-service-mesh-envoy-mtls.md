@@ -1,3 +1,11 @@
+---
+title: "Istio Service Mesh: Zero-Trust mTLS and Traffic Routing"
+description: "In a standard Kubernetes cluster, network traffic between pods is unencrypted by default. If an attacker manages to compromise a single frontend container, they can easily attach a network sniffer (li"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Istio Service Mesh: Zero-Trust mTLS and Traffic Routing
 
 ## The Problem: The Insecurity of Plaintext Cluster Traffic

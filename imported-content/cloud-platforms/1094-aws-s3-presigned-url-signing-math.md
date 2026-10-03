@@ -1,3 +1,11 @@
+---
+title: "Securing AWS S3: Inside the Signature Version 4 (SigV4) Pre-Signed URL Lifecycle"
+description: "In modern web applications, routing large file uploads or downloads through an application backend is an anti-pattern. It consumes bandwidth, ties up worker threads, and degrades performance. The opti"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Securing AWS S3: Inside the Signature Version 4 (SigV4) Pre-Signed URL Lifecycle
 
 ## The Problem: Securely Delegating Temporary Access

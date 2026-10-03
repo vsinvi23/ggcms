@@ -1,3 +1,11 @@
+---
+title: "Hardening the Docker Daemon: Securing /var/run/docker.sock and Rootless User Namespaces"
+description: "By default, the Docker daemon (`dockerd`) runs as the `root` user on the host system. Furthermore, tools that require Docker access (like CI/CD runners or monitoring agents) often mount the Docker soc"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Hardening the Docker Daemon: Securing /var/run/docker.sock and Rootless User Namespaces
 
 ### The Problem: The Daemon as Root and the Socket Vulnerability

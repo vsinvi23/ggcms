@@ -1,3 +1,11 @@
+---
+title: "X.509 PKI: Navigating the Certificate Chain of Trust and Root CAs"
+description: "When your web browser establishes a TLS connection to `example.com`, the server provides a public key to initiate the secure handshake. But how do you know this public key actually belongs to `example"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # X.509 PKI: Navigating the Certificate Chain of Trust and Root CAs
 
 ## The Problem: How Do You Trust a Public Key?

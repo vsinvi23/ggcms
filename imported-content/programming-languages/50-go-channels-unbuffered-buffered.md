@@ -1,3 +1,11 @@
+---
+title: "Go Channels: Synchronous vs. Asynchronous Communication Under the Hood"
+description: "In concurrent programming, managing shared state across multiple threads is notoriously difficult. Traditional multi-threaded languages rely on shared memory protected by mutexes, condition variables,"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Channels: Synchronous vs. Asynchronous Communication Under the Hood
 
 ### The Problem: Safe Concurrency without Lock Contention

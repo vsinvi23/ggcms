@@ -1,3 +1,11 @@
+---
+title: "Docker Layer Caching: Structuring Dockerfiles for Fast Builds"
+description: "Slow container builds kill developer productivity and bottleneck CI/CD pipelines. Every time a developer commits code, they wait minutes—or even tens of minutes—for the container image to compile, ins"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Layer Caching: Structuring Dockerfiles for Fast Builds
 
 ## The Build Time Problem

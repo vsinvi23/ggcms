@@ -1,3 +1,11 @@
+---
+title: "Bellman-Ford in C++: Detecting Arbitrage Opportunities (Negative Cycles) in Finance"
+description: "Dijkstra's algorithm is fast but fails catastrophically if a graph has negative edge weights (because it assumes the shortest path is finalized once extracted from the heap). In financial systems, dis"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Bellman-Ford in C++: Detecting Arbitrage Opportunities (Negative Cycles) in Finance
 
 ## The Problem: Negative Weights and Cycles

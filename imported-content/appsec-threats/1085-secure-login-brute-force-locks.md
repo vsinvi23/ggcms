@@ -1,3 +1,11 @@
+---
+title: "Building a Secure Login System from Scratch: Lockouts, Session Tokens, and Timing Defenses"
+description: "Authentication endpoints are the front door of any web application. Because they are publicly exposed, they are targeted by brute-force attacks, credential stuffing campaigns, and side-channel timing "
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Building a Secure Login System from Scratch: Lockouts, Session Tokens, and Timing Defenses
 
 ## The Problem: The Standard Authentication Surface

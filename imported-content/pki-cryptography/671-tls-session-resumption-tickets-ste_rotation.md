@@ -1,3 +1,11 @@
+---
+title: "TLS 1.3 Session Resumption: PSK and Session Ticket Encryption Key (STEK) Rotation"
+description: "TLS 1.3 defines a streamlined 1-RTT handshake and supports an optimized session resumption mechanism utilizing **Pre-Shared Keys (PSK)**. Resumption minimizes latency by avoiding expensive public key "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # TLS 1.3 Session Resumption: PSK and Session Ticket Encryption Key (STEK) Rotation
 
 ## The Problem: The Forward Secrecy Gaps in Session Tickets

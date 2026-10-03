@@ -1,3 +1,11 @@
+---
+title: "Agent Memory: Managing Short-Term Sliding Windows and Long-Term Vector Stores"
+description: "**The Problem:** LLMs are inherently stateless. To create an agent that remembers user preferences across sessions, you must pass the chat history into every API call. However, context windows are fin"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Agent Memory: Managing Short-Term Sliding Windows and Long-Term Vector Stores
 
 **The Problem:** LLMs are inherently stateless. To create an agent that remembers user preferences across sessions, you must pass the chat history into every API call. However, context windows are finite (and expensive). Pushing a year's worth of conversation history into a prompt will result in a context window crash and massive API bills.

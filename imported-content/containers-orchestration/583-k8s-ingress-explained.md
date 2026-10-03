@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Ingress Explained: Layer 7 Routing and TLS"
+description: "We know that a `LoadBalancer` Service provides an external IP address to expose our application. However, provisioning a cloud LoadBalancer for every single microservice is an architectural nightmare."
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Ingress Explained: Layer 7 Routing and TLS
 
 ### The Problem

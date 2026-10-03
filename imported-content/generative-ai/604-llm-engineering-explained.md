@@ -1,4 +1,4 @@
----
+--- 
 title: "LLM Engineering Explained: From Prompting to Production Systems"
 slug: "llm-engineering-explained-from-prompting-to-production-systems"
 category: "Generative AI"
@@ -42,7 +42,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # LLM Engineering Explained: From Prompting to Production Systems
 

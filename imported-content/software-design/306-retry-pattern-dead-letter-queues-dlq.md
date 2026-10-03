@@ -1,3 +1,11 @@
+---
+title: "Microservice Resilience: Processing Poison Pills and Implementing Dead Letter Queues"
+description: "In asynchronous message-driven architectures (using RabbitMQ, AWS SQS, or Apache Kafka), consumer services process streams of background tasks. When a consumer encounters a transient error—such as a d"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Microservice Resilience: Processing Poison Pills and Implementing Dead Letter Queues
 
 ## The Problem: The Catastrophic Retry Loop

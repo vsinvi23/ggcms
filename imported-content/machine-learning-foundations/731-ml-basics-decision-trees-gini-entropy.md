@@ -1,3 +1,11 @@
+---
+title: "Ensemble Learning: From Decision Trees to Random Forests (Bagging)"
+description: "A single Decision Tree is a highly interpretable model that greedily splits data based on feature values to maximize information gain. However, standalone decision trees are highly susceptible to over"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Ensemble Learning: From Decision Trees to Random Forests (Bagging)
 
 ## The Problem

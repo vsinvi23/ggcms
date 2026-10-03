@@ -1,3 +1,11 @@
+---
+title: "Designing Netflix: Video Transcoding Pipelines, CDN Caching, and DASH Adaptive Streaming"
+description: "Streaming video to millions of concurrent users across disparate network conditions and diverse client devices is a monumental engineering challenge. A single raw 4K video file can exceed hundreds of "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing Netflix: Video Transcoding Pipelines, CDN Caching, and DASH Adaptive Streaming
 
 ## The Problem: Delivering High-Quality Video at Scale

@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Token Introspection (RFC 7662): Validating Opaque Tokens across Microservices"
+description: "While JSON Web Tokens (JWTs) allow microservices to validate authorization autonomously, they pose significant risks. JWTs expose internal claims (user roles, emails) if intercepted, and their statele"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Token Introspection (RFC 7662): Validating Opaque Tokens across Microservices
 
 ## The Problem

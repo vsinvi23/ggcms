@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking"
+description: "Standard Retrieval-Augmented Generation (RAG) relies on **Bi-Encoders** (like OpenAI's `text-embedding-ada-002` or `BGE-M3`). In a Bi-Encoder architecture, the query and the documents are embedded sep"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking
 
 ### The Problem: The Semantic Gap in Bi-Encoders

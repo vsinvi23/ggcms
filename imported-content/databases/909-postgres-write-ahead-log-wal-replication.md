@@ -1,3 +1,11 @@
+---
+title: "Postgres WAL Internals: Crash Recovery, LSN, and Physical Replication Streams"
+description: "In relational database design, guaranteeing ACID compliance—specifically **Durability**—presents a fundamental I/O bottleneck. When a transaction modifies a row, writing the modified database page (ty"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres WAL Internals: Crash Recovery, LSN, and Physical Replication Streams
 
 ## The Problem: The Durability Bottleneck and Random I/O

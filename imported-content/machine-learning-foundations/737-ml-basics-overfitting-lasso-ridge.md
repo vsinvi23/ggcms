@@ -1,3 +1,11 @@
+---
+title: "ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization"
+description: "A machine learning model must generalize to unseen data. When a model is too simple (e.g., linear regression on highly non-linear data), it severely underfits, failing to capture the underlying patter"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # ML Model Tuning: Bias-Variance Tradeoff and L1/L2 Regularization
 
 ## The Problem

@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Parent-Child Document Retrieval for Context Integrity"
+description: "Retrieval-Augmented Generation (RAG) relies on slicing large documents into smaller chunks, embedding them, and searching for semantic similarity. This creates a painful Catch-22:"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Parent-Child Document Retrieval for Context Integrity
 
 ### The Problem: The Chunking Catch-22

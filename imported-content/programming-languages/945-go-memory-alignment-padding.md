@@ -1,3 +1,11 @@
+---
+title: "Go Memory Alignment: Struct Padding and CPU Word-aligned Fetching Optimizations"
+description: "When optimizing high-performance Go applications, developers often focus on algorithms, ignoring physical hardware layouts. Modern CPUs do not read memory byte-by-byte; they fetch memory in fixed-size"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Memory Alignment: Struct Padding and CPU Word-aligned Fetching Optimizations
 
 ## The CPU Word Architecture

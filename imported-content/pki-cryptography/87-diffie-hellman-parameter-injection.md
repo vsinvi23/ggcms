@@ -1,3 +1,11 @@
+---
+title: "Diffie-Hellman Parameter Injection and Logjam Mitigations"
+description: "Diffie-Hellman (DH) key exchange is the foundation of Perfect Forward Secrecy. It allows two parties to establish a shared secret over an insecure channel. However, in 2015, the security community was"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Diffie-Hellman Parameter Injection and Logjam Mitigations
 
 ## The Problem: The Illusion of Strong Encryption

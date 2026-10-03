@@ -1,3 +1,11 @@
+---
+title: "Unsupervised Learning: K-Means Clustering and the Elbow Method"
+description: "In data engineering and analytics, we are frequently faced with large volumes of unlabeled data. We want to discover hidden patterns, categorize system behaviors, or group users into cohorts. Unsuperv"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Unsupervised Learning: K-Means Clustering and the Elbow Method
 
 In data engineering and analytics, we are frequently faced with large volumes of unlabeled data. We want to discover hidden patterns, categorize system behaviors, or group users into cohorts. Unsupervised learning solves this by clustering data points without explicit target labels. **K-Means** is the most widely adopted clustering algorithm due to its simplicity and computational efficiency. However, K-Means requires you to predefine the number of clusters ($K$). Selecting this parameter arbitrarily leads to poor groupings, which developers resolve using the mathematical **Elbow Method**.

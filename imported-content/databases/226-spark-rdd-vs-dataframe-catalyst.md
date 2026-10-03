@@ -1,3 +1,11 @@
+---
+title: "Apache Spark Catalyst Optimizer: Why DataFrames Destroy RDD Performance"
+description: "In the early days of Apache Spark, developers wrote distributed data pipelines using **RDDs (Resilient Distributed Datasets)**. RDDs expose an imperative API (using `map`, `filter`, `reduceByKey`)."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Apache Spark Catalyst Optimizer: Why DataFrames Destroy RDD Performance
 
 ### The Problem: The Flaws of Imperative Data Processing

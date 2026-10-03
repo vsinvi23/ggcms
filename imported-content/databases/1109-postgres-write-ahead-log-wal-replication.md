@@ -1,3 +1,11 @@
+---
+title: "Postgres WAL Internals: Crash Recovery, LSN, and Physical Replication Streams"
+description: "In relational databases, ensuring durability (the \"D\" in ACID) fundamentally conflicts with high throughput. If every `INSERT` or `UPDATE` required an immediate flush to disk (specifically, writing da"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres WAL Internals: Crash Recovery, LSN, and Physical Replication Streams
 
 ## The Problem: Data Durability vs. Throughput

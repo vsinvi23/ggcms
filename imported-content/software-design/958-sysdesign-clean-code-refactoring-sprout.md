@@ -1,3 +1,11 @@
+---
+title: "Refactoring Legacy Code: The Sprout Method, Feather's Characterization, and Feature Toggles"
+description: "Michael Feathers defines legacy code as \"code without tests.\" When tasked with adding a feature or fixing a bug in a massive, untested, tightly coupled monolith (a \"Big Ball of Mud\"), the instinct is "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Refactoring Legacy Code: The Sprout Method, Feather's Characterization, and Feature Toggles
 
 ## The Problem: The Legacy Code Dilemma

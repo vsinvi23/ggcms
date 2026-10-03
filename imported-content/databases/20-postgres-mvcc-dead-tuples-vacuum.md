@@ -1,3 +1,11 @@
+---
+title: "PostgreSQL MVCC Internals: Dead Tuples, Vacuuming, and Transaction ID Wraparound"
+description: "Explore the low-level storage engines of relational databases, analyze how PostgreSQL executes Multi-Version Concurrency Control (MVCC) without table locks, and learn how to manage dead tuples and vacuum operations."
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # PostgreSQL MVCC Internals: Dead Tuples, Vacuuming, and Transaction ID Wraparound
 
 > Explore the low-level storage engines of relational databases, analyze how PostgreSQL executes Multi-Version Concurrency Control (MVCC) without table locks, and learn how to manage dead tuples and vacuum operations.

@@ -1,3 +1,11 @@
+---
+title: "Computer Vision: Convolutional Neural Networks (CNNs) and Receptive Fields"
+description: "While traditional Multi-Layer Perceptrons (MLPs) can theoretically approximate non-linear functions, they scale incredibly poorly to image data. For instance, a modest $1000 \times 1000$ pixel RGB ima"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Computer Vision: Convolutional Neural Networks (CNNs) and Receptive Fields
 
 ## The Problem

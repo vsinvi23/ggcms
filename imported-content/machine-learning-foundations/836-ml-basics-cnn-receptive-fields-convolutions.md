@@ -1,3 +1,11 @@
+---
+title: "Computer Vision: Convolutional Neural Networks (CNNs) and Receptive Fields"
+description: "Applying fully connected feedforward networks (MLPs) to image processing tasks introduces two fatal flaws:"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Computer Vision: Convolutional Neural Networks (CNNs) and Receptive Fields
 
 ## The Problem

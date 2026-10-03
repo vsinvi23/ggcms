@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Token Introspection (RFC 7662): Validating Opaque Tokens across Microservices"
+description: "Opaque (or reference) tokens are highly secure from a client-side perspective because they contain zero internal state, expose no payload data, and can be instantly revoked at the Authorization Server"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Token Introspection (RFC 7662): Validating Opaque Tokens across Microservices
 
 ## The Problem: The Introspection Storm in Distributed Microservices

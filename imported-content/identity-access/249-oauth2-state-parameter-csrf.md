@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Security: Defeating Cross-Site Request Forgery with the `state` Parameter"
+description: "When a user initiates an OAuth 2.0 Authorization Code flow, the relying party (client application) redirects the user to the authorization server (e.g., Google, GitHub). Upon successful authentication"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Security: Defeating Cross-Site Request Forgery with the `state` Parameter
 
 ## The Problem: Cross-Site Request Forgery (CSRF) in OAuth 2.0

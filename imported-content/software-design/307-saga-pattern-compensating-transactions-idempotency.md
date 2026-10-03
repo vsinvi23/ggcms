@@ -1,3 +1,11 @@
+---
+title: "Orchestrating Sagas: Writing Commutative and Idempotent Compensating Transactions"
+description: "In monolithic systems, maintaining data consistency across multiple entities is straightforward. We wrap database queries in a single database transaction block. If any step fails, the database automa"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Orchestrating Sagas: Writing Commutative and Idempotent Compensating Transactions
 
 ## The Problem: The Death of Distributed ACID Transactions

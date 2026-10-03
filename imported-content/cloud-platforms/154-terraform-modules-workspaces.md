@@ -1,3 +1,11 @@
+---
+title: "Scaling Infrastructure as Code: Terraform Modules and Workspaces"
+description: "When organizations begin their Infrastructure as Code (IaC) journey, they often start with a single, monolithic Terraform configuration directory. All resources—VPCs, routing tables, security groups, "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Scaling Infrastructure as Code: Terraform Modules and Workspaces
 
 ## The Problem: The Blast Radius of Monolithic IaC

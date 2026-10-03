@@ -1,3 +1,11 @@
+---
+title: "Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph"
+description: "**The Problem:** Simple agentic loops (like ReAct) operate on a linear `While` loop. As workflows become more complex (e.g., human-in-the-loop approvals, parallel execution, fallback routing, and dist"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph
 
 **The Problem:** Simple agentic loops (like ReAct) operate on a linear `While` loop. As workflows become more complex (e.g., human-in-the-loop approvals, parallel execution, fallback routing, and distinct agent personas), linear loops become unmanageable. Managing the state and memory of multiple agents requires a robust, stateful orchestration framework.

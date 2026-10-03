@@ -1,3 +1,11 @@
+---
+title: "Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC Curves"
+description: "Measuring the performance of a classification model using raw accuracy is one of the most dangerous anti-patterns in machine learning. Consider a fraud detection pipeline where only $0.1\%$ of transac"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC Curves
 
 Measuring the performance of a classification model using raw accuracy is one of the most dangerous anti-patterns in machine learning. Consider a fraud detection pipeline where only $0.1\%$ of transactions are fraudulent. A naive model that classifies *all* transactions as non-fraudulent achieves $99.9\%$ accuracy—yet it fails to catch a single fraudulent event, rendering it completely useless in production. To evaluate models rigorously, developers must employ metrics like **Precision, Recall, F1-Score**, and **ROC-AUC curves**.

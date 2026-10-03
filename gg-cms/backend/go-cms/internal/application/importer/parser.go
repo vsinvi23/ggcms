@@ -13,20 +13,23 @@ import (
 )
 
 type ParsedItem struct {
-	FileName     string
-	Type         string
-	Title        string
-	Description  string
-	Body         string
-	BodyFormat   string
-	CategorySlug string
-	ArticleType  string
-	CourseType   string
-	Status       string
-	Tags         []string
-	Sections     []ParsedSection
-	Valid        bool
-	Error        string
+	FileName         string
+	Type             string
+	Title            string
+	Description      string
+	Body             string
+	BodyFormat       string
+	CategorySlug     string
+	ArticleType      string
+	CourseType       string
+	Kind             string
+	Slug             string
+	SequencedCourses []string
+	Status           string
+	Tags             []string
+	Sections         []ParsedSection
+	Valid            bool
+	Error            string
 }
 
 // ParsedLesson is a lesson parsed from a COURSE import's markdown/JSON structure.
@@ -227,16 +230,19 @@ func parseFrontmatter(fm string, item *ParsedItem) {
 }
 
 type jsonImportItem struct {
-	Type         string             `json:"type"`
-	Title        string             `json:"title"`
-	Description  string             `json:"description"`
-	Body         string             `json:"body"`
-	CategorySlug string             `json:"categorySlug"`
-	ArticleType  string             `json:"articleType"`
-	CourseType   string             `json:"courseType"`
-	Status       string             `json:"status"`
-	Tags         []string           `json:"tags"`
-	Sections     []jsonSectionItem  `json:"sections"`
+	PathID           string             `json:"pathId"`
+	Kind             string             `json:"kind"`
+	Type             string             `json:"type"`
+	Title            string             `json:"title"`
+	Description      string             `json:"description"`
+	Body             string             `json:"body"`
+	CategorySlug     string             `json:"categorySlug"`
+	ArticleType      string             `json:"articleType"`
+	CourseType       string             `json:"courseType"`
+	SequencedCourses []string           `json:"sequencedCourses"`
+	Status           string             `json:"status"`
+	Tags             []string           `json:"tags"`
+	Sections         []jsonSectionItem  `json:"sections"`
 }
 
 type jsonLessonItem struct {
@@ -277,22 +283,33 @@ func parseJSON(filename string, content []byte) []ParsedItem {
 
 func jsonToItem(filename string, ji jsonImportItem) ParsedItem {
 	t := strings.ToUpper(ji.Type)
-	if t == "" {
+	if t == "LEARNING_PATH" || ji.PathID != "" || len(ji.SequencedCourses) > 0 {
+		t = "LEARNING_PATH"
+	} else if t == "" {
 		t = "ARTICLE"
 	}
+
+	kind := ji.Kind
+	if t == "LEARNING_PATH" && kind == "" {
+		kind = "LEARNING_PLAN"
+	}
+
 	item := ParsedItem{
-		FileName:     filename,
-		Type:         t,
-		Title:        ji.Title,
-		Description:  ji.Description,
-		Body:         ji.Body,
-		BodyFormat:   "json",
-		CategorySlug: ji.CategorySlug,
-		ArticleType:  ji.ArticleType,
-		CourseType:   ji.CourseType,
-		Status:       strings.ToUpper(ji.Status),
-		Tags:         ji.Tags,
-		Valid:        true,
+		FileName:         filename,
+		Type:             t,
+		Title:            ji.Title,
+		Description:      ji.Description,
+		Body:             ji.Body,
+		BodyFormat:       "json",
+		CategorySlug:     ji.CategorySlug,
+		ArticleType:      ji.ArticleType,
+		CourseType:       ji.CourseType,
+		Kind:             kind,
+		Slug:             ji.PathID,
+		SequencedCourses: ji.SequencedCourses,
+		Status:           strings.ToUpper(ji.Status),
+		Tags:             ji.Tags,
+		Valid:            true,
 	}
 	if t == "COURSE" && len(ji.Sections) > 0 {
 		item.Sections = make([]ParsedSection, len(ji.Sections))

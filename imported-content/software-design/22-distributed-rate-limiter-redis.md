@@ -1,3 +1,11 @@
+---
+title: "Designing a Global Distributed Rate Limiter: Redis Cluster, Sliding Window Logs, and Token Buckets"
+description: "Master the architectural patterns of highly available, ultra-low-latency distributed rate limiting. Learn how to combat distributed race conditions, minimize lock contention, and leverage Redis-backed Lua scripts for atomic token-bucket execution."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing a Global Distributed Rate Limiter: Redis Cluster, Sliding Window Logs, and Token Buckets
 
 > Master the architectural patterns of highly available, ultra-low-latency distributed rate limiting. Learn how to combat distributed race conditions, minimize lock contention, and leverage Redis-backed Lua scripts for atomic token-bucket execution.

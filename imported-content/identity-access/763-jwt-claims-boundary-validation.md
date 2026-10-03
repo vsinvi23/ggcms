@@ -1,3 +1,11 @@
+---
+title: "JWT Claim Validation: Enforcing Issuer (iss) and Audience (aud) Boundaries"
+description: "A common security vulnerability in distributed APIs is the **Cryptographic Validation Trap**. Many engineers assume that if a JSON Web Token (JWT) passes signature verification successfully, the token"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Claim Validation: Enforcing Issuer (iss) and Audience (aud) Boundaries
 
 ## The Problem: The Cryptographic Verification Trap

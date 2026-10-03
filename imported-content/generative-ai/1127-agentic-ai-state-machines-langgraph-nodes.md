@@ -1,3 +1,11 @@
+---
+title: "Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph"
+description: "**The Problem:** Traditional agent frameworks (like standard LangChain or AutoGPT) use linear, while-loop based reasoning architectures. They struggle with complex, deterministic workflows that requir"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph
 
 **The Problem:** Traditional agent frameworks (like standard LangChain or AutoGPT) use linear, while-loop based reasoning architectures. They struggle with complex, deterministic workflows that require loops, branching logic, human-in-the-loop approvals, or persisting long-term state across multiple specialized agents.

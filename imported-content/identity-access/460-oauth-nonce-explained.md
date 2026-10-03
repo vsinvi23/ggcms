@@ -1,3 +1,11 @@
+---
+title: "OAuth Nonce Explained: Replay Attack Mitigation in OpenID Connect"
+description: "While the OAuth 2.0 `state` parameter is designed to prevent Cross-Site Request Forgery (CSRF) during the redirect phase, OpenID Connect (OIDC) introduces another critical safety check: the **`nonce` "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth Nonce Explained: Replay Attack Mitigation in OpenID Connect
 
 While the OAuth 2.0 `state` parameter is designed to prevent Cross-Site Request Forgery (CSRF) during the redirect phase, OpenID Connect (OIDC) introduces another critical safety check: the **`nonce` parameter**.

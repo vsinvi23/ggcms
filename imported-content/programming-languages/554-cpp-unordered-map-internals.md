@@ -1,3 +1,11 @@
+---
+title: "std::unordered_map Explained Internally: Hash Buckets and Chaining"
+description: "Standard search trees (`std::map`, backed by Red-Black trees) guarantee O(log N) lookup time. However, for massive datasets where key-value relationships don't need sorting, O(log N) is too slow. We r"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # std::unordered_map Explained Internally: Hash Buckets and Chaining
 
 ## Problem Statement

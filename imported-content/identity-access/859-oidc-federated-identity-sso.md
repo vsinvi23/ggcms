@@ -1,3 +1,11 @@
+---
+title: "OIDC Federated Identity: Managing Multi-Account SSO and ID Token Verification"
+description: "When implementing an OpenID Connect (OIDC) Relying Party (RP) that supports federated Single Sign-On (SSO) across multiple external identity providers (IdPs), security boundaries must be tightly enfor"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OIDC Federated Identity: Managing Multi-Account SSO and ID Token Verification
 
 ## The Problem: The Risk of Dynamic Discovery in Multi-Tenant OIDC RPs

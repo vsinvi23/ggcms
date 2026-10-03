@@ -1,3 +1,11 @@
+---
+title: "Deserialization Attacks: How Java Object Streams Lead to Remote Code Execution"
+description: "Distributed enterprise applications frequently serialize Java objects to send them over network boundaries, store session state in databases, or queue tasks. The default serialization mechanism provid"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Deserialization Attacks: How Java Object Streams Lead to Remote Code Execution
 
 ## The Problem: Arbitrary Instantiation and Gadget Injection

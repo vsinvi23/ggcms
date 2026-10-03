@@ -1,3 +1,11 @@
+---
+title: "SAML Parsing Vulnerabilities: Defending Against the Billion Laughs (XML Bomb) Attack"
+description: "Security Assertion Markup Language (SAML) remains a dominant protocol for enterprise Single Sign-On (SSO). Because SAML messages are heavily structured XML documents, the security of any SAML implemen"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SAML Parsing Vulnerabilities: Defending Against the Billion Laughs (XML Bomb) Attack
 
 ## The Problem: The Hidden Dangers of Entity Expansion

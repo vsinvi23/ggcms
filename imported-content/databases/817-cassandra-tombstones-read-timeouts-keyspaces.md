@@ -1,3 +1,11 @@
+---
+title: "Cassandra Deletions: Why Tombstones Cause Read Latency and Timeouts"
+description: "In masterless, distributed databases like Apache Cassandra, deleting data is fundamentally different from traditional relational databases. Running a standard `DELETE` query or setting a column to `NU"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Deletions: Why Tombstones Cause Read Latency and Timeouts
 
 ## The Problem: The High Cost of Distributed Deletions

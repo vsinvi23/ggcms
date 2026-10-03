@@ -1,3 +1,11 @@
+---
+title: "Orchestrating Sagas: Writing Commutative and Idempotent Compensating Transactions"
+description: "In a microservices architecture, a single business transaction often spans multiple databases. Since Two-Phase Commit (2PC) blocks and scales poorly, we need a way to maintain eventual consistency. En"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Orchestrating Sagas: Writing Commutative and Idempotent Compensating Transactions
 
 ## The Problem: Distributed Consistency Without 2PC

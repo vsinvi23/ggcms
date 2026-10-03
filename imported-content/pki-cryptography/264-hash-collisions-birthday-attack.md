@@ -1,3 +1,11 @@
+---
+title: "The Birthday Paradox: Why a 128-bit Hash Collides in $2^{64}$ Attempts"
+description: "Cryptographic hash functions act as the digital fingerprints of modern computing. They map arbitrary-sized data to a fixed-size bit string. A fundamental requirement of a secure hash function is *coll"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # The Birthday Paradox: Why a 128-bit Hash Collides in $2^{64}$ Attempts
 
 Cryptographic hash functions act as the digital fingerprints of modern computing. They map arbitrary-sized data to a fixed-size bit string. A fundamental requirement of a secure hash function is *collision resistance*: it should be computationally infeasible to find two distinct inputs, $M_1$ and $M_2$, that produce the same hash output $H(M_1) = H(M_2)$. 

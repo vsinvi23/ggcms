@@ -1,3 +1,11 @@
+---
+title: "Building a Secure Login System: Lockouts, Session Tokens, and Timing Defenses"
+description: "Authentication portals are the frontline interface exposed to attackers. A high-security login system must defend against:"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Building a Secure Login System: Lockouts, Session Tokens, and Timing Defenses
 
 ## The Problem

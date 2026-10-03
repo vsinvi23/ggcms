@@ -1,3 +1,11 @@
+---
+title: "GCP IAM Workload Federation: Eliminating Service Account Keys"
+description: "For years, the standard method for authenticating external workloads (like GitHub Actions, on-premises servers, or AWS instances) to Google Cloud Platform (GCP) involved generating Service Account JSO"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP IAM Workload Federation: Eliminating Service Account Keys
 
 ## The Static Credential Problem

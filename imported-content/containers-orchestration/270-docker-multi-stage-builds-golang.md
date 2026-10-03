@@ -1,3 +1,11 @@
+---
+title: "Docker Multi-Stage Builds: Compiling Static Go Binaries for Distroless Images"
+description: "When deploying Go applications to production, developers often default to building container images using standard parent images like `golang:1.22` or `ubuntu:22.04`. While convenient, this practice i"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Multi-Stage Builds: Compiling Static Go Binaries for Distroless Images
 
 ## The Problem: Bloated and Vulnerable Production Container Images

@@ -1,3 +1,11 @@
+---
+title: "Rust Concurrency: Deciphering the Compiler-enforced Send and Sync Thread-safety Traits"
+description: "A Rust developer attempts to implement a high-concurrency event router. To maximize memory throughput, the design uses raw pointer buffers and thread-local data stores to communicate between threads. "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Concurrency: Deciphering the Compiler-enforced Send and Sync Thread-safety Traits
 
 ## The Problem: Cryptic Thread-safety Compilation Blocks

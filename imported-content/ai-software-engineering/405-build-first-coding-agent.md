@@ -1,3 +1,11 @@
+---
+title: "Building Your First Coding Agent from Scratch"
+description: "Commercial coding agents can seem complex, wrapped in heavy layers and databases. This hides the elegant simplicity of their core operational loop. At their foundation, all agents rely on a read-eval-"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Building Your First Coding Agent from Scratch
 
 Commercial coding agents can seem complex, wrapped in heavy layers and databases. This hides the elegant simplicity of their core operational loop. At their foundation, all agents rely on a read-eval-write cycle. Building a coding agent from scratch in Python demystifies how these systems interact with environments and recover from errors.

@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Deployments: Helm Charts vs Kustomize Declarative Overlays"
+description: "Managing Kubernetes configurations across multiple environments (Development, Staging, Production) often leads to extensive code duplication. Copy-pasting hundreds of lines of YAML for a `Deployment` "
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Deployments: Helm Charts vs Kustomize Declarative Overlays
 
 ### The Problem: Configuration Drift and YAML Sprawl

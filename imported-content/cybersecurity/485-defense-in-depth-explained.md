@@ -1,3 +1,11 @@
+---
+title: "Defense in Depth Explained: The Swiss Cheese Security Model"
+description: "Engineering teams often look for a \"silver bullet\" to solve a security requirement. Need to secure a web app? \"Just put a Web Application Firewall (WAF) in front of it.\" Need to secure a database? \"Ju"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Defense in Depth Explained: The Swiss Cheese Security Model
 
 ## The Problem: The Single Point of Failure

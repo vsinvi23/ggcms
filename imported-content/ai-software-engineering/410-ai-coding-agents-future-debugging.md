@@ -1,3 +1,11 @@
+---
+title: "AI Coding Agents and the Future of Debugging"
+description: "When a production system fails, developers are forced to reconstruct the failure state. They sift through unstructured logs, trace back complex call stacks, and manually write reproduction scripts to "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # AI Coding Agents and the Future of Debugging
 
 When a production system fails, developers are forced to reconstruct the failure state. They sift through unstructured logs, trace back complex call stacks, and manually write reproduction scripts to isolate state bugs. Autonomous AI coding agents represent a paradigm shift: they don't just write new code; they automate the reproduction, instrumentation, and remediation of production defects.

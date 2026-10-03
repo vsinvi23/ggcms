@@ -1,3 +1,11 @@
+---
+title: "IAM Explained from Scratch: Lifecycle, Provisioning, and Federation"
+description: "In the early days of a startup, identity management is simple: you create a row in a Postgres `users` table."
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # IAM Explained from Scratch: Lifecycle, Provisioning, and Federation
 
 ## The Problem: The Identity Sprawl

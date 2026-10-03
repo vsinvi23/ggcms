@@ -1,3 +1,11 @@
+---
+title: "Python Dunder Methods: Customizing Object Collection, Representation, and Context Protocols"
+description: "In Python, building custom business domain models often leads to clunky, un-intuitive code interfaces. For example, if you create a custom `TransactionHistory` collection class, developers are forced "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Dunder Methods: Customizing Object Collection, Representation, and Context Protocols
 
 ## The Problem: The Un-Pythonic Object

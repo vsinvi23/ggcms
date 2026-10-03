@@ -1,3 +1,11 @@
+---
+title: "JWT Claim Validation: Enforcing Issuer (iss) and Audience (aud) Boundaries"
+description: "A common vulnerability in microservice architectures is \"Confused Deputy\" attacks via token reuse. If Microservice A accepts a JWT intended for Microservice B, a compromised service can replay its tok"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Claim Validation: Enforcing Issuer (iss) and Audience (aud) Boundaries
 
 ## The Problem

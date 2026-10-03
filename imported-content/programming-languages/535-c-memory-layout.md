@@ -1,3 +1,11 @@
+---
+title: "C Memory Layout Explained"
+description: "Understanding where variables are stored physically in memory is critical for writing performant, secure C code. Misunderstanding the memory layout leads to bugs like returning stack variables, attemp"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C Memory Layout Explained
 
 ## The Problem

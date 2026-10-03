@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Token Introspection: Validating Opaque Tokens across Microservices"
+description: "Many modern distributed systems use JSON Web Tokens (JWTs) to pass identities statelessly between microservices. However, standard JWTs have two major architectural drawbacks: **Data Exposure** and **"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Token Introspection: Validating Opaque Tokens across Microservices
 
 ## The Problem: Stateless Payload Leakage vs. Opaque Verification Latency

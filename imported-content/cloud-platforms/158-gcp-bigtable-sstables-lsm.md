@@ -1,3 +1,11 @@
+---
+title: "Google Cloud Bigtable Architecture: Scaling Petabyte LSM Trees"
+description: "Traditional relational database engines (like PostgreSQL or MySQL) use B-Tree indexes to store and retrieve data. B-Trees are designed for efficient random-read operations, keeping data pages organize"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Google Cloud Bigtable Architecture: Scaling Petabyte LSM Trees
 
 ## The Problem: The Write-Throughput Wall of B-Trees

@@ -1,3 +1,11 @@
+---
+title: "Cassandra Gossip Protocol: Decentralized Node Failure Detection and Repairs"
+description: "In distributed databases, maintaining an accurate and consistent view of cluster topology is notoriously difficult. If a cluster uses a centralized coordinator (like Zookeeper in older Kafka or a mast"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Gossip Protocol: Decentralized Node Failure Detection and Repairs
 
 ## The Problem: Centralized Bottlenecks

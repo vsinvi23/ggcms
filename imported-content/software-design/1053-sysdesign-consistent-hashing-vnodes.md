@@ -1,3 +1,11 @@
+---
+title: "Sharded Database Routing: Stabilizing Node Failures with Consistent Hashing and Virtual Nodes (VNodes)"
+description: "When scaling a distributed database or a distributed cache (like Memcached or Redis), data must be partitioned across multiple nodes. The simplest routing approach is modulo hashing: `Node_Index = has"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Sharded Database Routing: Stabilizing Node Failures with Consistent Hashing and Virtual Nodes (VNodes)
 
 ## The Problem: The Instability of Modulo Hashing

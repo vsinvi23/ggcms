@@ -1,3 +1,11 @@
+---
+title: "Authentication Bypass: Mitigating Logic Flaws, Type Coercion, and Magic Hashes"
+description: "Authentication subsystems are the absolute trust boundaries of any software architecture. However, they frequently fail due to subtle dynamic language behaviors or logical design flaws. Two common vec"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Authentication Bypass: Mitigating Logic Flaws, Type Coercion, and Magic Hashes
 
 ## The Problem: Loose Compiles and Logical State Bypass

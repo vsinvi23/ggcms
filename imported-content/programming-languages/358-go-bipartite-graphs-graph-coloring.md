@@ -1,3 +1,11 @@
+---
+title: "Bipartite Graph Coloring in Go: Assigning Frequencies in Radio Networks"
+description: "In telecommunications, if two adjacent radio towers use the same frequency, interference occurs. If a network can be perfectly assigned exactly two frequencies without conflict, the graph is mathemati"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Bipartite Graph Coloring in Go: Assigning Frequencies in Radio Networks
 
 ## The Problem: Conflict Resolution and 2-Coloring

@@ -1,3 +1,11 @@
+---
+title: "Modern Password Hashing: Why Argon2id Beats bcrypt and PBKDF2"
+description: "For decades, cybersecurity standards recommended hashing user passwords using CPU-intensive algorithms like PBKDF2 or bcrypt. These algorithms slow down hash calculation, making offline dictionary and"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Modern Password Hashing: Why Argon2id Beats bcrypt and PBKDF2
 
 ## The Problem: The Industrialization of Password Brute-Forcing

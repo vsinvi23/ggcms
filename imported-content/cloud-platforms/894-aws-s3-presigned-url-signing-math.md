@@ -1,3 +1,11 @@
+---
+title: "Securing AWS S3: Inside the Signature Version 4 (SigV4) Pre-Signed URL Lifecycle"
+description: "When building web applications, a common requirement is allowing a user's browser to directly upload or download large objects from AWS S3. Routing this traffic through your application backend is ine"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Securing AWS S3: Inside the Signature Version 4 (SigV4) Pre-Signed URL Lifecycle
 
 ## The Problem: Securely Delegating S3 Access Without Distributing Credentials

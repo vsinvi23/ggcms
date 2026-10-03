@@ -1,3 +1,11 @@
+---
+title: "Go Slices Under the Hood: Pointers, Length, Capacity, and Append Reallocations"
+description: "Go slices are one of the most frequently used yet widely misunderstood primitives in the language. Many developers treat them as dynamic arrays similar to Python lists or C++ vectors. However, treatin"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Go Slices Under the Hood: Pointers, Length, Capacity, and Append Reallocations
 
 Go slices are one of the most frequently used yet widely misunderstood primitives in the language. Many developers treat them as dynamic arrays similar to Python lists or C++ vectors. However, treating a slice as a pure dynamic array leads to subtle bugs, such as unexpected mutations in unrelated variables, or silent memory leaks. 

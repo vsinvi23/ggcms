@@ -1,3 +1,11 @@
+---
+title: "Rust Async: Under the Hood of Tokio's Work-Stealing Task Scheduler"
+description: "Writing high-performance network servers requires handling hundreds of thousands of concurrent connections. Spawning one OS-level thread per connection is inefficient, as thread context switching and "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Async: Under the Hood of Tokio's Work-Stealing Task Scheduler
 
 ## The Problem

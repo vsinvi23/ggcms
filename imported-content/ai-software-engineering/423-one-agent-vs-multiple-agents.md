@@ -1,3 +1,11 @@
+---
+title: "Architecting for Scale: When to Use One AI Agent vs. Multiple Agents"
+description: "When designing LLM-powered applications, software engineers frequently slide into two dangerous architectural extremes."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Architecting for Scale: When to Use One AI Agent vs. Multiple Agents
 
 ## The Architectural Anti-Patterns

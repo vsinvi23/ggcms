@@ -1,3 +1,11 @@
+---
+title: "Segment Trees in C++: $O(\log N)$ Range Sum Queries for Game Engines"
+description: "Consider an array representing terrain heights or particle counts across a 1D coordinate system in a game. We frequently need to calculate the sum of values in a specific range $[L, R]$ and update val"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Segment Trees in C++: $O(\log N)$ Range Sum Queries for Game Engines
 
 ## The Problem: Dynamic Range Queries

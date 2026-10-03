@@ -1,3 +1,11 @@
+---
+title: "Cache Stampedes: Preventing Thundering Herds with Probabilistic Early Expiration"
+description: "In high-concurrency systems, caching is the primary mechanism used to protect databases from read exhaustion. However, standard Time-To-Live (TTL) expiration strategies suffer from a critical vulnerab"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Cache Stampedes: Preventing Thundering Herds with Probabilistic Early Expiration
 
 ## The Problem: The High-Traffic Expiration Collapse

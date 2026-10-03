@@ -1,3 +1,11 @@
+---
+title: "Tarjan's SCC in Java: Identifying Clusters in Social Network Graphs"
+description: "In a directed graph like Twitter (where A follows B, but B might not follow A), a Strongly Connected Component (SCC) is a maximal subset of vertices where every vertex is reachable from every other ve"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Tarjan's SCC in Java: Identifying Clusters in Social Network Graphs
 
 ## The Problem: Strongly Connected Components

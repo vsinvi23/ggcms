@@ -1,4 +1,4 @@
----
+--- 
 title: "Domain-Specific AI: Why General Models Aren't Always Enough"
 slug: "domain-specific-ai-why-general-models-not-enough"
 category: "Generative AI"
@@ -42,7 +42,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "generative-ai"
 ---
+
 
 # Domain-Specific AI: Why General Models Aren't Always Enough
 

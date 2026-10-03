@@ -1,3 +1,11 @@
+---
+title: "AI Supply Chain Security: Defending Against Poisoned Weights and Malicious Packages"
+description: "Modern AI development relies heavily on the open-source supply chain, importing packages from PyPI and downloading pretrained model weights from repositories like Hugging Face. However, this massive e"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # AI Supply Chain Security: Defending Against Poisoned Weights and Malicious Packages
 
 ## Problem Statement

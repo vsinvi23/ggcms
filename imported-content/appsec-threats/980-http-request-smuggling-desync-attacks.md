@@ -1,3 +1,11 @@
+---
+title: "HTTP Request Smuggling: Exploiting Frontend/Backend Desync Vulnerabilities"
+description: "Modern web architecture rarely exposes application servers directly to the internet. Instead, reverse proxies, load balancers, or Web Application Firewalls (WAFs) sit at the edge, forwarding requests "
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # HTTP Request Smuggling: Exploiting Frontend/Backend Desync Vulnerabilities
 
 ## The Problem: Ambiguous HTTP Boundaries

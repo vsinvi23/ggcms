@@ -1,3 +1,11 @@
+---
+title: "Python C Extensions: Bypassing the GIL with Thread-safe C-bindings"
+description: "CPython, the standard implementation of Python, relies on a **Global Interpreter Lock (GIL)** to protect its internal state. The GIL ensures that only one native thread can execute Python bytecode at "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python C Extensions: Bypassing the GIL with Thread-safe C-bindings
 
 ## The Problem

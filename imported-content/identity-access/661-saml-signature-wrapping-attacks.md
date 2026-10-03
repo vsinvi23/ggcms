@@ -1,3 +1,11 @@
+---
+title: "SAML Assertion Security: Defeating XML Signature Wrapping (XSW) Exploits"
+description: "Security Assertion Markup Language (SAML) 2.0 relies on XML Signatures (XMLDSig) to ensure that the Identity Provider (IdP) legitimately issued the authentication assertion."
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SAML Assertion Security: Defeating XML Signature Wrapping (XSW) Exploits
 
 ## The Problem: The Ambiguity of XML DOM Parsing

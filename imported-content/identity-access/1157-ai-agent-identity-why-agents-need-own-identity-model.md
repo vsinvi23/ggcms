@@ -1,4 +1,4 @@
----
+--- 
 title: "AI Agent Identity: Why Agents Need Their Own Identity Model"
 slug: "ai-agent-identity-why-agents-need-own-identity-model"
 category: "Security"
@@ -45,7 +45,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "identity-access"
 ---
+
 
 # AI Agent Identity: Why Agents Need Their Own Identity Model
 

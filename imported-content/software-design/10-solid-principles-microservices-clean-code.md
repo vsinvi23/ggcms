@@ -1,3 +1,11 @@
+---
+title: "Applying SOLID Principles in Software Architecture: Designing Extensible Clean Systems"
+description: "Discover how the SOLID design principles translate from object-oriented programming to building highly maintainable, loosely coupled, and extensible modern software systems."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Applying SOLID Principles in Software Architecture: Designing Extensible Clean Systems
 
 > Discover how the SOLID design principles translate from object-oriented programming to building highly maintainable, loosely coupled, and extensible modern software systems.

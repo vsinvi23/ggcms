@@ -1,3 +1,11 @@
+---
+title: "Java GraalVM: Native Image Compilation, Ahead-Of-Time Constraints, and Reflection Maps"
+description: "Modern cloud architecture favors microservices, serverless functions, and containerized scale-to-zero workloads. In these environments, the traditional JVM suffers from two major limitations: long sta"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java GraalVM: Native Image Compilation, Ahead-Of-Time Constraints, and Reflection Maps
 
 ## The Problem

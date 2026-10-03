@@ -1,3 +1,11 @@
+---
+title: "CAP Theorem Explained Without the Academic Jargon"
+description: "Imagine a microservice architecture where `Service A` communicates with a database cluster consisting of a primary node and a replica. Everything works perfectly in a local development environment. Ne"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # CAP Theorem Explained Without the Academic Jargon
 
 ## The Problem: The Inevitability of Network Failure

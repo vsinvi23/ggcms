@@ -1,3 +1,11 @@
+---
+title: "Google Cloud Bigtable Architecture: Designing Row Keys to Prevent SSTable Hotspotting"
+description: "Google Cloud Bigtable is a petabyte-scale, fully managed NoSQL wide-column database. It is designed to handle millions of operations per second with single-digit millisecond latency. However, develope"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Google Cloud Bigtable Architecture: Designing Row Keys to Prevent SSTable Hotspotting
 
 ## The Problem: The Sequential Write Bottleneck in Wide-Column Stores

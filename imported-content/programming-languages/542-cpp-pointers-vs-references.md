@@ -1,3 +1,11 @@
+---
+title: "Pointers vs. References: Memory Aliasing, Null Safety, and Const Correctness"
+description: "In C++, developers have two primary mechanisms for addressing memory indirectly: pointers and references. While they appear to solve similar problems—referencing an object without copying it—they have"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Pointers vs. References: Memory Aliasing, Null Safety, and Const Correctness
 
 In C++, developers have two primary mechanisms for addressing memory indirectly: pointers and references. While they appear to solve similar problems—referencing an object without copying it—they have vastly different semantic guarantees, compiler optimization paths, and safety implications. Understanding these differences at a machine level is critical for writing robust and highly optimized modern C++.

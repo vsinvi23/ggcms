@@ -1,3 +1,11 @@
+---
+title: "Hardware Security Modules (HSMs): Communicating via PKCS#11"
+description: "In the world of Public Key Infrastructure (PKI), the entire security architecture collapses if a private key is exposed. Traditional software-based key storage mechanisms suffer from inherent vulnerab"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Hardware Security Modules (HSMs): Communicating via PKCS#11
 
 ## The Core Problem: Defending the Private Key

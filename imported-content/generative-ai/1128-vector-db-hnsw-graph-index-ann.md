@@ -1,3 +1,11 @@
+---
+title: "Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs"
+description: "**The Problem:** Finding the exact closest vector (K-Nearest Neighbors, or KNN) in a database of billions of 1536-dimensional embeddings requires comparing the query against every single vector. This "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Vector DB Internals: Hierarchical Navigable Small World (HNSW) Graphs
 
 **The Problem:** Finding the exact closest vector (K-Nearest Neighbors, or KNN) in a database of billions of 1536-dimensional embeddings requires comparing the query against every single vector. This $O(N)$ linear scan is computationally unfeasible for real-time RAG applications. Vector databases (like Pinecone, Milvus, Qdrant) solve this using Approximate Nearest Neighbors (ANN) algorithms, the most prominent of which is HNSW.

@@ -1,3 +1,11 @@
+---
+title: "Python Multithreading: Why the GIL Causes Thread Thrashing on I/O-Bound Workloads"
+description: "When developers transition to Python from languages like Java or C++, they often attempt to speed up their applications by spinning up multiple threads. The logical assumption is that dividing a workl"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Python Multithreading: Why the GIL Causes Thread Thrashing on I/O-Bound Workloads
 
 ## The Problem: The Illusion of Concurrency

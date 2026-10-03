@@ -1,3 +1,11 @@
+---
+title: "Backend-For-Frontend (BFF): Tailoring APIs for Mobile vs Web Clients"
+description: "As a startup scales, they often build a robust suite of domain microservices (e.g., `Users`, `Orders`, `Products`) hidden behind a single General-Purpose API Gateway. This gateway exposes a unified RE"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Backend-For-Frontend (BFF): Tailoring APIs for Mobile vs Web Clients
 
 ## The Problem: The "One Size Fits All" API

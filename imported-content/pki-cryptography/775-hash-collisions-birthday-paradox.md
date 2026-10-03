@@ -1,3 +1,11 @@
+---
+title: "The Birthday Paradox: Why a 128-bit Hash Collides in $2^{64}$ Attempts"
+description: "Cryptographic hash functions like MD5, SHA-1, and SHA-256 take arbitrary input and compress it into a fixed-size deterministic output. A common misconception among developers is that a hash function p"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # The Birthday Paradox: Why a 128-bit Hash Collides in $2^{64}$ Attempts
 
 ## The Problem: The Illusion of Hash Security

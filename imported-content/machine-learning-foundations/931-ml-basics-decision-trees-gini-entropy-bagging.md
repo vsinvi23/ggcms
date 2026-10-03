@@ -1,3 +1,11 @@
+---
+title: "Ensemble Learning: From Decision Trees to Random Forests (Bagging)"
+description: "Individual Decision Trees are highly intuitive, require minimal preprocessing, and natively handle both categorical and numerical features. However, they suffer from extreme variance: they are prone t"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Ensemble Learning: From Decision Trees to Random Forests (Bagging)
 
 ## The Problem

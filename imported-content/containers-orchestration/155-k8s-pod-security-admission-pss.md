@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Pod Security Standards (PSS) and Admission Controllers"
+description: "By default, Kubernetes pods run with highly permissive security settings. If a pod’s configuration is left unhardened, a compromised container can serve as a launchpad for an attacker to compromise th"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Pod Security Standards (PSS) and Admission Controllers
 
 ## The Problem: The Danger of Privileged Pod Defaults

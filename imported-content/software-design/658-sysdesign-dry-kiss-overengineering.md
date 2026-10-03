@@ -1,3 +1,11 @@
+---
+title: "Clean Code Architecture: Pragmatic Design Boundaries vs Premature Object Abstraction"
+description: "In the pursuit of \"Clean Code\" and SOLID principles, software engineering culture frequently falls into the trap of premature abstraction. Developers, anticipating non-existent future requirements, fr"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Clean Code Architecture: Pragmatic Design Boundaries vs Premature Object Abstraction
 
 ## The Problem: The Overengineering Trap

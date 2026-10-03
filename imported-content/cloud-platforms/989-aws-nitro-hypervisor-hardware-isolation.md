@@ -1,3 +1,11 @@
+---
+title: "AWS Nitro System: Decoupling Virtualization Overhead onto Dedicated Hardware Cards"
+description: "In traditional virtualization architectures (such as early Xen-based EC2 instances), a single physical server runs a hypervisor that manages CPU, memory, network, storage, and management agents. This "
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Nitro System: Decoupling Virtualization Overhead onto Dedicated Hardware Cards
 
 ## The Problem: The "Hypervisor Tax" and Resource Contention

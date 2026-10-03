@@ -2,7 +2,7 @@
   "type": "COURSE",
   "title": "OWASP Top 10 for LLM Applications: Defense & Mitigation",
   "description": "A security engineering course detailing prompt injection, insecure output handling, sensitive data leakage, system prompt theft, and dual-LLM guardrail architectures.",
-  "categorySlug": "appsec-and-threats",
+  "categorySlug": "appsec-threats",
   "courseType": "TRACK",
   "tags": [
     "owasp-top-10",

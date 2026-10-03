@@ -1,3 +1,11 @@
+---
+title: "Postgres BRIN Indexes: Block Range Indexing for Time-Series Datasets"
+description: "Standard B-Tree indexes are excellent for lookups, but they suffer from severe scalability issues when applied to massive, append-only datasets like IoT telemetry, application logs, or time-series met"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres BRIN Indexes: Block Range Indexing for Time-Series Datasets
 
 ## The Problem: B-Trees Do Not Scale for Big Data

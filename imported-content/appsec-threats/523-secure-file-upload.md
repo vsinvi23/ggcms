@@ -1,3 +1,11 @@
+---
+title: "Secure File Upload Architecture: Defeating Polyglots and Remote Code Execution"
+description: "Allowing users to upload files is one of the most hazardous capabilities an application can expose. If misconfigured, an upload form can become an immediate vector for Remote Code Execution (RCE), whe"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Secure File Upload Architecture: Defeating Polyglots and Remote Code Execution
 
 Allowing users to upload files is one of the most hazardous capabilities an application can expose. If misconfigured, an upload form can become an immediate vector for Remote Code Execution (RCE), where an attacker uploads a malicious script (e.g., `.php`, `.jsp`, `.exe`, or `.sh`) and coaxes the server into executing it. Beyond simple extension spoofing, advanced attackers craft "polyglot" files—payloads that are structurally valid images but contain executable scripts in their metadata or pixel arrays.

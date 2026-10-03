@@ -1,3 +1,11 @@
+---
+title: "Domain-Driven Design (DDD): Translating Ubiquitous Language into Isolated Bounded Contexts"
+description: "In large-scale software systems, developers often fall into the trap of designing a single, unified database schema or domain model for the entire enterprise. This approach invariably leads to **seman"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Domain-Driven Design (DDD): Translating Ubiquitous Language into Isolated Bounded Contexts
 
 ## The Problem: The Cognitive Trap of the "God Object"

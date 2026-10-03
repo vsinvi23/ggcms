@@ -1,3 +1,11 @@
+---
+title: "The Open/Closed Principle: Implementing the Strategy Pattern for Extensibility"
+description: "In the lifecycle of every successful software project, there comes a moment when a core file becomes a \"God Class.\" It starts innocently enough—an `if` statement here, a `switch` case there. But fast-"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The Open/Closed Principle: Implementing the Strategy Pattern for Extensibility
 
 In the lifecycle of every successful software project, there comes a moment when a core file becomes a "God Class." It starts innocently enough—an `if` statement here, a `switch` case there. But fast-forward a year, and your `PaymentProcessor` class is a 2,000-line behemoth of tangled conditionals handling Stripe, PayPal, Apple Pay, and cryptocurrency.

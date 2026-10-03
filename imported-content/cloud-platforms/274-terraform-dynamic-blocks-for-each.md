@@ -1,3 +1,11 @@
+---
+title: "Terraform DRY Scoping: for_each and Dynamic Blocks Explained"
+description: "As infrastructure scales, Terraform codebases frequently fall victim to copy-paste bloat. Consider provisioning an AWS Security Group that requires fifteen custom ingress rules, or a GCP load balancer"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # Terraform DRY Scoping: for_each and Dynamic Blocks Explained
 
 ## The Problem: The Copy-Paste Nightmare of Cloud Infrastructure

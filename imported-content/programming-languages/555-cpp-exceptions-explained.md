@@ -1,3 +1,11 @@
+---
+title: "C++ Exceptions Explained: Stack Unwinding and Zero-Cost Abstraction"
+description: "When an error occurs deeply nested inside a call stack, propagating error codes (`int err = do_something(); if (err < 0) return err;`) clutters the business logic, leads to unhandled edge cases, and p"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ Exceptions Explained: Stack Unwinding and Zero-Cost Abstraction
 
 ## Problem Statement

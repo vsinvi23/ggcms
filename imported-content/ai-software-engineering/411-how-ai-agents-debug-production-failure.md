@@ -1,3 +1,11 @@
+---
+title: "How AI Agents Debug a Production Failure"
+description: "When a critical microservice fails in production, the standard on-call response is reactive: metrics spike, PagerDuty triggers, and engineers log into dashboards. In highly distributed, event-driven a"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # How AI Agents Debug a Production Failure
 
 ## The Problem: Debugging at 3 AM Under Alert Fatigue

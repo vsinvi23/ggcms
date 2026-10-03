@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Internals: How the Kubelet Talks to the Container Runtime Interface (CRI)"
+description: "Step inside the worker node architecture of Kubernetes to analyze how the Kubelet agent orchestrates pods, interacts with container runtimes using gRPC, and enforces Pod Security Standards (PSS)."
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Internals: How the Kubelet Talks to the Container Runtime Interface (CRI)
 
 > Step inside the worker node architecture of Kubernetes to analyze how the Kubelet agent orchestrates pods, interacts with container runtimes using gRPC, and enforces Pod Security Standards (PSS).

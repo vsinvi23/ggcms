@@ -1,3 +1,11 @@
+---
+title: "WebAuthn: Platform vs Roaming Authenticators and CTAP2 Protocol Handshakes"
+description: "The Web Authentication API (WebAuthn) represents a monumental shift away from passwords toward cryptographically secure, hardware-bound credentials. To implement WebAuthn securely at the production le"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # WebAuthn: Platform vs Roaming Authenticators and CTAP2 Protocol Handshakes
 
 The Web Authentication API (WebAuthn) represents a monumental shift away from passwords toward cryptographically secure, hardware-bound credentials. To implement WebAuthn securely at the production level, software architects must understand how authenticators differ (Platform vs. Roaming) and how client browsers exchange binary messages with hardware via the Client-to-Authenticator Protocol (CTAP2).

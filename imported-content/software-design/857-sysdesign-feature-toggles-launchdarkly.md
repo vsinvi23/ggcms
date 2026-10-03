@@ -1,3 +1,11 @@
+---
+title: "Feature Toggles: Branch by Abstraction and Decoupling Deployment from Software Release"
+description: "In traditional software development, releasing a new feature involves merging a long-lived feature branch into `main` and deploying the codebase to production. The physical deployment of the code is p"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Feature Toggles: Branch by Abstraction and Decoupling Deployment from Software Release
 
 ## The Problem: The Risks of the "Big Bang" Release

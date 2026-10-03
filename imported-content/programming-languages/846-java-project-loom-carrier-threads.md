@@ -1,3 +1,11 @@
+---
+title: "Project Loom Internals: Carrier Threads, Virtual Thread Scheduling, and Pinning Hazards"
+description: "A backend engineering team migrates a high-concurrency database wrapper service to Java 21 to take advantage of **Project Loom's Virtual Threads**. The team replaces traditional OS thread pools with v"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Project Loom Internals: Carrier Threads, Virtual Thread Scheduling, and Pinning Hazards
 
 ## The Problem: Starvation Under Virtual Thread Migration

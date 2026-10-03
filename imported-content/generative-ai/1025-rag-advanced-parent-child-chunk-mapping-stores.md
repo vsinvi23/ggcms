@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Parent-Child Document Retrieval for Context Integrity"
+description: "Retrieval-Augmented Generation (RAG) relies on slicing large documents into smaller chunks, embedding them, and searching a vector database to find context relevant to a user's query. This introduces "
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Parent-Child Document Retrieval for Context Integrity
 
 ## The Problem: The Chunk Size Dilemma

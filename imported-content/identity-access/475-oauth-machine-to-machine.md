@@ -1,3 +1,11 @@
+---
+title: "OAuth for Machine-to-Machine: The Client Credentials Grant"
+description: "Background services, cron jobs, billing synchronizers, and internal reporting daemons need to fetch and manipulate data from secure APIs. Because these are autonomous scripts, there is no human user t"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth for Machine-to-Machine: The Client Credentials Grant
 
 ## The Problem

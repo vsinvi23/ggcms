@@ -1,3 +1,11 @@
+---
+title: "Istio Service Mesh: Zero-Trust mTLS, PeerAuthentication, and Sidecar Proxies"
+description: "Once a malicious actor breaches the perimeter of a standard Kubernetes cluster and gains a foothold in a single pod, the internal network is entirely at their disposal. By default, traffic between pod"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Istio Service Mesh: Zero-Trust mTLS, PeerAuthentication, and Sidecar Proxies
 
 ## The Problem: The Cleartext Internal Network

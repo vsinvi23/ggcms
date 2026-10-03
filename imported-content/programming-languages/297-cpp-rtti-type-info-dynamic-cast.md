@@ -1,3 +1,11 @@
+---
+title: "C++ RTTI: The Internal `type_info` Struct and Why `dynamic_cast` Degrades Performance"
+description: "In object-oriented C++, polymorphism allows a pointer to a base class to invoke methods on a derived class via virtual functions. For example, a `Shape*` might point to a `Circle` or a `Square`."
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ RTTI: The Internal `type_info` Struct and Why `dynamic_cast` Degrades Performance
 
 ## The Problem: Polymorphism at Runtime

@@ -1,3 +1,11 @@
+---
+title: "Postgres Index Bloat: Reclaiming Disk Space with REINDEX CONCURRENTLY"
+description: "PostgreSQL relies on Multiversion Concurrency Control (MVCC) to handle concurrent transactions without locking. When an `UPDATE` or `DELETE` occurs, Postgres does not immediately remove or overwrite t"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres Index Bloat: Reclaiming Disk Space with REINDEX CONCURRENTLY
 
 ## The Problem: MVCC and Dead Tuples

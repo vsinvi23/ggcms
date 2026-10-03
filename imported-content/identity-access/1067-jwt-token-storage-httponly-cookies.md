@@ -1,3 +1,11 @@
+---
+title: "Secure Token Storage in SPAs: Comparing HttpOnly Cookies vs In-Memory Refresh Rotation"
+description: "Single Page Applications (SPAs) built with modern frameworks (React, Vue, Angular) must store Access and Refresh Tokens securely on the client. Storing tokens incorrectly exposes the application to tw"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Secure Token Storage in SPAs: Comparing HttpOnly Cookies vs In-Memory Refresh Rotation
 
 Single Page Applications (SPAs) built with modern frameworks (React, Vue, Angular) must store Access and Refresh Tokens securely on the client. Storing tokens incorrectly exposes the application to two high-severity web vulnerabilities: **Cross-Site Scripting (XSS)** and **Cross-Site Request Forgery (CSRF)**.

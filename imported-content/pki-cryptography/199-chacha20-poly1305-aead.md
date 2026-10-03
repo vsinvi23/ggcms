@@ -1,3 +1,11 @@
+---
+title: "ChaCha20 Stream Cipher: Quarter Rounds and Poly1305 MAC Verification"
+description: "For years, the Advanced Encryption Standard (AES) has been the gold standard for symmetric encryption. However, AES was designed with a specific algebraic structure (Rijndael's finite field operations"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # ChaCha20 Stream Cipher: Quarter Rounds and Poly1305 MAC Verification
 
 ## The Problem: Hardware-Dependent Performance

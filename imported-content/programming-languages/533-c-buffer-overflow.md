@@ -1,3 +1,11 @@
+---
+title: "Buffer Overflow from First Principles"
+description: "A buffer overflow happens when a program writes more data to a block of memory (buffer) than it was allocated to hold. Because C does not perform implicit bounds checking, the excess data overwrites a"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Buffer Overflow from First Principles
 
 ## The Problem

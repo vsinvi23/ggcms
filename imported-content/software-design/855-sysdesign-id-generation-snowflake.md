@@ -1,3 +1,11 @@
+---
+title: "Distributed ID Generation: Designing Twitter Snowflake for Monotonic 64-bit Sorting"
+description: "Every record in a database requires a unique identifier. In a single relational database, an `AUTO_INCREMENT` integer primary key works perfectly. However, when a system scales to distributed shards, "
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed ID Generation: Designing Twitter Snowflake for Monotonic 64-bit Sorting
 
 ## The Problem: The Limitations of UUIDs and Auto-Increment

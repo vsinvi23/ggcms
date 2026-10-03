@@ -1,3 +1,11 @@
+---
+title: "The Incident Lifecycle: Orchestrating Preventive, Detective, and Corrective Controls"
+description: "Many software developers build applications on a single, flawed assumption: **\"If our preventive controls are strong enough, we will never be breached.\"** They spend 100% of their security budget on i"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # The Incident Lifecycle: Orchestrating Preventive, Detective, and Corrective Controls
 
 ## The Problem: The Myth of Absolute Prevention

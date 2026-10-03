@@ -1,3 +1,11 @@
+---
+title: "Distributed Tracing: Context Propagation with OpenTelemetry and Jaeger"
+description: "In a monolithic application, debugging a slow or failed request is straightforward: you open the log file and follow the single thread of execution from top to bottom."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed Tracing: Context Propagation with OpenTelemetry and Jaeger
 
 ## The Problem: The Microservice Murder Mystery

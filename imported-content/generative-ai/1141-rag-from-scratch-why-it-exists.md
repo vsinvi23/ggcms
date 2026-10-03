@@ -1,4 +1,4 @@
----
+--- 
 title: "RAG From Scratch: Why Retrieval-Augmented Generation Exists"
 slug: "rag-from-scratch-why-it-exists"
 category: "Generative AI"
@@ -40,7 +40,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "generative-ai"
 ---
+
 
 # RAG From Scratch: Why Retrieval-Augmented Generation Exists
 

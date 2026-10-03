@@ -1,3 +1,11 @@
+---
+title: "Postgres WAL Internals: Crash Recovery, LSN, and Physical Replication Streams"
+description: "In a relational database system, ensuring ACID durability guarantees while maintaining high write throughput is a fundamental engineering conflict. Direct, in-place modification of database heap files"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres WAL Internals: Crash Recovery, LSN, and Physical Replication Streams
 
 ## The Problem: Storage I/O Bottlenecks and Durability Guarantees

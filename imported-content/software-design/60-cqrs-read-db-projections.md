@@ -1,3 +1,11 @@
+---
+title: "CQRS Projections: Syncing Write and Read DBs Asynchronously"
+description: "In traditional CRUD (Create, Read, Update, Delete) applications, we use the same data model and the same database to handle both writes and reads. For early-stage applications, this is efficient and s"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # CQRS Projections: Syncing Write and Read DBs Asynchronously
 
 ## The Problem: The Dual Nature of Data

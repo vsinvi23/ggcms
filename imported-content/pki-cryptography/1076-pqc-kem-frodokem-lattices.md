@@ -1,3 +1,11 @@
+---
+title: "Post-Quantum Cryptography: FrodoKEM and the Conservative Security of Unstructured Lattices"
+description: "The security of modern Public Key Infrastructure (PKI) relies entirely on three mathematical problems: integer factorization (RSA), discrete logarithms (Diffie-Hellman), and elliptic curve discrete lo"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Post-Quantum Cryptography: FrodoKEM and the Conservative Security of Unstructured Lattices
 
 ## The Problem: The Quantum Threat to Classic PKI

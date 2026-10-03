@@ -1,3 +1,11 @@
+---
+title: "Event-Driven Architecture from Scratch"
+description: "Most developers start by building REST APIs. When `Service A` needs something from `Service B`, it makes an HTTP call."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Event-Driven Architecture from Scratch
 
 ## The Problem: Synchronous Coupling

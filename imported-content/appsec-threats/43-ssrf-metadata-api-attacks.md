@@ -1,3 +1,11 @@
+---
+title: "Server-Side Request Forgery (SSRF): Exploiting Cloud Metadata APIs (IMDSv2)"
+description: "Server-Side Request Forgery (SSRF) is a critical vulnerability that occurs when a web application is manipulated into making unauthorized back-channel HTTP requests on behalf of an attacker."
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Server-Side Request Forgery (SSRF): Exploiting Cloud Metadata APIs (IMDSv2)
 
 Server-Side Request Forgery (SSRF) is a critical vulnerability that occurs when a web application is manipulated into making unauthorized back-channel HTTP requests on behalf of an attacker. 

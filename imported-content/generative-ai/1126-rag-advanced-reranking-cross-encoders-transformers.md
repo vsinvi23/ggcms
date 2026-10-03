@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking"
+description: "**The Problem:** In standard RAG pipelines, dense vector retrieval uses Bi-Encoders. The query and the document are embedded separately into a single vector space, and similarity is calculated using C"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking
 
 **The Problem:** In standard RAG pipelines, dense vector retrieval uses Bi-Encoders. The query and the document are embedded separately into a single vector space, and similarity is calculated using Cosine Distance. This is incredibly fast (scaling to billions of documents) but suffers from poor deep semantic matching because the query and document never interact during the embedding process.

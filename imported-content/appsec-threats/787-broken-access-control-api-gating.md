@@ -1,3 +1,11 @@
+---
+title: "Broken Access Control: Bypassing UI Security Filters on API Endpoints"
+description: "A prevalent architectural flaw in modern Single Page Applications (SPAs) built with React, Vue, or Angular is the complete reliance on \"client-side UI gating\" to enforce authorization. Developers ofte"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Broken Access Control: Bypassing UI Security Filters on API Endpoints
 
 ## The Problem

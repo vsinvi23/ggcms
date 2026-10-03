@@ -1,3 +1,11 @@
+---
+title: "SAML Security: Auditing `RelayState` Parameters to Prevent Open Redirect Attacks"
+description: "In an enterprise Single Sign-On (SSO) environment using SAML 2.0, the authentication flow requires bouncing the user between two distinct domains: the Service Provider (SP, the application the user wa"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SAML Security: Auditing `RelayState` Parameters to Prevent Open Redirect Attacks
 
 ## The Problem: The "Where Was I?" Dilemma in SSO

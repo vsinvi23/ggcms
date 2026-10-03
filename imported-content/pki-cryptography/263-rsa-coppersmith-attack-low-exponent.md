@@ -1,3 +1,11 @@
+---
+title: "RSA Vulnerabilities: Coppersmith's Attack on Low Public Exponents (e=3)"
+description: "In the RSA cryptosystem, the public key consists of the modulus $N$ and the public exponent $e$. To optimize the performance of encryption and signature verification, developers historically gravitate"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # RSA Vulnerabilities: Coppersmith's Attack on Low Public Exponents (e=3)
 
 In the RSA cryptosystem, the public key consists of the modulus $N$ and the public exponent $e$. To optimize the performance of encryption and signature verification, developers historically gravitated toward exceptionally small values for $e$, specifically $e = 3$. While $e=3$ drastically reduces CPU cycles, it walks a razor-thin line regarding mathematical security. If padding is omitted or poorly implemented, a low exponent invites devastating algebraic attacks, most notably Coppersmith's theorem.

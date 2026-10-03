@@ -1,3 +1,11 @@
+---
+title: "Rust Procedural Macros: Parsing the AST to Write Custom `#[derive]` Traits"
+description: "In large-scale Rust projects, developers frequently need to implement identical traits across dozens of data structures. For example, if you are building an API, you might need to serialize structs to"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Procedural Macros: Parsing the AST to Write Custom `#[derive]` Traits
 
 ## The Problem: Boilerplate Code and Trait Implementations

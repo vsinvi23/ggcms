@@ -1,3 +1,11 @@
+---
+title: "Designing Bitly: Base62 Encodings, Collision Prevention, and Key Generation Services"
+description: "URL shorteners like Bitly or TinyURL seem like trivial applications—a basic key-value mapping of a short string to a long URL. However, at a global scale of billions of links and thousands of requests"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Designing Bitly: Base62 Encodings, Collision Prevention, and Key Generation Services
 
 URL shorteners like Bitly or TinyURL seem like trivial applications—a basic key-value mapping of a short string to a long URL. However, at a global scale of billions of links and thousands of requests per second, the naive approaches of hashing and random string generation catastrophically fail.

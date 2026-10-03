@@ -1,3 +1,11 @@
+---
+title: "LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece Under the Hood"
+description: "When designing a Large Language Model (LLM), representing raw text as input tensors introduces a fundamental engineering trade-off."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece Under the Hood
 
 ### The Problem: The Vocabulary Representation Dilemma

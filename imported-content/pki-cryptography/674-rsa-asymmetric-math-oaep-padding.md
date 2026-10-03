@@ -1,3 +1,11 @@
+---
+title: "Asymmetric RSA: Prime Factorization, Euler Totient, and RSA-OAEP Padding"
+description: "Textbook RSA encryption ($C = M^e \pmod N$) is mathematically elegant but catastrophically insecure in practical environments:"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Asymmetric RSA: Prime Factorization, Euler Totient, and RSA-OAEP Padding
 
 ## The Problem: The Insecurity of "Textbook" RSA and PKCS#1 v1.5

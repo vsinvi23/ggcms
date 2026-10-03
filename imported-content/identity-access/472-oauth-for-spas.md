@@ -1,3 +1,11 @@
+---
+title: "OAuth for SPAs: The BFF Pattern vs. Local Storage"
+description: "Single Page Applications (SPAs) run entirely in the browser, an inherently untrusted environment. Historically, SPAs relied on the OAuth 2.0 Implicit Flow, returning access tokens directly in the URL "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth for SPAs: The BFF Pattern vs. Local Storage
 
 ## The Problem

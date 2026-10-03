@@ -1,3 +1,11 @@
+---
+title: "Vitess VIndexes: Abstracting Cross-Shard Joins in Globally Sharded MySQL"
+description: "MySQL is a robust relational database, but a single instance faces physical limits on disk capacity and CPU throughput. When hyper-growth companies (like YouTube or Slack) outgrow a monolithic databas"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Vitess VIndexes: Abstracting Cross-Shard Joins in Globally Sharded MySQL
 
 ### The Problem: The Application-Level Sharding Nightmare

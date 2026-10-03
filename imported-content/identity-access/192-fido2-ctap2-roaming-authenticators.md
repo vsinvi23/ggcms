@@ -1,3 +1,11 @@
+---
+title: "WebAuthn: Platform vs Roaming Authenticators and CTAP2 Protocols"
+description: "Password-based authentication and legacy multi-factor solutions (such as SMS codes, push notifications, and TOTP mobile apps) remain highly vulnerable to modern proxy-based phishing attacks (using too"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # WebAuthn: Platform vs Roaming Authenticators and CTAP2 Protocols
 
 ## The Problem

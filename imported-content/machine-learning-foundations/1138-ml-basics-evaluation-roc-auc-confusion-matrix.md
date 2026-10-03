@@ -1,3 +1,11 @@
+---
+title: "Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC"
+description: "For classification tasks, overall **Accuracy** is a deceptive metric. In a dataset where 99% of transactions are legitimate and 1% are fraudulent, a \"dumb\" model that always predicts \"legitimate\" achi"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC
 
 ## The Problem

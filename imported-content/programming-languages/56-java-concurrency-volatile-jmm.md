@@ -1,3 +1,11 @@
+---
+title: "Java Concurrency: Demystifying Volatile and the Java Memory Model"
+description: "In modern multi-core processors, each CPU core has its own set of high-speed registers and cache levels (L1, L2, L3) to optimize memory access speeds. When a Java thread accesses a shared variable, it"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Concurrency: Demystifying Volatile and the Java Memory Model
 
 ### The Problem: Memory Incoherence and Hidden Updates

@@ -1,3 +1,11 @@
+---
+title: "Refactoring Legacy Code: The Sprout Method, Feather's Characterization, and Feature Toggles"
+description: "\"Legacy code is simply code without tests.\" — Michael Feathers."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Refactoring Legacy Code: The Sprout Method, Feather's Characterization, and Feature Toggles
 
 ## The Problem: The Fear of Touching Legacy Code

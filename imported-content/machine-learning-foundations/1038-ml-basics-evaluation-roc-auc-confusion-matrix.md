@@ -1,3 +1,11 @@
+---
+title: "Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC"
+description: "For binary classification models deployed in real-world environments, raw Accuracy is often a deceptive performance metric. Consider a credit card transaction stream where only $0.1\%$ of transactions"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Evaluating ML Models: Precision, Recall, F1-Score, and ROC-AUC
 
 ## The Problem

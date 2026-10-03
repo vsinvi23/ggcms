@@ -1,3 +1,11 @@
+---
+title: "Distributed ID Generation: Twitter Snowflake vs UUIDv4 vs UUIDv7"
+description: "Every record in a database needs a Primary Key. In the days of the monolith, we used Auto-Incrementing Integers (e.g., `SERIAL` in Postgres, `AUTO_INCREMENT` in MySQL). The database generated `1, 2, 3"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed ID Generation: Twitter Snowflake vs UUIDv4 vs UUIDv7
 
 ## The Problem: The B-Tree Massacre

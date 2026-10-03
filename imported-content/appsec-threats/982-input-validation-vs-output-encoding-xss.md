@@ -1,3 +1,11 @@
+---
+title: "Input Validation vs Output Encoding: Context-Aware Escaping to Defeat XSS"
+description: "Cross-Site Scripting (XSS) remains a dominant vulnerability because modern web applications are complex engines that dynamically mix untrusted data with executable code (HTML, JavaScript, CSS). XSS oc"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Input Validation vs Output Encoding: Context-Aware Escaping to Defeat XSS
 
 ## The Problem: The Cross-Site Scripting Persistence

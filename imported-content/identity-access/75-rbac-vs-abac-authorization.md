@@ -1,3 +1,11 @@
+---
+title: "Authorization Architecture: Overcoming Role Explosion with RBAC and ABAC"
+description: "Determining who can perform what actions on which resources is one of the most critical challenges in application architecture. Traditionally, developers implement Role-Based Access Control (RBAC). In"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Authorization Architecture: Overcoming Role Explosion with RBAC and ABAC
 
 ### The Problem: The Enterprise Role Explosion Trap

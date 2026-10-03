@@ -1,3 +1,11 @@
+---
+title: "Managing SAML Trust: Automated IdP Metadata Parsing and Certificate Rotation"
+description: "Establishing single sign-on (SSO) trust between a Service Provider (SP) and an external Identity Provider (IdP) via SAML 2.0 requires robust certificate management. Because SAML assertions are cryptog"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Managing SAML Trust: Automated IdP Metadata Parsing and Certificate Rotation
 
 Establishing single sign-on (SSO) trust between a Service Provider (SP) and an external Identity Provider (IdP) via SAML 2.0 requires robust certificate management. Because SAML assertions are cryptographically signed, the SP must possess the IdP's public signing certificate. In many enterprise environments, certificate expiration leads to sudden, catastrophic authentication outages due to manual and reactive key-rotation processes.

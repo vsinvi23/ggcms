@@ -1,3 +1,11 @@
+---
+title: "Server-Side Request Forgery (SSRF): Preventing Cloud Metadata Extraction (IMDSv1/v2)"
+description: "Modern cloud-native web applications frequently need to request resources from external servers—such as fetching third-party profile pictures, processing webhooks, or parsing remote XML feeds."
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Server-Side Request Forgery (SSRF): Preventing Cloud Metadata Extraction (IMDSv1/v2)
 
 ## The Problem: Arbitrary Internal Outbound Calls

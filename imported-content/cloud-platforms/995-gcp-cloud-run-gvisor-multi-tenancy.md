@@ -1,3 +1,11 @@
+---
+title: "GCP Cloud Run Internals: Sandboxing Container Runtimes with gVisor"
+description: "Serverless containers running in multi-tenant environments (such as GCP Cloud Run) must execute arbitrary, untrusted customer code on shared physical hosts."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Cloud Run Internals: Sandboxing Container Runtimes with gVisor
 
 ## The Problem: The Inherent Vulnerability of Shared-Kernel Containers

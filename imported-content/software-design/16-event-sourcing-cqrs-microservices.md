@@ -1,3 +1,11 @@
+---
+title: "Event Sourcing & CQRS: Escaping the CRUD Monolith"
+description: "Break free from legacy database constraints by decoupling reads from writes using Command Query Responsibility Segregation (CQRS) and architecting immutable, time-traveling audit logs via Event Sourcing."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Event Sourcing & CQRS: Escaping the CRUD Monolith
 
 > Break free from legacy database constraints by decoupling reads from writes using Command Query Responsibility Segregation (CQRS) and architecting immutable, time-traveling audit logs via Event Sourcing.

@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Parent-Child Document Retrieval for Context Integrity"
+description: "**The Problem:** Vector search forces a cruel compromise. If you use large chunks (e.g., 1000 tokens), the embeddings become diluted, and precision drops. If you use small chunks (e.g., 100 tokens), s"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Parent-Child Document Retrieval for Context Integrity
 
 **The Problem:** Vector search forces a cruel compromise. If you use large chunks (e.g., 1000 tokens), the embeddings become diluted, and precision drops. If you use small chunks (e.g., 100 tokens), search precision skyrockets, but the LLM loses the surrounding context needed to synthesize a coherent answer.

@@ -1,3 +1,11 @@
+---
+title: "Rust Concurrency: Deciphering the Compiler-Enforced Send and Sync Thread-Safety Traits"
+description: "In traditional systems languages like C or C++, writing multi-threaded applications is a minefield. Two threads accessing the same memory location concurrently where at least one access is a write res"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Concurrency: Deciphering the Compiler-Enforced Send and Sync Thread-Safety Traits
 
 ## The Problem: Data Races as Compile-Time Failures

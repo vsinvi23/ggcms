@@ -1,3 +1,11 @@
+---
+title: "AWS PrivateLink: Interfacing with Services without Internet Transit"
+description: "In enterprise cloud security, routing traffic over the public internet to reach SaaS platforms, APIs, or even internal AWS-native services (like KMS, Secrets Manager, or SQS) is an unacceptable archit"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS PrivateLink: Interfacing with Services without Internet Transit
 
 ## The Problem: Data Exfiltration and the Excessive Cost of NAT Gateways

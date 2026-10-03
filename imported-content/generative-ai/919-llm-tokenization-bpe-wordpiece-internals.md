@@ -1,3 +1,11 @@
+---
+title: "LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece under the Hood"
+description: "**The Problem:** LLMs cannot process raw text. They require numbers. Mapping characters to IDs creates sequences that are too long (losing context window efficiency), while mapping whole words creates"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # LLM Tokenization: Byte-Pair Encoding (BPE) vs WordPiece under the Hood
 
 **The Problem:** LLMs cannot process raw text. They require numbers. Mapping characters to IDs creates sequences that are too long (losing context window efficiency), while mapping whole words creates an unmanageable vocabulary size (millions of unique words, leading to OOV - Out of Vocabulary errors). Subword tokenization balances sequence length and vocabulary size, but algorithms like BPE and WordPiece construct their vocabularies differently, heavily impacting model performance across languages and domains.

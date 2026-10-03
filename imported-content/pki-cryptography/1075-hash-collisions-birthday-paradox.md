@@ -1,3 +1,11 @@
+---
+title: "The Birthday Paradox: Why a 128-bit Hash Collides in $2^{64}$ Attempts"
+description: "A common architectural misconception is that the strength of a hash function against collisions is equal to its output space. Under this assumption, a 128-bit hash function (like MD5) would require $2"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # The Birthday Paradox: Why a 128-bit Hash Collides in $2^{64}$ Attempts
 
 ## The Problem: The Counter-Intuitive Mathematics of Collisions

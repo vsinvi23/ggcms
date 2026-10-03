@@ -1,3 +1,11 @@
+---
+title: "Redirect URI Security in OAuth 2.0: Preventing Authorization Code Exfiltration"
+description: "In the OAuth 2.0 Authorization Code Flow, the **Redirect URI** is the critical parameter that dictates where the Authorization Server sends the single-use Authorization Code after a user authenticates"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Redirect URI Security in OAuth 2.0: Preventing Authorization Code Exfiltration
 
 ## The Problem: The Wildcard Exfiltration Vulnerability

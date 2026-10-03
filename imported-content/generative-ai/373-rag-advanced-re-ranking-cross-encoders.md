@@ -1,3 +1,11 @@
+---
+title: "Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking"
+description: "**The Problem:** Standard vector embeddings (Bi-Encoders) are fast because they pre-compute document vectors and compare them via simple cosine similarity. However, they lack deep semantic understandi"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Advanced RAG: Boosting Recall with Cross-Encoder Re-Ranking
 
 **The Problem:** Standard vector embeddings (Bi-Encoders) are fast because they pre-compute document vectors and compare them via simple cosine similarity. However, they lack deep semantic understanding of how a specific query interacts with a specific document. This results in the "lost in the middle" problem, where the most relevant chunks are retrieved at position 15 instead of position 1.

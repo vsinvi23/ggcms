@@ -1,3 +1,11 @@
+---
+title: "Asymmetric RSA: Prime Factorization and Key Generation"
+description: "For millennia, cryptography relied entirely on symmetric keys: the sender and receiver had to possess the exact same secret key to encrypt and decrypt a message. This created an insurmountable logisti"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Asymmetric RSA: Prime Factorization and Key Generation
 
 ## The Problem: The Key Distribution Paradox

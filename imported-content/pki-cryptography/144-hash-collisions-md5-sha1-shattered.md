@@ -1,3 +1,11 @@
+---
+title: "The Fall of MD5 and SHA-1: Understanding Hash Collisions"
+description: "Cryptographic hash functions are meticulously designed algorithms that take an input of any size (a password, a text file, or a 50GB database) and compress it into a fixed-size string of bytes, often "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # The Fall of MD5 and SHA-1: Understanding Hash Collisions
 
 ## The Problem: When Digital Fingerprints Match

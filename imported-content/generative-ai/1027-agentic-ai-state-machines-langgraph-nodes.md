@@ -1,3 +1,11 @@
+---
+title: "Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph"
+description: "Standard Agentic architectures (like the ReAct pattern) rely on linear `while` loops. The LLM acts, the environment observes, and the loop repeats until a \"Finish\" condition is met."
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Multi-Agent Orchestration: Designing Stateful Graphs with LangGraph
 
 ## The Problem: The Fragility of While-Loop Agents

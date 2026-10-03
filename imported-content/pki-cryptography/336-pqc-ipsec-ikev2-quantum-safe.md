@@ -1,3 +1,11 @@
+---
+title: "Quantum-Safe VPNs: Upgrading IPsec and IKEv2 with Hybrid PQC"
+description: "IPsec (Internet Protocol Security) is the backbone of enterprise VPNs, site-to-site connectivity, and 5G cellular architectures. The key negotiation protocol for IPsec is IKEv2 (Internet Key Exchange "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Quantum-Safe VPNs: Upgrading IPsec and IKEv2 with Hybrid PQC
 
 ## The Problem: The SNDL Threat to IPsec

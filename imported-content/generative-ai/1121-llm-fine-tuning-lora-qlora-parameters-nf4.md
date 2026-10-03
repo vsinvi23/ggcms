@@ -1,3 +1,11 @@
+---
+title: "Fine-Tuning LLMs: Parameter-Efficient LoRA and QLoRA NF4 Quantization"
+description: "**The Problem:** Fine-tuning a 7B to 70B parameter LLM via full-parameter tuning requires massive compute clusters. Updating all weights means storing optimizer states (Adam requires 2x model size) an"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Fine-Tuning LLMs: Parameter-Efficient LoRA and QLoRA NF4 Quantization
 
 **The Problem:** Fine-tuning a 7B to 70B parameter LLM via full-parameter tuning requires massive compute clusters. Updating all weights means storing optimizer states (Adam requires 2x model size) and gradients, easily exceeding 100GB of VRAM even for small models. 

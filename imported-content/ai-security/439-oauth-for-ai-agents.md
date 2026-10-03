@@ -1,3 +1,11 @@
+---
+title: "OAuth for AI Agents: Token Exchange and Scoped Delegations"
+description: "Autonomous AI agents act as digital proxies, fetching data, updating systems, and communicating with external APIs. To authenticate these agents securely, developers often rely on static api-keys or b"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # OAuth for AI Agents: Token Exchange and Scoped Delegations
 
 Autonomous AI agents act as digital proxies, fetching data, updating systems, and communicating with external APIs. To authenticate these agents securely, developers often rely on static api-keys or broad OAuth 2.0 client credentials. However, these patterns suffer from a fatal flaw: they provide broad, unscoped access. If an agent is hijacked via prompt injection, the attacker inherits full access to the target systems. Securing autonomous workers requires a transition to RFC 8693 (OAuth 2.0 Token Exchange).

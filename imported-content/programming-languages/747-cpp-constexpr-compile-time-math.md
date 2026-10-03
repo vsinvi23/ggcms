@@ -1,3 +1,11 @@
+---
+title: "C++ constexpr: Executing Complex Mathematical Calculations at Compile Time"
+description: "In latency-sensitive applications like high-frequency trading (HFT) engines, graphics rendering pipelines, or aerospace guidance systems, every nanosecond spent on startup or frame-time calculation is"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ constexpr: Executing Complex Mathematical Calculations at Compile Time
 
 ## The Problem: Runtime Initialization Latency in Critical Systems

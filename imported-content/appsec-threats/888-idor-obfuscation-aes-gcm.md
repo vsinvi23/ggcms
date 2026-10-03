@@ -1,3 +1,11 @@
+---
+title: "Insecure Direct Object References: Obfuscating Primary Keys with AES-GCM"
+description: "Relational databases traditionally use auto-incrementing integers (1, 2, 3, 4...) as primary keys. When these primary keys are exposed in URLs or API endpoints (e.g., `GET /api/invoices/1042`), two se"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Insecure Direct Object References: Obfuscating Primary Keys with AES-GCM
 
 ## The Problem: The Danger of Predictable Identifiers

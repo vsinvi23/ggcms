@@ -1,3 +1,11 @@
+---
+title: "Postgres WAL Internals: Crash Recovery and Replication"
+description: "In relational databases, ensuring durability (the 'D' in ACID) typically requires writing every committed transaction to disk. However, random disk I/O is notoriously slow. If a database forced a disk"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Postgres WAL Internals: Crash Recovery and Replication
 
 ## The Problem: Durability vs. Performance

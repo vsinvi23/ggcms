@@ -1,3 +1,11 @@
+---
+title: "Advanced Go Profiling: Finding CPU Bottlenecks and Memory Leaks with pprof and runtime/trace"
+description: "A Go service operating flawlessly in staging suddenly exhibits latency spikes and memory bloat under production throughput. Traditional logging metrics point to specific endpoints, but they fail to re"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Advanced Go Profiling: Finding CPU Bottlenecks and Memory Leaks with pprof and runtime/trace
 
 ## The Problem: Silent Degradation Under Load

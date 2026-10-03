@@ -1,3 +1,11 @@
+---
+title: "Deep Learning 101: Feedforward Neural Networks and Backpropagation"
+description: "Linear models and shallow learners fundamentally fail to approximate highly complex, non-linear functions (like XOR logic, image categorization, or language modeling). Feature engineering can force no"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Deep Learning 101: Feedforward Neural Networks and Backpropagation
 
 ## The Problem

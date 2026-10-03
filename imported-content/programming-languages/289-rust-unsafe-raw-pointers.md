@@ -1,3 +1,11 @@
+---
+title: "Rust Unsafe Code: Dereferencing Raw Pointers and Bypassing the Borrow Checker"
+description: "Rust’s primary selling point is its relentless enforcement of memory safety via the borrow checker. At compile time, it guarantees that references are always valid, preventing data races, dangling poi"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Unsafe Code: Dereferencing Raw Pointers and Bypassing the Borrow Checker
 
 ## The Problem: Memory Safety vs. Hardware Reality

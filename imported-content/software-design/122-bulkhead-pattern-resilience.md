@@ -1,3 +1,11 @@
+---
+title: "The Bulkhead Pattern: Isolating Resource Pools to Prevent Cascading Failures"
+description: "In a microservices architecture, a single service rarely works in isolation. It relies on databases, third-party APIs, and other internal services. When a downstream dependency fails *fast* (e.g., con"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # The Bulkhead Pattern: Isolating Resource Pools to Prevent Cascading Failures
 
 ## The Problem: The Domino Effect of Exhausted Threads

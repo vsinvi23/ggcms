@@ -1,3 +1,11 @@
+---
+title: "JWT Signature Stripping: Defeating the 'none' Algorithm"
+description: "JSON Web Tokens (JWTs) are the standard mechanism for stateless authentication in modern web APIs. A standard JWT contains three Base64URL-encoded components separated by dots: a Header (metadata and "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # JWT Signature Stripping: Defeating the 'none' Algorithm
 
 JSON Web Tokens (JWTs) are the standard mechanism for stateless authentication in modern web APIs. A standard JWT contains three Base64URL-encoded components separated by dots: a Header (metadata and algorithm), a Payload (claims), and a Signature (verifying integrity). 

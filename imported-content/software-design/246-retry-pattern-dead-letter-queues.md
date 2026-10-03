@@ -1,3 +1,11 @@
+---
+title: "Microservice Resilience: Implementing Dead Letter Queues (DLQs) for Poison Pills"
+description: "Asynchronous message brokers—like Kafka, RabbitMQ, or AWS SQS—are the connective tissue of modern microservice architectures. They decouple services, absorb traffic spikes, and guarantee that events a"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Microservice Resilience: Implementing Dead Letter Queues (DLQs) for Poison Pills
 
 Asynchronous message brokers—like Kafka, RabbitMQ, or AWS SQS—are the connective tissue of modern microservice architectures. They decouple services, absorb traffic spikes, and guarantee that events are not lost if a downstream consumer temporarily goes offline. 

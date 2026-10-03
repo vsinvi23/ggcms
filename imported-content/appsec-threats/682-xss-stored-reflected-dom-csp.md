@@ -1,3 +1,11 @@
+---
+title: "Cross-Site Scripting (XSS): Reflected, Stored, and DOM-based Injection Controls"
+description: "Cross-Site Scripting (XSS) is a severe vulnerability where an application takes untrusted, unvalidated input and outputs it back to a browser context without proper encoding or sanitization. This allo"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Cross-Site Scripting (XSS): Reflected, Stored, and DOM-based Injection Controls
 
 ## The Problem: Script Execution in the Client Trust Boundary

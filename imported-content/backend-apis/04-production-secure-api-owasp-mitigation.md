@@ -1,3 +1,11 @@
+---
+title: "Designing Secure APIs: Mitigating OWASP API Security Risks in Production"
+description: "Master the defensive patterns required to protect web APIs and microservices from critical real-world vulnerabilities like Broken Object-Level Authorization (BOLA), Mass Assignment, and Unrestricted Resource Consumption."
+type: "ARTICLE"
+categorySlug: "backend-apis"
+articleType: "GUIDE"
+---
+
 # Designing Secure APIs: Mitigating OWASP API Security Risks in Production
 
 > Master the defensive patterns required to protect web APIs and microservices from critical real-world vulnerabilities like Broken Object-Level Authorization (BOLA), Mass Assignment, and Unrestricted Resource Consumption.

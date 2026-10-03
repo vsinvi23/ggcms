@@ -1,3 +1,11 @@
+---
+title: "Attack Surface Explained: Mapping Inputs and API Endpoints"
+description: "Modern applications are no longer contained within neat, firewalled castles. A single microservices-based application might expose web sockets, REST APIs, GraphQL endpoints, background job queues, and"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Attack Surface Explained: Mapping Inputs and API Endpoints
 
 ## The Problem: The Expanding Perimeter

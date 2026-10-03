@@ -1,3 +1,11 @@
+---
+title: "Interface Segregation: Designing Single-purpose Interfaces"
+description: "The \"I\" in the SOLID principles stands for the **Interface Segregation Principle (ISP)**. Formulated by Robert C. Martin, ISP states that *no client should be forced to depend on methods it does not u"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Interface Segregation: Designing Single-purpose Interfaces
 
 ## The Problem: The "Fat" Interface

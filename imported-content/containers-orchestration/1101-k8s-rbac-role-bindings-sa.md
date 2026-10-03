@@ -1,3 +1,11 @@
+---
+title: "Kubernetes RBAC: Hardening Cluster Roles, Roles, and Service Account Tokens"
+description: "Kubernetes Role-Based Access Control (RBAC) is the primary line of defense for securing the cluster control plane. Despite this, over-privileged Roles, wildcard resource access (`*`), and exposed Serv"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes RBAC: Hardening Cluster Roles, Roles, and Service Account Tokens
 
 Kubernetes Role-Based Access Control (RBAC) is the primary line of defense for securing the cluster control plane. Despite this, over-privileged Roles, wildcard resource access (`*`), and exposed Service Account (SA) tokens remain among the most exploited attack vectors in Kubernetes environments.

@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Token Introspection (RFC 7662): Validating Opaque Tokens across Microservices"
+description: "When designing secure distributed microservice architectures, authorization is often handled using structured JWTs (by-value) or opaque tokens (by-reference). While JWTs are popular due to stateless v"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Token Introspection (RFC 7662): Validating Opaque Tokens across Microservices
 
 When designing secure distributed microservice architectures, authorization is often handled using structured JWTs (by-value) or opaque tokens (by-reference). While JWTs are popular due to stateless validation, they expose internal claims to clients, suffer from difficult revocation, and inflate request payloads. Opaque tokens mitigate these issues, but they require microservices to perform real-time verification via RFC 7662 Token Introspection.

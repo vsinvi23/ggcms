@@ -1,3 +1,11 @@
+---
+title: "Rust Concurrency: Deciphering the Compiler-enforced `Send` and `Sync` Thread-safety Traits"
+description: "In C++ or Java, transferring ownership of an object between threads or sharing a mutable reference concurrently relies entirely on developer discipline. If a developer forgets to acquire a mutex befor"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rust Concurrency: Deciphering the Compiler-enforced `Send` and `Sync` Thread-safety Traits
 
 ## The Problem: Data Races at Runtime

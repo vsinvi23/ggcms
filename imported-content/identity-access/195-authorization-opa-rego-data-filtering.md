@@ -1,3 +1,11 @@
+---
+title: "Open Policy Agent (OPA): Rego Policies for API Data Filtering and Partial Evaluation"
+description: "Most authorization systems make binary decisions: a user is either authorized (YES) or unauthorized (NO) to perform an action on a resource. However, in enterprise SaaS and multi-tenant applications, "
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # Open Policy Agent (OPA): Rego Policies for API Data Filtering and Partial Evaluation
 
 ## The Problem

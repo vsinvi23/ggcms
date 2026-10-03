@@ -1,3 +1,11 @@
+---
+title: "Java Class Loading Explained: Delegation, Visibility, and Troubleshooting"
+description: "The Java Virtual Machine (JVM) does not load all class files into memory at startup. Instead, it employs a dynamic, on-demand loading model. While this keeps the startup footprint light, it introduces"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java Class Loading Explained: Delegation, Visibility, and Troubleshooting
 
 ## The Problem: Dynamic Loading, Classpath Conflicts, and Runtime Failures

@@ -1,3 +1,11 @@
+---
+title: "Identity Governance and Administration (IGA): Designing Separation of Duties & Access Attestation"
+description: "When users are hired, they receive a baseline set of permissions. As they move across departments or take on temporary projects, they request and receive new access rights. However, their old privileg"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # Identity Governance and Administration (IGA): Designing Separation of Duties & Access Attestation
 
 ## The Problem: Entitlement Creep and Toxic Access

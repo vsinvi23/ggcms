@@ -1,4 +1,4 @@
----
+--- 
 title: "AI Supply Chain Risk: Securing Models, Datasets, and Weights"
 slug: "ai-supply-chain-risk-models-datasets-weights"
 category: "Software Supply Chain"
@@ -42,7 +42,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-18"
+categorySlug: "devsecops-supply-chain"
 ---
+
 
 # AI Supply Chain Risk: Securing Models, Datasets, and Weights
 

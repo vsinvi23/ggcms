@@ -1,3 +1,11 @@
+---
+title: "dbt Snapshots: Designing Type 2 Slowly Changing Dimensions (SCD) for Historical Audits"
+description: "Transactional databases are optimized for real-time reads and writes. To save disk space and improve application performance, they overwrite data. When a customer changes their subscription plan from "
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # dbt Snapshots: Designing Type 2 Slowly Changing Dimensions (SCD) for Historical Audits
 
 ## The Overwritten History Problem

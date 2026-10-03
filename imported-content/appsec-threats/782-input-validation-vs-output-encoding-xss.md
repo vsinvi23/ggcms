@@ -1,3 +1,11 @@
+---
+title: "Input Validation vs Output Encoding: Context-Aware Escaping to Defeat XSS"
+description: "Cross-Site Scripting (XSS) remains a persistent threat because developers frequently treat input validation and output encoding as interchangeable concepts. They are not."
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Input Validation vs Output Encoding: Context-Aware Escaping to Defeat XSS
 
 ## The Problem

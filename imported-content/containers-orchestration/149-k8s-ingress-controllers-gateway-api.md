@@ -1,3 +1,11 @@
+---
+title: "Kubernetes Gateway API vs Ingress Controllers: Routing Modern Traffic"
+description: "When Kubernetes Ingress was introduced in Beta in 2015, HTTP traffic routing was relatively straightforward. However, as microservices architectures grew in complexity, the limitations of the classic "
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Kubernetes Gateway API vs Ingress Controllers: Routing Modern Traffic
 
 ## The Problem: The Fragmented Limitations of Ingress

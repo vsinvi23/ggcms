@@ -1,3 +1,11 @@
+---
+title: "Cassandra Deletions: Why Tombstones Cause Read Timeouts"
+description: "Apache Cassandra is a highly scalable, distributed NoSQL database favored for its exceptional write throughput. Its performance stems from a Log-Structured Merge-Tree (LSM-Tree) architecture, where al"
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Cassandra Deletions: Why Tombstones Cause Read Timeouts
 
 ## The Problem: The High Cost of Deleting Data

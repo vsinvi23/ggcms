@@ -1,3 +1,11 @@
+---
+title: "Structs and Memory Alignment"
+description: "When defining a `struct` in C, you might assume its size in memory is exactly the sum of the sizes of its members. However, printing `sizeof(struct)` often reveals it is larger. This is due to memory "
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Structs and Memory Alignment
 
 ## The Problem

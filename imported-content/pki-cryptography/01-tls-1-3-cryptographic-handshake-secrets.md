@@ -1,3 +1,11 @@
+---
+title: "Deep Dive into TLS 1.3: Cryptographic Handshake, Key Schedule, and HKDF Derivation"
+description: "Unpack the low-level wire formats, ephemeral key exchange mechanisms, and cryptographic secret derivation tree that make TLS 1.3 both faster and fundamentally more secure than its predecessors."
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Deep Dive into TLS 1.3: Cryptographic Handshake, Key Schedule, and HKDF Derivation
 
 > Unpack the low-level wire formats, ephemeral key exchange mechanisms, and cryptographic secret derivation tree that make TLS 1.3 both faster and fundamentally more secure than its predecessors.

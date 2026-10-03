@@ -1,3 +1,11 @@
+---
+title: "AI Agents vs AI Assistants: What's the Real Difference?"
+description: "The industry frequently uses the terms \"AI assistant\" and \"AI agent\" interchangeably. However, from an architectural standpoint, they are completely different. While an assistant is a chat-bound advis"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # AI Agents vs AI Assistants: What's the Real Difference?
 
 The industry frequently uses the terms "AI assistant" and "AI agent" interchangeably. However, from an architectural standpoint, they are completely different. While an assistant is a chat-bound advisor that relies on a human-in-the-loop to apply suggestions, an agent is an autonomous software system capable of planning, executing shell commands, and modifying workspaces. Understanding these architectural differences is crucial for choosing the right toolchain for your development pipeline.

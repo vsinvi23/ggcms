@@ -1,3 +1,11 @@
+---
+title: "LSM Trees in Go: The Append-Only Architecture of Modern NoSQL"
+description: "B-Trees rule relational databases because they optimize read paths. However, inserting a random key into a B-Tree forces the OS to fetch a 4KB disk page, modify a few bytes, and flush it back. This ra"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # LSM Trees in Go: The Append-Only Architecture of Modern NoSQL
 
 ## The Problem: The B-Tree Write Bottleneck

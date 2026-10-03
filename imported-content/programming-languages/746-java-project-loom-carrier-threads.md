@@ -1,3 +1,11 @@
+---
+title: "Project Loom Internals: Carrier Threads, Virtual Thread Scheduling, and Pinning Hazards"
+description: "In standard Java (pre-JDK 21), concurrent programming relies on platform threads, which are 1:1 wrappers around OS threads. Each platform thread allocates a large, contiguous memory stack (typically 1"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Project Loom Internals: Carrier Threads, Virtual Thread Scheduling, and Pinning Hazards
 
 ## The Problem: The Scalability Limit of 1:1 Threads

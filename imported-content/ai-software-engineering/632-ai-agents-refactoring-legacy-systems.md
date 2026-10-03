@@ -1,4 +1,4 @@
----
+--- 
 title: "AI Agents for Refactoring Legacy Systems"
 slug: "ai-agents-refactoring-legacy-systems"
 category: "AI Software Engineering"
@@ -40,7 +40,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # AI Agents for Refactoring Legacy Systems
 

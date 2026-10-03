@@ -1,3 +1,11 @@
+---
+title: "Istio Service Mesh: Zero-Trust mTLS, PeerAuthentication, and Sidecar Proxies"
+description: "In traditional Kubernetes deployments, once traffic bypasses the external firewall (Ingress), it traverses the internal cluster network in plaintext. If an attacker gains access to a single Pod (via R"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Istio Service Mesh: Zero-Trust mTLS, PeerAuthentication, and Sidecar Proxies
 
 ### The Problem: Implicit Trust in Internal Networks

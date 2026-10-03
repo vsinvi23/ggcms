@@ -1,3 +1,11 @@
+---
+title: "Java from Scratch: What Actually Happens When You Run Java? The JVM Abstraction"
+description: "Traditional system languages (like C or C++) compile directly to target-specific machine code. A C++ binary compiled for Windows x86_64 cannot execute on an ARM Linux server. Porting software across d"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Java from Scratch: What Actually Happens When You Run Java? The JVM Abstraction
 
 ## Problem Statement

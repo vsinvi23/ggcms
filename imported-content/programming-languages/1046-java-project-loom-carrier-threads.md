@@ -1,3 +1,11 @@
+---
+title: "Project Loom Internals: Carrier Threads, Virtual Thread Scheduling, and Pinning Hazards"
+description: "Historically, Java's `java.lang.Thread` mapped 1:1 directly to OS-level threads. OS threads are heavyweight resources. They require ~1MB of memory for the stack and require a costly system call to con"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Project Loom Internals: Carrier Threads, Virtual Thread Scheduling, and Pinning Hazards
 
 ## The Problem: The High Cost of Platform Threads

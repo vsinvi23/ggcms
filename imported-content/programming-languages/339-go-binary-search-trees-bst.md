@@ -1,3 +1,11 @@
+---
+title: "Binary Search Trees in Go: Pointer Mechanics and $O(\log N)$ Lookups"
+description: "Arrays provide $O(1)$ lookups but $O(N)$ insertions. Linked lists offer $O(1)$ insertions (at known nodes) but $O(N)$ lookups. The Binary Search Tree (BST) bridges this gap, aiming for $O(\log N)$ tim"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Binary Search Trees in Go: Pointer Mechanics and $O(\log N)$ Lookups
 
 ## The Problem: Dynamic Ordered Data

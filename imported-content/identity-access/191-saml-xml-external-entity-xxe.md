@@ -1,3 +1,11 @@
+---
+title: "SAML Security: Mitigating XML External Entity (XXE) Processing Vulnerabilities"
+description: "Security Assertion Markup Language (SAML) remains a cornerstone of enterprise single sign-on (SSO). However, because SAML relies entirely on the XML standard for packaging assertions, requests, and me"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # SAML Security: Mitigating XML External Entity (XXE) Processing Vulnerabilities
 
 ## The Problem

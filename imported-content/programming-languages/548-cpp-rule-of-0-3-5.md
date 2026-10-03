@@ -1,3 +1,11 @@
+---
+title: "Rule of 0, 3, and 5 Explained: Class Design for Resource Management"
+description: "C++ classes are highly customizable. When writing a class, the compiler can synthesize up to five special member functions to manage the lifecycle of your object: the destructor, the copy constructor,"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Rule of 0, 3, and 5 Explained: Class Design for Resource Management
 
 C++ classes are highly customizable. When writing a class, the compiler can synthesize up to five special member functions to manage the lifecycle of your object: the destructor, the copy constructor, the copy assignment operator, the move constructor, and the move assignment operator. Navigating when to implement, default, or delete these functions is governed by three historical design standards: the **Rule of Three**, the **Rule of Five**, and the **Rule of Zero**.

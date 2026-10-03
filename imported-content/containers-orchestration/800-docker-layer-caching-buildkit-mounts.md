@@ -1,3 +1,11 @@
+---
+title: "Docker Layer Caching: Structuring Multi-Stage Dockerfiles and BuildKit Cache Mounts"
+description: "Building container images repeatedly during local development or CI/CD pipelines can be agonizingly slow. Common anti-patterns include copying the entire source directory before fetching dependencies "
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Docker Layer Caching: Structuring Multi-Stage Dockerfiles and BuildKit Cache Mounts
 
 ### The Problem: Monolithic, Unoptimized Image Builds

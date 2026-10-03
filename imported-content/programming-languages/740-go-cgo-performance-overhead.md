@@ -1,3 +1,11 @@
+---
+title: "CGO Internals: The Hidden Performance Costs of Transitioning Between Go and C boundaries"
+description: "When developers need to integrate existing native C/C++ libraries (e.g., SQLite, OpenSSL, or customized hardware drivers) into a Go application, `CGO` is the de facto bridge. However, a common pitfall"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # CGO Internals: The Hidden Performance Costs of Transitioning Between Go and C boundaries
 
 ## The Problem: CGO is Not a "Free Pass"

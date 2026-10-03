@@ -1,3 +1,11 @@
+---
+title: "AI Agent Authorization: Decoupling Policy Decisions with OPA and Rego"
+description: "Autonomous AI agents are highly susceptible to prompt injection, jailbreaking, and execution hijacking. When an agent decides *which* tool to call and with *what* parameters, we cannot let the LLM mak"
+type: "ARTICLE"
+categorySlug: "ai-llm-security"
+articleType: "GUIDE"
+---
+
 # AI Agent Authorization: Decoupling Policy Decisions with OPA and Rego
 
 ## Problem Statement

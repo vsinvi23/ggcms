@@ -1,3 +1,11 @@
+---
+title: "Hardening the Docker Daemon: Securing /var/run/docker.sock"
+description: "The Docker architecture consists of a client (the `docker` CLI) and a server (the `dockerd` daemon). By default, these two components communicate over a local Unix socket located at `/var/run/docker.s"
+type: "ARTICLE"
+categorySlug: "containers-orchestration"
+articleType: "GUIDE"
+---
+
 # Hardening the Docker Daemon: Securing /var/run/docker.sock
 
 ## The Daemon Socket Problem

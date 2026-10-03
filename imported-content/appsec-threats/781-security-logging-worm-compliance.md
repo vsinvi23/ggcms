@@ -1,3 +1,11 @@
+---
+title: "Security Logging: Implementing Immutable WORM (Write-Once-Read-Many) Audit Trails"
+description: "When a sophisticated adversary gains unauthorized access to a high-value system, one of their immediate actions is to perform \"log cleaning.\" By modifying, deleting, or injecting malicious noise into "
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # Security Logging: Implementing Immutable WORM (Write-Once-Read-Many) Audit Trails
 
 ## The Problem

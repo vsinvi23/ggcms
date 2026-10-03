@@ -1,4 +1,4 @@
----
+--- 
 title: "What Happens When an AI Agent Becomes Part of Your Development Team?"
 slug: "ai-agent-part-of-dev-team"
 category: "AI Software Engineering"
@@ -44,7 +44,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # What Happens When an AI Agent Becomes Part of Your Development Team?
 

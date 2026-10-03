@@ -1,3 +1,11 @@
+---
+title: "AWS Transit Gateway vs VPC Peering: Scaling Hub-and-Spoke Network Topologies"
+description: "As organizations mature in AWS, their cloud footprint expands from a single Virtual Private Cloud (VPC) to dozens or hundreds of VPCs across multiple accounts. To allow these microservices, databases,"
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # AWS Transit Gateway vs VPC Peering: Scaling Hub-and-Spoke Network Topologies
 
 ## The Problem: The Sprawl of VPC Peering Connections

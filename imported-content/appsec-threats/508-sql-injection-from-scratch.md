@@ -1,3 +1,11 @@
+---
+title: "SQL Injection from Scratch: Exploitation and Defense"
+description: "SQL Injection (SQLi) is arguably the oldest and most devastating web vulnerability. It occurs when an application takes user input and concatenates it directly into a database query. The database engi"
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # SQL Injection from Scratch: Exploitation and Defense
 
 ## The Problem: Treating Data as Code

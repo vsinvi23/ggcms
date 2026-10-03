@@ -1,4 +1,4 @@
----
+--- 
 title: "AI Model Cards and Audit Trails: Documenting AI Systems for Accountability"
 slug: "ai-model-cards-audit-trails-documenting-ai-systems"
 category: "AI Governance"
@@ -38,7 +38,9 @@ tags:
 
 content_status: "reviewed"
 last_reviewed: "2026-09-18"
+categorySlug: "generative-ai"
 ---
+
 
 # AI Model Cards and Audit Trails: Documenting AI Systems for Accountability
 

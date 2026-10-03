@@ -1,3 +1,11 @@
+---
+title: "Tries (Prefix Trees) in Java: Building a Sub-Millisecond Autocomplete Engine"
+description: "Searching for words starting with a specific prefix (e.g., autocomplete for \"algo\") in an array or a Hash Map requires scanning every string. In an ordered Binary Search Tree, range queries are possib"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # Tries (Prefix Trees) in Java: Building a Sub-Millisecond Autocomplete Engine
 
 ## The Problem: The Prefix Penalty

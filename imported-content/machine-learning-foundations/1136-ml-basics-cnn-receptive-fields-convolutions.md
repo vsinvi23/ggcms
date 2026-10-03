@@ -1,3 +1,11 @@
+---
+title: "Computer Vision: Convolutional Neural Networks (CNNs) and Receptive Fields"
+description: "Using standard Feedforward Neural Networks (MLPs) for images is catastrophically inefficient. Flattening a 256x256 RGB image creates 196,608 input nodes. A single dense hidden layer of 1,000 neurons w"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Computer Vision: Convolutional Neural Networks (CNNs) and Receptive Fields
 
 ## The Problem

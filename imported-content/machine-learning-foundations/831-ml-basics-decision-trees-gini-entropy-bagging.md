@@ -1,3 +1,11 @@
+---
+title: "Ensemble Learning: From Decision Trees to Random Forests (Bagging)"
+description: "Single decision trees are highly interpretable models that naturally handle mixed data types (continuous, categorical), require zero feature scaling, and capture complex non-linear feature interaction"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Ensemble Learning: From Decision Trees to Random Forests (Bagging)
 
 ## The Problem

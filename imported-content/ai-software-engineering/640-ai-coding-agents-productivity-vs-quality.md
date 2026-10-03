@@ -1,4 +1,4 @@
----
+--- 
 title: "AI Coding Agents: Productivity vs Software Quality"
 slug: "ai-coding-agents-productivity-vs-quality"
 category: "AI Software Engineering"
@@ -44,7 +44,9 @@ tags:
 
 content_status: "draft"
 last_reviewed: "2026-09-17"
+categorySlug: "generative-ai"
 ---
+
 
 # AI Coding Agents: Productivity vs Software Quality
 

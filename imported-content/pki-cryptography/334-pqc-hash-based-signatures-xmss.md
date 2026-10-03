@@ -1,3 +1,11 @@
+---
+title: "Stateful Hash-Based Signatures (XMSS): The Safest Post-Quantum Fallback"
+description: "While NIST has standardized lattice-based cryptography (ML-DSA) for general-purpose signatures, lattices are mathematically \"young.\" The underlying hardness assumptions (like the Learning With Errors "
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # Stateful Hash-Based Signatures (XMSS): The Safest Post-Quantum Fallback
 
 ## The Problem: The Mathematical Anxiety of Lattices

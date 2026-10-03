@@ -1,3 +1,11 @@
+---
+title: "OAuth 2.0 Client Credentials Grant: Securing Machine-to-Machine APIs"
+description: "In modern microservices architectures, back-end services frequently communicate with other services without any human user context. Historically, developers secured these machine-to-machine (M2M) inte"
+type: "ARTICLE"
+categorySlug: "identity-access"
+articleType: "GUIDE"
+---
+
 # OAuth 2.0 Client Credentials Grant: Securing Machine-to-Machine APIs
 
 ## The Problem: Hardcoded Secrets and Indefinite Trust in M2M Networks

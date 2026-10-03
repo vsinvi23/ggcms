@@ -1,3 +1,11 @@
+---
+title: "Feature Toggles: Branch by Abstraction and Decoupling Deployment from Release"
+description: "Historically, software development relied on long-lived feature branches. A developer would check out a branch, work on it for a month, and then face the nightmare of merging it back into `main`."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Feature Toggles: Branch by Abstraction and Decoupling Deployment from Release
 
 Historically, software development relied on long-lived feature branches. A developer would check out a branch, work on it for a month, and then face the nightmare of merging it back into `main`. 

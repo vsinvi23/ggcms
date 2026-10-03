@@ -1,3 +1,11 @@
+---
+title: "Kafka Partitioning: Horizontal Scaling of Message Brokering and Rebalancing"
+description: "In traditional message queuing systems, a single queue can become an absolute bottleneck. If multiple consumers read from the same queue in parallel, preserving message order is nearly impossible. If "
+type: "ARTICLE"
+categorySlug: "databases"
+articleType: "GUIDE"
+---
+
 # Kafka Partitioning: Horizontal Scaling of Message Brokering and Rebalancing
 
 ## The Problem: The Single-Queue Bottleneck and Rebalance Storms

@@ -1,3 +1,11 @@
+---
+title: "Agentic AI: The ReAct (Reason + Act) Loop Pattern"
+description: "**The Problem:** Traditional LLMs act as static input-output engines. They suffer from hallucinations, lack access to real-time data, and cannot perform multi-step procedural tasks reliably. To execut"
+type: "ARTICLE"
+categorySlug: "generative-ai"
+articleType: "GUIDE"
+---
+
 # Agentic AI: The ReAct (Reason + Act) Loop Pattern
 
 **The Problem:** Traditional LLMs act as static input-output engines. They suffer from hallucinations, lack access to real-time data, and cannot perform multi-step procedural tasks reliably. To execute complex workflows, an LLM must break out of the single-turn generation paradigm and adopt a framework for cyclical reasoning and external environment interaction.

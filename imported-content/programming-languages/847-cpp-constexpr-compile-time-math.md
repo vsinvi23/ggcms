@@ -1,3 +1,11 @@
+---
+title: "C++ constexpr: Executing Complex Mathematical Calculations at Compile Time"
+description: "A real-time signal processing engine or high-frequency trading application must pre-compute complex trigonometric tables, filter coefficients, or matrix transformation constants on startup. Traditiona"
+type: "ARTICLE"
+categorySlug: "programming-languages"
+articleType: "GUIDE"
+---
+
 # C++ constexpr: Executing Complex Mathematical Calculations at Compile Time
 
 ## The Problem: Runtime Math Initialization Latency

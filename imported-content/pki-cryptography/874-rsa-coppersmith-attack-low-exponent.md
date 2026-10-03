@@ -1,3 +1,11 @@
+---
+title: "RSA Vulnerabilities: Coppersmith's Attack on Low Public Exponents (e=3)"
+description: "To optimize encryption and signature verification performance, cryptographic libraries often use low public exponents ($e$) in RSA. The value $e = 65537$ ($2^{16} + 1$) is the current industry standar"
+type: "ARTICLE"
+categorySlug: "pki-cryptography"
+articleType: "GUIDE"
+---
+
 # RSA Vulnerabilities: Coppersmith's Attack on Low Public Exponents (e=3)
 
 ## The Problem: The Trap of Fast RSA Decryption

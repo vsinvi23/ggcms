@@ -1,3 +1,11 @@
+---
+title: "API Pagination: Why Cursor-Based Pagination Outperforms OFFSET/LIMIT"
+description: "Pagination is a fundamental requirement for any data-heavy API. However, the default approach most developers reach for—the standard `OFFSET` and `LIMIT` SQL paradigm—harbors a hidden performance clif"
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # API Pagination: Why Cursor-Based Pagination Outperforms OFFSET/LIMIT
 
 Pagination is a fundamental requirement for any data-heavy API. However, the default approach most developers reach for—the standard `OFFSET` and `LIMIT` SQL paradigm—harbors a hidden performance cliff and subtle data consistency bugs that only reveal themselves at scale. 

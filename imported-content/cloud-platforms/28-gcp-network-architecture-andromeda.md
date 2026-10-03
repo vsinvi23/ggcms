@@ -1,3 +1,11 @@
+---
+title: "GCP Network Architecture: Andromeda Software-Defined Networks, BGP, and Global VPC Routing"
+description: "Unpack the architectural and logical primitives of Google Cloud's virtual network substrate. Learn how Andromeda decouples control from physical host data planes, trace packet path encapsulation on hypervisor virtual switches, examine global VPC fiber routing, and analyze dynamic BGP peering via Cloud Router."
+type: "ARTICLE"
+categorySlug: "cloud-platforms"
+articleType: "GUIDE"
+---
+
 # GCP Network Architecture: Andromeda Software-Defined Networks, BGP, and Global VPC Routing
 
 > Unpack the architectural and logical primitives of Google Cloud's virtual network substrate. Learn how Andromeda decouples control from physical host data planes, trace packet path encapsulation on hypervisor virtual switches, examine global VPC fiber routing, and analyze dynamic BGP peering via Cloud Router.

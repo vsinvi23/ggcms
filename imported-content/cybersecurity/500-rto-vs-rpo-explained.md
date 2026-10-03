@@ -1,3 +1,11 @@
+---
+title: "RTO vs. RPO: Engineering Cost-Reliability Curves in System Backups"
+description: "During initial system design meetings, product owners almost always make the same demand: **\"We need zero downtime and absolutely zero data loss.\"**"
+type: "ARTICLE"
+categorySlug: "cloud-security-compliance"
+articleType: "GUIDE"
+---
+
 # RTO vs. RPO: Engineering Cost-Reliability Curves in System Backups
 
 ## The Problem: The "Zero-Downtime, Zero-Loss" Fallacy

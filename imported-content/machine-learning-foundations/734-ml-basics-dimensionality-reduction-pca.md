@@ -1,3 +1,11 @@
+---
+title: "Principal Component Analysis (PCA): Covariance Matrix and Eigenvectors"
+description: "High-dimensional datasets (e.g., genomics, high-res images) suffer from the \"Curse of Dimensionality.\" As the number of features $n$ grows, data becomes sparse, distance metrics degrade, and computati"
+type: "ARTICLE"
+categorySlug: "machine-learning-foundations"
+articleType: "GUIDE"
+---
+
 # Principal Component Analysis (PCA): Covariance Matrix and Eigenvectors
 
 ## The Problem

@@ -1,3 +1,11 @@
+---
+title: "How Hackers Actually Think About Web Applications"
+description: "Developers build software to follow the \"happy path.\" A user enters a username, enters a password, clicks submit, and views their dashboard."
+type: "ARTICLE"
+categorySlug: "appsec-threats"
+articleType: "GUIDE"
+---
+
 # How Hackers Actually Think About Web Applications
 
 ## The Problem: The "Happy Path" Fallacy

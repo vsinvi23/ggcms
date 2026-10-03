@@ -1,3 +1,11 @@
+---
+title: "Distributed Systems from Scratch: Why One Computer Isn't Enough"
+description: "When you build a software application, it starts on a single machine. The database, the application logic, and the web server all share the same CPU, memory, and disk."
+type: "ARTICLE"
+categorySlug: "software-design"
+articleType: "GUIDE"
+---
+
 # Distributed Systems from Scratch: Why One Computer Isn't Enough
 
 ### The Problem: Reaching the Physical Limit
