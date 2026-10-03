@@ -220,12 +220,24 @@ export default publicCmsService;
 
 // ─── Public learning-path service (no auth) ────────────────────────────────────
 
+export interface PublicLearningPathCourseDto {
+  courseId: number;
+  sortOrder: number;
+  title?: string;
+  slug?: string;
+  description?: string;
+  status?: string;
+  categoryName?: string;
+}
+
 export interface PublicLearningPathDto {
   id: number;
   kind: string;
   title: string;
   description: string;
-  courses?: PublicCmsPagedResponse['items'];
+  slug?: string;
+  courseCount?: number;
+  courses?: PublicLearningPathCourseDto[];
 }
 
 export const publicLearningPathService = {

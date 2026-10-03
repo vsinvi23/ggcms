@@ -44,9 +44,9 @@ interface PublicLayoutProps {
 }
 
 const allNavItems = [
+  { icon: Compass,       label: 'Explore',        href: '/explore',       exact: false, flag: null },
   { icon: BookOpen,      label: 'Courses',        href: '/courses',       exact: false, flag: null },
   { icon: GraduationCap, label: 'Learning Paths', href: '/learning-paths', exact: false, flag: null },
-  { icon: Compass,       label: 'Explore',        href: '/explore',       exact: false, flag: null },
   { icon: Target,        label: 'Practice',       href: '/practice',      exact: false, flag: null },
   { icon: Briefcase,     label: 'Interview Prep', href: '/interview-prep', exact: false, flag: null },
 ];

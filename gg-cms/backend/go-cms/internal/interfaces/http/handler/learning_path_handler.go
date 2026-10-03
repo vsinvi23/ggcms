@@ -20,8 +20,13 @@ func NewLearningPathHandler(svc lpsvc.Service) *LearningPathHandler {
 }
 
 type learningPathCourseResponse struct {
-	CourseID  uint `json:"courseId"`
-	SortOrder int  `json:"sortOrder"`
+	CourseID     uint   `json:"courseId"`
+	SortOrder    int    `json:"sortOrder"`
+	Title        string `json:"title,omitempty"`
+	Slug         string `json:"slug,omitempty"`
+	Description  string `json:"description,omitempty"`
+	Status       string `json:"status,omitempty"`
+	CategoryName string `json:"categoryName,omitempty"`
 }
 
 type learningPathResponse struct {
@@ -41,6 +46,25 @@ func mapLearningPath(lp *entity.LearningPath) learningPathResponse {
 	courses := make([]learningPathCourseResponse, len(lp.Courses))
 	for i, c := range lp.Courses {
 		courses[i] = learningPathCourseResponse{CourseID: c.CourseID, SortOrder: c.SortOrder}
+		if c.Course != nil {
+			courses[i].Status = string(c.Course.Status)
+			// Only published content exposes its metadata; drafts return id/status only.
+			if c.Course.Status == entity.CMSStatusPublished {
+				courses[i].Title = c.Course.Title
+				courses[i].Slug = c.Course.Slug
+				desc := c.Course.Description
+				if c.Course.HasPendingDraft {
+					courses[i].Title = c.Course.PublishedTitle
+					desc = c.Course.PublishedDescription
+				}
+				if desc != nil {
+					courses[i].Description = *desc
+				}
+				if c.Course.Category != nil {
+					courses[i].CategoryName = c.Course.Category.Name
+				}
+			}
+		}
 	}
 	pathSlug := lp.Slug
 	if pathSlug == "" {

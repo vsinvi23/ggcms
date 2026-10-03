@@ -195,3 +195,57 @@ export function updateCourseProgress(
 
   return newState;
 }
+
+export interface LearningPathResumeState {
+  pathSlug: string;
+  courseSlug: string;
+  courseUrl: string;
+  lessonId: number | null;
+  savedAt: string;
+}
+
+const PATH_RESUME_KEY = 'ggcms_path_resume_states';
+const RECENT_PATHS_KEY = 'ggcms_recent_paths';
+const COURSE_RESUME_PREFIX = 'ggcms_course_state_';
+
+function readJson<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function getPathResumeState(pathSlug: string): LearningPathResumeState | null {
+  return readJson<Record<string, LearningPathResumeState>>(PATH_RESUME_KEY, {})[pathSlug] ?? null;
+}
+
+export function savePathResumeState(state: LearningPathResumeState): void {
+  try {
+    const all = readJson<Record<string, LearningPathResumeState>>(PATH_RESUME_KEY, {});
+    all[state.pathSlug] = state;
+    localStorage.setItem(PATH_RESUME_KEY, JSON.stringify(all));
+  } catch (e) {
+    console.warn('Failed to save learning path state:', e);
+  }
+}
+
+export function getSavedCourseLessonId(courseId: number): number | null {
+  const saved = readJson<{ selectedLessonId?: number } | null>(`${COURSE_RESUME_PREFIX}${courseId}`, null);
+  return saved?.selectedLessonId ?? null;
+}
+
+export function getRecentPathSlugs(): string[] {
+  return readJson<string[]>(RECENT_PATHS_KEY, []);
+}
+
+export function recordRecentPath(pathSlug: string): void {
+  if (!pathSlug) return;
+  try {
+    const next = [pathSlug, ...getRecentPathSlugs().filter(s => s !== pathSlug)].slice(0, 6);
+    localStorage.setItem(RECENT_PATHS_KEY, JSON.stringify(next));
+  } catch {
+    // ignore
+  }
+}

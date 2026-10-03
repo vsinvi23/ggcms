@@ -1,250 +1,141 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useQueries } from '@tanstack/react-query';
 import {
-  BookOpen, Clock, ChevronRight, GraduationCap, CheckCircle2, Circle, PlayCircle, Star, Bookmark, Check, Shield, ArrowLeft,
-  ChevronDown, FileText, Code2, HelpCircle, Layers, Play, ArrowRight,
+  BookOpen, Clock, ChevronRight, GraduationCap, CheckCircle2, Circle, PlayCircle, Bookmark, Check, Shield,
+  ChevronDown, FileText, Play, HelpCircle, Layers, ArrowRight, History, AlertTriangle,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { usePublicLearningPathById, usePublicLearningPaths, usePublicCmsList } from '@/api/hooks/usePublicCms';
-import { useSectionsByCourse } from '@/api/hooks/useSections';
-import { useMyEnrollments } from '@/api/hooks/useEnrollments';
+import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
+import { usePublicLearningPathById, usePublicLearningPaths } from '@/api/hooks/usePublicCms';
+import { sectionKeys } from '@/api/hooks/useSections';
+import { sectionService } from '@/api/services/sectionService';
+import { useMyEnrollments, useEnroll } from '@/api/hooks/useEnrollments';
 import { useAuth } from '@/contexts/AuthContext';
-import { EnrollmentDto } from '@/api/types';
+import { EnrollmentDto, SectionDto } from '@/api/types';
 import { buildCourseUrl } from '@/lib/slug';
 import { cn } from '@/lib/utils';
-import { CURATED_LEARNING_PATHS, CuratedLearningPath } from '@/data/learningPathData';
+import { CURATED_LEARNING_PATHS } from '@/data/learningPathData';
+import {
+  getCourseProgressState,
+  getPathResumeState,
+  getRecentPathSlugs,
+  getSavedCourseLessonId,
+  recordRecentPath,
+  savePathResumeState,
+} from '@/lib/contentStateStore';
 
 type CourseStatus = 'completed' | 'current' | 'upcoming';
 
-interface ModuleChapter {
-  id: string;
+interface PathCourse {
+  id: number;
   title: string;
-  type: 'Video' | 'Reading' | 'Hands-on Lab' | 'Quiz';
-  durationMinutes: number;
+  slug: string;
   description: string;
+  categoryName?: string;
 }
 
-const getModuleChapters = (course: any, moduleIndex: number): ModuleChapter[] => {
-  const titleLower = (course.title || '').toLowerCase();
-  
-  if (titleLower.includes('typescript') || titleLower.includes('react')) {
-    return [
-      { id: 'ch-1', title: 'Component Composition & Design Patterns', type: 'Video', durationMinutes: 25, description: 'Learn advanced component composition, HOCs, and render props in React.' },
-      { id: 'ch-2', title: 'Custom Hooks & Reactive State Management', type: 'Reading', durationMinutes: 35, description: 'Deep dive into state synchronization, useReducer, and Context API optimization.' },
-      { id: 'ch-3', title: 'Type Safety & Generics in Enterprise Apps', type: 'Hands-on Lab', durationMinutes: 40, description: 'Build strongly typed API clients and polymorphic UI components in TypeScript.' },
-      { id: 'ch-4', title: 'React Architecture Knowledge Assessment', type: 'Quiz', durationMinutes: 15, description: 'Test your understanding of component lifecycles, memoization, and custom hooks.' },
-    ];
-  }
-  
-  if (titleLower.includes('go') || titleLower.includes('backend') || titleLower.includes('microservice')) {
-    return [
-      { id: 'ch-1', title: 'Concurrent Goroutines & Channel Pipelines', type: 'Video', durationMinutes: 30, description: 'Master lightweight concurrency, worker pools, and channel synchronization in Go.' },
-      { id: 'ch-2', title: 'REST & gRPC API Contracts in Go', type: 'Reading', durationMinutes: 40, description: 'Design clean REST handlers, Protobuf contracts, and high-performance gRPC endpoints.' },
-      { id: 'ch-3', title: 'Middleware, Context & Timeout Hardening', type: 'Hands-on Lab', durationMinutes: 45, description: 'Implement request tracing, cancellation contexts, rate limiting, and CORS.' },
-      { id: 'ch-4', title: 'Go Backend Engineering Quiz', type: 'Quiz', durationMinutes: 15, description: 'Verify goroutine safety, channel buffering, and error handling patterns.' },
-    ];
-  }
-
-  if (titleLower.includes('postgres') || titleLower.includes('data') || titleLower.includes('database')) {
-    return [
-      { id: 'ch-1', title: 'Relational Schema Design & Normalization', type: 'Video', durationMinutes: 25, description: 'Third normal form (3NF), primary/foreign keys, and data integrity constraints.' },
-      { id: 'ch-2', title: 'Indexing Strategies & B-Tree Tuning', type: 'Reading', durationMinutes: 30, description: 'B-Tree, GIN, and BRIN indexes, composite indexing, and query plan analysis.' },
-      { id: 'ch-3', title: 'Query Optimization & EXPLAIN ANALYZE', type: 'Hands-on Lab', durationMinutes: 40, description: 'Identify slow queries, join algorithms, and execution plan bottlenecks.' },
-    ];
-  }
-
-  if (titleLower.includes('oauth') || titleLower.includes('security') || titleLower.includes('identity')) {
-    return [
-      { id: 'ch-1', title: 'Authorization Code Flow with PKCE Deep Dive', type: 'Video', durationMinutes: 30, description: 'Cryptographic code_verifier and code_challenge generation for public clients.' },
-      { id: 'ch-2', title: 'JWT Verification & Identity Assertion', type: 'Reading', durationMinutes: 35, description: 'RS256 vs HS256 signatures, token rotation, and OIDC claims validation.' },
-      { id: 'ch-3', title: 'Building a Secure Token Verification Gateway', type: 'Hands-on Lab', durationMinutes: 50, description: 'Implement bearer token extraction, JWKS fetching, and scope checking.' },
-      { id: 'ch-4', title: 'Identity & OAuth Security Assessment', type: 'Quiz', durationMinutes: 15, description: 'Test token validation, grant types, and PKCE parameters.' },
-    ];
-  }
-
-  if (titleLower.includes('docker') || titleLower.includes('kubernetes') || titleLower.includes('cloud') || titleLower.includes('devops')) {
-    return [
-      { id: 'ch-1', title: 'Multi-stage Docker Builds & Security', type: 'Video', durationMinutes: 25, description: 'Create minimal distroless container images and optimize layer caching.' },
-      { id: 'ch-2', title: 'Kubernetes Pods, Services & Ingress Routes', type: 'Reading', durationMinutes: 35, description: 'ClusterIP, NodePort, LoadBalancer, and Ingress routing rules.' },
-      { id: 'ch-3', title: 'Terraform & Cloud Run Automated Pipeline', type: 'Hands-on Lab', durationMinutes: 45, description: 'Provision GCP Cloud Run services and IAM roles via Terraform IaC.' },
-    ];
-  }
-
-  return [
-    { id: `ch-${moduleIndex}-1`, title: `Foundations of ${course.title}`, type: 'Video', durationMinutes: 20, description: `Key principles, core concepts, and environment setup for ${course.title}.` },
-    { id: `ch-${moduleIndex}-2`, title: `Deep Dive Architecture & Design Patterns`, type: 'Reading', durationMinutes: 30, description: `In-depth breakdown of production architecture, best practices, and trade-offs.` },
-    { id: `ch-${moduleIndex}-3`, title: `Hands-on Project & Implementation Lab`, type: 'Hands-on Lab', durationMinutes: 40, description: `Apply concepts to build a production-ready feature with automated testing.` },
-    { id: `ch-${moduleIndex}-4`, title: `Module Knowledge Assessment`, type: 'Quiz', durationMinutes: 15, description: `Interactive review questions to test concept retention and active recall.` },
-  ];
-};
-
-import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
+const lessonIcon = (type?: string) => (type === 'video' ? Play : type === 'quiz' ? HelpCircle : FileText);
 
 interface CourseModuleCardProps {
-  course: any;
+  course: PathCourse;
   index: number;
   status: CourseStatus;
+  progress: number;
+  sections: SectionDto[];
+  isLoading: boolean;
   isExpanded: boolean;
-  onToggleExpand: (id: number) => void;
+  onToggle: () => void;
+  launchUrl: (course: PathCourse, lessonId?: number) => string;
 }
 
-const CourseModuleCard = ({ course, index, status, isExpanded, onToggleExpand }: CourseModuleCardProps) => {
-  const courseId = typeof course.id === 'number' ? course.id : (parseInt(String(course.id), 10) || 0);
-  const { data: dbSections } = useSectionsByCourse(courseId, courseId > 0);
-
-  const chapters: ModuleChapter[] = useMemo(() => {
-    if (dbSections && dbSections.length > 0) {
-      const list: ModuleChapter[] = [];
-      dbSections.forEach((sec, sIdx) => {
-        if (sec.lessons && sec.lessons.length > 0) {
-          sec.lessons.forEach((les, lIdx) => {
-            let type: 'Video' | 'Reading' | 'Hands-on Lab' | 'Quiz' = 'Reading';
-            if (les.type === 'video') type = 'Video';
-            else if (les.type === 'quiz') type = 'Quiz';
-            else if (les.type === 'lab') type = 'Hands-on Lab';
-
-            list.push({
-              id: `les-${les.id}`,
-              title: les.title || `Lesson ${lIdx + 1}: ${sec.title}`,
-              type,
-              durationMinutes: les.duration || 15,
-              description: `Section ${sIdx + 1}: ${sec.title}`,
-            });
-          });
-        } else {
-          list.push({
-            id: `sec-${sec.id}`,
-            title: sec.title,
-            type: 'Reading',
-            durationMinutes: 20,
-            description: sec.description || `Section ${sIdx + 1} of ${course.title}`,
-          });
-        }
-      });
-      return list;
-    }
-    return getModuleChapters(course, index + 1);
-  }, [dbSections, course, index]);
+const CourseModuleCard = ({ course, index, status, progress, sections, isLoading, isExpanded, onToggle, launchUrl }: CourseModuleCardProps) => {
+  const lessons = useMemo(() => sections.flatMap(s => s.lessons ?? []), [sections]);
+  const minutes = lessons.reduce((acc, l) => acc + (l.duration || 0), 0);
 
   return (
-    <Card
-      key={course.id}
-      className={cn(
-        'transition-all rounded-2xl border border-border overflow-hidden bg-card',
-        isExpanded ? 'shadow-md border-emerald-500/40' : 'hover:border-emerald-500/30'
-      )}
-    >
-      <div
-        onClick={() => onToggleExpand(course.id)}
-        className="p-5 flex items-center justify-between gap-4 cursor-pointer select-none hover:bg-muted/30 transition-colors"
-      >
-        <div className="flex items-start gap-4 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+    <Card className={cn('rounded-2xl border border-border overflow-hidden bg-card transition-all', isExpanded ? 'border-primary/40 shadow-sm' : 'hover:border-primary/30')}>
+      <div className="p-4 flex items-center justify-between gap-3">
+        <button type="button" onClick={onToggle} className="flex items-start gap-3 min-w-0 flex-1 text-left">
+          <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
             {status === 'completed' && <CheckCircle2 className="h-5 w-5" />}
             {status === 'current' && <PlayCircle className="h-5 w-5" />}
             {status === 'upcoming' && <Circle className="h-5 w-5 text-muted-foreground" />}
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                Module {String(index + 1).padStart(2, '0')}
-              </span>
-              <span className="text-xs text-muted-foreground font-medium">
-                &bull; {chapters.length} Sub-modules
-              </span>
+            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-primary">
+              Module {String(index + 1).padStart(2, '0')}
+              {progress > 0 && <span className="text-muted-foreground normal-case font-medium">&bull; {progress}% done</span>}
             </div>
-            <h3 className="text-lg font-bold text-foreground transition-colors line-clamp-1 mt-0.5">
-              {course.title}
-            </h3>
-            {course.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                {course.description}
-              </p>
-            )}
+            <h3 className="text-base font-bold text-foreground line-clamp-1">{course.title}</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {isLoading ? 'Loading lessons…' : `${sections.length} sections • ${lessons.length} lessons${minutes ? ` • ${minutes} min` : ''}`}
+            </p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <Badge variant="secondary" className="hidden sm:inline-flex text-xs">
-            {chapters.reduce((acc, c) => acc + c.durationMinutes, 0)} mins
-          </Badge>
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-            <ChevronDown className={cn('w-4 h-4 transition-transform duration-200', isExpanded && 'rotate-180')} />
-          </div>
+        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link to={launchUrl(course)}>
+            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg gap-1.5 text-xs font-bold h-8">
+              <Play className="w-3.5 h-3.5" /> {status === 'upcoming' && progress === 0 ? 'Start' : 'Continue'}
+            </Button>
+          </Link>
+          <button type="button" onClick={onToggle} aria-label="Toggle lessons" className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+            <ChevronDown className={cn('w-4 h-4 transition-transform', isExpanded && 'rotate-180')} />
+          </button>
         </div>
       </div>
 
       {isExpanded && (
-        <div className="border-t border-border bg-muted/20 p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              Chapters & Sub-modules
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {chapters.length} Interactive Lessons
-            </span>
-          </div>
-
-          <div className="space-y-2.5">
-            {chapters.map((ch, chIdx) => (
-              <div
-                key={ch.id}
-                className="p-3.5 rounded-xl border border-border/70 bg-card hover:border-emerald-500/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-              >
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold">
-                    {index + 1}.{chIdx + 1}
+        <div className="border-t border-border bg-muted/20 px-4 py-3 space-y-3">
+          {course.description && <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{course.description}</p>}
+          {isLoading ? (
+            <Skeleton className="h-16 w-full rounded-xl" />
+          ) : sections.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-2">Lessons for this module are being prepared. You can still open the module.</p>
+          ) : (
+            <div className="space-y-2.5">
+              {sections.map((sec, sIdx) => (
+                <div key={sec.id} className="rounded-xl border border-border/70 bg-card overflow-hidden">
+                  <div className="px-3 py-2 bg-muted/30 text-xs font-bold text-foreground flex items-center gap-2">
+                    <Layers className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="truncate">{index + 1}.{sIdx + 1} {sec.title}</span>
                   </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-sm font-bold text-foreground">
-                        {ch.title}
-                      </h4>
-                      <Badge variant="outline" className="text-[10px] px-2 py-0 h-4 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
-                        {ch.type === 'Video' && <Play className="w-2.5 h-2.5 mr-1 inline" />}
-                        {ch.type === 'Reading' && <FileText className="w-2.5 h-2.5 mr-1 inline" />}
-                        {ch.type === 'Hands-on Lab' && <Code2 className="w-2.5 h-2.5 mr-1 inline" />}
-                        {ch.type === 'Quiz' && <HelpCircle className="w-2.5 h-2.5 mr-1 inline" />}
-                        {ch.type}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                      {ch.description}
-                    </p>
+                  <div className="divide-y divide-border/40">
+                    {(sec.lessons ?? []).map(les => {
+                      const Icon = lessonIcon(les.type);
+                      return (
+                        <Link key={les.id} to={launchUrl(course, les.id)} className="flex items-center justify-between gap-3 px-3 py-2 hover:bg-primary/5 group">
+                          <span className="flex items-center gap-2 min-w-0 text-xs text-foreground group-hover:text-primary">
+                            <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate">{les.title}</span>
+                          </span>
+                          <span className="flex items-center gap-2 shrink-0 text-[11px] text-muted-foreground">
+                            {les.duration ? `${les.duration}m` : ''}
+                            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-primary" />
+                          </span>
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-border/40">
-                  <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                    {ch.durationMinutes}m
-                  </span>
-                  <Link to={`${buildCourseUrl(course)}?chapter=${ch.id}`}>
-                    <Button size="sm" variant="ghost" className="h-8 rounded-lg text-xs gap-1 font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
-                      Start Chapter <ArrowRight className="w-3.5 h-3.5" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="pt-2 flex items-center justify-between border-t border-border/60">
-            <span className="text-xs text-muted-foreground hidden sm:inline">
-              Complete all sub-modules to finish Module {String(index + 1).padStart(2, '0')}.
-            </span>
-            <Link to={buildCourseUrl(course)}>
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2 text-xs font-bold ml-auto">
-                <PlayCircle className="w-4 h-4" /> Launch Full Module
-              </Button>
-            </Link>
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </Card>
@@ -256,6 +147,10 @@ const LearningPathPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [isViewingPending, setIsViewingPending] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({});
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
 
   // NOTE: learning-path quick-edit has no backing update API yet — this only
   // toggles the local "viewing pending" UI state, it doesn't persist anything.
@@ -263,22 +158,10 @@ const LearningPathPage = () => {
     setIsViewingPending(true);
   };
 
-  // Real live backend API hooks
-  const { data: apiData, isLoading } = usePublicLearningPathById(pathId ?? '');
-  const { data: allDbPaths } = usePublicLearningPaths();
-  const { data: publicCmsCourses } = usePublicCmsList({ type: 'COURSE', size: 100 });
+  const { data: apiPath, isLoading } = usePublicLearningPathById(pathId ?? '');
+  const { data: allPaths } = usePublicLearningPaths();
   const { data: enrollments = [] } = useMyEnrollments(isAuthenticated);
-
-  const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'related'>('overview');
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [expandedModules, setExpandedModules] = useState<Record<number, boolean>>({});
-
-  const toggleModuleExpand = (courseId: number) => {
-    setExpandedModules(prev => ({
-      ...prev,
-      [courseId]: prev[courseId] === undefined ? false : !prev[courseId],
-    }));
-  };
+  const { mutate: enroll } = useEnroll();
 
   const enrollmentMap = useMemo(() => {
     const m = new Map<number, EnrollmentDto>();
@@ -288,183 +171,139 @@ const LearningPathPage = () => {
     return m;
   }, [enrollments]);
 
-  // Live database data resolution with dynamic course auto-matching & fallback
-  const data = useMemo(() => {
-    let targetRaw = apiData;
-    if (!targetRaw && allDbPaths && allDbPaths.length > 0 && pathId) {
-      const q = pathId.toLowerCase();
-      targetRaw = allDbPaths.find(p => p.slug === q || String(p.id) === q);
-      if (!targetRaw) {
-        const keywords = q.split(/[-_]/);
-        targetRaw = allDbPaths.find(p => {
-          const t = (p.title || '').toLowerCase();
-          const s = (p.slug || '').toLowerCase();
-          return keywords.some(k => k.length > 2 && (t.includes(k) || s.includes(k)));
-        });
-      }
+  const pathSlug = apiPath?.slug || (apiPath ? String(apiPath.id) : '');
+
+  const courses: PathCourse[] = useMemo(
+    () =>
+      (apiPath?.courses ?? [])
+        .filter(c => !!c.slug && (!c.status || c.status === 'PUBLISHED'))
+        .map(c => ({
+          id: c.courseId,
+          title: c.title || `Course #${c.courseId}`,
+          slug: c.slug || '',
+          description: c.description || '',
+          categoryName: c.categoryName,
+        })),
+    [apiPath],
+  );
+
+  const sectionQueries = useQueries({
+    queries: courses.map(c => ({
+      queryKey: sectionKeys.byCourse(c.id),
+      queryFn: () => sectionService.getSectionsByCourse(c.id),
+      staleTime: 60_000,
+    })),
+  });
+
+  useEffect(() => {
+    if (pathSlug) recordRecentPath(pathSlug);
+  }, [pathSlug]);
+
+  const resume = pathSlug ? getPathResumeState(pathSlug) : null;
+
+  const launchUrl = (course: PathCourse, lessonId?: number) => {
+    const params = new URLSearchParams({ path: pathSlug, learn: 'true' });
+    if (lessonId) params.set('lesson', String(lessonId));
+    return `${buildCourseUrl(course)}?${params.toString()}`;
+  };
+
+  const courseProgress = (courseId: number): number => {
+    const enrollment = enrollmentMap.get(courseId);
+    if (enrollment) return enrollment.status === 'completed' ? 100 : Math.round((enrollment.progress ?? 0) * 100);
+    return getCourseProgressState(courseId)?.progress ?? 0;
+  };
+
+  const courseStatus = (courseId: number): CourseStatus => {
+    const p = courseProgress(courseId);
+    if (p >= 100) return 'completed';
+    return p > 0 ? 'current' : 'upcoming';
+  };
+
+  const hasProgress = courses.some(c => courseProgress(c.id) > 0);
+  const isStarted = hasProgress || !!resume;
+
+  const curated = useMemo(
+    () => CURATED_LEARNING_PATHS.find(cp => cp.slug === pathSlug),
+    [pathSlug],
+  );
+
+  const totalMinutes = sectionQueries.reduce(
+    (acc, q) => acc + (q.data ?? []).flatMap(s => s.lessons ?? []).reduce((a, l) => a + (l.duration || 0), 0),
+    0,
+  );
+  const totalLessons = sectionQueries.reduce((acc, q) => acc + (q.data ?? []).flatMap(s => s.lessons ?? []).length, 0);
+  const hoursText = totalMinutes > 0 ? `${Math.max(1, Math.round(totalMinutes / 60))}h` : curated ? `~${curated.estimatedHours}h` : 'Self-paced';
+
+  const skills = useMemo(() => {
+    const list = curated?.skillsGained?.length ? curated.skillsGained : courses.map(c => c.title);
+    return list.slice(0, 6);
+  }, [curated, courses]);
+
+  const relatedPaths = useMemo(() => (allPaths ?? []).filter(p => p.slug !== pathSlug && p.id !== apiPath?.id).slice(0, 3), [allPaths, apiPath]);
+  const recentPaths = useMemo(() => {
+    const bySlug = new Map((allPaths ?? []).map(p => [p.slug, p]));
+    return getRecentPathSlugs()
+      .filter(s => s !== pathSlug)
+      .map(s => bySlug.get(s))
+      .filter((p): p is NonNullable<typeof p> => !!p)
+      .slice(0, 3);
+  }, [allPaths, pathSlug]);
+
+  const handleStartPath = () => {
+    if (courses.length === 0) return;
+    if (isAuthenticated) {
+      courses.filter(c => !enrollmentMap.has(c.id)).forEach(c => enroll(c.id));
     }
-
-    // Match curated metadata if available
-    const searchSlug = (pathId || targetRaw?.slug || targetRaw?.title || '').toLowerCase();
-    const curatedMatch = CURATED_LEARNING_PATHS.find(
-      cp => cp.slug === searchSlug || String(cp.id) === String(targetRaw?.id) || cp.title.toLowerCase().includes(searchSlug)
-    );
-
-    if (!targetRaw && curatedMatch) {
-      targetRaw = {
-        id: curatedMatch.id,
-        kind: curatedMatch.kind,
-        title: curatedMatch.title,
-        description: curatedMatch.description,
-        slug: curatedMatch.slug,
-        courses: [],
-      } as any;
+    if (resume?.courseUrl) {
+      navigate(resume.courseUrl);
+      return;
     }
+    const inProgress = courses.find(c => courseStatus(c.id) === 'current') ?? courses.find(c => courseStatus(c.id) === 'upcoming') ?? courses[0];
+    const savedLesson = getSavedCourseLessonId(inProgress.id);
+    navigate(launchUrl(inProgress, savedLesson ?? undefined));
+  };
 
-    if (!targetRaw && allDbPaths && allDbPaths.length > 0) {
-      targetRaw = allDbPaths[0];
-    }
-
-    if (!targetRaw && CURATED_LEARNING_PATHS.length > 0) {
-      const first = CURATED_LEARNING_PATHS[0];
-      targetRaw = {
-        id: first.id,
-        kind: first.kind,
-        title: first.title,
-        description: first.description,
-        slug: first.slug,
-        courses: [],
-      } as any;
-    }
-
-    if (!targetRaw) return null;
-
-    const cmsMap = new Map<number, any>();
-    const allCmsCourses = publicCmsCourses?.items || [];
-    allCmsCourses.forEach(item => cmsMap.set(item.id, item));
-
-    let rawCoursesList = targetRaw.courses || [];
-
-    // DYNAMIC MATCHING: If database path has 0 linked courses, dynamically assign CMS courses / curated modules
-    if (rawCoursesList.length === 0) {
-      if (curatedMatch && curatedMatch.modules.length > 0) {
-        rawCoursesList = curatedMatch.modules.map(m => {
-          const match = allCmsCourses.find(c =>
-            c.title.toLowerCase().includes(m.title.toLowerCase()) ||
-            m.title.toLowerCase().includes((c.categoryName || '').toLowerCase())
-          );
-          return {
-            courseId: match?.id || m.id,
-            id: match?.id || m.id,
-            title: match?.title || m.title,
-            description: match?.description || m.description,
-            durationMinutes: m.durationMinutes,
-            sectionsCount: m.lessonCount,
-          };
-        });
-      } else if (allCmsCourses.length > 0) {
-        const pTitle = (targetRaw.title || '').toLowerCase();
-        const matchedCms = allCmsCourses.filter(c => {
-          const cTitle = c.title.toLowerCase();
-          const cCat = (c.categoryName || '').toLowerCase();
-          if (pTitle.includes('security') || pTitle.includes('identity')) {
-            return cTitle.includes('security') || cTitle.includes('oauth') || cTitle.includes('identity') || cCat.includes('security');
-          }
-          if (pTitle.includes('backend') || pTitle.includes('go')) {
-            return cTitle.includes('go') || cTitle.includes('backend') || cTitle.includes('microservice') || cCat.includes('backend') || cCat.includes('design');
-          }
-          if (pTitle.includes('cloud') || pTitle.includes('devops')) {
-            return cTitle.includes('docker') || cTitle.includes('cloud') || cTitle.includes('container') || cCat.includes('cloud') || cCat.includes('infrastructure');
-          }
-          if (pTitle.includes('design') || pTitle.includes('interview')) {
-            return cTitle.includes('design') || cTitle.includes('sharded') || cTitle.includes('architecture') || cCat.includes('design');
-          }
-          if (pTitle.includes('ai') || pTitle.includes('machine')) {
-            return cTitle.includes('ai') || cTitle.includes('model') || cTitle.includes('data') || cCat.includes('ai');
-          }
-          return true;
-        });
-
-        const selectedCourses = matchedCms.length > 0 ? matchedCms.slice(0, 4) : allCmsCourses.slice(0, 4);
-        rawCoursesList = selectedCourses.map(c => ({
-          courseId: c.id,
-          id: c.id,
-          title: c.title,
-          description: c.description,
-        }));
-      }
-    }
-
-    const enrichedCourses = rawCoursesList.map((cItem: any) => {
-      const cId = cItem.courseId || cItem.id;
-      const cmsCourse = cmsMap.get(cId);
-      return {
-        id: cId,
-        title: cmsCourse?.title || cItem.title || `Course Module #${cId}`,
-        description: cmsCourse?.description || cItem.description || 'Master core domain concepts and production architecture.',
-        type: 'COURSE' as const,
-        categoryId: cmsCourse?.categoryId || 1,
-        createdBy: cmsCourse?.createdBy || 1,
-        status: 'PUBLISHED' as const,
-        blockCount: cmsCourse?.sectionsCount || cmsCourse?.lessonsCount || 8,
-        durationMinutes: cmsCourse?.durationMinutes || cItem.durationMinutes || 180,
-        slug: cmsCourse?.slug || buildCourseUrl(cmsCourse || { id: cId, title: cItem.title || `Course Module #${cId}` }),
-        tags: cmsCourse?.tags || ['Backend', 'Engineering'],
-        createdAt: cmsCourse?.createdAt || new Date().toISOString(),
-      };
-    });
-
-    return {
-      id: targetRaw.id,
-      kind: targetRaw.kind || 'Structured Learning Path',
-      title: targetRaw.title,
-      description: targetRaw.description,
-      estimatedHours: enrichedCourses.length ? Math.ceil(enrichedCourses.reduce((acc, curr) => acc + (curr.durationMinutes || 180), 0) / 60) : 24,
-      level: 'Intermediate → Advanced',
-      skillsGained: curatedMatch?.skillsGained || enrichedCourses.map(c => `Master ${c.title}`),
-      courses: enrichedCourses,
+  // Ask to save state when leaving the path (any link outside the path→course flow)
+  useEffect(() => {
+    if (!isStarted) return;
+    const onClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a');
+      const href = anchor?.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('/course/') || href.startsWith('/article/') || href.startsWith('javascript:')) return;
+      if (href === window.location.pathname) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingUrl(href);
+      setShowExitDialog(true);
     };
-  }, [apiData, allDbPaths, pathId, publicCmsCourses]);
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [isStarted]);
 
-  // Dynamic Related Paths from database with dynamic module count fallback
-  const relatedPaths = useMemo(() => {
-    if (!allDbPaths || !data) return [];
-    return allDbPaths
-      .filter(p => String(p.id) !== String(data.id))
-      .map(rp => {
-        const searchSlug = (rp.slug || rp.title || '').toLowerCase();
-        const curatedMatch = CURATED_LEARNING_PATHS.find(
-          cp => cp.slug === searchSlug || String(cp.id) === String(rp.id) || cp.title.toLowerCase().includes(searchSlug)
-        );
-        let moduleCount = rp.courses?.length || rp.courseCount || 0;
-        if (moduleCount === 0) {
-          moduleCount = curatedMatch?.modules?.length || 4;
-        }
-        return {
-          ...rp,
-          moduleCount,
-        };
-      });
-  }, [allDbPaths, data]);
+  const confirmExit = () => {
+    if (pathSlug && resume) savePathResumeState({ ...resume, savedAt: new Date().toISOString() });
+    setShowExitDialog(false);
+    if (pendingUrl) navigate(pendingUrl);
+    setPendingUrl(null);
+  };
 
-  if (isLoading && !data) {
+  if (isLoading) {
     return (
       <PublicLayout>
-        <div className="max-w-6xl mx-auto px-6 py-10 space-y-6 animate-pulse">
-          <Skeleton className="h-32 w-full rounded-2xl" />
-          <Skeleton className="h-6 w-1/2" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-4">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
+        <div className="max-w-7xl mx-auto px-6 py-10 space-y-6 animate-pulse">
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-8 space-y-4">
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
             </div>
-            <Skeleton className="h-64 w-full rounded-xl" />
+            <Skeleton className="lg:col-span-4 h-64 w-full rounded-xl" />
           </div>
         </div>
       </PublicLayout>
     );
   }
 
-  if (!data) {
+  if (!apiPath) {
     return (
       <PublicLayout>
         <div className="max-w-6xl mx-auto px-6 py-16 text-center space-y-6">
@@ -472,337 +311,173 @@ const LearningPathPage = () => {
             <GraduationCap className="w-8 h-8" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Learning Path Not Found</h1>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            The learning path requested could not be found. Explore our available career roadmaps below.
-          </p>
-          <Button onClick={() => navigate('/learning-paths')} className="mt-4">
-            Explore All Learning Paths
-          </Button>
+          <p className="text-muted-foreground max-w-md mx-auto">The learning path requested could not be found.</p>
+          <Button onClick={() => navigate('/learning-paths')} className="mt-4">Explore All Learning Paths</Button>
         </div>
       </PublicLayout>
     );
   }
 
-
-  const courses = data.courses ?? [];
-  const hasProgress = courses.some(course => {
-    const enrollment = enrollmentMap.get(course.id);
-    return enrollment && (enrollment.status === 'completed' || enrollment.progress > 0);
-  });
-
-  const getCourseStatus = (courseId: number): CourseStatus => {
-    const enrollment = enrollmentMap.get(courseId);
-    if (!enrollment) return 'upcoming';
-    if (enrollment.status === 'completed') return 'completed';
-    if (enrollment.status === 'active' && enrollment.progress > 0) return 'current';
-    return 'upcoming';
-  };
-
-  const handleStartPath = () => {
-    if (courses.length > 0) {
-      const firstCourse = courses[0];
-      navigate(`${buildCourseUrl(firstCourse)}?learn=true`);
-    }
-  };
-
-  // Dynamic Skills Gained derivation
-  const skillsList = useMemo(() => {
-    if (data.skillsGained && data.skillsGained.length > 0) {
-      return data.skillsGained;
-    }
-    if (courses.length > 0) {
-      return courses.map(c => `Master ${c.title}`);
-    }
-    return [
-      'Architect production-grade scalable web software',
-      'Design RESTful & gRPC backend APIs',
-      'Implement enterprise security, OAuth 2.0 & identity controls',
-      'Deploy containerized services to Cloud Run & Kubernetes',
-    ];
-  }, [data.skillsGained, courses]);
-
-
-
-  const estimatedHours = data.estimatedHours || (courses.length ? courses.length * 4 : 24);
-  const levelText = data.level || 'Intermediate';
-
   return (
     <PublicLayout>
       <PublicQuickEditBar
         contentType="learning_path"
-        contentId={data.id}
-        currentTitle={data.title || ''}
-        currentDescription={data.description || ''}
+        contentId={apiPath.id}
+        currentTitle={apiPath.title || ''}
+        currentDescription={apiPath.description || ''}
         currentBody=""
         isViewingPending={isViewingPending}
         onToggleView={setIsViewingPending}
         onSaveRevision={handleSavePathRevision}
       />
-      <div className="max-w-7xl mx-auto px-6 py-10 space-y-8">
-        {/* Breadcrumb */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         <nav className="flex items-center gap-2 text-sm text-muted-foreground">
           <Link to="/" className="hover:text-primary transition-colors">Home</Link>
           <ChevronRight className="w-4 h-4" />
-          <Link to="/explore/paths" className="hover:text-primary transition-colors">Learning Paths</Link>
+          <Link to="/learning-paths" className="hover:text-primary transition-colors">Learning Paths</Link>
           <ChevronRight className="w-4 h-4" />
-          <span className="text-foreground font-medium truncate max-w-[240px]">{data.title}</span>
+          <span className="text-foreground font-medium truncate max-w-[240px]">{apiPath.title}</span>
         </nav>
 
-        {/* Hero Header Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          <div className="lg:col-span-2 space-y-5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
-                <GraduationCap className="w-3.5 h-3.5 mr-1" />
-                {data.kind === 'INTERVIEW_PREP' ? 'Interview Prep Track' : 'Structured Learning Path'}
-              </Badge>
-              <Badge variant="outline" className="text-xs">{levelText}</Badge>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
-              {data.title}
-            </h1>
-
-            {data.description && (
-              <p className="text-base text-muted-foreground leading-relaxed">
-                {data.description}
-              </p>
-            )}
-
-            {/* Path Stats */}
-            <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground pt-2">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="font-semibold text-foreground">{courses.length}</span> modules
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* MAIN: introduction + curriculum */}
+          <div className="lg:col-span-8 space-y-6">
+            <div className="rounded-2xl border border-border bg-card bg-gradient-to-br from-primary/10 via-card to-card p-6 sm:p-8 space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                  <GraduationCap className="w-3.5 h-3.5 mr-1" />
+                  {apiPath.kind === 'INTERVIEW_PREP' ? 'Interview Prep Track' : apiPath.kind === 'SECURITY_TRACK' ? 'Security Track' : 'Structured Learning Path'}
+                </Badge>
+                {curated?.level && <Badge variant="outline" className="text-xs">{curated.level}</Badge>}
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="font-semibold text-foreground">{estimatedHours}</span> hours estimated
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">{apiPath.title}</h1>
+              {apiPath.description && <p className="text-base text-muted-foreground leading-relaxed">{apiPath.description}</p>}
+
+              <div className="flex flex-wrap items-center gap-5 text-sm text-muted-foreground">
+                <span className="flex items-center gap-2"><BookOpen className="w-4 h-4 text-primary" /><b className="text-foreground">{courses.length}</b> modules</span>
+                {totalLessons > 0 && <span className="flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /><b className="text-foreground">{totalLessons}</b> lessons</span>}
+                <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /><b className="text-foreground">{hoursText}</b></span>
               </div>
-            </div>
 
-            {/* CTA Buttons */}
-            <div className="flex items-center gap-3 pt-3">
-              <Button size="lg" onClick={handleStartPath} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-2 px-6 shadow-md">
-                <PlayCircle className="w-5 h-5" />
-                {hasProgress ? 'Continue Learning Path' : 'Start Learning Path'}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => setIsBookmarked(prev => !prev)}
-                className={cn('rounded-xl border-border', isBookmarked && 'text-emerald-600 border-emerald-500 bg-emerald-500/10')}
-              >
-                <Bookmark className={cn('w-4 h-4', isBookmarked && 'fill-emerald-600')} />
-              </Button>
-            </div>
-          </div>
-
-          {/* Right Card: Dynamic Skills You'll Gain */}
-          <Card className="rounded-2xl border border-border shadow-sm bg-card p-6 space-y-4">
-            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-              <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              Skills You&apos;ll Gain
-            </h3>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              {skillsList.map((skill, index) => (
-                <li key={index} className="flex items-start gap-2.5">
-                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                  <span>{skill}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-
-        {/* Sub-tabs bar */}
-        <div className="border-b border-border">
-          <div className="flex gap-8">
-            {(
-              [
-                { id: 'overview', label: 'Overview' },
-                { id: 'curriculum', label: 'Curriculum' },
-                { id: 'related', label: 'Related Paths' },
-              ] as const
-            ).map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  'pb-3 text-sm font-semibold border-b-2 transition-colors',
-                  activeTab === tab.id
-                    ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                    : 'border-transparent text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Dynamic Tab Content */}
-        {activeTab === 'overview' && (
-          <div className="space-y-8 pt-2">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="p-6 rounded-2xl border border-border space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    <BookOpen className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground font-medium">Curriculum Scope</div>
-                    <div className="text-base font-bold">{courses.length} Structured Modules</div>
-                  </div>
+              {skills.length > 0 && (
+                <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 pt-1">
+                  {skills.map(skill => (
+                    <div key={skill} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span className="line-clamp-1">{skill}</span>
+                    </div>
+                  ))}
                 </div>
-              </Card>
+              )}
 
-              <Card className="p-6 rounded-2xl border border-border space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    <Clock className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground font-medium">Time Commitment</div>
-                    <div className="text-base font-bold">~{estimatedHours} Total Hours</div>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6 rounded-2xl border border-border space-y-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    <GraduationCap className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground font-medium">Difficulty Level</div>
-                    <div className="text-base font-bold">{levelText}</div>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-foreground">Path Overview & Learning Goals</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                {data.description} This learning path is structured to guide software professionals from fundamental principles to production engineering mastery.
-              </p>
-            </div>
-
-            {/* Path Key Highlights */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-foreground">Key Outcomes</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {skillsList.map((skill, index) => (
-                  <div key={index} className="p-4 rounded-xl border border-border bg-card/60 flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    <span className="text-sm font-medium text-foreground">{skill}</span>
-                  </div>
-                ))}
+              <div className="flex items-center gap-3 pt-2">
+                <Button size="lg" onClick={handleStartPath} disabled={courses.length === 0} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-2 px-6 shadow-md">
+                  <PlayCircle className="w-5 h-5" />
+                  {isStarted ? 'Continue Learning Path' : 'Start Learning Path'}
+                </Button>
+                <Button variant="outline" size="lg" onClick={() => setIsBookmarked(b => !b)} aria-label="Bookmark path"
+                  className={cn('rounded-xl border-border', isBookmarked && 'text-primary border-primary bg-primary/10')}>
+                  <Bookmark className={cn('w-4 h-4', isBookmarked && 'fill-primary')} />
+                </Button>
               </div>
             </div>
 
-            <div className="pt-2 flex items-center justify-between border-t border-border">
-              <p className="text-sm text-muted-foreground">Ready to start? Begin with Module 01 in the curriculum.</p>
-              <Button onClick={() => setActiveTab('curriculum')} variant="outline" className="rounded-xl gap-2">
-                View Curriculum <ChevronRight className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'curriculum' && (
-          <div className="space-y-6 pt-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">Path Curriculum ({courses.length} Modules)</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">Click any module to expand chapters and sub-modules.</p>
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-primary" /> Curriculum
+                </h2>
+                <span className="text-xs text-muted-foreground">Open a module to see its lessons and start from any of them</span>
               </div>
-              <Badge variant="outline">{estimatedHours} Total Hours</Badge>
-            </div>
 
-            {courses.length > 0 ? (
-              <div className="space-y-4">
-                {courses.map((course, index) => {
-                  const status = getCourseStatus(course.id);
-                  const isExpanded = expandedModules[course.id] !== false;
-                  return (
+              {courses.length > 0 ? (
+                <div className="space-y-3">
+                  {courses.map((course, index) => (
                     <CourseModuleCard
                       key={course.id}
                       course={course}
                       index={index}
-                      status={status}
-                      isExpanded={isExpanded}
-                      onToggleExpand={toggleModuleExpand}
+                      status={courseStatus(course.id)}
+                      progress={courseProgress(course.id)}
+                      sections={sectionQueries[index]?.data ?? []}
+                      isLoading={!!sectionQueries[index]?.isLoading}
+                      isExpanded={expandedModules[course.id] ?? index === 0}
+                      onToggle={() => setExpandedModules(prev => ({ ...prev, [course.id]: !(prev[course.id] ?? index === 0) }))}
+                      launchUrl={launchUrl}
                     />
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-16 border border-dashed rounded-2xl p-8 space-y-3">
-                <BookOpen className="h-10 w-10 mx-auto text-muted-foreground/40" />
-                <h3 className="text-base font-bold text-foreground">Curriculum updating</h3>
-                <p className="text-sm text-muted-foreground">Courses are being added to this path. Check back soon!</p>
-              </div>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-14 border border-dashed rounded-2xl space-y-2">
+                  <BookOpen className="h-10 w-10 mx-auto text-muted-foreground/40" />
+                  <h3 className="text-base font-bold text-foreground">Curriculum updating</h3>
+                  <p className="text-sm text-muted-foreground">Courses are being added to this path. Check back soon!</p>
+                </div>
+              )}
+            </section>
           </div>
-        )}
 
-        {activeTab === 'related' && (
-          <div className="space-y-6 pt-2">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">Related Learning Paths</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">Explore recommended paths to complement your skills.</p>
-            </div>
-
-            {relatedPaths.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {relatedPaths.map(rp => (
-                  <Card key={rp.id} className="p-6 rounded-2xl border border-border hover:border-emerald-500/40 transition-all flex flex-col justify-between space-y-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                          {rp.kind === 'INTERVIEW_PREP' ? 'Interview Prep' : 'Structured Path'}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground font-semibold">{rp.level || 'Intermediate'}</span>
-                      </div>
-                      <h3 className="text-lg font-bold text-foreground line-clamp-1">{rp.title}</h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{rp.description}</p>
-                      
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                          {rp.moduleCount} Modules
+          {/* RIGHT RAIL: compact related + recent */}
+          <aside className="lg:col-span-4 space-y-4 lg:sticky lg:top-20">
+            <Card className="rounded-2xl border border-border p-4 space-y-3">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2"><Shield className="w-4 h-4 text-primary" /> Related Paths</h3>
+              {relatedPaths.length > 0 ? (
+                <ul className="space-y-1.5">
+                  {relatedPaths.map(rp => (
+                    <li key={rp.id}>
+                      <Link to={`/learn/${rp.slug || rp.id}`} className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 hover:bg-primary/5 group">
+                        <span className="min-w-0">
+                          <span className="block text-xs font-semibold text-foreground group-hover:text-primary line-clamp-1">{rp.title}</span>
+                          <span className="block text-[11px] text-muted-foreground">{rp.courseCount ?? rp.courses?.length ?? 0} modules</span>
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                          {(rp as any).estimatedHours || ((rp as any).courses?.length ? (rp as any).courses.length * 3 : 20)} Hours
-                        </span>
-                      </div>
-                    </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs text-muted-foreground">No other paths yet.</p>
+              )}
+              <Link to="/learning-paths" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">All paths <ArrowRight className="w-3 h-3" /></Link>
+            </Card>
 
-                    <Link to={`/learn/${rp.slug || rp.id}`}>
-                      <Button variant="outline" className="w-full rounded-xl gap-2 hover:bg-emerald-500/10 hover:text-emerald-600">
-                        View Path <ChevronRight className="w-4 h-4" />
-                      </Button>
-                    </Link>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-16 border border-dashed rounded-2xl p-8 space-y-3">
-                <BookOpen className="h-10 w-10 mx-auto text-muted-foreground/40" />
-                <h3 className="text-base font-bold text-foreground">No related paths found</h3>
-                <p className="text-sm text-muted-foreground">Check back as new learning paths are added.</p>
-              </div>
+            {recentPaths.length > 0 && (
+              <Card className="rounded-2xl border border-border p-4 space-y-3">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2"><History className="w-4 h-4 text-primary" /> Recently Viewed</h3>
+                <ul className="space-y-1.5">
+                  {recentPaths.map(rp => (
+                    <li key={rp.id}>
+                      <Link to={`/learn/${rp.slug || rp.id}`} className="block rounded-lg px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-primary/5 hover:text-primary line-clamp-1">
+                        {rp.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
             )}
-          </div>
-        )}
-
+          </aside>
+        </div>
       </div>
+
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent className="rounded-2xl max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-base font-bold flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" /> Leave this learning path?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground">
+              Save your progress and current position so you can resume this path later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel onClick={() => setPendingUrl(null)}>Stay</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmExit} className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
+              Save &amp; Exit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PublicLayout>
   );
 };
 
 export default LearningPathPage;
-

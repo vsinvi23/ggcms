@@ -72,6 +72,7 @@ export function CoursesPage() {
         learningStyle: 'Hands-on',
         skills: item.tags || ['Go', 'REST', 'Backend'],
         progress: 0,
+        publishedAt: item.publishedAt ?? item.createdAt ?? '',
       };
     });
   }, [publicCmsData]);
@@ -158,6 +159,18 @@ export function CoursesPage() {
     });
   }, [searchQuery, selectedLevel, selectedCategories, selectedStyles, selectedSkills, allCourses]);
 
+  const [viewMode, setViewMode] = useState<'category' | 'recent'>('category');
+
+  const groups = useMemo(() => {
+    if (viewMode === 'recent') {
+      const sorted = [...filteredCourses].sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''));
+      return [{ title: 'Recently added', items: sorted }];
+    }
+    const map = new Map<string, typeof filteredCourses>();
+    filteredCourses.forEach(c => map.set(c.category, [...(map.get(c.category) ?? []), c]));
+    return Array.from(map.entries()).map(([title, items]) => ({ title, items }));
+  }, [filteredCourses, viewMode]);
+
   const hasActiveFilters = selectedLevel !== 'All' || selectedCategories.length > 0 || selectedStyles.length > 0 || selectedSkills.length > 0 || searchQuery !== '';
 
   const resetFilters = () => {
@@ -215,11 +228,11 @@ export function CoursesPage() {
         </div>
 
         {/* 2-Column Space-Optimized Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-5 pt-5">
+          <div className="grid grid-cols-1 md:grid-cols-[250px_minmax(0,1fr)] gap-5">
             
             {/* Left-Aligned Compact Filter Panel */}
-            <div className="md:col-span-1 space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs">
+            <div className="space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs md:sticky md:top-16 md:max-h-[calc(100vh-5rem)] md:overflow-y-auto">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <Filter className="w-3 h-3 text-primary" />
@@ -311,7 +324,7 @@ export function CoursesPage() {
             </div>
 
             {/* Right Column — Content Cards Grid immediately visible */}
-            <div className="md:col-span-3 space-y-4">
+            <div className="min-w-0 space-y-4">
               {loadingCms ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {Array.from({ length: 6 }).map((_, i) => (
@@ -334,8 +347,25 @@ export function CoursesPage() {
                   <Button variant="outline" size="sm" onClick={resetFilters}>Reset All Filters</Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredCourses.map(course => (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{filteredCourses.length} courses</span>
+                    <div className="flex gap-1 rounded-lg bg-muted/60 p-0.5">
+                      {([['category', 'By category'], ['recent', 'Most recent']] as const).map(([mode, label]) => (
+                        <button key={mode} onClick={() => setViewMode(mode)}
+                          className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-colors ${viewMode === mode ? 'bg-card text-primary shadow-2xs' : 'text-muted-foreground hover:text-foreground'}`}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {groups.map(group => (
+                  <section key={group.title} className="space-y-3">
+                    <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      {group.title} <span className="text-[11px] font-medium text-muted-foreground">({group.items.length})</span>
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+                  {group.items.map(course => (
                     <div
                       key={course.id}
                       className="bg-card border border-border hover:border-primary/50 rounded-2xl p-4 flex flex-col justify-between transition-all hover:shadow-md group space-y-3"
@@ -394,6 +424,9 @@ export function CoursesPage() {
                         </Button>
                       </div>
                     </div>
+                  ))}
+                    </div>
+                  </section>
                   ))}
                 </div>
               )}

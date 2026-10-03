@@ -129,20 +129,20 @@ export function GlobalSearchModal({ open, onOpenChange }: GlobalSearchModalProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="p-0 max-w-2xl overflow-hidden rounded-2xl border border-border shadow-2xl bg-card">
         {/* Search Input Bar with Pixel-Perfect Symmetric Centering */}
-        <form onSubmit={handleViewAllResults} className="relative border-b border-border px-4 py-3 flex items-center gap-3">
+        <form onSubmit={handleViewAllResults} className="relative border-b border-border pl-4 pr-14 py-3 flex items-center gap-3">
           <Search className="w-5 h-5 text-muted-foreground shrink-0 ml-1 pointer-events-none" />
           <Input
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search courses, articles, topics, categories..."
-            className="border-0 focus-visible:ring-0 text-base h-9 bg-transparent p-0 flex-1 placeholder:text-muted-foreground/60 pr-12"
+            className="border-0 shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base h-9 bg-transparent p-0 flex-1 min-w-0 placeholder:text-muted-foreground/60"
             autoFocus
           />
           {query ? (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/80 transition-colors"
+              className="shrink-0 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-muted/80 transition-colors"
               title="Clear search input"
             >
               <X className="w-4 h-4" />

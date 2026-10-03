@@ -276,34 +276,24 @@ export function PracticeHub() {
               </div>
             )}
 
-            {/* Right Spacer / Back Button */}
-            <div className="sm:w-1/4 flex justify-end">
-              {activeQuiz && (
-                <Button variant="outline" size="sm" onClick={() => setActiveQuiz(null)} className="rounded-xl gap-2 text-xs">
-                  <X className="w-3.5 h-3.5" /> Close Quiz
-                </Button>
-              )}
-            </div>
+            <div className="sm:w-1/4" />
           </div>
         </div>
 
         {activeQuiz ? (
           /* 3-Column Interactive Quiz View */
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <Button variant="ghost" size="sm" onClick={() => setActiveQuiz(null)} className="rounded-xl gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground">
-                <ArrowLeft className="w-4 h-4" /> Back to All Practice Tests
+          <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-5 pt-5 space-y-5">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <Button variant="ghost" size="sm" onClick={() => setActiveQuiz(null)} className="rounded-xl gap-1 text-xs">
+                <ArrowLeft className="w-3.5 h-3.5" /> Back
               </Button>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs font-bold uppercase">{activeQuiz.domainSlug}</Badge>
-                <Badge variant="outline" className="text-xs font-semibold capitalize">{activeQuiz.difficulty}</Badge>
-              </div>
+              <span className="text-sm font-semibold text-foreground truncate">{activeQuiz.title}</span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
               
-              {/* LEFT COLUMN: Questions Compact Radio Navigator (3 Cols) */}
-              <div className="lg:col-span-3">
+              {/* LEFT COLUMN: Questions Navigator (3 Cols) */}
+              <div className="lg:col-span-3 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
                 <QuestionNavigator
                   totalQuestions={activeQuiz.questions.length}
                   currentIndex={currentQuestionIdx}
@@ -315,8 +305,8 @@ export function PracticeHub() {
               </div>
 
               {/* CENTER COLUMN: Main Content & Question Runner (6 Cols) */}
-              <div className="lg:col-span-6 space-y-6">
-                <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
+              <div className="lg:col-span-9 space-y-6 min-w-0">
+                <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
                   <div className="border-b border-border pb-4 space-y-1">
                     <h2 className="text-xl font-extrabold text-foreground">{activeQuiz.title}</h2>
                     <p className="text-xs text-muted-foreground leading-relaxed">{activeQuiz.description}</p>
@@ -442,8 +432,8 @@ export function PracticeHub() {
                 </div>
               </div>
 
-              {/* RIGHTMOST COLUMN: Related Content & Recommended Courses (3 Cols) */}
-              <div className="lg:col-span-3 space-y-4">
+              {/* Related content: below the runner, aligned with the content column */}
+              <div className="lg:col-start-4 lg:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 
                 {/* Related Practice Sets */}
                 <div className="bg-card border border-border rounded-2xl p-4 space-y-3 shadow-2xs">
@@ -529,11 +519,11 @@ export function PracticeHub() {
           </div>
         ) : (
           /* 2-Column Space-Optimized Grid */
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-5 pt-5">
+            <div className="grid grid-cols-1 md:grid-cols-[250px_minmax(0,1fr)] gap-5">
               
               {/* Left-Aligned Compact Filter Panel */}
-              <div className="md:col-span-1 space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs">
+              <div className="space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs md:sticky md:top-16 md:max-h-[calc(100vh-5rem)] md:overflow-y-auto">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <span className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                     <Filter className="w-3 h-3 text-primary" />
@@ -564,11 +554,11 @@ export function PracticeHub() {
               </div>
 
               {/* Right Column — Cards Grid */}
-              <div className="md:col-span-3 space-y-4">
+              <div className="min-w-0 space-y-4">
                 
 
                 {/* Quizzes Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
                   {allQuizzes.map(quiz => {
                     const itemAttempt = attempts[quiz.id] || (quiz.slug ? attempts[quiz.slug] : null);
                     return (

@@ -28,7 +28,7 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
-import { usePublicCmsById, usePublicCmsList } from '@/api/hooks/usePublicCms';
+import { usePublicCmsById, usePublicCmsList, usePublicLearningPathById, usePublicLearningPaths } from '@/api/hooks/usePublicCms';
 import { useSectionsByCourse } from '@/api/hooks/useSections';
 import { useMyEnrollment, useEnroll, useUpdateProgress } from '@/api/hooks/useEnrollments';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,17 +40,19 @@ import { HighlightOverlay } from '@/components/engagement/HighlightOverlay';
 import { HighlightsPanel } from '@/components/engagement/HighlightsPanel';
 import { InteractionBar } from '@/components/engagement/InteractionBar';
 import { CommentsSection } from '@/components/shared/CommentsSection';
-import { CURATED_LEARNING_PATHS } from '@/data/learningPathData';
 
 import { QuestionNavigator } from '@/components/shared/QuestionNavigator';
 import { ModuleLessonNavigator } from '@/components/shared/ModuleLessonNavigator';
+import { PathCourseNavigator } from '@/components/shared/PathCourseNavigator';
 import { 
   getPracticeAttempt, 
   savePracticeAttempt, 
   clearPracticeAttempt,
   markCourseAsReferred,
   updateCourseProgress,
-  getCourseProgressState
+  getCourseProgressState,
+  getSavedCourseLessonId,
+  savePathResumeState,
 } from '@/lib/contentStateStore';
 
 // ─── Utility to flatten lessons ────────────────────────────────────────────────
@@ -144,8 +146,8 @@ const RelatedCoursesSection = ({
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {relatedCourses.slice(0, 6).map(rc => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {relatedCourses.slice(0, 4).map(rc => (
           <Link key={rc.id} to={buildCourseUrl(rc)} className="group">
             <Card className="p-4 rounded-xl border border-border hover:border-primary/40 hover:shadow-md transition-all bg-card/70 h-full flex flex-col justify-between space-y-3">
               <div className="space-y-2">
@@ -186,52 +188,32 @@ const RelatedCoursesSection = ({
 };
 
 // ─── Recommended Learning Paths Component ─────────────────────────────────────
-const RecommendedPathsSection = () => {
+const RecommendedPathsSection = ({ excludeSlug }: { excludeSlug?: string | null }) => {
+  const { data: paths = [] } = usePublicLearningPaths();
+  const list = paths.filter(p => p.slug !== excludeSlug).slice(0, 3);
+  if (list.length === 0) return null;
+
   return (
-    <section className="pt-6 space-y-4">
+    <section className="pt-5 space-y-3">
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-primary" />
-            Recommended Learning Paths
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Structured career pathways combining courses, labs, and assessments.
-          </p>
-        </div>
+        <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+          <GraduationCap className="w-4 h-4 text-primary" />
+          Recommended Learning Paths
+        </h3>
         <Link to="/learning-paths" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
           All Paths <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {CURATED_LEARNING_PATHS.slice(0, 2).map(path => (
-          <Card key={path.id} className="p-5 rounded-xl border border-border hover:border-primary/40 transition-all bg-card/60 flex flex-col justify-between space-y-3">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
-                  {path.kind === 'SECURITY_TRACK' ? 'Security Track' : 'Structured Path'}
-                </Badge>
-              </div>
-              <h4 className="text-base font-bold text-foreground line-clamp-1">{path.title}</h4>
-              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{path.description}</p>
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
-              <span className="text-muted-foreground font-medium flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-primary" /> ~{path.estimatedHours}h
-                <span>&bull;</span>
-                <BookOpen className="w-3.5 h-3.5 text-primary" /> {path.modules.length} Modules
-              </span>
-              <Link to={`/learn/${path.slug}`}>
-                <Button size="sm" variant="outline" className="rounded-lg h-8 text-xs gap-1 font-bold text-primary hover:bg-primary/10">
-                  View Path <ArrowRight className="w-3.5 h-3.5" />
-                </Button>
-              </Link>
-            </div>
-          </Card>
+      <ul className="space-y-1.5">
+        {list.map(path => (
+          <li key={path.id}>
+            <Link to={`/learn/${path.slug || path.id}`} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 hover:border-primary/40 hover:bg-primary/5 group">
+              <span className="text-xs font-semibold text-foreground group-hover:text-primary line-clamp-1">{path.title}</span>
+              <span className="text-[11px] text-muted-foreground shrink-0">{path.courseCount ?? path.courses?.length ?? 0} modules</span>
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   );
 };
@@ -248,6 +230,10 @@ export function CourseViewPage() {
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
   const courseId = extractSlugFromPath(wildcardPath);
+  const pathParam = searchParams.get('path');
+  const lessonParam = Number(searchParams.get('lesson')) || null;
+  const autoLaunch = searchParams.get('learn') === 'true' || !!lessonParam;
+  const { data: paramPath } = usePublicLearningPathById(pathParam ?? '');
   const { isAuthenticated, isAdmin, isMasterAdmin, canQuickEditPublic } = useAuth();
   const [isViewingPending, setIsViewingPending] = useState(false);
   const [isInlineEditing, setIsInlineEditing] = useState(false);
@@ -287,6 +273,10 @@ export function CourseViewPage() {
     'COURSE',
   );
   const numericCourseId = course?.id ?? 0;
+  // Path context applies only when launched from a learning path (?path=)
+  const parentPath = paramPath;
+  const pathSlug = pathParam ? (parentPath?.slug || pathParam) : null;
+  const pathCourseSlugs = useMemo(() => (parentPath?.courses ?? []).map(c => c.slug ?? '').filter(Boolean), [parentPath]);
   // Fetch the real, unmasked draft via the authenticated CMS endpoint whenever this
   // course has a pending draft — the public endpoint substitutes the published
   // snapshot for hasPendingDraft=true content, so it can never show the actual
@@ -301,7 +291,7 @@ export function CourseViewPage() {
     !!numericCourseId,
   );
   const { data: enrollment } = useMyEnrollment(numericCourseId, isAuthenticated && !!numericCourseId);
-  const { mutate: enroll, isPending: enrolling } = useEnroll();
+  const { mutate: enroll, mutateAsync: enrollAsync } = useEnroll();
   const { mutateAsync: updateProgress, isPending: isMarkingComplete } = useUpdateProgress();
   const { data: allCoursesData } = usePublicCmsList({ type: 'COURSE', size: 30 });
 
@@ -361,23 +351,7 @@ export function CourseViewPage() {
   const displayCourse = useMemo(() => {
     if (course) return course;
     if (!courseId) return null;
-    const slug = courseId.toLowerCase();
-    const formattedTitle = slug
-      .split('-')
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ');
-    return {
-      id: 0,
-      title: formattedTitle || 'Technical Course',
-      slug: slug,
-      description: `Course content for ${formattedTitle}.`,
-      status: 'PUBLISHED',
-      type: 'COURSE',
-      categoryName: 'Engineering',
-      durationMinutes: 0,
-      sectionsCount: 0,
-      lessonsCount: 0,
-    } as CmsResponseDto;
+    return null;
   }, [course, courseId]);
 
   const [tiptapCourseBodyHtml, setTiptapCourseBodyHtml] = useState('');
@@ -426,15 +400,29 @@ export function CourseViewPage() {
 
   const isEnrolled = !!enrollment;
 
+  // Launch gracefully: jump to the requested lesson, else resume the saved one, else the first
+  const [autoLaunched, setAutoLaunched] = useState(false);
+  React.useEffect(() => {
+    if (autoLaunched || !autoLaunch || !numericCourseId || isPracticeCourse) return;
+    const lessons = displaySections.flatMap(getAllLessons);
+    if (lessons.length === 0) return;
+    const wanted = lessonParam ?? getSavedCourseLessonId(numericCourseId);
+    const target = lessons.find(l => l.id === wanted) ?? lessons[0];
+    setSelectedLessonId(target.id);
+    setAutoLaunched(true);
+  }, [autoLaunch, autoLaunched, displaySections, isPracticeCourse, lessonParam, numericCourseId]);
+
   // Local completed lessons state stored in localStorage for persistent offline/guest progress
-  const [localCompletedIds, setLocalCompletedIds] = useState<number[]>(() => {
+  const [localCompletedIds, setLocalCompletedIds] = useState<number[]>([]);
+  React.useEffect(() => {
+    if (!numericCourseId) return;
     try {
-      const saved = localStorage.getItem(`ggcms_completed_lessons_${numericCourseId || 0}`);
-      return saved ? JSON.parse(saved) : [];
+      const saved = localStorage.getItem(`ggcms_completed_lessons_${numericCourseId}`);
+      setLocalCompletedIds(saved ? JSON.parse(saved) : []);
     } catch {
-      return [];
+      setLocalCompletedIds([]);
     }
-  });
+  }, [numericCourseId]);
 
   const completedLessonIds: number[] = useMemo(() => {
     const fromApi = (enrollment?.completedLessons ?? []).map(l => l.id);
@@ -510,8 +498,17 @@ export function CourseViewPage() {
       } catch {
         // ignore
       }
+      if (pathSlug) {
+        savePathResumeState({
+          pathSlug,
+          courseSlug: displayCourse?.slug || courseId,
+          courseUrl: `${buildCourseUrl(displayCourse ?? { id: numericCourseId, title: courseId })}?path=${encodeURIComponent(pathSlug)}&lesson=${selectedLessonId}`,
+          lessonId: selectedLessonId,
+          savedAt: new Date().toISOString(),
+        });
+      }
     }
-  }, [numericCourseId, selectedLessonId, completedLessonIds]);
+  }, [numericCourseId, selectedLessonId, completedLessonIds, pathSlug, displayCourse, courseId]);
 
   // Intercept click on any external link when in an active lesson
   React.useEffect(() => {
@@ -520,11 +517,30 @@ export function CourseViewPage() {
     const handleDocumentClick = (e: MouseEvent) => {
       const targetAnchor = (e.target as HTMLElement).closest('a');
       if (!targetAnchor) return;
-      const href = targetAnchor.getAttribute('href');
-      if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
-
-      const currentPath = window.location.pathname;
-      if (href !== currentPath && !href.includes(currentPath)) {
+      const rawHref = (targetAnchor.getAttribute('href') ?? '').trim();
+      if (!rawHref || rawHref.startsWith('#')) return;
+      let url: URL;
+      try {
+        url = new URL(rawHref, window.location.origin);
+      } catch {
+        return;
+      }
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+        e.preventDefault();
+        return;
+      }
+      if (url.origin !== window.location.origin) return;
+      const href = `${url.pathname}${url.search}${url.hash}`;
+      if (url.pathname.startsWith('/article/')) return;
+      if (pathSlug && url.pathname.startsWith(`/learn/${pathSlug}`)) {
+        saveCurrentCourseState();
+        return;
+      }
+      if (url.pathname.startsWith('/course/') && pathCourseSlugs.includes(extractSlugFromPath(url.pathname.replace('/course/', '')))) {
+        saveCurrentCourseState();
+        return;
+      }
+      if (url.pathname !== window.location.pathname) {
         e.preventDefault();
         e.stopPropagation();
         saveCurrentCourseState();
@@ -537,7 +553,7 @@ export function CourseViewPage() {
     return () => {
       document.removeEventListener('click', handleDocumentClick, true);
     };
-  }, [selectedLessonId, saveCurrentCourseState]);
+  }, [selectedLessonId, saveCurrentCourseState, pathSlug, pathCourseSlugs]);
 
   // Handle browser reload or window close
   React.useEffect(() => {
@@ -625,11 +641,6 @@ export function CourseViewPage() {
   };
 
   const handleMarkComplete = async (lId: number) => {
-    if (!isAuthenticated || !enrollment) {
-      toast.error('Enroll in this course to track your progress.');
-      return;
-    }
-
     const updated = completedLessonIds.includes(lId)
       ? completedLessonIds
       : [...completedLessonIds, lId];
@@ -642,21 +653,30 @@ export function CourseViewPage() {
     }
 
     const newProgress = totalLessons > 0 ? updated.length / totalLessons : 0;
+
+    if (!isAuthenticated) {
+      toast.success('Progress saved on this device. Sign in to sync it to your account.');
+      return;
+    }
+
     try {
-      await updateProgress({
-        enrollmentId: enrollment.id,
-        data: {
-          completedLessonId: lId,
-          progress: newProgress,
-          status: newProgress >= 1 ? 'completed' : 'active',
-        },
-      });
+      const active = enrollment ?? (await enrollAsync(numericCourseId));
+      if (active?.id) {
+        await updateProgress({
+          enrollmentId: active.id,
+          data: {
+            completedLessonId: lId,
+            progress: newProgress,
+            status: newProgress >= 1 ? 'completed' : 'active',
+          },
+        });
+      }
     } catch (err) {
       toast.error(toUserMessage(err, 'Progress saved locally but failed to sync to your account.'));
       return;
     }
 
-    toast.success('Lesson progress saved!');
+    toast.success('Lesson marked complete');
     if (newProgress >= 1) {
       toast.success('Congratulations! Course completed! 🎓');
     }
@@ -666,6 +686,21 @@ export function CourseViewPage() {
     return (
       <PublicLayout>
         <CourseViewSkeleton />
+      </PublicLayout>
+    );
+  }
+
+  if (!displayCourse) {
+    return (
+      <PublicLayout>
+        <div className="max-w-xl mx-auto px-6 py-20 text-center space-y-4">
+          <BookOpen className="w-10 h-10 mx-auto text-muted-foreground/40" />
+          <h1 className="text-2xl font-bold">Course not found</h1>
+          <p className="text-sm text-muted-foreground">This course is unavailable or has not been published yet.</p>
+          <Button onClick={() => navigate(pathSlug ? `/learn/${pathSlug}` : '/courses')}>
+            {pathSlug ? 'Back to Learning Path' : 'Browse Courses'}
+          </Button>
+        </div>
       </PublicLayout>
     );
   }
@@ -725,52 +760,26 @@ export function CourseViewPage() {
         Full viewport container with Left Navigation Sidebar + Right Content View
       */}
       <div className="min-h-screen bg-background text-foreground pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-          {/* Top Header Bar with Course Search */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b border-border pb-3 gap-3">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-xs font-bold uppercase bg-primary/10 text-primary border-primary/20">
-                {displayCourse?.categoryName || 'Engineering'}
-              </Badge>
-              {isPracticeCourse && (
-                <Badge variant="outline" className="text-xs font-semibold">
-                  Practice Assessment Track
-                </Badge>
-              )}
-            </div>
-
-            {/* Top Bar Search in Course Content */}
-            <div className="flex items-center gap-2 flex-1 max-w-md">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-                <Input
-                  type="text"
-                  placeholder="Search in course content & lessons..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="text-xs rounded-xl pl-9 pr-8 py-1.5 h-9 bg-card border-border shadow-2xs focus-visible:ring-1 focus-visible:ring-blue-500"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
-                    aria-label="Clear search"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <Button variant="ghost" size="sm" onClick={() => navigate('/courses')} className="rounded-xl gap-1 text-xs shrink-0">
-              <ChevronLeft className="w-3.5 h-3.5" /> All Courses
+        <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-5 pt-5 space-y-5">
+          {/* Top Header Bar */}
+          <div className="flex items-center gap-3 border-b border-border pb-3 flex-wrap">
+            <Button variant="ghost" size="sm" onClick={() => navigate(pathSlug ? `/learn/${pathSlug}` : '/courses')} className="rounded-xl gap-1 text-xs shrink-0">
+              <ChevronLeft className="w-3.5 h-3.5" /> Back
             </Button>
+            <span className="text-sm font-semibold text-foreground truncate max-w-[60ch]">
+              {displayCourse?.title ?? title}
+            </span>
+            {isPracticeCourse && (
+              <Badge variant="outline" className="text-xs font-semibold">
+                Practice Assessment Track
+              </Badge>
+            )}
           </div>
 
           {/* 2-Column Runner Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             {/* LEFT COLUMN: Sticky Modules/Lessons Navigator (4 Cols) */}
-            <div className="lg:col-span-4 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto pr-0.5">
+            <div className="lg:col-span-3 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto pr-0.5">
               {isPracticeCourse ? (
                 <QuestionNavigator
                   totalQuestions={totalLessons || 4}
@@ -779,6 +788,23 @@ export function CourseViewPage() {
                   onSelectQuestion={(idx) => setPracticeQuestionIdx(idx)}
                   questions={allLessons.length > 0 ? allLessons : [1, 2, 3, 4].map(n => ({ title: `Question ${n}` }))}
                   title="Questions Navigator"
+                />
+              ) : pathSlug && parentPath && numericCourseId ? (
+                <PathCourseNavigator
+                  pathTitle={parentPath.title}
+                  pathSlug={pathSlug}
+                  courses={(parentPath.courses ?? [])
+                    .filter(c => !!c.slug && c.status === 'PUBLISHED')
+                    .map(c => ({
+                      id: c.courseId,
+                      title: c.title || c.slug || '',
+                      courseUrl: `${buildCourseUrl({ id: c.courseId, slug: c.slug, title: c.title ?? '', categoryName: c.categoryName })}?path=${encodeURIComponent(pathSlug)}&learn=true`,
+                    }))}
+                  currentCourseId={numericCourseId}
+                  sections={displaySections}
+                  selectedLessonId={selectedLessonId}
+                  onSelectLesson={setSelectedLessonId}
+                  completedLessonIds={completedLessonIds}
                 />
               ) : (
                 <ModuleLessonNavigator
@@ -793,7 +819,7 @@ export function CourseViewPage() {
             </div>
 
             {/* RIGHT COLUMN: Content Runner Card (8 Cols) */}
-            <div className="lg:col-span-8 space-y-4">
+            <div className="lg:col-span-9 space-y-4 min-w-0">
               {isPracticeCourse ? (
                 /* ── PRACTICE COURSE RUNNER ────── */
                 <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
@@ -829,14 +855,14 @@ export function CourseViewPage() {
                               className={cn(
                                 'w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between cursor-pointer',
                                 isSelected
-                                  ? 'bg-blue-500/10 border-blue-500 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
+                                  ? 'bg-primary/10 border-primary text-primary font-bold shadow-xs'
                                   : 'bg-card border-border text-foreground hover:bg-muted/60'
                               )}
                             >
                               <span>{opt}</span>
                               <div className={cn(
                                 'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
-                                isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-muted-foreground/40'
+                                isSelected ? 'border-primary bg-primary text-white' : 'border-muted-foreground/40'
                               )}>
                                 {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                               </div>
@@ -877,10 +903,10 @@ export function CourseViewPage() {
                     </div>
 
                     {isPracticeSubmitted && (
-                      <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 space-y-3 animate-fade-in">
+                      <div className="p-4 rounded-2xl bg-primary/10 border border-primary/30 space-y-3 animate-fade-in">
                         <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
-                            <CheckCircle2 className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Practice Assessment Evaluated!
+                          <h4 className="text-sm font-bold text-primary flex items-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4 text-primary" /> Practice Assessment Evaluated!
                           </h4>
                           <Button
                             size="sm"
@@ -901,24 +927,24 @@ export function CourseViewPage() {
                 /* ── STANDARD COURSE OVERVIEW VIEW ──────────────────────────────── */
               <div className="space-y-8">
                 {/* Hero Card */}
-                <div className="relative rounded-2xl overflow-hidden p-8 border border-border shadow-sm bg-card bg-gradient-to-br from-emerald-950/30 via-card to-card">
+                <div className="relative rounded-2xl overflow-hidden p-8 border border-border shadow-sm bg-card bg-gradient-to-br from-primary/10 via-card to-card">
                   <div className="space-y-4 max-w-3xl">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-bold">
+                      <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 font-bold">
                         <BookOpen className="w-3.5 h-3.5 mr-1" />
                         Course Overview
                       </Badge>
                       <Badge variant="outline" className="text-xs">{displayCourse?.categoryName || 'Engineering'}</Badge>
                       {courseState?.isCompleted ? (
-                        <Badge className="bg-emerald-500 text-white font-bold text-xs border-none">
+                        <Badge className="bg-primary text-white font-bold text-xs border-none">
                           <Award className="w-3.5 h-3.5 mr-1" /> Course Completed (100%)
                         </Badge>
                       ) : courseState?.isReferred ? (
-                        <Badge variant="outline" className="border-blue-500/40 text-blue-600 dark:text-blue-400 bg-blue-500/10 font-bold text-xs">
+                        <Badge variant="outline" className="border-primary/40 text-primary bg-primary/10 font-bold text-xs">
                           <Clock className="w-3.5 h-3.5 mr-1" /> Referred ({courseState.progress}%)
                         </Badge>
                       ) : isEnrolled ? (
-                        <Badge className="bg-emerald-500 text-white border-none text-xs">
+                        <Badge className="bg-primary text-white border-none text-xs">
                           <CheckCircle2 className="w-3 h-3 mr-1" /> Enrolled
                         </Badge>
                       ) : null}
@@ -953,6 +979,7 @@ export function CourseViewPage() {
                       <Button
                         size="lg"
                         onClick={() => {
+                          if (isAuthenticated && !isEnrolled && numericCourseId) enroll(numericCourseId);
                           if (allLessons.length > 0) setSelectedLessonId(allLessons[0].id);
                         }}
                         className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-2 font-bold px-6 shadow-md"
@@ -963,9 +990,9 @@ export function CourseViewPage() {
                         variant="outline"
                         size="lg"
                         onClick={() => setBookmarked(b => !b)}
-                        className={cn('rounded-xl border-border', bookmarked && 'text-emerald-500 border-emerald-500 bg-emerald-500/10')}
+                        className={cn('rounded-xl border-border', bookmarked && 'text-primary border-primary bg-primary/10')}
                       >
-                        <Bookmark className={cn('w-4 h-4', bookmarked && 'fill-emerald-500')} />
+                        <Bookmark className={cn('w-4 h-4', bookmarked && 'fill-primary')} />
                       </Button>
                     </div>
                   </div>
@@ -975,13 +1002,13 @@ export function CourseViewPage() {
                 {bodyHeadings.length > 0 && (
                   <Card className="p-6 rounded-2xl border border-border bg-card space-y-4">
                     <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                      <Shield className="w-5 h-5 text-emerald-500" />
+                      <Shield className="w-5 h-5 text-primary" />
                       What You&apos;ll Master in This Course
                     </h2>
                     <div className="grid sm:grid-cols-2 gap-3">
                       {bodyHeadings.map((heading, idx) => (
                         <div key={idx} className="flex items-start gap-2.5 text-sm">
-                          <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                          <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                           <span className="text-muted-foreground font-medium">{heading}</span>
                         </div>
                       ))}
@@ -995,14 +1022,14 @@ export function CourseViewPage() {
                     <div className="flex items-center justify-between border-b border-border pb-4 flex-wrap gap-2">
                       <div>
                         <h2 className="text-xl font-extrabold text-foreground flex items-center gap-2">
-                          <Layers className="w-5 h-5 text-blue-500" />
+                          <Layers className="w-5 h-5 text-primary" />
                           Course Curriculum & Module Coverage
                         </h2>
                         <p className="text-xs text-muted-foreground mt-1">
                           {totalModules} {totalModules === 1 ? 'Module' : 'Modules'} • {totalLessons} {totalLessons === 1 ? 'Lesson' : 'Lessons'} • Click any module or lesson to jump directly into learning
                         </p>
                       </div>
-                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary">
                         {completedCount} / {totalLessons} Completed
                       </span>
                     </div>
@@ -1022,7 +1049,7 @@ export function CourseViewPage() {
                             >
                               <div className="space-y-1 min-w-0 flex-1">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <Badge variant="outline" className="text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30">
+                                  <Badge variant="outline" className="text-[10px] font-extrabold uppercase bg-primary/10 text-primary border-primary/30">
                                     Module {String(sIdx + 1).padStart(2, '0')}
                                   </Badge>
                                   <h3 className="text-sm font-bold text-foreground line-clamp-2 leading-snug">
@@ -1052,20 +1079,20 @@ export function CourseViewPage() {
                                     <button
                                       key={lesson.id || lIdx}
                                       onClick={() => setSelectedLessonId(lesson.id)}
-                                      className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-blue-500/5 transition-colors group cursor-pointer"
+                                      className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-primary/5 transition-colors group cursor-pointer"
                                     >
                                       <div className="flex items-start gap-3 min-w-0 flex-1">
                                         <div className={cn(
                                           'w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors',
                                           isCompleted
-                                            ? 'border-blue-600 bg-blue-600 text-white dark:bg-blue-500 dark:border-blue-500'
+                                            ? 'border-primary bg-primary text-primary-foreground'
                                             : 'border-muted-foreground/40 bg-background'
                                         )}>
                                           {isCompleted && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                         </div>
 
                                         <div className="space-y-0.5 min-w-0 flex-1">
-                                          <p className="text-xs font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                                          <p className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
                                             {lesson.title}
                                           </p>
                                           {lesson.summary && (
@@ -1110,8 +1137,7 @@ export function CourseViewPage() {
                 {/* Related & Recommended Courses Section */}
                 <RelatedCoursesSection relatedCourses={relatedCourses} />
 
-                {/* Recommended Learning Paths Section */}
-                <RecommendedPathsSection />
+                <RecommendedPathsSection excludeSlug={pathSlug} />
               </div>
             ) : (
               /* ── 2. INDIVIDUAL LESSON CONTENT VIEW ────────────────────── */
@@ -1146,7 +1172,7 @@ export function CourseViewPage() {
                         onClick={() => setBookmarked(b => !b)}
                         className="mt-1 p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                       >
-                        <Bookmark size={18} fill={bookmarked ? 'currentColor' : 'none'} className={bookmarked ? 'text-amber-500' : ''} />
+                        <Bookmark size={18} fill={bookmarked ? 'currentColor' : 'none'} className={bookmarked ? 'text-primary' : ''} />
                       </button>
                     </div>
 
@@ -1238,22 +1264,14 @@ export function CourseViewPage() {
                       ) : (
                         <Button
                           onClick={async () => {
-                            if (!isEnrolled) {
-                              handleEnroll();
-                              return;
-                            }
                             await handleMarkComplete(currentLesson.id);
                             if (nextLesson) setSelectedLessonId(nextLesson.id);
                           }}
-                          disabled={isMarkingComplete || enrolling}
+                          disabled={isMarkingComplete}
                           className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold gap-2"
                         >
                           <CheckCircle2 className="h-4 w-4" />
-                          {isMarkingComplete
-                            ? 'Saving…'
-                            : !isEnrolled
-                              ? 'Enroll to Track Progress'
-                              : 'Mark as Complete'}
+                          {isMarkingComplete ? 'Saving…' : 'Mark as Complete'}
                         </Button>
                       )}
                     </div>
@@ -1263,11 +1281,6 @@ export function CourseViewPage() {
                       <CommentsSection contentType="course" contentId={numericCourseId} />
                     </div>
 
-                    {/* Related & Recommended Courses Section inside Lesson view */}
-                    <RelatedCoursesSection relatedCourses={relatedCourses} />
-
-                    {/* Recommended Learning Paths Section */}
-                    <RecommendedPathsSection />
                   </>
                 ) : (
                   <div className="py-20 text-center text-muted-foreground">
@@ -1301,7 +1314,7 @@ export function CourseViewPage() {
               Exit Course?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs text-muted-foreground">
-              Your current course progress and lesson state have been saved automatically. Are you sure you want to exit?
+              {pathSlug ? 'Your position in this learning path will be saved so you can resume later.' : 'Your progress and current lesson will be saved so you can resume later.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:gap-0">
@@ -1310,6 +1323,7 @@ export function CourseViewPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
+                saveCurrentCourseState();
                 setShowExitDialog(false);
                 if (pendingNavigationUrl) {
                   navigate(pendingNavigationUrl);

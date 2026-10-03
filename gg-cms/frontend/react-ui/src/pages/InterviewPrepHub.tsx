@@ -386,34 +386,24 @@ export function InterviewPrepHub() {
             )}
 
             {/* Right Action */}
-            <div className="sm:w-1/4 flex justify-end">
-              {activeTrack && (
-                <Button variant="outline" size="sm" onClick={() => { setActiveTrack(null); navigate('/interview-prep'); }} className="rounded-xl gap-2 text-xs">
-                  <X className="w-3.5 h-3.5" /> Close Track
-                </Button>
-              )}
-            </div>
+            <div className="sm:w-1/4" />
           </div>
         </div>
 
         {activeTrack ? (
           /* 3-Column Interactive In-Page Interview Runner */
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <Button variant="ghost" size="sm" onClick={() => { setActiveTrack(null); navigate('/interview-prep'); }} className="rounded-xl gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground">
-                <ArrowLeft className="w-4 h-4" /> Back to All Interview Tracks
+          <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-5 pt-5 space-y-5">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <Button variant="ghost" size="sm" onClick={() => { setActiveTrack(null); navigate('/interview-prep'); }} className="rounded-xl gap-1 text-xs">
+                <ArrowLeft className="w-3.5 h-3.5" /> Back
               </Button>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs font-bold bg-primary/10 text-primary border-primary/20">{activeTrack.role} Role</Badge>
-                <Badge variant="outline" className="text-xs font-semibold">{activeTrack.round}</Badge>
-                <Badge variant="outline" className="text-xs font-semibold capitalize">{activeTrack.difficulty}</Badge>
-              </div>
+              <span className="text-sm font-semibold text-foreground truncate">{activeTrack.title}</span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
               
               {/* LEFT COLUMN: Question Module Selector (3 Cols) */}
-              <div className="lg:col-span-3">
+              <div className="lg:col-span-3 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
                 <QuestionNavigator
                   totalQuestions={activeTrack.questions.length}
                   currentIndex={currentQuestionIdx}
@@ -426,7 +416,7 @@ export function InterviewPrepHub() {
               </div>
 
               {/* CENTER COLUMN: Main Question & Interactive Solution Runner (6 Cols) */}
-              <div className="lg:col-span-6 space-y-6">
+              <div className="lg:col-span-9 space-y-6 min-w-0">
                 <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
                   <div className="border-b border-border pb-4 space-y-1">
                     <h2 className="text-xl font-extrabold text-foreground">{activeTrack.title}</h2>
@@ -600,8 +590,8 @@ export function InterviewPrepHub() {
                 />
               </div>
 
-              {/* RIGHTMOST COLUMN: Related Interview Tracks & Practice Sets (3 Cols) */}
-              <div className="lg:col-span-3 space-y-4">
+              {/* Related content: below the runner, aligned with the content column */}
+              <div className="lg:col-start-4 lg:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 
                 {/* Related Interview Tracks */}
                 <div className="bg-card border border-border rounded-2xl p-4 space-y-3 shadow-2xs">
@@ -655,11 +645,11 @@ export function InterviewPrepHub() {
           </div>
         ) : (
           /* Main Grid Content (All Tracks Listing) */
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-5 pt-5">
+            <div className="grid grid-cols-1 md:grid-cols-[250px_minmax(0,1fr)] gap-5">
               
               {/* Left Filter Panel */}
-              <div className="md:col-span-1 space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs">
+              <div className="space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs md:sticky md:top-16 md:max-h-[calc(100vh-5rem)] md:overflow-y-auto">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <span className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                     <Filter className="w-3 h-3 text-primary" />
@@ -714,7 +704,7 @@ export function InterviewPrepHub() {
               </div>
 
               {/* Right Column — Interview Prep Courses Cards */}
-              <div className="md:col-span-3 space-y-5">
+              <div className="min-w-0 space-y-5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     Available Interview Tracks ({filteredCourses.length})

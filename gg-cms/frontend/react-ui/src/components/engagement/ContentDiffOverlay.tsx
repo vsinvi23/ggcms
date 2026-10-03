@@ -27,7 +27,12 @@ interface ContentDiffOverlayProps {
 /**
  * Word-level diff helper that compares two strings and returns HTML with <ins> and <del> tags.
  */
-function computeWordDiff(oldText: string, newText: string): string {
+const escapeHtml = (t: string): string =>
+  t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+function computeWordDiff(oldRaw: string, newRaw: string): string {
+  const oldText = escapeHtml(oldRaw ?? '');
+  const newText = escapeHtml(newRaw ?? '');
   if (!oldText) return `<ins class="diff-ins bg-emerald-500/20 text-emerald-950 dark:text-emerald-200 px-1 py-0.5 rounded border-l-2 border-emerald-500 font-semibold underline decoration-emerald-500">${newText}</ins>`;
   if (!newText) return `<del class="diff-del bg-rose-500/20 text-rose-950 dark:text-rose-200 px-1 py-0.5 rounded line-through decoration-rose-500 opacity-80">${oldText}</del>`;
   if (oldText === newText) return oldText;

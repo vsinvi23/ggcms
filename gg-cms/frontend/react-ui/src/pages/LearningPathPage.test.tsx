@@ -11,23 +11,25 @@ vi.mock('@/contexts/AuthContext', () => ({
 vi.mock('@/api/hooks/usePublicCms', () => ({
   usePublicLearningPathById: () => ({
     data: {
-      id: 'lp-101',
+      id: 101,
+      slug: 'cloud-native',
+      kind: 'STRUCTURED_PATH',
       title: 'Cloud Native Architect',
       description: 'Master Kubernetes, Go, and GCP',
       courses: [
-        { id: 'c1', title: 'Container Security Masterclass' },
+        { courseId: 1, sortOrder: 1, title: 'Container Security Masterclass', slug: 'container-security', status: 'PUBLISHED' },
       ],
     },
     isLoading: false,
   }),
+  usePublicCmsList: () => ({ data: { items: [] }, isLoading: false }),
   usePublicLearningPaths: () => ({
-    data: [
-      { id: 'lp-102', title: 'Fullstack Go Developer' },
-    ],
+    data: [{ id: 102, slug: 'fullstack-go', kind: 'STRUCTURED_PATH', title: 'Fullstack Go Developer', description: '', courseCount: 4 }],
   }),
-  usePublicCmsList: () => ({
-    data: { items: [] },
-  }),
+}));
+
+vi.mock('@/api/services/sectionService', () => ({
+  sectionService: { getSectionsByCourse: () => Promise.resolve([]) },
 }));
 
 vi.mock('@/api/hooks/useTopics', () => ({
@@ -49,32 +51,30 @@ function renderPage() {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/learn/lp-101']}>
         <Routes>
-          <Route path="/learn/:id" element={<LearningPathPage />} />
+          <Route path="/learn/:path" element={<LearningPathPage />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
   );
 }
 
-describe('LearningPathPage (Panel 5 UI Spec)', () => {
-  it('renders learning path details and skills sidebar', () => {
+describe('LearningPathPage', () => {
+  it('renders one landing page with intro, curriculum modules and start action', () => {
     renderPage();
 
     expect(screen.getAllByText('Cloud Native Architect')[0]).toBeInTheDocument();
     expect(screen.getByText('Master Kubernetes, Go, and GCP')).toBeInTheDocument();
-    expect(screen.getByText("Skills You'll Gain")).toBeInTheDocument();
-    expect(screen.getAllByText('Master Container Security Masterclass')[0]).toBeInTheDocument();
+    expect(screen.getByText('Curriculum')).toBeInTheDocument();
+    expect(screen.getAllByText('Container Security Masterclass')[0]).toBeInTheDocument();
+    expect(screen.getByText('Start Learning Path')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Overview' })).not.toBeInTheDocument();
   });
 
-  it('renders related paths tab without crashing when modules property is missing', () => {
-    const { fireEvent } = require('@testing-library/react');
+  it('shows a compact related paths rail', () => {
     renderPage();
 
-    const relatedTabBtn = screen.getByText('Related Paths');
-    expect(relatedTabBtn).toBeInTheDocument();
-    fireEvent.click(relatedTabBtn);
-
+    expect(screen.getByText('Related Paths')).toBeInTheDocument();
     expect(screen.getByText('Fullstack Go Developer')).toBeInTheDocument();
-    expect(screen.getByText('4 Modules')).toBeInTheDocument();
+    expect(screen.getByText('4 modules')).toBeInTheDocument();
   });
 });

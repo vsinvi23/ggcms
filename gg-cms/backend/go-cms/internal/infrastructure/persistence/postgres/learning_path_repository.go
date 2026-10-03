@@ -12,6 +12,8 @@ import (
 	"gorm.io/gorm"
 )
 
+func orderedCourses(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") }
+
 type learningPathRepository struct {
 	write *gorm.DB
 	read  *gorm.DB
@@ -37,7 +39,7 @@ func (r *learningPathRepository) Delete(ctx context.Context, id uint) error {
 func (r *learningPathRepository) FindByID(ctx context.Context, id uint) (*entity.LearningPath, error) {
 	var lp entity.LearningPath
 	err := r.read.WithContext(ctx).
-		Preload("Courses", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") }).
+		Preload("Courses", orderedCourses).Preload("Courses.Course.Category").
 		First(&lp, id).Error
 	if err != nil {
 		return nil, fmt.Errorf("learning path not found: %w", err)
@@ -48,7 +50,7 @@ func (r *learningPathRepository) FindByID(ctx context.Context, id uint) (*entity
 func (r *learningPathRepository) FindBySlug(ctx context.Context, slug string) (*entity.LearningPath, error) {
 	var lp entity.LearningPath
 	err := r.read.WithContext(ctx).
-		Preload("Courses", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") }).
+		Preload("Courses", orderedCourses).Preload("Courses.Course.Category").
 		Where("slug = ?", slug).
 		First(&lp).Error
 	if err != nil {
@@ -59,7 +61,7 @@ func (r *learningPathRepository) FindBySlug(ctx context.Context, slug string) (*
 
 func (r *learningPathRepository) FindByIDOrSlug(ctx context.Context, idOrSlug string) (*entity.LearningPath, error) {
 	var lp entity.LearningPath
-	db := r.read.WithContext(ctx).Preload("Courses", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") })
+	db := r.read.WithContext(ctx).Preload("Courses", orderedCourses).Preload("Courses.Course.Category")
 
 	// Check numeric ID first
 	if id, err := strconv.ParseUint(idOrSlug, 10, 64); err == nil {
@@ -78,7 +80,7 @@ func (r *learningPathRepository) FindByIDOrSlug(ctx context.Context, idOrSlug st
 func (r *learningPathRepository) FindAll(ctx context.Context, kind string) ([]*entity.LearningPath, error) {
 	var paths []*entity.LearningPath
 	db := r.read.WithContext(ctx).
-		Preload("Courses", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") }).
+		Preload("Courses", orderedCourses).Preload("Courses.Course.Category").
 		Order("created_at DESC")
 	if kind != "" {
 		db = db.Where("kind = ?", kind)

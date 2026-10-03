@@ -71,10 +71,10 @@ export const ModuleLessonNavigator: React.FC<ModuleLessonNavigatorProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border pb-3">
         <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-          <Layers className="w-4 h-4 text-blue-500" />
+          <Layers className="w-4 h-4 text-primary" />
           {title}
         </span>
-        <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full">
+        <span className="text-xs font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
           {completedCount} / {totalLessons} Completed
         </span>
       </div>
@@ -82,7 +82,7 @@ export const ModuleLessonNavigator: React.FC<ModuleLessonNavigatorProps> = ({
       {/* Status Legend */}
       <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground px-2.5 py-1.5 bg-muted/40 rounded-lg">
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0" /> Completed ({completedCount})
+          <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" /> Completed ({completedCount})
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-muted border border-border shrink-0" /> Remaining ({remainingCount})
@@ -97,22 +97,22 @@ export const ModuleLessonNavigator: React.FC<ModuleLessonNavigatorProps> = ({
           placeholder="Search modules & lessons..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full text-xs rounded-xl outline-none bg-background border border-border text-foreground placeholder:text-muted-foreground/60 pl-8 pr-3 py-1.5 focus:border-blue-500 transition-colors"
+          className="w-full text-xs rounded-xl outline-none bg-background border border-border text-foreground placeholder:text-muted-foreground/60 pl-8 pr-3 py-1.5 focus:border-primary transition-colors"
         />
       </div>
 
       {/* Overview Button & Section Tree */}
-      <div className="max-h-[360px] overflow-y-auto space-y-1.5 pr-1">
+      <div className="max-h-[calc(100vh-18rem)] overflow-y-auto space-y-1.5 pr-1">
         <button
           onClick={() => onSelectLesson(null)}
           className={cn(
             'w-full flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all text-left',
             selectedLessonId === null
-              ? 'border-blue-500/50 bg-blue-500/10 text-blue-600 dark:text-blue-400 ring-2 ring-blue-500 ring-offset-2 ring-offset-background font-extrabold'
+              ? 'border-primary/50 bg-primary/10 text-primary font-bold'
               : 'border-border bg-muted/20 text-muted-foreground hover:bg-muted/50'
           )}
         >
-          <LayoutList className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+          <LayoutList className="w-3.5 h-3.5 text-primary shrink-0" />
           <span className="truncate">Course Overview & Syllabus</span>
         </button>
 
@@ -155,9 +155,9 @@ export const ModuleLessonNavigator: React.FC<ModuleLessonNavigatorProps> = ({
                         className={cn(
                           'w-full flex items-center justify-between p-2 rounded-lg border text-xs transition-all text-left relative select-none',
                           isCurrent
-                            ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-background font-extrabold z-10 border-blue-500/50 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                            ? 'border-primary/50 bg-primary/10 text-primary font-bold'
                             : isCompleted
-                            ? 'border-blue-500/30 bg-blue-500/5 text-blue-600 dark:text-blue-400 font-semibold'
+                            ? 'border-primary/30 bg-primary/5 text-primary font-semibold'
                             : 'border-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/50'
                         )}
                       >
@@ -166,7 +166,7 @@ export const ModuleLessonNavigator: React.FC<ModuleLessonNavigatorProps> = ({
                             className={cn(
                               'w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors',
                               isCompleted
-                                ? 'border-blue-600 bg-blue-600 text-white dark:bg-blue-500 dark:border-blue-500'
+                                ? 'border-primary bg-primary text-primary-foreground'
                                 : 'border-muted-foreground/40 bg-background'
                             )}
                           >

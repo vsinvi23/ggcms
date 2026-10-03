@@ -137,11 +137,11 @@ export function LearningPathsHub() {
         </div>
 
         {/* 2-Column Space-Optimized Grid */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-5 pt-5">
+          <div className="grid grid-cols-1 md:grid-cols-[250px_minmax(0,1fr)] gap-5">
             
             {/* Left-Aligned Compact Filter Panel */}
-            <div className="md:col-span-1 space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs">
+            <div className="space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs md:sticky md:top-16 md:max-h-[calc(100vh-5rem)] md:overflow-y-auto">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <Filter className="w-3 h-3 text-primary" />
@@ -172,8 +172,8 @@ export function LearningPathsHub() {
             </div>
 
             {/* Right Column — Learning Path Cards */}
-            <div className="md:col-span-3 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="min-w-0 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
                 {filteredPaths.map(path => (
                   <div
                     key={path.id}

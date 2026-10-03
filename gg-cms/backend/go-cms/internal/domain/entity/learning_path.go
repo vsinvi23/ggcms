@@ -21,9 +21,10 @@ func (LearningPath) TableName() string { return "learning_paths" }
 // LearningPathCourse is a junction row linking a LearningPath to an ordered Course.
 type LearningPathCourse struct {
 	ID             uint `gorm:"primaryKey;autoIncrement"`
-	LearningPathID uint `gorm:"not null;index"`
-	CourseID       uint `gorm:"not null"`
+	LearningPathID uint `gorm:"not null;index;uniqueIndex:uq_lpc_path_course"`
+	CourseID       uint `gorm:"not null;uniqueIndex:uq_lpc_path_course"`
 	SortOrder      int  `gorm:"not null;default:0"`
+	Course         *Course `gorm:"foreignKey:CourseID"`
 }
 
 func (LearningPathCourse) TableName() string { return "learning_path_courses" }
