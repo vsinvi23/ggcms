@@ -215,6 +215,8 @@ type LearningPathRepository interface {
 	Update(ctx context.Context, lp *entity.LearningPath) error
 	Delete(ctx context.Context, id uint) error
 	FindByID(ctx context.Context, id uint) (*entity.LearningPath, error)
+	FindByIDOrSlug(ctx context.Context, idOrSlug string) (*entity.LearningPath, error)
+	FindBySlug(ctx context.Context, slug string) (*entity.LearningPath, error)
 	FindAll(ctx context.Context, kind string) ([]*entity.LearningPath, error)
 	SetCourses(ctx context.Context, pathID uint, courses []entity.LearningPathCourse) error
 }

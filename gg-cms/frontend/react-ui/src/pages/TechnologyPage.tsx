@@ -85,8 +85,10 @@ const TechnologyPage = () => {
       'cloud': 'Cloud Infrastructure',
       'cybersecurity': 'Cybersecurity',
       'security': 'Cybersecurity',
-      'data': 'Data Engineering',
-      'ai-machine-learning': 'AI & Machine Learning',
+      'data': 'Data & Analytics',
+      'data-analytics': 'Data & Analytics',
+      'ai-machine-learning': 'Artificial Intelligence',
+      'artificial-intelligence': 'Artificial Intelligence',
     };
 
     const name = categoryNamesMap[q] || slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');

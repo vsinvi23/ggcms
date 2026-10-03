@@ -12,7 +12,7 @@
       "sequenceOrder": 1,
       "courseSlug": "mastering-go-microservices-course",
       "courseTitle": "Mastering Microservices Architecture with Go",
-      "categorySlug": "backend-and-apis",
+      "categorySlug": "backend-apis",
       "required": true
     },
     {

@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/serenya/go-cms/internal/domain/entity"
@@ -38,6 +40,36 @@ func (r *learningPathRepository) FindByID(ctx context.Context, id uint) (*entity
 		Preload("Courses", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") }).
 		First(&lp, id).Error
 	if err != nil {
+		return nil, fmt.Errorf("learning path not found: %w", err)
+	}
+	return &lp, nil
+}
+
+func (r *learningPathRepository) FindBySlug(ctx context.Context, slug string) (*entity.LearningPath, error) {
+	var lp entity.LearningPath
+	err := r.read.WithContext(ctx).
+		Preload("Courses", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") }).
+		Where("slug = ?", slug).
+		First(&lp).Error
+	if err != nil {
+		return nil, fmt.Errorf("learning path not found: %w", err)
+	}
+	return &lp, nil
+}
+
+func (r *learningPathRepository) FindByIDOrSlug(ctx context.Context, idOrSlug string) (*entity.LearningPath, error) {
+	var lp entity.LearningPath
+	db := r.read.WithContext(ctx).Preload("Courses", func(db *gorm.DB) *gorm.DB { return db.Order("sort_order ASC") })
+
+	// Check numeric ID first
+	if id, err := strconv.ParseUint(idOrSlug, 10, 64); err == nil {
+		if err := db.Where("id = ?", id).First(&lp).Error; err == nil {
+			return &lp, nil
+		}
+	}
+
+	// Fallback to slug or lowercase title match
+	if err := db.Where("slug = ? OR LOWER(title) = ?", idOrSlug, strings.ToLower(idOrSlug)).First(&lp).Error; err != nil {
 		return nil, fmt.Errorf("learning path not found: %w", err)
 	}
 	return &lp, nil

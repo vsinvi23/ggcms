@@ -15,22 +15,25 @@ type ImportSectionItem struct {
 }
 
 type ImportPreviewItem struct {
-	FileName     string              `json:"fileName"`
-	Index        int                 `json:"index"`
-	Type         string              `json:"type"`
-	Title        string              `json:"title"`
-	Description  string              `json:"description"`
-	Body         string              `json:"body"`
-	BodyFormat   string              `json:"bodyFormat"`
-	CategorySlug string              `json:"categorySlug"`
-	CategoryID   *uint               `json:"categoryId,omitempty"`
-	ArticleType  string              `json:"articleType"`
-	CourseType   string              `json:"courseType"`
-	Status       string              `json:"status,omitempty"`
-	Tags         []string            `json:"tags"`
-	Sections     []ImportSectionItem `json:"sections,omitempty"`
-	Valid        bool                `json:"valid"`
-	Error        string              `json:"error,omitempty"`
+	FileName         string              `json:"fileName"`
+	Index            int                 `json:"index"`
+	Type             string              `json:"type"`
+	Title            string              `json:"title"`
+	Description      string              `json:"description"`
+	Body             string              `json:"body"`
+	BodyFormat       string              `json:"bodyFormat"`
+	CategorySlug     string              `json:"categorySlug"`
+	CategoryID       *uint               `json:"categoryId,omitempty"`
+	ArticleType      string              `json:"articleType"`
+	CourseType       string              `json:"courseType"`
+	Kind             string              `json:"kind,omitempty"`
+	Slug             string              `json:"slug,omitempty"`
+	SequencedCourses []string            `json:"sequencedCourses,omitempty"`
+	Status           string              `json:"status,omitempty"`
+	Tags             []string            `json:"tags"`
+	Sections         []ImportSectionItem `json:"sections,omitempty"`
+	Valid            bool                `json:"valid"`
+	Error            string              `json:"error,omitempty"`
 }
 
 type ImportPreviewResponse struct {
@@ -41,15 +44,18 @@ type ImportPreviewResponse struct {
 }
 
 type ImportConfirmItem struct {
-	Type        string              `json:"type"`
-	Title       string              `json:"title"`
-	Description string              `json:"description"`
-	Body        string              `json:"body"`
-	CategoryID  *uint               `json:"categoryId,omitempty"`
-	ArticleType string              `json:"articleType"`
-	CourseType  string              `json:"courseType"`
-	Status      string              `json:"status,omitempty"`
-	Sections    []ImportSectionItem `json:"sections,omitempty"`
+	Type             string              `json:"type"`
+	Title            string              `json:"title"`
+	Description      string              `json:"description"`
+	Body             string              `json:"body"`
+	CategoryID       *uint               `json:"categoryId,omitempty"`
+	ArticleType      string              `json:"articleType"`
+	CourseType       string              `json:"courseType"`
+	Kind             string              `json:"kind,omitempty"`
+	Slug             string              `json:"slug,omitempty"`
+	SequencedCourses []string            `json:"sequencedCourses,omitempty"`
+	Status           string              `json:"status,omitempty"`
+	Sections         []ImportSectionItem `json:"sections,omitempty"`
 }
 
 type ImportConfirmRequest struct {

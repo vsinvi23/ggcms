@@ -6,12 +6,14 @@ import (
 	"io"
 	"log"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	categorysvc "github.com/serenya/go-cms/internal/application/category"
 	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	"github.com/serenya/go-cms/internal/application/importer"
+	lpsvc "github.com/serenya/go-cms/internal/application/learningpath"
 	lessonsvc "github.com/serenya/go-cms/internal/application/lesson"
 	sectionsvc "github.com/serenya/go-cms/internal/application/section"
 	tasksvc "github.com/serenya/go-cms/internal/application/task"
@@ -19,6 +21,7 @@ import (
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
 	"github.com/serenya/go-cms/internal/interfaces/http/middleware"
 	"github.com/serenya/go-cms/pkg/response"
+	"github.com/serenya/go-cms/pkg/slugify"
 )
 
 type ImportHandler struct {
@@ -27,19 +30,29 @@ type ImportHandler struct {
 	sectionService  sectionsvc.Service
 	lessonService   lessonsvc.Service
 	categoryService categorysvc.Service
+	lpService       lpsvc.Service
 }
 
-func NewImportHandler(cmsService cmssvc.Service, taskService tasksvc.Service, sectionService sectionsvc.Service, lessonService lessonsvc.Service, categoryServices ...categorysvc.Service) *ImportHandler {
+func NewImportHandler(cmsService cmssvc.Service, taskService tasksvc.Service, sectionService sectionsvc.Service, lessonService lessonsvc.Service, extraServices ...interface{}) *ImportHandler {
 	var catSvc categorysvc.Service
-	if len(categoryServices) > 0 {
-		catSvc = categoryServices[0]
+	var lpSvc lpsvc.Service
+
+	for _, s := range extraServices {
+		if cs, ok := s.(categorysvc.Service); ok {
+			catSvc = cs
+		}
+		if ls, ok := s.(lpsvc.Service); ok {
+			lpSvc = ls
+		}
 	}
+
 	return &ImportHandler{
 		cmsService:      cmsService,
 		taskService:     taskService,
 		sectionService:  sectionService,
 		lessonService:   lessonService,
 		categoryService: catSvc,
+		lpService:       lpSvc,
 	}
 }
 
@@ -126,22 +139,25 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 			}
 
 			items = append(items, dto.ImportPreviewItem{
-				FileName:     p.FileName,
-				Index:        len(items),
-				Type:         p.Type,
-				Title:        p.Title,
-				Description:  p.Description,
-				Body:         p.Body,
-				BodyFormat:   p.BodyFormat,
-				CategorySlug: p.CategorySlug,
-				CategoryID:   categoryID,
-				ArticleType:  p.ArticleType,
-				CourseType:   p.CourseType,
-				Status:       p.Status,
-				Tags:         p.Tags,
-				Sections:     mapParsedSections(p.Sections),
-				Valid:        itemValid,
-				Error:        itemErr,
+				FileName:         p.FileName,
+				Index:            len(items),
+				Type:             p.Type,
+				Title:            p.Title,
+				Description:      p.Description,
+				Body:             p.Body,
+				BodyFormat:       p.BodyFormat,
+				CategorySlug:     p.CategorySlug,
+				CategoryID:       categoryID,
+				ArticleType:      p.ArticleType,
+				CourseType:       p.CourseType,
+				Kind:             p.Kind,
+				Slug:             p.Slug,
+				SequencedCourses: p.SequencedCourses,
+				Status:           p.Status,
+				Tags:             p.Tags,
+				Sections:         mapParsedSections(p.Sections),
+				Valid:            itemValid,
+				Error:            itemErr,
 			})
 		}
 	}
@@ -179,6 +195,81 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 	results := make([]dto.ImportConfirmResult, 0, len(req.Items))
 
 	for _, item := range req.Items {
+		if strings.EqualFold(item.Type, "LEARNING_PATH") {
+			kind := item.Kind
+			if kind == "" {
+				kind = "LEARNING_PLAN"
+			}
+			pathSlug := item.Slug
+			if pathSlug == "" {
+				pathSlug = slugify.Slug(item.Title)
+			}
+
+			var lp *entity.LearningPath
+			var err error
+			if h.lpService != nil {
+				lp, err = h.lpService.GetByIDOrSlug(c.Request.Context(), pathSlug)
+				if err != nil {
+					lp, err = h.lpService.Create(c.Request.Context(), lpsvc.CreateRequest{
+						Kind:        kind,
+						Title:       item.Title,
+						Description: item.Description,
+						Slug:        pathSlug,
+						CreatedByID: userID,
+					})
+				} else {
+					desc := item.Description
+					title := item.Title
+					h.lpService.Update(c.Request.Context(), lp.ID, lpsvc.UpdateRequest{
+						Title:       &title,
+						Description: &desc,
+						Slug:        &pathSlug,
+					})
+				}
+			}
+
+			if err != nil || lp == nil {
+				errStr := "failed to create learning path"
+				if err != nil {
+					errStr = err.Error()
+				}
+				results = append(results, dto.ImportConfirmResult{
+					Title:   item.Title,
+					Success: false,
+					Error:   errStr,
+				})
+				continue
+			}
+
+			// Link sequenced courses if provided
+			if len(item.SequencedCourses) > 0 && h.cmsService != nil {
+				var entries []lpsvc.CourseEntry
+				for idx, courseRef := range item.SequencedCourses {
+					var courseID uint
+					if id, parseErr := strconv.ParseUint(courseRef, 10, 64); parseErr == nil {
+						courseID = uint(id)
+					} else if res, getErr := h.cmsService.GetBySlug(c.Request.Context(), courseRef, entity.CMSTypeCourse); getErr == nil && res != nil {
+						if crs, ok := res.(*entity.Course); ok {
+							courseID = crs.ID
+						}
+					}
+					if courseID != 0 {
+						entries = append(entries, lpsvc.CourseEntry{CourseID: courseID, SortOrder: idx + 1})
+					}
+				}
+				if len(entries) > 0 {
+					_ = h.lpService.SetCourses(c.Request.Context(), lp.ID, entries)
+				}
+			}
+
+			results = append(results, dto.ImportConfirmResult{
+				Title:   item.Title,
+				ID:      lp.ID,
+				Success: true,
+			})
+			continue
+		}
+
 		var desc, body, artType, courseType *string
 		if item.Description != "" {
 			desc = &item.Description

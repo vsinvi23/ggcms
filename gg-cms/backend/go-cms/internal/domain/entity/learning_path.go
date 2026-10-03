@@ -9,6 +9,7 @@ type LearningPath struct {
 	Kind        string                `gorm:"type:varchar(30);not null;index"`
 	Title       string                `gorm:"type:varchar(500);not null"`
 	Description string                `gorm:"type:text"`
+	Slug        string                `gorm:"type:varchar(255);index"`
 	CreatedByID uint                  `gorm:"not null;index"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time

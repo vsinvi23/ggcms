@@ -40,6 +40,17 @@ VALID_CATEGORY_SLUGS = {
     "ai-machine-learning", "ai-and-machine-learning"
 }
 
+LONG_FORM_CATEGORY_SLUGS = {
+    "backend-and-apis": "backend-apis",
+    "containers-and-orchestration": "containers-orchestration",
+    "identity-and-access": "identity-access",
+    "pki-and-cryptography": "pki-cryptography",
+    "appsec-and-threats": "appsec-threats",
+    "cloud-and-infrastructure": "cloud-infrastructure",
+    "ai-and-machine-learning": "ai-machine-learning",
+}
+
+
 def parse_yaml_frontmatter(content: str):
     """Simple parser for YAML frontmatter between --- delimiters."""
     if not content.startswith("---"):
@@ -101,9 +112,11 @@ def validate_markdown_file(file_path: Path):
     if doc_type not in VALID_TYPES:
         errors.append(f"Invalid 'type': '{doc_type}'. Must be one of {VALID_TYPES}")
 
-    category_slug = metadata.get("categorySlug")
+    category_slug = metadata.get("categorySlug") or metadata.get("category") or metadata.get("category_slug")
     if not category_slug:
         errors.append("Missing required field 'categorySlug'")
+    elif category_slug in LONG_FORM_CATEGORY_SLUGS:
+        errors.append(f"Long-form categorySlug '{category_slug}' will fail DB auto-matching! Change to short-form '{LONG_FORM_CATEGORY_SLUGS[category_slug]}'")
 
     if not body:
         errors.append("Empty body content")
@@ -141,6 +154,11 @@ def validate_json_file(file_path: Path):
                 errors.append(f"Invalid 'type': '{doc_type}'")
             if not data.get("title"):
                 errors.append("Course missing required field 'title'")
+            
+            category_slug = data.get("categorySlug")
+            if category_slug in LONG_FORM_CATEGORY_SLUGS:
+                errors.append(f"Long-form categorySlug '{category_slug}' will fail DB auto-matching! Change to short-form '{LONG_FORM_CATEGORY_SLUGS[category_slug]}'")
+
             if not data.get("sections"):
                 warnings.append("Course JSON contains empty 'sections' list")
             else:
@@ -153,23 +171,42 @@ def validate_json_file(file_path: Path):
     return len(errors) == 0, errors, warnings
 
 
-def run_pipeline(content_dir: Path):
+def is_content_file(f: Path, base_dir: Path) -> bool:
+    try:
+        rel_parts = f.relative_to(base_dir).parts
+        if rel_parts[0] in {"dist", "scripts", ".git", ".venv", "node_modules", ".batches"}:
+            return False
+    except Exception:
+        return False
+    return f.name not in {"README.md", "GEEKGULLY_CONTENT_CATALOG_AND_BACKEND_INTEGRATION_BLUEPRINT.md", "import_manifest.json", ".DS_Store"}
+
+
+def collect_all_files(repo_dir: Path):
+    content_dir = repo_dir / "content"
+    imported_dir = repo_dir / "imported-content"
+
+    files = []
+    for d in [content_dir, imported_dir]:
+        if d.exists():
+            for f in d.rglob("*"):
+                if f.is_file() and (f.suffix in [".md", ".markdown", ".json"]):
+                    if is_content_file(f, d):
+                        files.append((f, f.relative_to(repo_dir)))
+    return sorted(files, key=lambda x: str(x[1]))
+
+
+def run_pipeline(repo_dir: Path):
     """Executes Multi-Agent scanning and validation across articles, courses, and learning paths."""
     print("🤖 Multi-Agent Content Orchestrator running...")
-    print(f"📂 Scanning directory: {content_dir}\n")
+    print(f"📂 Scanning workspace content directories: content/ and imported-content/\n")
 
-    md_files = [f for f in content_dir.glob("**/*.md") if f.name not in {"README.md", "GEEKGULLY_CONTENT_CATALOG_AND_BACKEND_INTEGRATION_BLUEPRINT.md"}]
-    json_files = [f for f in content_dir.glob("**/*.json") if f.name not in {"import_manifest.json"}]
-
-    all_files = sorted(md_files + json_files)
-
-    total = len(all_files)
+    all_files_tuples = collect_all_files(repo_dir)
+    total = len(all_files_tuples)
     valid_count = 0
     invalid_count = 0
 
-    for file_path in all_files:
-        rel_path = file_path.relative_to(content_dir)
-        if file_path.suffix == ".md":
+    for file_path, rel_path in all_files_tuples:
+        if file_path.suffix in [".md", ".markdown"]:
             is_valid, errors, warnings = validate_markdown_file(file_path)
         else:
             is_valid, errors, warnings = validate_json_file(file_path)
@@ -194,39 +231,76 @@ def run_pipeline(content_dir: Path):
     return valid_count == total and total > 0
 
 
-def create_package(content_dir: Path, output_zip: Path):
-    """Packages all validated markdown & JSON content files into a ZIP archive for gg-cms bulk import."""
-    output_zip.parent.mkdir(parents=True, exist_ok=True)
-    md_files = [f for f in content_dir.glob("**/*.md") if f.name not in {"README.md", "GEEKGULLY_CONTENT_CATALOG_AND_BACKEND_INTEGRATION_BLUEPRINT.md"}]
-    json_files = [f for f in content_dir.glob("**/*.json") if f.name not in {"import_manifest.json"}]
+def create_package(repo_dir: Path, dist_dir: Path, unimported_only: bool = False, num_parts: int = 4):
+    """Packages markdown & JSON content files into 4 ZIP archives for gg-cms bulk import (max 500 files per zip)."""
+    dist_dir.mkdir(parents=True, exist_ok=True)
+    all_files_tuples = collect_all_files(repo_dir)
 
-    all_files = sorted(md_files + json_files)
+    uploaded_files = set()
+    manifest_path = repo_dir / "content" / "import_manifest.json"
+    if unimported_only and manifest_path.exists():
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as f:
+                manifest = json.load(f)
+                for item in manifest.get("articles", []) + manifest.get("courses", []) + manifest.get("learningPaths", []):
+                    if "filePath" in item:
+                        uploaded_files.add(item["filePath"])
+                        uploaded_files.add(f"content/{item['filePath']}")
+        except Exception as e:
+            print(f"Warning reading manifest: {e}")
 
-    print(f"\n📦 Packaging {len(all_files)} files into archive: {output_zip}")
-    with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as archive:
-        for file_path in all_files:
-            rel_path = file_path.relative_to(content_dir)
-            archive.write(file_path, arcname=str(rel_path))
+    if unimported_only:
+        all_files_tuples = [t for t in all_files_tuples if str(t[1]) not in uploaded_files and str(t[1]).replace("content/", "") not in uploaded_files]
+        prefix = "ggcms_new_content_pack"
+        print(f"\n📦 Packaging {len(all_files_tuples)} NEW (unimported) content files into {num_parts} parts...")
+    else:
+        prefix = "ggcms_content_pack"
+        print(f"\n📦 Packaging all {len(all_files_tuples)} content files into {num_parts} parts...")
 
-    print(f"✨ Successfully generated content package archive: {output_zip} ({output_zip.stat().st_size} bytes)")
+    # Clean up old single monolith zips if present
+    for old_file in dist_dir.glob("*.zip"):
+        old_file.unlink()
+        print(f"🗑️ Removed existing zip archive: {old_file.name}")
+
+    total_files = len(all_files_tuples)
+    chunk_size = (total_files + num_parts - 1) // num_parts
+
+    for i in range(num_parts):
+        part_num = i + 1
+        chunk = all_files_tuples[i * chunk_size : (i + 1) * chunk_size]
+        if not chunk:
+            continue
+
+        output_zip = dist_dir / f"{prefix}_part{part_num}.zip"
+        with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as archive:
+            for file_path, rel_path in chunk:
+                archive.write(file_path, arcname=str(rel_path))
+
+        print(f"✨ Generated Part {part_num}/{num_parts}: {output_zip.name} ({len(chunk)} files, {output_zip.stat().st_size} bytes)")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Multi-Agent Content Orchestrator & Import Validator")
     parser.add_argument("--validate", action="store_true", help="Validate all content files")
-    parser.add_argument("--package", action="store_true", help="Package content into ggcms_content_pack.zip")
+    parser.add_argument("--package", action="store_true", help="Package all content into 4 zip parts")
+    parser.add_argument("--package-new", action="store_true", help="Package only NEW unimported content into 4 zip parts")
     args = parser.parse_args()
 
     script_dir = Path(__file__).resolve().parent
     content_dir = script_dir.parent
+    repo_dir = content_dir.parent
     dist_dir = content_dir / "dist"
-    output_zip = dist_dir / "ggcms_content_pack.zip"
 
-    success = run_pipeline(content_dir)
+    success = run_pipeline(repo_dir)
 
-    if args.package or not args.validate:
+    if args.package_new:
         if success:
-            create_package(content_dir, output_zip)
+            create_package(repo_dir, dist_dir, unimported_only=True, num_parts=4)
+        else:
+            print("⚠️ Skipping packaging due to validation errors.")
+    elif args.package or not args.validate:
+        if success:
+            create_package(repo_dir, dist_dir, unimported_only=False, num_parts=4)
         else:
             print("⚠️ Skipping packaging due to validation errors.")
 
@@ -235,3 +309,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
