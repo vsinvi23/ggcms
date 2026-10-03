@@ -767,7 +767,7 @@ export function CourseViewPage() {
               <ChevronLeft className="w-3.5 h-3.5" /> Back
             </Button>
             <span className="text-sm font-semibold text-foreground truncate max-w-[60ch]">
-              {displayCourse?.title ?? title}
+              {paramPath ? paramPath.title : (displayCourse?.title ?? title)}
             </span>
             {isPracticeCourse && (
               <Badge variant="outline" className="text-xs font-semibold">
@@ -934,7 +934,15 @@ export function CourseViewPage() {
                         <BookOpen className="w-3.5 h-3.5 mr-1" />
                         Course Overview
                       </Badge>
-                      <Badge variant="outline" className="text-xs">{displayCourse?.categoryName || 'Engineering'}</Badge>
+                      {paramPath ? (
+                        <Link to={`/learn/${paramPath.slug || paramPath.id}`}>
+                          <Badge variant="outline" className="text-xs hover:bg-primary/5 hover:text-primary transition-colors cursor-pointer border-primary/20 text-primary">
+                            {paramPath.title}
+                          </Badge>
+                        </Link>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">{displayCourse?.categoryName || 'Engineering'}</Badge>
+                      )}
                       {courseState?.isCompleted ? (
                         <Badge className="bg-primary text-white font-bold text-xs border-none">
                           <Award className="w-3.5 h-3.5 mr-1" /> Course Completed (100%)
