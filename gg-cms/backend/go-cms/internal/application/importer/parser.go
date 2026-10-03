@@ -229,20 +229,61 @@ func parseFrontmatter(fm string, item *ParsedItem) {
 	}
 }
 
+type jsonSequencedCourseRef struct {
+	CourseSlug string `json:"courseSlug"`
+	Slug       string `json:"slug"`
+	ID         any    `json:"id"`
+	CourseID   any    `json:"courseId"`
+}
+
+type flexibleSequencedCourses []string
+
+func (f *flexibleSequencedCourses) UnmarshalJSON(data []byte) error {
+	var strArr []string
+	if err := json.Unmarshal(data, &strArr); err == nil {
+		*f = strArr
+		return nil
+	}
+
+	var objArr []jsonSequencedCourseRef
+	if err := json.Unmarshal(data, &objArr); err == nil {
+		result := make([]string, 0, len(objArr))
+		for _, item := range objArr {
+			slug := item.CourseSlug
+			if slug == "" {
+				slug = item.Slug
+			}
+			if slug == "" && item.CourseID != nil {
+				slug = fmt.Sprintf("%v", item.CourseID)
+			}
+			if slug == "" && item.ID != nil {
+				slug = fmt.Sprintf("%v", item.ID)
+			}
+			if slug != "" {
+				result = append(result, slug)
+			}
+		}
+		*f = result
+		return nil
+	}
+
+	return nil
+}
+
 type jsonImportItem struct {
-	PathID           string             `json:"pathId"`
-	Kind             string             `json:"kind"`
-	Type             string             `json:"type"`
-	Title            string             `json:"title"`
-	Description      string             `json:"description"`
-	Body             string             `json:"body"`
-	CategorySlug     string             `json:"categorySlug"`
-	ArticleType      string             `json:"articleType"`
-	CourseType       string             `json:"courseType"`
-	SequencedCourses []string           `json:"sequencedCourses"`
-	Status           string             `json:"status"`
-	Tags             []string           `json:"tags"`
-	Sections         []jsonSectionItem  `json:"sections"`
+	PathID           string                   `json:"pathId"`
+	Kind             string                   `json:"kind"`
+	Type             string                   `json:"type"`
+	Title            string                   `json:"title"`
+	Description      string                   `json:"description"`
+	Body             string                   `json:"body"`
+	CategorySlug     string                   `json:"categorySlug"`
+	ArticleType      string                   `json:"articleType"`
+	CourseType       string                   `json:"courseType"`
+	SequencedCourses flexibleSequencedCourses `json:"sequencedCourses"`
+	Status           string                   `json:"status"`
+	Tags             []string                 `json:"tags"`
+	Sections         []jsonSectionItem        `json:"sections"`
 }
 
 type jsonLessonItem struct {
@@ -260,16 +301,18 @@ type jsonSectionItem struct {
 }
 
 func parseJSON(filename string, content []byte) []ParsedItem {
-	// Try array first
-	var arr []jsonImportItem
-	if err := json.Unmarshal(content, &arr); err == nil {
-		items := make([]ParsedItem, len(arr))
-		for i, ji := range arr {
-			items[i] = jsonToItem(filename, ji)
+	trimmed := strings.TrimSpace(string(content))
+	if strings.HasPrefix(trimmed, "[") {
+		var arr []jsonImportItem
+		if err := json.Unmarshal(content, &arr); err == nil {
+			items := make([]ParsedItem, len(arr))
+			for i, ji := range arr {
+				items[i] = jsonToItem(filename, ji)
+			}
+			return items
 		}
-		return items
 	}
-	// Try single object
+
 	var single jsonImportItem
 	if err := json.Unmarshal(content, &single); err == nil {
 		return []ParsedItem{jsonToItem(filename, single)}
@@ -306,7 +349,7 @@ func jsonToItem(filename string, ji jsonImportItem) ParsedItem {
 		CourseType:       ji.CourseType,
 		Kind:             kind,
 		Slug:             ji.PathID,
-		SequencedCourses: ji.SequencedCourses,
+		SequencedCourses: []string(ji.SequencedCourses),
 		Status:           strings.ToUpper(ji.Status),
 		Tags:             ji.Tags,
 		Valid:            true,
@@ -409,7 +452,7 @@ func validate(item *ParsedItem) {
 			item.Title = "Untitled Content"
 		}
 	}
-	if item.Type != "ARTICLE" && item.Type != "COURSE" && item.Type != "VIDEO" {
+	if item.Type != "ARTICLE" && item.Type != "COURSE" && item.Type != "VIDEO" && item.Type != "LEARNING_PATH" {
 		item.Type = "ARTICLE"
 	}
 	for si, sec := range item.Sections {

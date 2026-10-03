@@ -376,5 +376,56 @@ func TestParseZIP_SecurityMaxEntries(t *testing.T) {
 	}
 }
 
+func TestParseJSONLearningPathFlexibleSequencedCourses(t *testing.T) {
+	// Object array format (used in content/learning-paths/*.json)
+	objJson := `{
+		"pathId": "identity-appsec-engineer-roadmap",
+		"kind": "Security Engineer",
+		"title": "Identity & Application Security Engineer Roadmap",
+		"sequencedCourses": [
+			{"sequenceOrder": 1, "courseSlug": "cybersecurity-fundamentals-from-scratch"},
+			{"sequenceOrder": 2, "courseSlug": "oauth2-oidc-jwt-zero-to-attacks"}
+		]
+	}`
+
+	items := Parse("identity-appsec-engineer-roadmap.json", []byte(objJson))
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	item := items[0]
+	if !item.Valid {
+		t.Fatalf("expected item to be valid, got error: %s", item.Error)
+	}
+	t.Logf("item: %+v", item)
+	if item.Type != "LEARNING_PATH" {
+		t.Fatalf("expected type LEARNING_PATH, got %s", item.Type)
+	}
+	if len(item.SequencedCourses) != 2 {
+		t.Fatalf("expected 2 sequenced courses, got %d", len(item.SequencedCourses))
+	}
+	if item.SequencedCourses[0] != "cybersecurity-fundamentals-from-scratch" {
+		t.Fatalf("unexpected course 0 slug: %s", item.SequencedCourses[0])
+	}
+	if item.SequencedCourses[1] != "oauth2-oidc-jwt-zero-to-attacks" {
+		t.Fatalf("unexpected course 1 slug: %s", item.SequencedCourses[1])
+	}
+
+	// String array format fallback
+	strJson := `{
+		"pathId": "simple-path",
+		"title": "Simple Path",
+		"sequencedCourses": ["slug-1", "slug-2"]
+	}`
+
+	items2 := Parse("simple.json", []byte(strJson))
+	if len(items2) != 1 || !items2[0].Valid {
+		t.Fatalf("expected valid string array item")
+	}
+	if len(items2[0].SequencedCourses) != 2 || items2[0].SequencedCourses[0] != "slug-1" {
+		t.Fatalf("unexpected string array courses: %+v", items2[0].SequencedCourses)
+	}
+}
+
+
 
 

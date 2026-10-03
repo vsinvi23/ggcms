@@ -1,8 +1,8 @@
 {
   "name": "db-migrations",
-  "version": "1.5.8",
+  "version": "1.5.9",
   "description": "PostgreSQL Schema Migrations",
   "last_migration": "047_seed_all_learning_paths.sql",
-  "updated_at": "2026-10-03T08:09:30Z",
+  "updated_at": "2026-10-03T08:18:10Z",
   "db_schema_hash": "sha256:5cce15994f13586c4738832aafe5b10084ef25b72cebf5ef09e254b642d67a88"
 }
