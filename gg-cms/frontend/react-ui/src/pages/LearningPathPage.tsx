@@ -30,7 +30,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { EnrollmentDto, SectionDto } from '@/api/types';
 import { buildCourseUrl } from '@/lib/slug';
 import { cn } from '@/lib/utils';
-import { CURATED_LEARNING_PATHS } from '@/data/learningPathData';
 import {
   getCourseProgressState,
   getPathResumeState,
@@ -222,22 +221,14 @@ const LearningPathPage = () => {
   const hasProgress = courses.some(c => courseProgress(c.id) > 0);
   const isStarted = hasProgress || !!resume;
 
-  const curated = useMemo(
-    () => CURATED_LEARNING_PATHS.find(cp => cp.slug === pathSlug),
-    [pathSlug],
-  );
-
   const totalMinutes = sectionQueries.reduce(
     (acc, q) => acc + (q.data ?? []).flatMap(s => s.lessons ?? []).reduce((a, l) => a + (l.duration || 0), 0),
     0,
   );
   const totalLessons = sectionQueries.reduce((acc, q) => acc + (q.data ?? []).flatMap(s => s.lessons ?? []).length, 0);
-  const hoursText = totalMinutes > 0 ? `${Math.max(1, Math.round(totalMinutes / 60))}h` : curated ? `~${curated.estimatedHours}h` : 'Self-paced';
+  const hoursText = totalMinutes > 0 ? `${Math.max(1, Math.round(totalMinutes / 60))}h` : '';
 
-  const skills = useMemo(() => {
-    const list = curated?.skillsGained?.length ? curated.skillsGained : courses.map(c => c.title);
-    return list.slice(0, 6);
-  }, [curated, courses]);
+  const skills = useMemo(() => courses.map(c => c.title).slice(0, 6), [courses]);
 
   const relatedPaths = useMemo(() => (allPaths ?? []).filter(p => p.slug !== pathSlug && p.id !== apiPath?.id).slice(0, 3), [allPaths, apiPath]);
   const recentPaths = useMemo(() => {
@@ -348,7 +339,6 @@ const LearningPathPage = () => {
                   <GraduationCap className="w-3.5 h-3.5 mr-1" />
                   {apiPath.kind === 'INTERVIEW_PREP' ? 'Interview Prep Track' : apiPath.kind === 'SECURITY_TRACK' ? 'Security Track' : 'Structured Learning Path'}
                 </Badge>
-                {curated?.level && <Badge variant="outline" className="text-xs">{curated.level}</Badge>}
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">{apiPath.title}</h1>
               {apiPath.description && <p className="text-base text-muted-foreground leading-relaxed">{apiPath.description}</p>}
@@ -356,7 +346,7 @@ const LearningPathPage = () => {
               <div className="flex flex-wrap items-center gap-5 text-sm text-muted-foreground">
                 <span className="flex items-center gap-2"><BookOpen className="w-4 h-4 text-primary" /><b className="text-foreground">{courses.length}</b> modules</span>
                 {totalLessons > 0 && <span className="flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /><b className="text-foreground">{totalLessons}</b> lessons</span>}
-                <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /><b className="text-foreground">{hoursText}</b></span>
+                {hoursText && <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /><b className="text-foreground">{hoursText}</b></span>}
               </div>
 
               {skills.length > 0 && (

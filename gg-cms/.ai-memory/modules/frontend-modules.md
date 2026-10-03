@@ -57,7 +57,8 @@
 | `Auth.tsx` | Login + signup + OAuth |
 | `PublicArticleView.tsx` | Public article reader |
 | `PublicCourseView.tsx` | Public course detail |
-| `CourseViewPage.tsx` | Enrolled course player |
+| `CourseViewPage.tsx` | Course player; path-aware when opened with `?path=` (left rail lists all path modules) |
+| `LearningPathPage.tsx` | Single-page path: intro + curriculum (start from any lesson), compact related/recent rail |
 | `MyLearning.tsx` | Enrolled courses + progress |
 | `NotesHighlightsPage.tsx` | User notes + highlights |
 | `ProfilePage.tsx` | User profile viewer |

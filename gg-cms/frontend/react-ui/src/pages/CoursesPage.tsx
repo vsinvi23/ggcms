@@ -64,8 +64,8 @@ export function CoursesPage() {
         title: item.title,
         description: item.description || '',
         level: (item.level as any) || 'Intermediate',
-        modulesCount: (item.sectionsCount && item.sectionsCount > 0) ? item.sectionsCount : (item.blockCount && item.blockCount > 0 ? item.blockCount : 6),
-        lessonsCount: (item.lessonsCount && item.lessonsCount > 0) ? item.lessonsCount : ((item.sectionsCount && item.sectionsCount > 0) ? item.sectionsCount * 3 : 18),
+        modulesCount: item.sectionsCount && item.sectionsCount > 0 ? item.sectionsCount : 0,
+        lessonsCount: item.lessonsCount && item.lessonsCount > 0 ? item.lessonsCount : 0,
         durationText: dur,
         category: item.categoryName || 'Engineering',
         technology: item.tags?.[0] || 'Go',
@@ -391,7 +391,7 @@ export function CoursesPage() {
                         <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium pt-0.5">
                           <span className="flex items-center gap-1">
                             <Layers className="w-3.5 h-3.5 text-primary" />
-                            {course.modulesCount} mod &bull; {course.lessonsCount} lessons
+                            {course.modulesCount > 0 ? `${course.modulesCount} mod` : ''}{course.modulesCount > 0 && course.lessonsCount > 0 ? ' • ' : ''}{course.lessonsCount > 0 ? `${course.lessonsCount} lessons` : ''}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5 text-primary" />

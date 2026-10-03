@@ -64,11 +64,11 @@ export function LearningPathsHub() {
       title: dp.title,
       subtitle: dp.description || dp.subtitle || `Guided learning roadmap for ${dp.title}.`,
       category: (dp.category as any) || (dp.kind ? (dp.kind.includes('Engineer') || dp.kind.includes('Architect') ? 'Career' : 'Technology') : 'Career'),
-      level: dp.level || 'Intermediate',
-      stagesCount: dp.stages?.length || dp.courses?.length || 5,
-      resourcesCount: dp.resourcesCount || (dp.courses?.length ? dp.courses.length * 4 : 24),
-      estimatedHours: dp.estimatedHours || (dp.courses?.length ? dp.courses.length * 3 : 20),
-      skills: dp.skills || ['Core', 'Architecture', 'Engineering'],
+      level: dp.level || '',
+      stagesCount: dp.courseCount ?? dp.courses?.length ?? 0,
+      resourcesCount: 0,
+      estimatedHours: dp.estimatedHours || 0,
+      skills: (dp.skills as string[] | undefined) || [],
       progress: dp.progress || 0,
       stages: dp.stages || [],
     }));
@@ -185,9 +185,11 @@ export function LearningPathsHub() {
                         <Badge variant="secondary" className="text-[10px] font-bold">
                           {path.category}
                         </Badge>
-                        <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                          {path.level}
-                        </span>
+                        {path.level && (
+                          <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                            {path.level}
+                          </span>
+                        )}
                       </div>
 
                       <div>
@@ -202,16 +204,18 @@ export function LearningPathsHub() {
                       <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium pt-1">
                         <span className="flex items-center gap-1">
                           <Layers className="w-3.5 h-3.5 text-primary" />
-                          {path.stagesCount} stages · {path.resourcesCount} items
+                          {path.stagesCount} {path.stagesCount === 1 ? 'module' : 'modules'}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-primary" />
-                          ~{path.estimatedHours}h
-                        </span>
+                        {path.estimatedHours > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-primary" />
+                            ~{path.estimatedHours}h
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap gap-1 pt-1">
-                        {path.skills.map(skill => (
+                        {path.skills.map((skill: string) => (
                           <span key={skill} className="text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-md">
                             {skill}
                           </span>

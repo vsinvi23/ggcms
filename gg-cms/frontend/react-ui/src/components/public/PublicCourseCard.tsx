@@ -24,8 +24,8 @@ export function PublicCourseCard({ course, enrollment, className }: PublicCourse
 
   const isEnrolled  = !!enrollment;
   const progress    = isEnrolled ? Math.round((enrollment!.progress ?? 0) * 100) : 0;
-  const lessonCount = (course.lessonsCount && course.lessonsCount > 0) ? course.lessonsCount : (course.blockCount && course.blockCount > 0 ? course.blockCount * 3 : 18);
-  const moduleCount = (course.sectionsCount && course.sectionsCount > 0) ? course.sectionsCount : (lessonCount > 0 ? Math.ceil(lessonCount / 3) : 6);
+  const lessonCount = course.lessonsCount && course.lessonsCount > 0 ? course.lessonsCount : 0;
+  const moduleCount = course.sectionsCount && course.sectionsCount > 0 ? course.sectionsCount : 0;
   const courseUrl   = buildCourseUrl(course);
   const detailUrl   = courseUrl;
   const learnUrl    = `${courseUrl}?learn=true`;
@@ -86,7 +86,7 @@ export function PublicCourseCard({ course, enrollment, className }: PublicCourse
           {/* Course title over the image */}
           <div className="absolute bottom-3 left-3 right-12">
             <p className="text-white text-sm font-bold leading-snug line-clamp-2 drop-shadow-sm">
-              {course.title ?? 'Untitled Course'}
+              {course.title}
             </p>
           </div>
 

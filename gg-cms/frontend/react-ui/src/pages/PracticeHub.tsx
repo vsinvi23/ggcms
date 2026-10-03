@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Quiz, QuestionItem } from '@/types/knowledge-graph';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
+import { buildCourseUrl } from '@/lib/slug';
 import { useCategories } from '@/api/hooks/useCategories';
 import { cn } from '@/lib/utils';
 import { QuestionNavigator } from '@/components/shared/QuestionNavigator';
@@ -485,33 +486,29 @@ export function PracticeHub() {
                   )}
                 </div>
 
-                {/* Related Learning Courses */}
-                <div className="bg-card border border-border rounded-2xl p-4 space-y-3 shadow-2xs">
-                  <div className="flex items-center justify-between border-b border-border pb-2">
-                    <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <BookOpen className="w-4 h-4 text-primary" />
-                      Related Courses
-                    </span>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    <div className="p-3 rounded-xl border border-border/70 space-y-1.5 bg-card/40">
-                      <h4 className="text-xs font-bold text-foreground line-clamp-1">OAuth 2.0 & OIDC Fundamentals</h4>
-                      <p className="text-[11px] text-muted-foreground line-clamp-2">Master PKCE flows, authorization server setup, and JWT claims.</p>
-                      <Button size="sm" variant="outline" className="w-full text-[11px] font-semibold h-7 rounded-lg mt-1" onClick={() => navigate('/course/oauth-2-fundamentals')}>
-                        Study Course
-                      </Button>
+                {/* Related Learning Courses (live published courses) */}
+                {(publicCourses?.items ?? []).length > 0 && (
+                  <div className="bg-card border border-border rounded-2xl p-4 space-y-3 shadow-2xs">
+                    <div className="flex items-center justify-between border-b border-border pb-2">
+                      <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <BookOpen className="w-4 h-4 text-primary" />
+                        Related Courses
+                      </span>
                     </div>
 
-                    <div className="p-3 rounded-xl border border-border/70 space-y-1.5 bg-card/40">
-                      <h4 className="text-xs font-bold text-foreground line-clamp-1">Go Backend Engineering</h4>
-                      <p className="text-[11px] text-muted-foreground line-clamp-2">Learn concurrency, channels, and REST microservices in Go.</p>
-                      <Button size="sm" variant="outline" className="w-full text-[11px] font-semibold h-7 rounded-lg mt-1" onClick={() => navigate('/course/go-backend-engineering')}>
-                        Study Course
-                      </Button>
+                    <div className="space-y-2.5">
+                      {(publicCourses?.items ?? []).slice(0, 3).map(c => (
+                        <div key={c.id} className="p-3 rounded-xl border border-border/70 space-y-1.5 bg-card/40">
+                          <h4 className="text-xs font-bold text-foreground line-clamp-1">{c.title}</h4>
+                          {c.description && <p className="text-[11px] text-muted-foreground line-clamp-2">{c.description}</p>}
+                          <Button size="sm" variant="outline" className="w-full text-[11px] font-semibold h-7 rounded-lg mt-1" onClick={() => navigate(buildCourseUrl(c))}>
+                            Study Course
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
+                )}
 
               </div>
 

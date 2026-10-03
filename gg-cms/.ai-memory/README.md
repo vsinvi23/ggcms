@@ -1,7 +1,7 @@
 # .ai-memory — Graph-Derived Memory Index
 
 **Project:** `C-Vivek-Pesonal-Serenya-Project-CMS-gocms-gg-cms`  
-**Graph:** 5,461 nodes · 15,842 edges · Indexed: 2026-09-02
+**Graph:** 8,150 nodes · 22,511 edges · Indexed: 2026-10-03
 
 ---
 
@@ -14,6 +14,7 @@
   modules/
     backend-services.md  ← all 21 Go services, handler→service map, pkg/ fan-in
     frontend-modules.md  ← service sizes, hook sizes, page complexity, state mgmt
+    learning-paths.md    ← learning-path data model, API, path-aware course flow, known gaps
   architecture/
     service-map.md       ← topology diagram, clusters, deployment variants, HTTP_CALLS
     data-flow.md         ← content lifecycle, auth, feature flags, engagement, personalization
@@ -32,6 +33,7 @@
 | `summaries/overview.md` | ~900 | Session start — always |
 | `modules/backend-services.md` | ~700 | Backend feature work |
 | `modules/frontend-modules.md` | ~700 | Frontend feature work |
+| `modules/learning-paths.md` | ~600 | Learning path / course player work |
 | `architecture/service-map.md` | ~900 | Architecture decisions |
 | `architecture/data-flow.md` | ~600 | Flow/sequence questions |
 | `runbooks/onboarding.md` | ~400 | New developer, setup |

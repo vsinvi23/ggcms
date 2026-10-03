@@ -92,3 +92,12 @@ cd backend/go-cms && go test ./internal/... -short -count=1
 # Frontend lint + types
 cd frontend/react-ui && npm run lint && node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json
 ```
+
+## Learning paths (added 2026-10-03)
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Path page shows "Curriculum updating" | No published course linked in `learning_path_courses` (UI shows only real, published courses) | Link courses in Admin → Learning Paths, or check the course status is `PUBLISHED` and has a slug |
+| New UI not visible on `:8080` | Go serves the committed `backend/go-cms/dist` bundle, not source | Rebuild the frontend and copy to `backend/go-cms/dist` (`release/build.sh` does this); the `frontend` compose container builds from source |
+| Second admin-created path fails (500) | `slug` defaults to `''` and `idx_learning_paths_slug` is UNIQUE | Known gap — pass a unique slug; auto-slug on create is not implemented yet |
+| Migration 049 fails | Existing orphan/duplicate rows or FK conflict | 049 deletes orphans/duplicates first; check `learning_path_courses` against `courses` before running on prod |

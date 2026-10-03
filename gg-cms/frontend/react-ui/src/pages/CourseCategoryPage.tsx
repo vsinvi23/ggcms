@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { usePublicCmsList } from '@/api/hooks/usePublicCms';
+import { usePublicCmsList, usePublicLearningPaths } from '@/api/hooks/usePublicCms';
 import { useCategories } from '@/api/hooks/useCategories';
 import { useTags } from '@/api/hooks/useTags';
 import { useDomains } from '@/api/hooks/useDomains';
@@ -24,7 +24,6 @@ import { CmsResponseDto, TagDto, EnrollmentDto, DomainDto } from '@/api/types';
 import { cn } from '@/lib/utils';
 import { buildArticleUrl, buildCourseUrl } from '@/lib/slug';
 import { PublicArticleCard } from '@/components/public/PublicArticleCard';
-import { CURATED_LEARNING_PATHS } from '@/data/learningPathData';
 
 // ─── Category slug → courseType ───────────────────────────────────────────────
 
@@ -365,7 +364,7 @@ function CategoryGrid({
                 </div>
                 <div className="min-w-0 flex-1">
                   <span className="text-sm font-semibold text-foreground block truncate group-hover:text-primary transition-colors">{cat.name}</span>
-                  <span className="text-xs text-muted-foreground">{cat.articleCount ?? 12} resources</span>
+                  <span className="text-xs text-muted-foreground">{cat.articleCount ?? 0} resources</span>
                 </div>
               </div>
               <ArrowRight className="w-4 h-4 text-muted-foreground/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0" />
@@ -904,16 +903,22 @@ function LearningPathsCatalog() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
+  const { data: dbPaths } = usePublicLearningPaths();
+  const livePaths = useMemo(
+    () => (dbPaths ?? []).map(p => ({ id: p.id, slug: p.slug || String(p.id), kind: p.kind, title: p.title, description: p.description, modules: (p.courses ?? []).filter(c => c.title).map(c => ({ id: c.courseId, title: c.title as string })) })),
+    [dbPaths],
+  );
+
   const filteredPaths = useMemo(() => {
-    if (!searchQuery.trim()) return CURATED_LEARNING_PATHS;
+    if (!searchQuery.trim()) return livePaths;
     const q = searchQuery.toLowerCase();
-    return CURATED_LEARNING_PATHS.filter(
+    return livePaths.filter(
       p =>
         p.title.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q) ||
         p.modules.some(m => m.title.toLowerCase().includes(q)),
     );
-  }, [searchQuery]);
+  }, [searchQuery, livePaths]);
 
   return (
     <PublicLayout hideSearch>
@@ -962,9 +967,7 @@ function LearningPathsCatalog() {
                       <Badge variant="outline" className="text-xs font-semibold text-primary border-primary/30 bg-primary/10">
                         {path.kind === 'INTERVIEW_PREP' ? 'Interview Track' : path.kind === 'SECURITY_TRACK' ? 'Security Track' : 'Career Path'}
                       </Badge>
-                      <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-primary" /> {path.estimatedHours}h estimated
-                      </span>
+
                     </div>
 
                     <div>

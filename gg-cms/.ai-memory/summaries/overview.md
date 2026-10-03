@@ -1,8 +1,10 @@
 # GG-CMS — Codebase Overview (Graph-Derived)
 
 **Project:** `C-Vivek-Pesonal-Serenya-Project-CMS-gocms-gg-cms`  
-**Graph:** 5,461 nodes · 15,842 edges · Indexed: 2026-09-07  
+**Graph:** 8,150 nodes · 22,511 edges · Indexed: 2026-10-03  
 **Branch:** `alpha-0.2`
+
+**Recent addition (2026-10-03):** Learning-path flow rework — single landing page (no tabs), path-aware course player (`/course/...?path=<slug>`), public path API now returns real per-course data (published only), migrations 048/049 (path-course links + FK/unique integrity), diff-overlay XSS fix, mock/fallback data removed from the UI. See `modules/learning-paths.md`.
 
 **Recent addition (2026-09-07):** Full email-based forgot/reset-password flow for all users (`POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `password_reset_tokens` table, `pkg/mailer`) plus a secret-gated break-glass master-admin recovery endpoint (`POST /api/admin/recover-password`, `X-Admin-Recovery-Secret` header, mirrors the factory-sync secret pattern) — see `modules/backend-services.md` §Password Reset & Admin Recovery.
 

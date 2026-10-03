@@ -19,7 +19,7 @@
 | `enrollment` | `internal/application/enrollment/` | `Enroll`, `UpdateProgress`, `CompleteLesson` | PG |
 | `task` | `internal/application/task/` | `ListByUser`, `UpsertReviewerTask` | PG |
 | `tag` | `internal/application/tag/` | `Create`, `GetAll`, `AssociateWithCategory` | PG |
-| `learningpath` | `internal/application/learningpath/` | `Create`, `AddCourse`, `GetAll` | PG |
+| `learningpath` | `internal/application/learningpath/` | `Create`, `SetCourses`, `List`, `GetByIDOrSlug` — see `modules/learning-paths.md` | PG |
 | `contenttype` | `internal/application/contenttype/` | `GetAll`, `Upsert` | PG |
 | `engagement` | `internal/application/engagement/` | `ToggleReaction`, `UpsertNote`, `SaveHighlight`, `ToggleFavourite` | Mongo |
 | `notification` | `internal/application/notification/` | `Create`, `MarkRead`, `ListByUser` | PG |

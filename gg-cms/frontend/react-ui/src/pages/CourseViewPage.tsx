@@ -157,11 +157,11 @@ const RelatedCoursesSection = ({
                   </Badge>
                   <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                     <Clock className="w-3 h-3 text-primary" />
-                    {rc.durationMinutes ? `${Math.floor(rc.durationMinutes / 60)}h ${rc.durationMinutes % 60}m` : '4h 30m'}
+                    {rc.durationMinutes ? `${Math.floor(rc.durationMinutes / 60)}h ${rc.durationMinutes % 60}m` : ''}
                   </span>
                 </div>
                 <h4 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                  {rc.title ?? 'Untitled Course'}
+                  {rc.title}
                 </h4>
                 {rc.description && (
                   <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
@@ -173,7 +173,7 @@ const RelatedCoursesSection = ({
               <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1 font-medium">
                   <BookOpen className="w-3.5 h-3.5 text-primary" />
-                  {rc.sectionsCount || 8} Modules
+                  {rc.sectionsCount ? `${rc.sectionsCount} Modules` : ''}
                 </span>
                 <span className="text-primary font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                   View <ChevronRight className="w-3.5 h-3.5" />
@@ -330,9 +330,9 @@ export function CourseViewPage() {
         quizId: String(courseId),
         selectedAnswers: practiceAnswers,
         isSubmitted: true,
-        score: 100,
-        totalQuestions: 4,
-        correctCount: 4,
+        score: 0,
+        totalQuestions: allLessons.length,
+        correctCount: 0,
         submittedAt: new Date().toISOString(),
       });
     }
@@ -429,8 +429,8 @@ export function CourseViewPage() {
     return Array.from(new Set([...fromApi, ...localCompletedIds]));
   }, [enrollment, localCompletedIds]);
   const allLessons = useMemo(() => displaySections.flatMap(getAllLessons), [displaySections]);
-  const totalLessons = allLessons.length > 0 ? allLessons.length : ((displayCourse?.lessonsCount && displayCourse.lessonsCount > 0) ? displayCourse.lessonsCount : ((displayCourse?.blockCount && displayCourse.blockCount > 0) ? displayCourse.blockCount * 3 : 18));
-  const totalModules = displaySections.length > 0 ? displaySections.length : ((displayCourse?.sectionsCount && displayCourse.sectionsCount > 0) ? displayCourse.sectionsCount : (totalLessons > 0 ? Math.ceil(totalLessons / 3) : 6));
+  const totalLessons = allLessons.length;
+  const totalModules = displaySections.length;
 
 
   // Automatically mark course as referred when opened, and update course progress
@@ -906,7 +906,7 @@ export function CourseViewPage() {
                       <div className="p-4 rounded-2xl bg-primary/10 border border-primary/30 space-y-3 animate-fade-in">
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-bold text-primary flex items-center gap-1.5">
-                            <CheckCircle2 className="w-4 h-4 text-primary" /> Practice Assessment Evaluated!
+                            <CheckCircle2 className="w-4 h-4 text-primary" /> Practice Set Submitted
                           </h4>
                           <Button
                             size="sm"
@@ -917,7 +917,7 @@ export function CourseViewPage() {
                           </Button>
                         </div>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                          Great job completing this practice set! All architectural principles and scenario answers have been saved to your progress history.
+                          Your answers have been saved to your progress history on this device.
                         </p>
                       </div>
                     )}
