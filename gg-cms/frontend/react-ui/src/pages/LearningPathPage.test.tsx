@@ -75,6 +75,6 @@ describe('LearningPathPage (Panel 5 UI Spec)', () => {
     fireEvent.click(relatedTabBtn);
 
     expect(screen.getByText('Fullstack Go Developer')).toBeInTheDocument();
-    expect(screen.getByText('0 Modules')).toBeInTheDocument();
+    expect(screen.getByText('4 Modules')).toBeInTheDocument();
   });
 });
