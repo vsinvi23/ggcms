@@ -2,13 +2,13 @@
 
 - **Target Environment**: prod
 - **Release Version**: v1.5.4
-- **Build Timestamp**: 2026-10-03T17:49:42Z
-- **Git Commit**: 351779b1
+- **Build Timestamp**: 2026-10-04T05:16:11Z
+- **Git Commit**: 6e9582d7
 
 ## Component Version Matrix
-- **React UI**: v1.6.4
-- **Go Backend**: v1.6.4
-- **DB Migrations**: v1.6.4
+- **React UI**: v1.7.0
+- **Go Backend**: v1.7.0
+- **DB Migrations**: v1.7.0
 - **AI Content Factory**: v1.6.4
 
 ## Deployment Contract & Security Signature
@@ -18,14 +18,14 @@
 
 ## Recent Change Log (Git Commits)
 ```
-351779b1 feat: Add course management to LearningPaths and fix ExplorePage content
-00307035 build(release): generate v1.4.11 release artifacts
-2e848f6e fix(ui): show learning path name instead of course name in top bar and category badge when viewing from a path
-fe3eda13 chore(release): commit v1.4.10 release artifacts and version bump
-9541ac48 fix(ui): make lesson title and toolbar sticky during scrolling in CourseViewPage
-be72ed09 fix(release-1.4.10): map migration 048 to slugs that exist in prod; replace hardcoded OAuth card on article page with live courses
-f8b83f40 chore(ui): remove mock/fallback data; document learning paths in .ai-memory
-58366869 feat(learning-paths): single-page path, path-aware course view, data integrity and security fixes
-45e6787f Merge main branch for v1.4.9
-8f5f9dbb fix(importer): support flexible sequencedCourses JSON objects and preserve LEARNING_PATH type in validate, release v1.4.9
+6e9582d7 feat: Add core Assessment Management module and Interactive Metadata payload
+9ba77316 feat: add logo to dashboard header top right
+5aac7b91 feat: redesign practice and interview hubs to 3-column layout
+4fc11acb fix: scroll to top on navigation in course, article and learning path pages
+fb7a37f8 feat: redesign article view to 3-column layout
+f1c36c14 feat: add right rail to course page and expose all content to admin
+ac2bc9d2 fix: syntax error in configuration page
+49754031 feat: add all path kinds to configuration page
+ec0b2dbf fix: map explore paths slug route to LearningPathPage and update management link
+ae16070a fix: LearningPathManagement course array mapping crash
 ```

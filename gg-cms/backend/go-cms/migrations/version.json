@@ -3,6 +3,6 @@
   "version": "1.7.0",
   "description": "PostgreSQL Schema Migrations",
   "last_migration": "050_interactive_metadata.sql",
-  "updated_at": "2026-10-04T05:14:01Z",
-  "db_schema_hash": "sha256:f734265a0c13c5c9dfe8949c348fdf522f392600463b54df0bf2ffa7490cade2"
+  "updated_at": "2026-10-04T05:16:34Z",
+  "db_schema_hash": "sha256:817080c5d9e39a4fc58218c01c743d03347ae9aa049e54e4782adabbec20b4b0"
 }

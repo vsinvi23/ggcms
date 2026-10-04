@@ -4,7 +4,7 @@ import { useCmsList, useDeleteCms, useSubmitCmsForReview, useClaimReview, useAss
 import { useCategories, useCategoryReviewers } from '@/api/hooks/useCategories';
 import { useAuth } from '@/contexts/AuthContext';
 import { CmsResponseDto } from '@/api/types';
-import { buildAssessmentUrl } from '@/lib/slug';
+import { buildCourseUrl } from '@/lib/slug';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -263,7 +263,7 @@ export default function AssessmentManagement() {
         <DropdownMenuItem onClick={() => navigate(`/assessments/${assessment.slug ?? assessment.id}/edit`)}>
           <Pencil className="w-4 h-4 mr-2" /> Edit
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => window.open(`${buildAssessmentUrl(assessment)}?preview=true`, '_blank')}>
+        <DropdownMenuItem onClick={() => window.open(`${buildCourseUrl(assessment)}?preview=true`, '_blank')}>
           <Eye className="w-4 h-4 mr-2" /> Preview
         </DropdownMenuItem>
 

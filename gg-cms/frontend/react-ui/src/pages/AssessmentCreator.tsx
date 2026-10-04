@@ -2,8 +2,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { sanitizeHtml } from '@/lib/sanitize';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { RichContentEditor } from '@/components/articles/RichContentEditor';
-import { AssessmentChapterManager } from '@/components/assessments/AssessmentChapterManager';
-import { AssessmentChapterViewer } from '@/components/assessments/AssessmentChapterViewer';
+import { CourseChapterManager } from '@/components/courses/CourseChapterManager';
+import { CourseChapterViewer } from '@/components/courses/CourseChapterViewer';
 import { DiffField } from '@/components/shared/DiffViewer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -175,9 +175,9 @@ export default function AssessmentCreator() {
       let cmsSlug: string | undefined;
       if (paramId) {
         cmsId = existingCmsId;
-        await updateCms.mutateAsync({ id: cmsId, data: { type: 'COURSE', courseType: 'ASSESSMENT', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined, interactiveMetadata: interactiveMetadata || undefined, interactiveMetadata: interactiveMetadata || undefined, topicIds: selectedTopicIds } });
+        await updateCms.mutateAsync({ id: cmsId, data: { type: 'COURSE', courseType: 'ASSESSMENT', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, interactiveMetadata: interactiveMetadata || undefined, topicIds: selectedTopicIds } });
       } else {
-        const created = await createCms.mutateAsync({ type: 'COURSE', courseType: 'ASSESSMENT', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined, interactiveMetadata: interactiveMetadata || undefined, interactiveMetadata: interactiveMetadata || undefined, topicIds: selectedTopicIds });
+        const created = await createCms.mutateAsync({ type: 'COURSE', courseType: 'ASSESSMENT', categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, interactiveMetadata: interactiveMetadata || undefined, topicIds: selectedTopicIds });
         cmsId = created.id;
         cmsSlug = created.slug;
         setSavedAssessmentId(cmsId);
@@ -201,7 +201,7 @@ export default function AssessmentCreator() {
   };
 
   const buildUpdateData = () => ({
-    type: 'COURSE', courseType: 'ASSESSMENT' as const, categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, courseType: courseType || undefined, interactiveMetadata: interactiveMetadata || undefined,
+    type: 'COURSE', courseType: 'ASSESSMENT' as const, categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, interactiveMetadata: interactiveMetadata || undefined,
   });
 
   const {
@@ -878,7 +878,7 @@ export default function AssessmentCreator() {
                           </p>
                         </CardHeader>
                         <CardContent>
-                          <AssessmentChapterViewer
+                          <CourseChapterViewer
                             assessmentId={assessmentIdForChapters}
                             snapshotJson={
                               canPublish
@@ -916,7 +916,7 @@ export default function AssessmentCreator() {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <AssessmentChapterManager assessmentId={assessmentIdForChapters} />
+                          <CourseChapterManager assessmentId={assessmentIdForChapters} />
                         </CardContent>
                       </Card>
                     )
