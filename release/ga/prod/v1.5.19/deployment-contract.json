@@ -1,0 +1,15 @@
+{
+  "deployment_id": "2026-10-04-prod-001",
+  "environment": "prod",
+  "ui_version": "1.7.16",
+  "backend_version": "1.7.16",
+  "db_migration_version": "1.7.15",
+  "db_schema_hash": "sha256:629138801980ad81096a81f0a9dce3e2fc4279c953577b2556ded61fc1ca9da5",
+  "backup_manifest_ref": "",
+  "api_contract_version": "v1",
+  "rollback_target": "",
+  "deployment_status": "prepared",
+  "created_at": "2026-10-04T15:56:43Z",
+  "updated_at": "2026-10-04T15:56:43Z",
+  "git_commit": "858a57b6"
+}

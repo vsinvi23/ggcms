@@ -1,8 +1,8 @@
 {
   "name": "db-migrations",
-  "version": "1.7.14",
+  "version": "1.7.15",
   "description": "PostgreSQL Schema Migrations",
   "last_migration": "051_backfill_assessment_metadata.sql",
-  "updated_at": "2026-10-04T15:29:27Z",
+  "updated_at": "2026-10-04T15:56:43Z",
   "db_schema_hash": "sha256:733f1f6ed06085ff09d9fe703d55057a0f58776eb200ed9a42a0af0eb636fa28"
 }
