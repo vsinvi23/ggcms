@@ -198,6 +198,7 @@ export default function ConfigurationPage() {
                   >
                     <Target className="w-3.5 h-3.5" /> Practice Tracks
                   </button>
+                </div>
               </div>
 
               {/* Tier 3: Workflow & Governance */}
