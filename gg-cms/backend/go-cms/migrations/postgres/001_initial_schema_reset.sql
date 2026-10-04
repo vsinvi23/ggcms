@@ -1,3 +1,5 @@
+-- Terminate all other connections so we can exclusively lock and drop the schema
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = current_database() AND pid <> pg_backend_pid();
 DROP SCHEMA public CASCADE; CREATE SCHEMA public;
 CREATE TABLE IF NOT EXISTS schema_migrations (
 		version VARCHAR(255) PRIMARY KEY,
