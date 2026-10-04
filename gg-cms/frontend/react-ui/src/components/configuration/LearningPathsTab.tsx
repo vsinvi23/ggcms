@@ -231,6 +231,22 @@ export function LearningPathsTab() {
   return <PathsList kind="LEARNING_PLAN" title="Learning Paths" description="Curated sequences of courses for structured learning." />;
 }
 
+export function StructuredPathsTab() {
+  return <PathsList kind="STRUCTURED_PATH" title="Structured Paths" description="Rigorous step-by-step career and topic paths." />;
+}
+
+export function SecurityTracksTab() {
+  return <PathsList kind="SECURITY_TRACK" title="Security Tracks" description="Specialized security and compliance training paths." />;
+}
+
+export function PracticeTracksTab() {
+  return <PathsList kind="PRACTICE_TRACK" title="Practice Tracks" description="Hands-on practice and lab tracks." />;
+}
+
+export function InterviewPathsTab() {
+  return <PathsList kind="INTERVIEW_PREP" title="Interview Paths" description="Curated preparation paths for technical interviews." />;
+}
+
 function PathsList({ kind, title, description }: PathsListProps) {
   const { data: paths = [], isLoading } = useLearningPaths(kind);
   const deletePath = useDeleteLearningPath();

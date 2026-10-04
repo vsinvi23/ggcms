@@ -9,8 +9,13 @@ import {
 import { CategoriesTab } from '@/components/configuration/CategoriesTab';
 import { TagsTab } from '@/components/configuration/TagsTab';
 import { ContentTypesTab } from '@/components/configuration/ContentTypesTab';
-import { LearningPathsTab } from '@/components/configuration/LearningPathsTab';
-import { InterviewPathsTab } from '@/components/configuration/InterviewPathsTab';
+import {
+  LearningPathsTab,
+  InterviewPathsTab,
+  StructuredPathsTab,
+  SecurityTracksTab,
+  PracticeTracksTab
+} from '@/components/configuration/LearningPathsTab';
 import { ReviewerGroupsTab } from '@/components/configuration/ReviewerGroupsTab';
 import { ErrorAuditLogsTab } from '@/components/configuration/ErrorAuditLogsTab';
 import { cn } from '@/lib/utils';
@@ -157,7 +162,42 @@ export default function ConfigurationPage() {
                   >
                     <Target className="w-3.5 h-3.5" /> Interview Paths
                   </button>
-                </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('structured-paths')}
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border',
+                      activeTab === 'structured-paths'
+                        ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                        : 'bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground border-transparent',
+                    )}
+                  >
+                    <Route className="w-3.5 h-3.5" /> Structured Paths
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('security-tracks')}
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border',
+                      activeTab === 'security-tracks'
+                        ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                        : 'bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground border-transparent',
+                    )}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" /> Security Tracks
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('practice-tracks')}
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border',
+                      activeTab === 'practice-tracks'
+                        ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                        : 'bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground border-transparent',
+                    )}
+                  >
+                    <Target className="w-3.5 h-3.5" /> Practice Tracks
+                  </button>
               </div>
 
               {/* Tier 3: Workflow & Governance */}
@@ -213,6 +253,15 @@ export default function ConfigurationPage() {
               <TabsTrigger value="learning-paths" className="gap-2 rounded-lg text-xs font-semibold">
                 <Route className="w-4 h-4" /> Learning Paths
               </TabsTrigger>
+              <TabsTrigger value="structured-paths" className="gap-2 rounded-lg text-xs font-semibold">
+                <Route className="w-4 h-4" /> Structured Paths
+              </TabsTrigger>
+              <TabsTrigger value="security-tracks" className="gap-2 rounded-lg text-xs font-semibold">
+                <ShieldCheck className="w-4 h-4" /> Security Tracks
+              </TabsTrigger>
+              <TabsTrigger value="practice-tracks" className="gap-2 rounded-lg text-xs font-semibold">
+                <Target className="w-4 h-4" /> Practice Tracks
+              </TabsTrigger>
               <TabsTrigger value="interview-paths" className="gap-2 rounded-lg text-xs font-semibold">
                 <Target className="w-4 h-4" /> Interview Paths
               </TabsTrigger>
@@ -244,6 +293,18 @@ export default function ConfigurationPage() {
 
           <TabsContent value="interview-paths" className="mt-0 focus-visible:outline-none">
             <InterviewPathsTab />
+          </TabsContent>
+
+          <TabsContent value="structured-paths" className="mt-0 focus-visible:outline-none">
+            <StructuredPathsTab />
+          </TabsContent>
+
+          <TabsContent value="security-tracks" className="mt-0 focus-visible:outline-none">
+            <SecurityTracksTab />
+          </TabsContent>
+
+          <TabsContent value="practice-tracks" className="mt-0 focus-visible:outline-none">
+            <PracticeTracksTab />
           </TabsContent>
 
           <TabsContent value="reviewer-groups" className="mt-0 focus-visible:outline-none">
