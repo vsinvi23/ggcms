@@ -306,7 +306,7 @@ export function PracticeHub() {
               </div>
 
               {/* CENTER COLUMN: Main Content & Question Runner (6 Cols) */}
-              <div className="lg:col-span-9 space-y-6 min-w-0">
+              <div className="lg:col-span-6 space-y-6 min-w-0">
                 <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
                   <div className="border-b border-border pb-4 space-y-1">
                     <h2 className="text-xl font-extrabold text-foreground">{activeQuiz.title}</h2>
@@ -433,8 +433,8 @@ export function PracticeHub() {
                 </div>
               </div>
 
-              {/* Related content: below the runner, aligned with the content column */}
-              <div className="lg:col-start-4 lg:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+              {/* RIGHT COLUMN: Related content */}
+              <div className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-16">
                 
                 {/* Related Practice Sets */}
                 <div className="bg-card border border-border rounded-2xl p-4 space-y-3 shadow-2xs">
