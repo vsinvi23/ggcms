@@ -6,8 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 
+const stripHtml = (html: string | null | undefined): string => {
+  if (!html) return '';
+  return html.replace(/<[^>]*>?/gm, '');
+};
+
 import { useCategories } from '@/api/hooks/useCategories';
-import { usePublicCmsList } from '@/api/hooks/usePublicCms';
+import { usePublicCmsList, usePublicLearningPaths } from '@/api/hooks/usePublicCms';
 import { useContentTypes } from '@/api/hooks/useContentTypes';
 import { buildArticleUrl } from '@/lib/slug';
 
@@ -37,6 +42,7 @@ export function ExplorePage() {
   // Live backend published CMS articles API hook
   const { data: publicArticlesData } = usePublicCmsList({ type: 'ARTICLE', size: 50 });
   const { data: publicCoursesData } = usePublicCmsList({ type: 'COURSE', size: 50 });
+  const { data: publicLearningPathsData } = usePublicLearningPaths();
   
   // Live backend content format types API hook
   const { data: backendArticleTypes } = useContentTypes('article');
@@ -46,34 +52,70 @@ export function ExplorePage() {
     if (fetched.length > 0) {
       return ['All', ...Array.from(new Set(fetched))];
     }
-    return ['All', 'Articles', 'Guides', 'Tutorials', 'Deep Dives', 'Cheat Sheets', 'References', 'Labs', 'Projects', 'Course'];
+    return ['All', 'Articles', 'Guides', 'Tutorials', 'Deep Dives', 'Cheat Sheets', 'References', 'Labs', 'Projects', 'Course', 'Learning Plan', 'Structured Path', 'Security Track', 'Interview Prep', 'Practice Track'];
   }, [backendArticleTypes]);
 
   const backendExploreItems = useMemo(() => {
     const items = [];
     if (publicArticlesData?.items) {
-      items.push(...publicArticlesData.items);
+      items.push(...publicArticlesData.items.map(item => ({
+        id: String(item.id),
+        slug: item.slug || buildArticleUrl(item),
+        title: item.title || '',
+        excerpt: stripHtml(item.description || item.excerpt || ''),
+        contentType: item.articleType || 'Article',
+        category: item.categoryName || 'Engineering',
+        readingTimeMinutes: 10,
+        domain: item.categoryName || 'General',
+        tags: item.tags || ['Article', 'Tech'],
+        publishedDate: item.publishedAt || item.createdAt || '2026-03-15',
+        isTrending: true,
+        isFeatured: false,
+        rawType: 'ARTICLE'
+      })));
     }
     if (publicCoursesData?.items) {
-      items.push(...publicCoursesData.items);
+      items.push(...publicCoursesData.items.map(item => ({
+        id: String(item.id),
+        slug: item.slug || String(item.id),
+        title: item.title || '',
+        excerpt: stripHtml(item.description || item.excerpt || ''),
+        contentType: item.courseType || 'Course',
+        category: item.categoryName || 'Engineering',
+        readingTimeMinutes: 60,
+        domain: item.categoryName || 'General',
+        tags: item.tags || ['Course', 'Tech'],
+        publishedDate: item.publishedAt || item.createdAt || '2026-03-15',
+        isTrending: true,
+        isFeatured: false,
+        rawType: 'COURSE'
+      })));
     }
-    if (items.length === 0) return [];
-    
-    return items.map(item => ({
-      id: String(item.id),
-      slug: item.slug || buildArticleUrl(item),
-      title: item.title,
-      excerpt: item.description || '',
-      contentType: (item.articleType as string) || (item.courseType ? 'Course' : 'Article'),
-      category: item.categoryName || 'Engineering',
-      readingTimeMinutes: item.readingTimeMinutes || 10,
-      domain: item.categoryName || 'General',
-      tags: item.tags || ['Article', 'Tech'],
-      publishedDate: item.publishedAt || '2026-03-15',
-      isTrending: true,
-      isFeatured: false,
-    }));
-  }, [publicArticlesData, publicCoursesData]);
+    if (publicLearningPathsData) {
+      items.push(...publicLearningPathsData.map(lp => {
+        const kindLabel = lp.kind 
+          ? lp.kind.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) 
+          : 'Learning Path';
+
+        return {
+          id: String(lp.id),
+          slug: lp.slug || `learning-path-${lp.id}`,
+          title: lp.title || '',
+          excerpt: lp.description || '',
+          contentType: kindLabel,
+          category: 'Engineering',
+          readingTimeMinutes: (lp.courseCount || 1) * 30,
+          domain: 'Engineering',
+          tags: [kindLabel, 'Guided'],
+          publishedDate: lp.createdAt || '2026-03-15',
+          isTrending: true,
+          isFeatured: false,
+          rawType: 'PATH'
+        };
+      }));
+    }
+    return items;
+  }, [publicArticlesData, publicCoursesData, publicLearningPathsData]);
 
   const allExploreItems = useMemo(() => {
     return backendExploreItems;
@@ -235,7 +277,15 @@ export function ExplorePage() {
                   <div
                     key={item.id}
                     className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md group cursor-pointer"
-                    onClick={() => navigate(`/article/${item.slug}`)}
+                    onClick={() => {
+                      if (item.rawType === 'PATH') {
+                        navigate(`/learning-paths/${item.slug}`);
+                      } else if (item.rawType === 'COURSE') {
+                        navigate(`/course/${item.slug}`);
+                      } else {
+                        navigate(`/article/${item.slug}`);
+                      }
+                    }}
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">

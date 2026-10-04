@@ -16,17 +16,9 @@ vi.mock('@/components/personalization/VisitorImportDialog', () => ({
   VisitorImportDialog: () => null,
 }));
 
+const mockUseAuth = vi.fn();
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: { id: 1, name: 'Admin User', email: 'admin@test.com', role: 'admin' },
-    isAuthenticated: true,
-    isAdmin: true,
-    isLoading: false,
-    userGroups: [],
-    groupNames: ['ADMIN'],
-    visitorProfileImported: false,
-    clearVisitorImportFlag: vi.fn(),
-  }),
+  useAuth: () => mockUseAuth(),
 }));
 
 const mockUsersData = {
@@ -87,6 +79,16 @@ function renderDashboard() {
 describe('Dashboard page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: { id: 1, name: 'Admin User', email: 'admin@test.com', role: 'admin' },
+      isAuthenticated: true,
+      isAdmin: true,
+      isLoading: false,
+      userGroups: [],
+      groupNames: ['ADMIN'],
+      visitorProfileImported: false,
+      clearVisitorImportFlag: vi.fn(),
+    });
   });
 
   it('renders inside DashboardLayout', () => {
@@ -117,5 +119,31 @@ describe('Dashboard page', () => {
   it('renders AI Content Factory button', () => {
     renderDashboard();
     expect(screen.getByText('AI Content Factory')).toBeInTheDocument();
+  });
+});
+
+describe('Dashboard page - User', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      user: { id: 2, name: 'Test User', email: 'user@test.com', role: 'user' },
+      isAuthenticated: true,
+      isAdmin: false,
+      isLoading: false,
+      userGroups: [],
+      groupNames: [],
+      visitorProfileImported: false,
+      clearVisitorImportFlag: vi.fn(),
+    });
+  });
+
+  it('renders Practice Hub quick link', () => {
+    renderDashboard();
+    expect(screen.getByText('Practice Hub')).toBeInTheDocument();
+  });
+
+  it('renders Interview Prep quick link', () => {
+    renderDashboard();
+    expect(screen.getByText('Interview Prep')).toBeInTheDocument();
   });
 });

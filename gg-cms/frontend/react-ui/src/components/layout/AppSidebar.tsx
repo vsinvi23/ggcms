@@ -43,7 +43,7 @@ interface NavSection {
   adminOnly?: boolean;
 }
 
-import { BookOpen, FileText, ListTodo, Layers, GraduationCap, Settings2, Upload, Factory } from 'lucide-react';
+import { BookOpen, FileText, ListTodo, Layers, GraduationCap, Settings2, Upload, Factory, Target, Briefcase } from 'lucide-react';
 
 // All menu items with access control flags
 const standaloneItems: NavItem[] = [

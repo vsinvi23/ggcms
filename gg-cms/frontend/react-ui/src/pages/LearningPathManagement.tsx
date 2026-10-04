@@ -77,7 +77,7 @@ export default function LearningPathManagement() {
     }
     try {
       if (formDialog.lp) {
-        await updateLP.mutateAsync({ id: formDialog.lp.id, data: { title: formData.title, description: formData.description } });
+        await updateLP.mutateAsync({ id: formDialog.lp.id, data: { title: formData.title, slug: formData.slug, kind: formData.kind, description: formData.description } });
         toast.success('Learning path updated');
       } else {
         await createLP.mutateAsync({ title: formData.title, slug: formData.slug, kind: formData.kind, description: formData.description });
@@ -231,6 +231,8 @@ export default function LearningPathManagement() {
                     <SelectItem value="LEARNING_PLAN">Learning Plan</SelectItem>
                     <SelectItem value="STRUCTURED_PATH">Structured Path</SelectItem>
                     <SelectItem value="SECURITY_TRACK">Security Track</SelectItem>
+                    <SelectItem value="INTERVIEW_PREP">Interview Prep</SelectItem>
+                    <SelectItem value="PRACTICE_TRACK">Practice Track</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

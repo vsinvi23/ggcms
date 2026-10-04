@@ -32,7 +32,10 @@ export const useCreateLearningPath = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: LearningPathCreateDto) => learningPathService.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: learningPathKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: learningPathKeys.all });
+      qc.invalidateQueries({ queryKey: ['public-cms'] });
+    },
   });
 };
 
@@ -44,6 +47,7 @@ export const useUpdateLearningPath = () => {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: learningPathKeys.detail(id) });
       qc.invalidateQueries({ queryKey: learningPathKeys.all });
+      qc.invalidateQueries({ queryKey: ['public-cms'] });
     },
   });
 };
@@ -52,7 +56,10 @@ export const useDeleteLearningPath = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => learningPathService.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: learningPathKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: learningPathKeys.all });
+      qc.invalidateQueries({ queryKey: ['public-cms'] });
+    },
   });
 };
 
@@ -64,6 +71,7 @@ export const useSetLearningPathCourses = () => {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: learningPathKeys.detail(id) });
       qc.invalidateQueries({ queryKey: learningPathKeys.all });
+      qc.invalidateQueries({ queryKey: ['public-cms'] });
     },
   });
 };

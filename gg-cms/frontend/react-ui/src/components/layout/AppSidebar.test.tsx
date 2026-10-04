@@ -60,6 +60,16 @@ describe('AppSidebar — items visible to all authenticated users', () => {
     renderSidebar(false);
     expect(screen.getByText('My Learning')).toBeInTheDocument();
   });
+
+  it('regular user sees Practice Hub nav item', () => {
+    renderSidebar(false);
+    expect(screen.getByText('Practice Hub')).toBeInTheDocument();
+  });
+
+  it('regular user sees Interview Prep nav item', () => {
+    renderSidebar(false);
+    expect(screen.getByText('Interview Prep')).toBeInTheDocument();
+  });
 });
 
 // ─── Admin-only items ─────────────────────────────────────────────────────────
