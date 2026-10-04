@@ -54,6 +54,7 @@ const standaloneItems: NavItem[] = [
   { icon: Layers, label: 'Manage Learning Paths', href: '/dashboard/learning-paths', contentOnly: true },
   { icon: FileText, label: 'Manage Articles', href: '/workspace/articles', contentOnly: true },
   { icon: GraduationCap, label: 'My Learning', href: '/my-learning', contentOnly: true },
+  { icon: Globe, label: 'All Content (Admin)', href: '/workspace/content-overview', adminOnly: true },
   { icon: Upload, label: 'Bulk Import', href: '/dashboard/import', contentOnly: true },
 ];
 
@@ -65,7 +66,6 @@ const userManagementSection: NavSection = {
   items: [
     { icon: Users, label: 'Manage Users', href: '/workspace/users', adminOnly: true },
     { icon: Shield, label: 'Roles & Permissions', href: '/workspace/roles', adminOnly: true },
-    { icon: Globe, label: 'Content Overview', href: '/workspace/content-overview', adminOnly: true },
   ],
 };
 

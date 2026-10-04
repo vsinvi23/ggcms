@@ -130,60 +130,27 @@ const RelatedCoursesSection = ({
   if (!relatedCourses || relatedCourses.length === 0) return null;
 
   return (
-    <section className="pt-8 border-t border-border space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            Related & Recommended Courses
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Expand your engineering skills with these recommended tracks.
-          </p>
-        </div>
-        <Link to="/courses" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-          Explore Catalog <ChevronRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {relatedCourses.slice(0, 4).map(rc => (
-          <Link key={rc.id} to={buildCourseUrl(rc)} className="group">
-            <Card className="p-4 rounded-xl border border-border hover:border-primary/40 hover:shadow-md transition-all bg-card/70 h-full flex flex-col justify-between space-y-3">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Badge variant="secondary" className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary border-primary/20">
-                    {rc.categoryName || 'Engineering'}
-                  </Badge>
-                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-primary" />
-                    {rc.durationMinutes ? `${Math.floor(rc.durationMinutes / 60)}h ${rc.durationMinutes % 60}m` : ''}
-                  </span>
-                </div>
-                <h4 className="text-sm font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                  {rc.title}
-                </h4>
-                {rc.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                    {rc.description}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1 font-medium">
-                  <BookOpen className="w-3.5 h-3.5 text-primary" />
-                  {rc.sectionsCount ? `${rc.sectionsCount} Modules` : ''}
-                </span>
-                <span className="text-primary font-bold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                  View <ChevronRight className="w-3.5 h-3.5" />
-                </span>
-              </div>
-            </Card>
-          </Link>
+    <Card className="rounded-2xl border border-border p-4 space-y-3 shadow-sm bg-card">
+      <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+        <Sparkles className="w-4 h-4 text-primary" /> Related Courses
+      </h3>
+      <ul className="space-y-1.5">
+        {relatedCourses.slice(0, 5).map(rc => (
+          <li key={rc.id}>
+            <Link to={buildCourseUrl(rc)} className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 hover:bg-primary/5 group">
+              <span className="min-w-0">
+                <span className="block text-xs font-semibold text-foreground group-hover:text-primary line-clamp-1">{rc.title}</span>
+                <span className="block text-[11px] text-muted-foreground">{rc.sectionsCount ? `${rc.sectionsCount} modules` : 'Self-paced'}</span>
+              </span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+            </Link>
+          </li>
         ))}
-      </div>
-    </section>
+      </ul>
+      <Link to="/courses" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 pt-1">
+        Explore Catalog <ArrowRight className="w-3 h-3" />
+      </Link>
+    </Card>
   );
 };
 
@@ -194,27 +161,27 @@ const RecommendedPathsSection = ({ excludeSlug }: { excludeSlug?: string | null 
   if (list.length === 0) return null;
 
   return (
-    <section className="pt-5 space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-          <GraduationCap className="w-4 h-4 text-primary" />
-          Recommended Learning Paths
-        </h3>
-        <Link to="/learning-paths" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-          All Paths <ChevronRight className="w-3.5 h-3.5" />
-        </Link>
-      </div>
+    <Card className="rounded-2xl border border-border p-4 space-y-3 shadow-sm bg-card mt-4">
+      <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+        <GraduationCap className="w-4 h-4 text-primary" /> Recommended Paths
+      </h3>
       <ul className="space-y-1.5">
         {list.map(path => (
           <li key={path.id}>
-            <Link to={`/learn/${path.slug || path.id}`} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 hover:border-primary/40 hover:bg-primary/5 group">
-              <span className="text-xs font-semibold text-foreground group-hover:text-primary line-clamp-1">{path.title}</span>
-              <span className="text-[11px] text-muted-foreground shrink-0">{path.courseCount ?? path.courses?.length ?? 0} modules</span>
+            <Link to={`/learn/${path.slug || path.id}`} className="flex items-center justify-between gap-3 rounded-lg px-2.5 py-2 hover:bg-primary/5 group">
+              <span className="min-w-0">
+                <span className="block text-xs font-semibold text-foreground group-hover:text-primary line-clamp-1">{path.title}</span>
+                <span className="block text-[11px] text-muted-foreground shrink-0">{path.courseCount ?? path.courses?.length ?? 0} modules</span>
+              </span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
             </Link>
           </li>
         ))}
       </ul>
-    </section>
+      <Link to="/learning-paths" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 pt-1">
+        All Paths <ArrowRight className="w-3 h-3" />
+      </Link>
+    </Card>
   );
 };
 
@@ -818,8 +785,8 @@ export function CourseViewPage() {
               )}
             </div>
 
-            {/* RIGHT COLUMN: Content Runner Card (8 Cols) */}
-            <div className="lg:col-span-9 space-y-4 min-w-0">
+            {/* MIDDLE COLUMN: Content Runner Card (6 or 9 Cols depending on mode) */}
+            <div className={cn("space-y-4 min-w-0", selectedLessonId === null ? "lg:col-span-6 lg:border-r lg:border-border lg:pr-6" : "lg:col-span-9")}>
               {isPracticeCourse ? (
                 /* ── PRACTICE COURSE RUNNER ────── */
                 <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
@@ -1142,10 +1109,6 @@ export function CourseViewPage() {
                   </div>
                 )}
 
-                {/* Related & Recommended Courses Section */}
-                <RelatedCoursesSection relatedCourses={relatedCourses} />
-
-                <RecommendedPathsSection excludeSlug={pathSlug} />
               </div>
             ) : (
               /* ── 2. INDIVIDUAL LESSON CONTENT VIEW ────────────────────── */
@@ -1307,6 +1270,14 @@ export function CourseViewPage() {
                 )}
               </div>
             </div>
+            )}
+            
+            {/* RIGHT RAIL: Related & Recommended Courses (Only on Course Overview) */}
+            {selectedLessonId === null && (
+              <aside className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-16 pl-1">
+                <RelatedCoursesSection relatedCourses={relatedCourses} />
+                <RecommendedPathsSection excludeSlug={pathSlug} />
+              </aside>
             )}
           </div>
         </div>
