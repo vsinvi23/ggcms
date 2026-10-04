@@ -26,6 +26,7 @@ import {
   List,
   CheckCircle2,
   Eye,
+  Sparkles,
 } from 'lucide-react';
 import { InteractionBar } from '@/components/engagement/InteractionBar';
 import { HighlightOverlay } from '@/components/engagement/HighlightOverlay';
@@ -480,8 +481,54 @@ export default function PublicArticleView() {
           <span className="text-foreground truncate max-w-[200px]">{article.title || 'Untitled'}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-10 items-start">
-          <article className="max-w-3xl w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* LEFT RAIL: Related Content & Next Steps */}
+          <aside className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-24">
+            {relatedItems.length > 0 && (
+              <Card className="rounded-2xl border border-border p-4 space-y-3 shadow-sm bg-card">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-primary" /> Related Articles
+                </h3>
+                <ul className="space-y-1.5">
+                  {relatedItems.slice(0, 4).map((item) => (
+                    <li key={item.id}>
+                      <Link to={`/explore/articles/${item.slug || item.id}`} className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 hover:bg-primary/5 group">
+                        <span className="min-w-0">
+                          <span className="block text-xs font-semibold text-foreground group-hover:text-primary line-clamp-2">{item.title}</span>
+                          {item.categoryName && <span className="block text-[11px] text-muted-foreground">{item.categoryName}</span>}
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+
+            {recommendedCourses.length > 0 && (
+              <Card className="rounded-2xl border border-border p-4 space-y-3 shadow-sm bg-card mt-4">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" /> Next Steps
+                </h3>
+                <ul className="space-y-1.5">
+                  {recommendedCourses.slice(0, 3).map((course) => (
+                    <li key={course.id}>
+                      <Link to={buildCourseUrl(course)} className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 hover:bg-primary/5 group">
+                        <span className="min-w-0">
+                          <span className="block text-xs font-semibold text-foreground group-hover:text-primary line-clamp-2">{course.title}</span>
+                          <span className="block text-[11px] text-muted-foreground">Course</span>
+                        </span>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+          </aside>
+
+          {/* MAIN ARTICLE CONTENT */}
+          <article className="lg:col-span-6 w-full min-w-0">
             {/* Header Section */}
             <header className="mb-8">
               <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -689,76 +736,7 @@ export default function PublicArticleView() {
               </section>
             )}
 
-            {/* Related Content & Recommended Insights */}
-            {relatedItems.length > 0 && (
-              <section className="mt-12 pt-8 border-t border-border/80 space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-extrabold text-foreground flex items-center gap-2">
-                      <BookOpen className="w-5 h-5 text-primary" /> Recommended Articles &amp; Insights
-                    </h2>
-                    <p className="text-xs text-muted-foreground">Handpicked articles and deep reads related to {article.categoryName || 'this topic'}</p>
-                  </div>
-                  <Button variant="ghost" size="sm" asChild className="text-xs font-semibold text-primary">
-                    <Link to="/explore/articles">
-                      View all articles <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {relatedItems.slice(0, 3).map((item) => (
-                    <ContentCard key={item.id} item={item} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Next Steps Learning Journey Banner (live published courses only) */}
-            {recommendedCourses.length > 0 && (
-            <div className="mt-10 p-6 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 via-card to-emerald-500/5 space-y-6 shadow-xs">
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="space-y-1 max-w-xl">
-                  <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 uppercase tracking-wider">
-                    Recommended Next Steps
-                  </Badge>
-                  <h3 className="text-xl font-extrabold text-foreground">
-                    {article.categoryName ? `Deepen Your Knowledge in ${article.categoryName}` : 'Keep Learning'}
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Take your reading further with structured courses and hands-on practice.
-                  </p>
-                </div>
-                <Button size="sm" variant="outline" asChild className="rounded-xl text-xs font-bold gap-1 hover:bg-emerald-500/10 hover:text-emerald-600">
-                  <Link to="/practice">
-                    Practice Hub <ChevronRight className="w-3.5 h-3.5" />
-                  </Link>
-                </Button>
-              </div>
-
-              {/* Related Course Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                {recommendedCourses.map((course) => (
-                  <div key={course.id} className="p-4 rounded-2xl border border-border bg-card space-y-3 hover:border-primary/40 transition-all">
-                    <div className="flex items-center justify-between gap-2">
-                      <Badge variant="secondary" className="text-[10px] font-bold bg-primary/10 text-primary">Course</Badge>
-                      {course.categoryName && (
-                        <span className="text-[11px] text-muted-foreground font-semibold truncate">{course.categoryName}</span>
-                      )}
-                    </div>
-                    <h4 className="text-sm font-bold text-foreground line-clamp-2">{course.title}</h4>
-                    {course.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">{course.description}</p>
-                    )}
-                    <Button size="sm" asChild className="w-full rounded-xl text-xs font-bold gap-1 mt-1">
-                      <Link to={buildCourseUrl(course)}>
-                        Start Course <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-            )}
+            {/* Removed old Related Content sections (now in Left Rail) */}
 
             {/* Footer actions */}
             <div className="mt-10 pt-8 border-t border-border">
@@ -786,7 +764,7 @@ export default function PublicArticleView() {
 
           {/* Desktop right-rail table of contents */}
           {showToc && (
-            <aside className="hidden lg:block sticky top-24">
+            <aside className="hidden lg:block lg:col-span-3 sticky top-24">
               <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                 <List className="w-4 h-4" />
                 On this page
