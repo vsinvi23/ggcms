@@ -293,19 +293,38 @@ function UserDashboard() {
           <div className="flex items-center gap-3 shrink-0">
             <Button 
               size="lg" 
-              onClick={() => navigate('/articles')}
+              onClick={() => navigate('/workspace/articles')}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg gap-2 rounded-xl"
             >
-              <Compass className="w-5 h-5" />
-              Explore Articles
+              <FileText className="w-5 h-5" />
+              Article Editor
             </Button>
             <Button 
               variant="outline" 
               size="lg"
-              onClick={() => navigate('/courses')}
-              className="border-slate-700 bg-slate-800/80 hover:bg-slate-800 text-slate-200 font-semibold rounded-xl"
+              onClick={() => navigate('/workspace/courses')}
+              className="border-slate-700 bg-slate-800/80 hover:bg-slate-800 text-slate-200 font-semibold rounded-xl gap-2"
             >
-              Courses
+              <BookOpen className="w-5 h-5" />
+              Course Creator
+            </Button>
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => navigate('/dashboard/learning-paths')}
+              className="border-amber-700 bg-amber-900/40 hover:bg-amber-800 text-amber-100 font-semibold rounded-xl gap-2"
+            >
+              <Layers className="w-5 h-5" />
+              Path / Interview Maker
+            </Button>
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => navigate('/workspace/configuration')}
+              className="border-indigo-700 bg-indigo-900/40 hover:bg-indigo-800 text-indigo-100 font-semibold rounded-xl gap-2"
+            >
+              <Settings2 className="w-5 h-5" />
+              Configuration
             </Button>
           </div>
         </div>
