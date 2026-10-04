@@ -191,7 +191,7 @@ export default function LearningPathManagement() {
                               <List className="w-4 h-4 mr-2" /> Manage Courses
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => {
-                                window.open(`/explore/paths/${lp.slug}`, '_blank');
+                                window.open(`/learning-paths/${lp.slug}`, '_blank');
                             }}>
                               <Layout className="w-4 h-4 mr-2" /> View public page
                             </DropdownMenuItem>
