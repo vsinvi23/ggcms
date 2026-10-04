@@ -131,10 +131,6 @@ export function Header() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <div className="hidden lg:flex border-l border-border pl-4 items-center">
-          <GGLogo size={28} showText={true} />
-        </div>
       </div>
 
       {/* Personalisation sheet */}

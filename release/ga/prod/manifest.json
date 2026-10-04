@@ -1,9 +1,191 @@
 {
   "system_name": "GG-CMS Production Release Registry",
   "environment": "prod",
-  "current_version": "1.5.4",
-  "last_build_at": "2026-10-04T05:16:11Z",
+  "current_version": "1.5.18",
+  "last_build_at": "2026-10-04T15:29:07Z",
   "releases": [
+    {
+      "version": "1.5.18",
+      "built_at": "2026-10-04T15:29:07Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.18",
+      "components": {
+        "ui": "1.7.15",
+        "backend": "1.7.15",
+        "db": "1.7.14",
+        "content-factory": "1.6.18"
+      }
+    },
+    {
+      "version": "1.5.17",
+      "built_at": "2026-10-04T14:53:23Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.17",
+      "components": {
+        "ui": "1.7.13",
+        "backend": "1.7.13",
+        "db": "1.7.13",
+        "content-factory": "1.6.17"
+      }
+    },
+    {
+      "version": "1.5.16",
+      "built_at": "2026-10-04T14:39:03Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.16",
+      "components": {
+        "ui": "1.7.12",
+        "backend": "1.7.12",
+        "db": "1.7.12",
+        "content-factory": "1.6.16"
+      }
+    },
+    {
+      "version": "1.5.15",
+      "built_at": "2026-10-04T14:24:21Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.15",
+      "components": {
+        "ui": "1.7.11",
+        "backend": "1.7.11",
+        "db": "1.7.11",
+        "content-factory": "1.6.15"
+      }
+    },
+    {
+      "version": "1.5.14",
+      "built_at": "2026-10-04T14:21:01Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.14",
+      "components": {
+        "ui": "1.7.10",
+        "backend": "1.7.10",
+        "db": "1.7.10",
+        "content-factory": "1.6.14"
+      }
+    },
+    {
+      "version": "1.5.13",
+      "built_at": "2026-10-04T14:16:58Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.13",
+      "components": {
+        "ui": "1.7.9",
+        "backend": "1.7.9",
+        "db": "1.7.9",
+        "content-factory": "1.6.13"
+      }
+    },
+    {
+      "version": "1.5.12",
+      "built_at": "2026-10-04T14:15:34Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.12",
+      "components": {
+        "ui": "1.7.8",
+        "backend": "1.7.8",
+        "db": "1.7.8",
+        "content-factory": "1.6.12"
+      }
+    },
+    {
+      "version": "1.5.11",
+      "built_at": "2026-10-04T14:12:21Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.11",
+      "components": {
+        "ui": "1.7.7",
+        "backend": "1.7.7",
+        "db": "1.7.7",
+        "content-factory": "1.6.11"
+      }
+    },
+    {
+      "version": "1.5.10",
+      "built_at": "2026-10-04T12:53:52Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.10",
+      "components": {
+        "ui": "1.7.6",
+        "backend": "1.7.6",
+        "db": "1.7.6",
+        "content-factory": "1.6.10"
+      }
+    },
+    {
+      "version": "1.5.9",
+      "built_at": "2026-10-04T12:45:57Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.9",
+      "components": {
+        "ui": "1.7.5",
+        "backend": "1.7.5",
+        "db": "1.7.5",
+        "content-factory": "1.6.9"
+      }
+    },
+    {
+      "version": "1.5.8",
+      "built_at": "2026-10-04T12:36:01Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.8",
+      "components": {
+        "ui": "1.7.4",
+        "backend": "1.7.4",
+        "db": "1.7.4",
+        "content-factory": "1.6.8"
+      }
+    },
+    {
+      "version": "1.5.7",
+      "built_at": "2026-10-04T06:02:09Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.7",
+      "components": {
+        "ui": "1.7.3",
+        "backend": "1.7.3",
+        "db": "1.7.3",
+        "content-factory": "1.6.7"
+      }
+    },
+    {
+      "version": "1.5.6",
+      "built_at": "2026-10-04T05:58:11Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.6",
+      "components": {
+        "ui": "1.7.2",
+        "backend": "1.7.2",
+        "db": "1.7.2",
+        "content-factory": "1.6.6"
+      }
+    },
+    {
+      "version": "1.5.5",
+      "built_at": "2026-10-04T05:22:51Z",
+      "branch": "release",
+      "commit": "77cdf26f",
+      "archive_path": "release/ga/prod/v1.5.5",
+      "components": {
+        "ui": "1.7.1",
+        "backend": "1.7.1",
+        "db": "1.7.1",
+        "content-factory": "1.6.5"
+      }
+    },
     {
       "version": "1.5.4",
       "built_at": "2026-10-04T05:16:11Z",

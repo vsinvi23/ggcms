@@ -211,7 +211,18 @@ export function InterviewPrepHub() {
 
   const dbInterviewCourses = useMemo((): InterviewCourse[] => {
     if (combinedCmsItems.length === 0) return [];
-    return combinedCmsItems.map((item, idx) => ({
+
+    const validAssessments = combinedCmsItems.filter(item => {
+      if (item.courseType === 'ASSESSMENT' && item.interactiveMetadata) {
+        try {
+          const parsed = JSON.parse(item.interactiveMetadata);
+          return parsed.assessmentType === 'INTERVIEW';
+        } catch(e) {}
+      }
+      return false; // exclude if not specifically an interview assessment
+    });
+
+    return validAssessments.map((item, idx) => ({
       id: String(item.id),
       slug: item.slug || String(item.id),
       title: item.title.includes('Track') || item.title.includes('Interview') ? item.title : `${item.title} Interview Track`,

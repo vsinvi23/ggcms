@@ -77,6 +77,9 @@ export default function AssessmentCreator() {
   const [categoryId, setCategoryId] = useState('');
   const [courseType, setCourseType] = useState('ASSESSMENT');
   const [interactiveMetadata, setInteractiveMetadata] = useState('');
+  const [assessmentType, setAssessmentType] = useState('PRACTICE');
+  const [assessmentContentType, setAssessmentContentType] = useState('MCQ');
+
   const [contentBlocks, setContentBlocks] = useState<ContentBlock[]>([]);
   const [selectedTopicIds, setSelectedTopicIds] = useState<number[]>([]);
   const { data: initialTopics = [] } = useContentTopics(existingCmsId > 0 ? existingCmsId : null, 'COURSE');
@@ -439,6 +442,50 @@ export default function AssessmentCreator() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-5">
+                      {/* Assessment Types & Category */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="space-y-1.5">
+                          <Label>Target Hub Tab (Assessment Type) <span className="text-destructive">*</span></Label>
+                          <Select value={assessmentType} onValueChange={setAssessmentType} disabled={isViewMode && !reviewerEditMode && !publisherEditMode}>
+                            <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Select Tab" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="INTERVIEW">Interview Prep</SelectItem>
+                              <SelectItem value="PRACTICE">Practice Tracks</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">Which hub this assessment appears in.</p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Content Type <span className="text-destructive">*</span></Label>
+                          <Select value={assessmentContentType} onValueChange={setAssessmentContentType} disabled={isViewMode && !reviewerEditMode && !publisherEditMode}>
+                            <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Select Content Type" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="QA">Question & Answer (Q&A)</SelectItem>
+                              <SelectItem value="MCQ">Multiple Choice</SelectItem>
+                              <SelectItem value="SCENARIO">Scenario Based</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">Determines layout and rendering logic.</p>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>
+                            Category <span className="text-destructive">*</span>
+                          </Label>
+                          {categoriesLoading ? (
+                            <Skeleton className="h-10 w-full" />
+                          ) : (
+                            <CategoryTreeSelect
+                              categories={categories}
+                              value={categoryId}
+                              onChange={setCategoryId}
+                              placeholder="Select category"
+                              disabled={isViewMode && !reviewerEditMode && !publisherEditMode}
+                            />
+                          )}
+                          <p className="text-xs text-muted-foreground">Used to group the assessment.</p>
+                        </div>
+                      </div>
+
                       {/* Title */}
                       <div className="space-y-1.5">
                         <Label htmlFor="title">
@@ -479,64 +526,25 @@ export default function AssessmentCreator() {
                           id="interactiveMetadata"
                           value={interactiveMetadata}
                           onChange={(e) => setInteractiveMetadata(e.target.value)}
-                          placeholder="{
-  &quot;questions&quot;: []
-}"
-                          rows={6}
+                          placeholder='{
+  "assessmentType": "PRACTICE",
+  "contentType": "MCQ",
+  "questions": [
+    {
+      "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+      "correctIndex": 0
+    }
+  ]
+}'
+                          rows={10}
                           className="font-mono text-sm"
                           disabled={isViewMode && !reviewerEditMode && !publisherEditMode}
                         />
                         <p className="text-xs text-muted-foreground">JSON data describing the assessment questions, options, and logic.</p>
                       </div>
 
-                      {/* Category + Assessment Type */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <Label>
-                            Category <span className="text-destructive">*</span>
-                          </Label>
-                          {categoriesLoading ? (
-                            <Skeleton className="h-10 w-full" />
-                          ) : (
-                            <CategoryTreeSelect
-                              categories={categories}
-                              value={categoryId}
-                              onChange={setCategoryId}
-                              placeholder="Select category"
-                              disabled={isViewMode && !reviewerEditMode && !publisherEditMode}
-                            />
-                          )}
-                          <p className="text-xs text-muted-foreground">Used to group the assessment and drive topic chips on the overview page.</p>
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label>
-                            Assessment Type <span className="text-destructive">*</span>
-                          </Label>
-                          <Select value={courseType} onValueChange={setCourseType} disabled={isViewMode && !reviewerEditMode && !publisherEditMode}>
-                            <SelectTrigger disabled={isViewMode && !reviewerEditMode && !publisherEditMode}>
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-background border z-50">
-                              {courseTypes.map((ct) => (
-                                <SelectItem key={ct.value} value={ct.value}>{ct.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-xs text-muted-foreground">
-                            {courseTypes.find(ct => ct.value === courseType)?.description ?? 'Shown as a badge on the assessment hero and search results.'}
-                          </p>
-                        </div>
-                      </div>
 
-                      <div className="space-y-1.5 mt-4">
-                        <Label>Topics</Label>
-                        <TopicMultiSelect
-                          selectedTopicIds={selectedTopicIds}
-                          onChange={setSelectedTopicIds}
-                          disabled={isViewMode && !reviewerEditMode && !publisherEditMode}
-                        />
-                        <p className="text-xs text-muted-foreground">Topics associate this assessment with knowledge graph concepts.</p>
-                      </div>
+
                     </CardContent>
                   </Card>
 

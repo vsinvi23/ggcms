@@ -218,6 +218,8 @@ func parseFrontmatter(fm string, item *ParsedItem) {
 			item.CourseType = val
 		case "status", "state":
 			item.Status = strings.ToUpper(val)
+		case "interactiveMetadata", "interactive_metadata":
+			item.InteractiveMetadata = val
 		case "tags":
 			val = strings.Trim(val, "[]")
 			for _, t := range strings.Split(val, ",") {

@@ -732,7 +732,7 @@ export function CourseViewPage() {
         Full viewport container with Left Navigation Sidebar + Right Content View
       */}
       <div className="min-h-screen bg-background text-foreground pb-12">
-        <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-5 pt-5 space-y-5">
+        <div className="w-full max-w-[1550px] mx-auto px-4 sm:px-6 lg:px-10 xl:pl-[8%] xl:pr-14 pt-5 space-y-5">
           {/* Top Header Bar */}
           <div className="flex items-center gap-3 border-b border-border pb-3 flex-wrap">
             <Button variant="ghost" size="sm" onClick={() => navigate(pathSlug ? `/learn/${pathSlug}` : '/courses')} className="rounded-xl gap-1 text-xs shrink-0">
@@ -790,8 +790,8 @@ export function CourseViewPage() {
               )}
             </div>
 
-            {/* MIDDLE COLUMN: Content Runner Card (6 or 9 Cols depending on mode) */}
-            <div className={cn("space-y-4 min-w-0", selectedLessonId === null ? "lg:col-span-6 lg:border-r lg:border-border lg:pr-6" : "lg:col-span-9")}>
+            {/* MIDDLE COLUMN: Content Runner Card */}
+            <div className={cn("space-y-4 min-w-0 pr-2 lg:pr-6 lg:col-span-7")}>
               {isPracticeCourse ? (
                 /* ── PRACTICE COURSE RUNNER ────── */
                 <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
@@ -813,34 +813,60 @@ export function CourseViewPage() {
                       </h3>
 
                       <div className="space-y-2.5 pt-2">
-                        {[
-                          'Separation of concerns, modular component isolation, and resilient boundary design',
-                          'Direct hardcoding of transient credentials inside application source files',
-                          'Bypassing network encryption and TLS certificates in local microservices',
-                          'Executing synchronous blocking calls on UI looper threads under load',
-                        ].map((opt, optIdx) => {
-                          const isSelected = practiceAnswers[practiceQuestionIdx] === optIdx;
-                          return (
-                            <button
-                              key={optIdx}
-                              onClick={() => setPracticeAnswers(prev => ({ ...prev, [practiceQuestionIdx]: optIdx }))}
-                              className={cn(
-                                'w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between cursor-pointer',
-                                isSelected
-                                  ? 'bg-primary/10 border-primary text-primary font-bold shadow-xs'
-                                  : 'bg-card border-border text-foreground hover:bg-muted/60'
-                              )}
-                            >
-                              <span>{opt}</span>
-                              <div className={cn(
-                                'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
-                                isSelected ? 'border-primary bg-primary text-white' : 'border-muted-foreground/40'
-                              )}>
-                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                              </div>
-                            </button>
-                          );
-                        })}
+                        {(() => {
+                          let options = [
+                            'Separation of concerns, modular component isolation, and resilient boundary design',
+                            'Direct hardcoding of transient credentials inside application source files',
+                            'Bypassing network encryption and TLS certificates in local microservices',
+                            'Executing synchronous blocking calls on UI looper threads under load',
+                          ];
+                          
+                          try {
+                            // First try to parse from course-level interactiveMetadata
+                            if (displayCourse?.interactiveMetadata) {
+                               const meta = typeof displayCourse.interactiveMetadata === 'string' ? JSON.parse(displayCourse.interactiveMetadata) : displayCourse.interactiveMetadata;
+                               if (meta?.questions && meta.questions[practiceQuestionIdx]?.options) {
+                                   options = meta.questions[practiceQuestionIdx].options;
+                               }
+                            }
+                            
+                            // If still using default options, try to parse from the individual lesson content
+                            const lessonContent = allLessons[practiceQuestionIdx]?.content || '';
+                            const cleanContent = lessonContent.replace(/<[^>]+>/g, '').trim();
+                            if (cleanContent.startsWith('{')) {
+                              const parsed = JSON.parse(cleanContent);
+                              if (parsed.options && Array.isArray(parsed.options)) {
+                                options = parsed.options;
+                              }
+                            }
+                          } catch (e) {
+                            // Silently fallback to defaults if JSON parsing fails
+                          }
+                          
+                          return options.map((opt, optIdx) => {
+                            const isSelected = practiceAnswers[practiceQuestionIdx] === optIdx;
+                            return (
+                              <button
+                                key={optIdx}
+                                onClick={() => setPracticeAnswers(prev => ({ ...prev, [practiceQuestionIdx]: optIdx }))}
+                                className={cn(
+                                  'w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between cursor-pointer',
+                                  isSelected
+                                    ? 'bg-primary/10 border-primary text-primary font-bold shadow-xs'
+                                    : 'bg-card border-border text-foreground hover:bg-muted/60'
+                                )}
+                              >
+                                <span>{opt}</span>
+                                <div className={cn(
+                                  'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
+                                  isSelected ? 'border-primary bg-primary text-white' : 'border-muted-foreground/40'
+                                )}>
+                                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                </div>
+                              </button>
+                            );
+                          });
+                        })()}
                       </div>
                     </div>
 
@@ -1278,11 +1304,15 @@ export function CourseViewPage() {
             )}
           </div>
             
-          {/* RIGHT RAIL: Related & Recommended Courses (Only on Course Overview) */}
-          {selectedLessonId === null && (
+          {/* RIGHT RAIL: Related Courses / Future Ads Space */}
+          {selectedLessonId === null ? (
             <aside className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-16 pl-1">
               <RelatedCoursesSection relatedCourses={relatedCourses} />
               <RecommendedPathsSection excludeSlug={pathSlug} />
+            </aside>
+          ) : (
+            <aside className="hidden lg:block lg:col-span-2 space-y-4 lg:sticky lg:top-16 pl-1">
+              {/* Reserved space for future advertisements, notes, or widgets (reduced width) */}
             </aside>
           )}
         </div>
@@ -1354,13 +1384,14 @@ const EduCourseStyles = () => (
     .edu-content-scroll::-webkit-scrollbar { width: 6px; }
     .edu-content-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
 
-    .edu-lesson-content h1 { font-size: 1.6rem; font-weight: 700; margin: 1.75rem 0 0.75rem; line-height: 1.3; }
-    .edu-lesson-content h2 { font-size: 1.3rem; font-weight: 600; margin: 1.5rem 0 0.6rem; }
-    .edu-lesson-content h3 { font-size: 1.1rem; font-weight: 600; margin: 1.25rem 0 0.4rem; }
-    .edu-lesson-content p  { margin-bottom: 1rem; line-height: 1.8; }
-    .edu-lesson-content ul { list-style-type: disc; padding-left: 1.75rem; margin-bottom: 1rem; }
-    .edu-lesson-content ol { list-style-type: decimal; padding-left: 1.75rem; margin-bottom: 1rem; }
-    .edu-lesson-content li { margin-bottom: 0.35rem; line-height: 1.75; }
+    .edu-lesson-content { font-size: 0.875rem; }
+    .edu-lesson-content h1 { font-size: 1.35rem; font-weight: 700; margin: 1.25rem 0 0.5rem; line-height: 1.3; }
+    .edu-lesson-content h2 { font-size: 1.15rem; font-weight: 600; margin: 1.1rem 0 0.4rem; }
+    .edu-lesson-content h3 { font-size: 1rem; font-weight: 600; margin: 0.9rem 0 0.3rem; }
+    .edu-lesson-content p  { margin-bottom: 0.75rem; line-height: 1.6; }
+    .edu-lesson-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+    .edu-lesson-content ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.75rem; }
+    .edu-lesson-content li { margin-bottom: 0.25rem; line-height: 1.55; }
     .edu-lesson-content a  { color: #10b981; text-decoration: underline; }
     .edu-lesson-content a:hover { text-decoration: none; }
     .edu-lesson-content pre {

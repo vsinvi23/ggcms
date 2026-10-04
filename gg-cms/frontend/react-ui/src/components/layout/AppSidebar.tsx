@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { NavLink } from '@/components/NavLink';
+import { GGLogo } from '@/components/shared/GGLogo';
 import { useLocation, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -52,7 +53,6 @@ const standaloneItems: NavItem[] = [
   { icon: ListTodo, label: 'My Tasks', href: '/my-tasks', contentOnly: true },
   { icon: BookOpen, label: 'Manage Courses', href: '/workspace/courses', contentOnly: true },
   { icon: Target, label: 'Manage Assessments', href: '/workspace/assessments', contentOnly: true },
-  { icon: Layers, label: 'Manage Learning Paths', href: '/dashboard/learning-paths', contentOnly: true },
   { icon: FileText, label: 'Manage Articles', href: '/workspace/articles', contentOnly: true },
   { icon: GraduationCap, label: 'My Learning', href: '/my-learning', contentOnly: true },
   { icon: Globe, label: 'All Content (Admin)', href: '/workspace/content-overview', adminOnly: true },
@@ -231,11 +231,9 @@ export function AppSidebar() {
       {/* Logo */}
       <Link to="/" className="flex items-center h-16 px-4 border-b border-sidebar-border hover:bg-sidebar-accent/50 transition-colors">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg">
-            <span className="text-sidebar-primary-foreground font-bold text-sm">GG</span>
-          </div>
+          <GGLogo size={32} />
           {!collapsed && (
-            <span className="font-semibold text-sidebar-foreground animate-fade-in">
+            <span className="font-bold text-sidebar-foreground animate-fade-in text-base">
               GeekGully
             </span>
           )}

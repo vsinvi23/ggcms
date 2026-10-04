@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	applogger "github.com/serenya/go-cms/pkg/logger"
@@ -34,19 +35,19 @@ func (l *zapGormLogger) LogMode(level gormlogger.LogLevel) gormlogger.Interface 
 
 func (l *zapGormLogger) Info(_ context.Context, msg string, args ...interface{}) {
 	if l.level >= gormlogger.Info {
-		applogger.Info("gorm", zap.String("msg", msg), zap.Any("args", args))
+		applogger.Info("gorm", zap.String("msg", msg), zap.String("args", fmt.Sprint(args)))
 	}
 }
 
 func (l *zapGormLogger) Warn(_ context.Context, msg string, args ...interface{}) {
 	if l.level >= gormlogger.Warn {
-		applogger.Warn("gorm", zap.String("msg", msg), zap.Any("args", args))
+		applogger.Warn("gorm", zap.String("msg", msg), zap.String("args", fmt.Sprint(args)))
 	}
 }
 
 func (l *zapGormLogger) Error(_ context.Context, msg string, args ...interface{}) {
 	if l.level >= gormlogger.Error {
-		applogger.Error("gorm", zap.String("msg", msg), zap.Any("args", args))
+		applogger.Error("gorm", zap.String("msg", msg), zap.String("args", fmt.Sprint(args)))
 	}
 }
 

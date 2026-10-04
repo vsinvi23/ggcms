@@ -187,7 +187,7 @@ const App = () => (
                 <Route path="/dashboard/assessments/create" element={<ProtectedRoute><AssessmentCreator /></ProtectedRoute>} />
                 <Route path="/dashboard/courses/:id/edit" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
                 <Route path="/dashboard/assessments/:id/edit" element={<ProtectedRoute><AssessmentCreator /></ProtectedRoute>} />
-                <Route path="/dashboard/learning-paths" element={<ProtectedRoute><LearningPathManagement /></ProtectedRoute>} />
+
                 <Route path="/dashboard/articles" element={<ProtectedRoute><ArticleManagement /></ProtectedRoute>} />
                 <Route path="/dashboard/articles/create" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
                 <Route path="/dashboard/users" element={<ProtectedRoute requireAdmin><UserManagementDashboard /></ProtectedRoute>} />

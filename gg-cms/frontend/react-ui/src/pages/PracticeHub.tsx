@@ -111,7 +111,18 @@ export function PracticeHub() {
 
   const dbQuizzes = useMemo((): Quiz[] => {
     if (combinedCmsItems.length === 0) return [];
-    return combinedCmsItems.map((item, idx) => {
+    
+    const validAssessments = combinedCmsItems.filter(item => {
+      if (item.courseType === 'ASSESSMENT' && item.interactiveMetadata) {
+        try {
+          const parsed = JSON.parse(item.interactiveMetadata);
+          return parsed.assessmentType === 'PRACTICE';
+        } catch(e) {}
+      }
+      return false; // exclude if not specifically a practice assessment
+    });
+
+    return validAssessments.map((item, idx) => {
       let parsedQuestions = null;
       if (item.interactiveMetadata) {
         try {

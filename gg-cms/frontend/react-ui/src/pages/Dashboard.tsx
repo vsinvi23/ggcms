@@ -311,7 +311,7 @@ function UserDashboard() {
             <Button 
               variant="outline" 
               size="lg"
-              onClick={() => navigate('/dashboard/learning-paths')}
+              onClick={() => navigate('/workspace/configuration?tab=learning-paths')}
               className="border-amber-700 bg-amber-900/40 hover:bg-amber-800 text-amber-100 font-semibold rounded-xl gap-2"
             >
               <Layers className="w-5 h-5" />

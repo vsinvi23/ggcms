@@ -1,8 +1,8 @@
 {
   "name": "db-migrations",
-  "version": "1.7.0",
+  "version": "1.7.14",
   "description": "PostgreSQL Schema Migrations",
-  "last_migration": "050_interactive_metadata.sql",
-  "updated_at": "2026-10-04T05:16:34Z",
-  "db_schema_hash": "sha256:817080c5d9e39a4fc58218c01c743d03347ae9aa049e54e4782adabbec20b4b0"
+  "last_migration": "051_backfill_assessment_metadata.sql",
+  "updated_at": "2026-10-04T15:29:27Z",
+  "db_schema_hash": "sha256:733f1f6ed06085ff09d9fe703d55057a0f58776eb200ed9a42a0af0eb636fa28"
 }

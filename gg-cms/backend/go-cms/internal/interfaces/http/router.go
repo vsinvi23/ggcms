@@ -315,6 +315,8 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.DELETE("content-types/:id", middleware.AdminOnly(), ctH.Delete)
 
 			// Learning Paths (admin only)
+			p.GET("learning-paths", lpH.GetAll)
+			p.GET("learning-paths/:id", lpH.GetByID)
 			p.POST("learning-paths", middleware.AdminOnly(), lpH.Create)
 			p.PUT("learning-paths/:id", middleware.AdminOnly(), lpH.Update)
 			p.DELETE("learning-paths/:id", middleware.AdminOnly(), lpH.Delete)
