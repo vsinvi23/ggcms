@@ -1,4 +1,8 @@
 DROP SCHEMA public CASCADE; CREATE SCHEMA public;
+CREATE TABLE IF NOT EXISTS schema_migrations (
+		version VARCHAR(255) PRIMARY KEY,
+		applied_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
