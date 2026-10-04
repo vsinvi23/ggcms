@@ -1,5 +1,6 @@
 import { Bell, Search, ChevronDown, LogOut, User, Settings, Sparkles, Shield } from 'lucide-react';
 import { useState } from 'react';
+import { GGLogo } from '@/components/shared/GGLogo';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { OnboardingWizard } from '@/components/personalization/OnboardingWizard';
 import { useProfile } from '@/api/hooks/useProfile';
@@ -130,6 +131,10 @@ export function Header() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <div className="hidden lg:flex border-l border-border pl-4 items-center">
+          <GGLogo size={28} showText={true} />
+        </div>
       </div>
 
       {/* Personalisation sheet */}
