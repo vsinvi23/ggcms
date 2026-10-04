@@ -441,6 +441,9 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		r.NoRoute(func(c *gin.Context) {
 			path := c.Request.URL.Path
 			if !strings.HasPrefix(path, "/api") && !strings.HasPrefix(path, "/graphql") && !strings.HasPrefix(path, "/uploads") {
+				c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+				c.Header("Pragma", "no-cache")
+				c.Header("Expires", "0")
 				c.File("dist/index.html")
 				return
 			}
