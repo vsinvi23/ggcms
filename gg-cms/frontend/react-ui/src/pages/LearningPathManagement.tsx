@@ -38,7 +38,8 @@ export default function LearningPathManagement() {
   const setCourses = useSetLearningPathCourses();
   
   // Use a query to fetch all courses for selection
-  const { data: allCourses = [] } = useCmsList({ type: 'COURSE' });
+  const { data: allCoursesData } = useCmsList({ type: 'COURSE' });
+  const allCourses = allCoursesData?.items ?? [];
 
   const [formDialog, setFormDialog] = useState<{ open: boolean; lp: LearningPath | null }>({ open: false, lp: null });
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; lp: LearningPath | null }>({ open: false, lp: null });
