@@ -244,6 +244,11 @@ export function CourseViewPage() {
   const parentPath = paramPath;
   const pathSlug = pathParam ? (parentPath?.slug || pathParam) : null;
   const pathCourseSlugs = useMemo(() => (parentPath?.courses ?? []).map(c => c.slug ?? '').filter(Boolean), [parentPath]);
+  
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [courseId, lessonParam]);
+
   // Fetch the real, unmasked draft via the authenticated CMS endpoint whenever this
   // course has a pending draft — the public endpoint substitutes the published
   // snapshot for hasPendingDraft=true content, so it can never show the actual

@@ -196,6 +196,7 @@ const LearningPathPage = () => {
 
   useEffect(() => {
     if (pathSlug) recordRecentPath(pathSlug);
+    window.scrollTo(0, 0);
   }, [pathSlug]);
 
   const resume = pathSlug ? getPathResumeState(pathSlug) : null;

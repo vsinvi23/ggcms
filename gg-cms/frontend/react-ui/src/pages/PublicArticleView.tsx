@@ -97,6 +97,11 @@ export default function PublicArticleView() {
   const [mobileTocOpen, setMobileTocOpen] = useState(false);
   const [tocEntries, setTocEntries] = useState<TocEntry[]>([]);
   const [activeHeadingId, setActiveHeadingId] = useState<string>('');
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [articleId]);
+
 
   const { data: article, isLoading: loadingArticle, error } = usePublicCmsById(articleId, true, isPreview);
   const { data: bodyHtml, isLoading: loadingBody } = usePublicCmsBody(articleId, !!article, isPreview);

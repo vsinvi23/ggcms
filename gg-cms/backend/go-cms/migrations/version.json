@@ -3,6 +3,6 @@
   "version": "1.6.4",
   "description": "PostgreSQL Schema Migrations",
   "last_migration": "049_learning_path_integrity.sql",
-  "updated_at": "2026-10-04T03:31:10Z",
+  "updated_at": "2026-10-04T04:08:27Z",
   "db_schema_hash": "sha256:f734265a0c13c5c9dfe8949c348fdf522f392600463b54df0bf2ffa7490cade2"
 }
