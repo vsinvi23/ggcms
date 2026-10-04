@@ -21,6 +21,7 @@ const (
 	CourseTypeByte         CourseType = "BYTE"
 	CourseTypeLearningPlan CourseType = "LEARNING_PLAN"
 	CourseTypeCapsule      CourseType = "CAPSULE"
+	CourseTypeAssessment   CourseType = "ASSESSMENT"
 )
 
 type CMSStatus string
@@ -57,6 +58,7 @@ type Article struct {
 	Body                *string   `gorm:"type:text"`
 	ArticleType         string    `gorm:"type:varchar(50);not null;default:''"`
 	ContentFormat       string    `gorm:"column:content_format;type:varchar(20);not null;default:'blocks'"`
+	InteractiveMetadata *string   `gorm:"column:interactive_metadata;type:jsonb"`
 	Status              CMSStatus `gorm:"type:varchar(20);not null;default:'DRAFT'"`
 	CategoryID          *uint     `gorm:"index"`
 	CreatedByID         uint      `gorm:"not null;index"`
@@ -96,6 +98,7 @@ type Course struct {
 	Body                *string    `gorm:"type:text"`
 	CourseType          CourseType `gorm:"type:varchar(30);not null;default:'STANDARD'"`
 	ContentFormat       string     `gorm:"column:content_format;type:varchar(20);not null;default:'blocks'"`
+	InteractiveMetadata *string    `gorm:"column:interactive_metadata;type:jsonb"`
 	Status              CMSStatus  `gorm:"type:varchar(20);not null;default:'DRAFT'"`
 	CategoryID          *uint      `gorm:"index"`
 	CreatedByID         uint       `gorm:"not null;index"`

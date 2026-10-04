@@ -63,6 +63,7 @@ const transformPublicItem = (item: Record<string, unknown>, type: 'ARTICLE' | 'C
     slug: (item.slug as string | undefined) ?? undefined,
     type,
     courseType: (item.courseType as string | null | undefined) ?? null,
+    interactiveMetadata: (item.interactiveMetadata as string | null | undefined) ?? null,
     articleType: (item.articleType as string | null | undefined) ?? null,
     categoryId: (item.categoryId as number | undefined) ?? (category?.id as number | undefined) ?? null,
     categoryName: (item.categoryName as string | undefined) ?? (category?.name as string | undefined) ?? null,

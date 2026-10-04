@@ -61,6 +61,7 @@ const transformCmsItem = (item: Record<string, unknown>, type?: CmsType): CmsRes
     type: ((item.type as CmsType | undefined) || type || 'ARTICLE') as CmsType,
     articleType: (item.articleType as string | null | undefined) ?? null,
     courseType: (item.courseType as string | null | undefined) ?? null,
+    interactiveMetadata: (item.interactiveMetadata as string | null | undefined) ?? null,
     blockCount: (item.blockCount as number | undefined) ?? 0,
     categoryId: (category?.id as number | undefined) ?? (item.categoryId as number | undefined) ?? null,
     createdBy: (author?.id as number | undefined) ?? (item.createdBy as number | undefined) ?? null,

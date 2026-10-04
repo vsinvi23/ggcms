@@ -29,6 +29,7 @@ type CreateRequest struct {
 	Body                *string
 	ArticleType         *string
 	CourseType          *string
+	InteractiveMetadata *string
 	ContentFormat       *string
 	CategoryID          *uint
 	CreatedByID         uint
@@ -43,6 +44,7 @@ type UpdateRequest struct {
 	Body                *string
 	ArticleType         *string
 	CourseType          *string
+	InteractiveMetadata *string
 	ContentFormat       *string
 	CategoryID          *uint
 	ThumbnailURL        *string
@@ -230,6 +232,7 @@ func (s *service) Create(ctx context.Context, req CreateRequest) (interface{}, e
 			Body:                req.Body,
 			CourseType:          courseType,
 			ContentFormat:       contentFormat,
+			InteractiveMetadata: req.InteractiveMetadata,
 			Status:              entity.CMSStatusDraft,
 			CategoryID:          req.CategoryID,
 			CreatedByID:         req.CreatedByID,
@@ -258,6 +261,7 @@ func (s *service) Create(ctx context.Context, req CreateRequest) (interface{}, e
 		Body:                req.Body,
 		ArticleType:         articleType,
 		ContentFormat:       articleContentFormat,
+		InteractiveMetadata: req.InteractiveMetadata,
 		Status:              entity.CMSStatusDraft,
 		CategoryID:          req.CategoryID,
 		CreatedByID:         req.CreatedByID,
@@ -338,6 +342,9 @@ func (s *service) Update(ctx context.Context, id uint, cmsType entity.CMSType, r
 		if req.CourseType != nil && *req.CourseType != "" {
 			course.CourseType = entity.CourseType(*req.CourseType)
 		}
+		if req.InteractiveMetadata != nil {
+			course.InteractiveMetadata = req.InteractiveMetadata
+		}
 		if req.ContentFormat != nil && *req.ContentFormat != "" {
 			course.ContentFormat = *req.ContentFormat
 		}
@@ -415,6 +422,9 @@ func (s *service) Update(ctx context.Context, id uint, cmsType entity.CMSType, r
 	}
 	if req.ArticleType != nil {
 		article.ArticleType = *req.ArticleType
+	}
+	if req.InteractiveMetadata != nil {
+		article.InteractiveMetadata = req.InteractiveMetadata
 	}
 	if req.ContentFormat != nil && *req.ContentFormat != "" {
 		article.ContentFormat = *req.ContentFormat

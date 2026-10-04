@@ -150,6 +150,7 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 				CategoryID:       categoryID,
 				ArticleType:      p.ArticleType,
 				CourseType:       p.CourseType,
+				InteractiveMetadata: p.InteractiveMetadata,
 				Kind:             p.Kind,
 				Slug:             p.Slug,
 				SequencedCourses: p.SequencedCourses,
@@ -270,7 +271,7 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 			continue
 		}
 
-		var desc, body, artType, courseType *string
+		var desc, body, artType, courseType, interactiveMeta *string
 		if item.Description != "" {
 			desc = &item.Description
 		}
@@ -283,6 +284,9 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 		if item.CourseType != "" {
 			courseType = &item.CourseType
 		}
+		if item.InteractiveMetadata != "" && item.InteractiveMetadata != "null" {
+			interactiveMeta = &item.InteractiveMetadata
+		}
 
 		cmsType := entity.CMSType(item.Type)
 		result, err := h.cmsService.Create(c.Request.Context(), cmssvc.CreateRequest{
@@ -292,6 +296,7 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 			Body:        body,
 			ArticleType: artType,
 			CourseType:  courseType,
+			InteractiveMetadata: interactiveMeta,
 			CategoryID:  item.CategoryID,
 			CreatedByID: userID,
 		})

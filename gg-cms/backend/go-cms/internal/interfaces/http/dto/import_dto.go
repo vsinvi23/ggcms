@@ -26,6 +26,7 @@ type ImportPreviewItem struct {
 	CategoryID       *uint               `json:"categoryId,omitempty"`
 	ArticleType      string              `json:"articleType"`
 	CourseType       string              `json:"courseType"`
+	InteractiveMetadata string           `json:"interactiveMetadata,omitempty"`
 	Kind             string              `json:"kind,omitempty"`
 	Slug             string              `json:"slug,omitempty"`
 	SequencedCourses []string            `json:"sequencedCourses,omitempty"`
@@ -51,6 +52,7 @@ type ImportConfirmItem struct {
 	CategoryID       *uint               `json:"categoryId,omitempty"`
 	ArticleType      string              `json:"articleType"`
 	CourseType       string              `json:"courseType"`
+	InteractiveMetadata string           `json:"interactiveMetadata,omitempty"`
 	Kind             string              `json:"kind,omitempty"`
 	Slug             string              `json:"slug,omitempty"`
 	SequencedCourses []string            `json:"sequencedCourses,omitempty"`

@@ -111,7 +111,21 @@ export function PracticeHub() {
 
   const dbQuizzes = useMemo((): Quiz[] => {
     if (combinedCmsItems.length === 0) return [];
-    return combinedCmsItems.map((item, idx) => ({
+    return combinedCmsItems.map((item, idx) => {
+      let parsedQuestions = null;
+      if (item.interactiveMetadata) {
+        try {
+          const parsed = JSON.parse(item.interactiveMetadata);
+          if (parsed && Array.isArray(parsed.questions)) {
+            parsedQuestions = parsed.questions;
+          }
+        } catch (e) {
+          console.error("Failed to parse interactive metadata for item", item.id);
+        }
+      }
+      const questions = parsedQuestions || generateQuestionsForSlug(item.slug || item.title);
+
+      return {
       id: `${item.type.toLowerCase()}-${item.id}-${idx}`,
       slug: item.slug || String(item.id),
       title: item.title.includes('Assessment') || item.title.includes('Quiz') ? item.title : `${item.title} Assessment`,
@@ -119,10 +133,11 @@ export function PracticeHub() {
       topicSlug: item.tags?.[0] || item.slug || 'general',
       domainSlug: (item.categoryName || 'Engineering').toLowerCase(),
       difficulty: (item.level as any)?.toLowerCase() || 'intermediate',
-      questionsCount: 4,
+      questionsCount: questions.length || 4,
       estimatedMinutes: item.durationMinutes || 10,
-      questions: generateQuestionsForSlug(item.slug || item.title),
-    }));
+      questions,
+    };
+    });
   }, [combinedCmsItems]);
 
   const allQuizzes = useMemo(() => {

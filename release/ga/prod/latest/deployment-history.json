@@ -1,10 +1,10 @@
 {
   "environment": "prod",
   "last_deployment": {
-    "timestamp": "2026-10-04T04:08:27Z",
+    "timestamp": "2026-10-04T04:21:44Z",
     "project_id": "ggcms-free-tier-vivek",
     "region": "us-central1",
-    "git_commit": "4fc11acb",
+    "git_commit": "9ba77316",
     "status": "SUCCESS",
     "deployed_deltas": [
       "db@v1.6.4"
@@ -17,6 +17,54 @@
     }
   },
   "history": [
+    {
+      "timestamp": "2026-10-04T04:21:44Z",
+      "project_id": "ggcms-free-tier-vivek",
+      "region": "us-central1",
+      "git_commit": "9ba77316",
+      "status": "SUCCESS",
+      "deployed_deltas": [
+        "db@v1.6.4"
+      ],
+      "components": {
+        "ui": "1.6.4",
+        "backend": "1.6.4",
+        "db": "1.6.4",
+        "content-factory": "1.6.4"
+      }
+    },
+    {
+      "timestamp": "2026-10-04T04:20:09Z",
+      "project_id": "ggcms-free-tier-vivek",
+      "region": "us-central1",
+      "git_commit": "9ba77316",
+      "status": "SUCCESS",
+      "deployed_deltas": [
+        "db@v1.6.4"
+      ],
+      "components": {
+        "ui": "1.6.4",
+        "backend": "1.6.4",
+        "db": "1.6.4",
+        "content-factory": "1.6.4"
+      }
+    },
+    {
+      "timestamp": "2026-10-04T04:13:20Z",
+      "project_id": "ggcms-free-tier-vivek",
+      "region": "us-central1",
+      "git_commit": "9ba77316",
+      "status": "SUCCESS",
+      "deployed_deltas": [
+        "db@v1.6.4"
+      ],
+      "components": {
+        "ui": "1.6.4",
+        "backend": "1.6.4",
+        "db": "1.6.4",
+        "content-factory": "1.6.4"
+      }
+    },
     {
       "timestamp": "2026-10-04T04:08:27Z",
       "project_id": "ggcms-free-tier-vivek",

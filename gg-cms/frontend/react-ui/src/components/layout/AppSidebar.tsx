@@ -51,6 +51,7 @@ const standaloneItems: NavItem[] = [
   { icon: Factory, label: 'AI Content Factory', href: '/factory', adminOnly: true },
   { icon: ListTodo, label: 'My Tasks', href: '/my-tasks', contentOnly: true },
   { icon: BookOpen, label: 'Manage Courses', href: '/workspace/courses', contentOnly: true },
+  { icon: Target, label: 'Manage Assessments', href: '/workspace/assessments', contentOnly: true },
   { icon: Layers, label: 'Manage Learning Paths', href: '/dashboard/learning-paths', contentOnly: true },
   { icon: FileText, label: 'Manage Articles', href: '/workspace/articles', contentOnly: true },
   { icon: GraduationCap, label: 'My Learning', href: '/my-learning', contentOnly: true },

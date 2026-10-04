@@ -18,8 +18,10 @@ const ConfigurationPage = lazy(() => import('./pages/ConfigurationPage'));
 const DashboardPage = lazy(() => import('./pages/Dashboard'));
 const ContentManagement = lazy(() => import('./pages/ContentManagement'));
 const CourseManagement = lazy(() => import('./pages/CourseManagement'));
+const AssessmentManagement = lazy(() => import('./pages/AssessmentManagement'));
 const LearningPathManagement = lazy(() => import('./pages/LearningPathManagement'));
 const CourseCreator = lazy(() => import('./pages/CourseCreator'));
+const AssessmentCreator = lazy(() => import('./pages/AssessmentCreator'));
 const ArticleManagement = lazy(() => import('./pages/ArticleManagement'));
 const ArticleCreator = lazy(() => import('./pages/ArticleCreator'));
 const MyTasks = lazy(() => import('./pages/MyTasks'));
@@ -158,7 +160,9 @@ const App = () => (
                 
                 {/* Protected Top-Level Create & Edit Routes for Articles and Courses */}
                 <Route path="/courses/create" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/assessments/create" element={<ProtectedRoute><AssessmentCreator /></ProtectedRoute>} />
                 <Route path="/courses/:id/edit" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/assessments/:id/edit" element={<ProtectedRoute><AssessmentCreator /></ProtectedRoute>} />
                 <Route path="/articles/create" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
                 <Route path="/articles/:id/edit" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
 
@@ -178,8 +182,11 @@ const App = () => (
                 <Route path="/dashboard/import" element={<ProtectedRoute><BulkImport /></ProtectedRoute>} />
                 <Route path="/dashboard/content" element={<ProtectedRoute><ContentManagement /></ProtectedRoute>} />
                 <Route path="/dashboard/courses" element={<ProtectedRoute><CourseManagement /></ProtectedRoute>} />
+                <Route path="/dashboard/assessments" element={<ProtectedRoute><AssessmentManagement /></ProtectedRoute>} />
                 <Route path="/dashboard/courses/create" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/dashboard/assessments/create" element={<ProtectedRoute><AssessmentCreator /></ProtectedRoute>} />
                 <Route path="/dashboard/courses/:id/edit" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/dashboard/assessments/:id/edit" element={<ProtectedRoute><AssessmentCreator /></ProtectedRoute>} />
                 <Route path="/dashboard/learning-paths" element={<ProtectedRoute><LearningPathManagement /></ProtectedRoute>} />
                 <Route path="/dashboard/articles" element={<ProtectedRoute><ArticleManagement /></ProtectedRoute>} />
                 <Route path="/dashboard/articles/create" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
@@ -191,8 +198,11 @@ const App = () => (
 
                 <Route path="/workspace/content" element={<ProtectedRoute><ContentManagement /></ProtectedRoute>} />
                 <Route path="/workspace/courses" element={<ProtectedRoute><CourseManagement /></ProtectedRoute>} />
+                <Route path="/workspace/assessments" element={<ProtectedRoute><AssessmentManagement /></ProtectedRoute>} />
                 <Route path="/workspace/courses/create" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/workspace/assessments/create" element={<ProtectedRoute><AssessmentCreator /></ProtectedRoute>} />
                 <Route path="/workspace/courses/:id/edit" element={<ProtectedRoute><CourseCreator /></ProtectedRoute>} />
+                <Route path="/workspace/assessments/:id/edit" element={<ProtectedRoute><AssessmentCreator /></ProtectedRoute>} />
                 <Route path="/workspace/articles" element={<ProtectedRoute><ArticleManagement /></ProtectedRoute>} />
                 <Route path="/workspace/articles/create" element={<ProtectedRoute><ArticleCreator /></ProtectedRoute>} />
                 <Route path="/workspace/users" element={<ProtectedRoute requireAdmin><UserManagementDashboard /></ProtectedRoute>} />

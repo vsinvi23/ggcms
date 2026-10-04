@@ -1276,15 +1276,15 @@ export function CourseViewPage() {
               </div>
             </div>
             )}
-            
-            {/* RIGHT RAIL: Related & Recommended Courses (Only on Course Overview) */}
-            {selectedLessonId === null && (
-              <aside className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-16 pl-1">
-                <RelatedCoursesSection relatedCourses={relatedCourses} />
-                <RecommendedPathsSection excludeSlug={pathSlug} />
-              </aside>
-            )}
           </div>
+            
+          {/* RIGHT RAIL: Related & Recommended Courses (Only on Course Overview) */}
+          {selectedLessonId === null && (
+            <aside className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-16 pl-1">
+              <RelatedCoursesSection relatedCourses={relatedCourses} />
+              <RecommendedPathsSection excludeSlug={pathSlug} />
+            </aside>
+          )}
         </div>
       </div>
     </div>

@@ -22,6 +22,7 @@ type ParsedItem struct {
 	CategorySlug     string
 	ArticleType      string
 	CourseType       string
+	InteractiveMetadata string
 	Kind             string
 	Slug             string
 	SequencedCourses []string
@@ -280,6 +281,7 @@ type jsonImportItem struct {
 	CategorySlug     string                   `json:"categorySlug"`
 	ArticleType      string                   `json:"articleType"`
 	CourseType       string                   `json:"courseType"`
+	InteractiveMetadata json.RawMessage       `json:"interactiveMetadata"`
 	SequencedCourses flexibleSequencedCourses `json:"sequencedCourses"`
 	Status           string                   `json:"status"`
 	Tags             []string                 `json:"tags"`
@@ -347,6 +349,7 @@ func jsonToItem(filename string, ji jsonImportItem) ParsedItem {
 		CategorySlug:     ji.CategorySlug,
 		ArticleType:      ji.ArticleType,
 		CourseType:       ji.CourseType,
+		InteractiveMetadata: string(ji.InteractiveMetadata),
 		Kind:             kind,
 		Slug:             ji.PathID,
 		SequencedCourses: []string(ji.SequencedCourses),
