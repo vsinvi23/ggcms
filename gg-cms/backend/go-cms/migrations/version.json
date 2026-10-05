@@ -3,6 +3,6 @@
   "version": "1.7.19",
   "description": "PostgreSQL Schema Migrations",
   "last_migration": "001_initial_schema_reset.sql",
-  "updated_at": "2026-10-05T02:31:57Z",
-  "db_schema_hash": "sha256:ac89e800655275808c8181aad77ee2860a403417289b7b7cae61113f114dda6e"
+  "updated_at": "2026-10-05T12:52:46Z",
+  "db_schema_hash": "sha256:214b07275e0a2ca38bd4408f1d7daa030308a9b958c281a6a2561097e8a7c5de"
 }
