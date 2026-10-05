@@ -111,6 +111,8 @@ gcloud builds submit gg-cms/backend/go-cms \
   --project=$PROJECT_ID
 
 echo "▶ Deploying to Cloud Run ($SERVICE_NAME)..."
+gcloud run services update $SERVICE_NAME --region="$REGION" --project="$PROJECT_ID" --remove-secrets=ADMIN_PASSWORD --quiet || true
+
 gcloud run deploy $SERVICE_NAME \
   --image=$IMAGE \
   --region=$REGION \
@@ -123,7 +125,6 @@ gcloud run deploy $SERVICE_NAME \
   --allow-unauthenticated \
   --ingress=all \
   --service-account=${SA_EMAIL} \
-  --remove-secrets=ADMIN_PASSWORD \
   --set-secrets=JWT_SECRET=gg-cms-jwt-secret:latest,ADMIN_RECOVERY_SECRET=gg-cms-admin-recovery-secret:latest \
   --set-env-vars="DB_WRITE_URL=postgres://gg_cms_user:${PG_PASS}@${VM_IP}:5432/gg_cms?sslmode=require,MONGO_URI=mongodb://gg_cms_user:${MONGO_PASS}@${VM_IP}:27017/?authSource=admin&tls=true&tlsInsecure=true,GIN_MODE=release,TLS_ENABLED=false,LOG_LEVEL=info,MONGO_DATABASE=gg_cms,ADMIN_EMAIL=info@serenyax.com,ADMIN_PASSWORD=Admin@12345,ADMIN_NAME=Super Admin,CONTENT_FACTORY_URL=https://content-factory-backend-274495931884.us-central1.run.app" \
   --network=default \
