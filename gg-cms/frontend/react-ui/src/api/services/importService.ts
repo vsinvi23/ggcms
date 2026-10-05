@@ -26,11 +26,17 @@ export interface ImportPreviewItem {
   categoryId?: number;
   articleType: string;
   courseType: string;
+  interactiveMetadata?: string;
+  kind?: string;
+  slug?: string;
+  sequencedCourses?: string[];
   status?: string;
   tags: string[];
   sections: ImportSectionItem[];
   valid: boolean;
   error?: string;
+  exists?: boolean;
+  existingId?: number;
 }
 
 export interface ImportPreviewResponse {
@@ -45,11 +51,19 @@ export interface ImportConfirmItem {
   title: string;
   description: string;
   body: string;
+  categorySlug?: string;
   categoryId?: number;
   articleType: string;
   courseType: string;
+  interactiveMetadata?: string;
+  kind?: string;
+  slug?: string;
+  sequencedCourses?: string[];
   status?: string;
   sections: ImportSectionItem[];
+  exists?: boolean;
+  existingId?: number;
+  overwrite?: boolean;
 }
 
 export interface ImportConfirmResult {

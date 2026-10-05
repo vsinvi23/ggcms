@@ -35,6 +35,8 @@ type ImportPreviewItem struct {
 	Sections         []ImportSectionItem `json:"sections,omitempty"`
 	Valid            bool                `json:"valid"`
 	Error            string              `json:"error,omitempty"`
+	Exists           bool                `json:"exists"`
+	ExistingID       uint                `json:"existingId,omitempty"`
 }
 
 type ImportPreviewResponse struct {
@@ -50,6 +52,7 @@ type ImportConfirmItem struct {
 	Description      string              `json:"description"`
 	Body             string              `json:"body"`
 	CategoryID       *uint               `json:"categoryId,omitempty"`
+	CategorySlug     string              `json:"categorySlug,omitempty"`
 	ArticleType      string              `json:"articleType"`
 	CourseType       string              `json:"courseType"`
 	InteractiveMetadata string           `json:"interactiveMetadata,omitempty"`
@@ -58,6 +61,9 @@ type ImportConfirmItem struct {
 	SequencedCourses []string            `json:"sequencedCourses,omitempty"`
 	Status           string              `json:"status,omitempty"`
 	Sections         []ImportSectionItem `json:"sections,omitempty"`
+	Exists           bool                `json:"exists"`
+	ExistingID       uint                `json:"existingId,omitempty"`
+	Overwrite        bool                `json:"overwrite"`
 }
 
 type ImportConfirmRequest struct {

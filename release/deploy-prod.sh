@@ -282,7 +282,8 @@ if [[ "$CF_DELTA" == "true" && "$INCLUDE_CONTENT_FACTORY" == "true" ]]; then
   bash release/gcp/production/deploy-content-factory.sh
   DEPLOYED_DELTAS+=("content-factory@v$T_CF")
 else
-  echo "ℹ️ Content Factory deployment excluded (use --include-content-factory to enable)."
+  echo "ℹ️ Content Factory deployment excluded. Removing from GCP if it exists..."
+  gcloud run services delete content-factory-backend --region="$REGION" --project="$PROJECT_ID" --quiet >/dev/null 2>&1 || true
 fi
 
 # --- Step 4: Record Deployment History & Publish Backup Manifest (Gate Step 8 & 9) ---

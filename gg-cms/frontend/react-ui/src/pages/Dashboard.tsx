@@ -62,14 +62,7 @@ function AdminDashboard() {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <Button 
-              size="lg" 
-              onClick={() => navigate('/factory')}
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold shadow-lg shadow-indigo-500/25 border border-indigo-400/30 gap-2 rounded-xl"
-            >
-              <Bot className="w-5 h-5 text-indigo-200" />
-              AI Content Factory
-            </Button>
+
             <Button 
               variant="outline" 
               size="lg"

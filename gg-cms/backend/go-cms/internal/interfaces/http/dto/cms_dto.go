@@ -16,9 +16,10 @@ type CMSResponse struct {
 	Title           string  `json:"title"`
 	Description     *string `json:"description,omitempty"`
 	Body            *string `json:"body,omitempty"`
-	ArticleType     *string `json:"articleType,omitempty"`
-	CourseType      *string `json:"courseType,omitempty"`
-	ContentFormat   string  `json:"contentFormat"`
+	ArticleType         *string `json:"articleType,omitempty"`
+	CourseType          *string `json:"courseType,omitempty"`
+	InteractiveMetadata *string `json:"interactiveMetadata,omitempty"`
+	ContentFormat       string  `json:"contentFormat"`
 	BlockCount      int     `json:"blockCount"`
 	Status          string  `json:"status"`
 	CategoryID      *uint   `json:"categoryId,omitempty"`

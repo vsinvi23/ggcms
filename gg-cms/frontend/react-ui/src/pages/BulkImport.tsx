@@ -779,11 +779,24 @@ export default function BulkImport() {
         description: it.description,
         body: toStoredBody(it.body, it.bodyFormat),
         categoryId: it.categoryId,
+        categorySlug: it.categorySlug,
         articleType: it.articleType,
         courseType: it.courseType,
+        interactiveMetadata: it.interactiveMetadata,
+        kind: it.kind,
+        slug: it.slug,
+        sequencedCourses: it.sequencedCourses,
         status: canDirectPublish ? (it.status || globalTargetStatus) : 'DRAFT',
         sections: it.type === 'COURSE' ? convertSections(it.sections ?? [], it.bodyFormat) : [],
-      }));
+        exists: it.exists,
+        existingId: it.existingId,
+        overwrite: it.overwrite !== false, // Default to true if not explicitly set to false
+      }))
+      .sort((a, b) => {
+        if (a.type === 'LEARNING_PATH' && b.type !== 'LEARNING_PATH') return 1;
+        if (a.type !== 'LEARNING_PATH' && b.type === 'LEARNING_PATH') return -1;
+        return 0;
+      });
 
     if (toImport.length === 0) {
       toast.error('Select at least one item to import');
@@ -1195,7 +1208,23 @@ COURSE,My Course,frontend,,STANDARD,`}
                             {!item.valid && (
                               <Badge variant="destructive" className="text-[10px] uppercase font-semibold">Wrong Format</Badge>
                             )}
+                            {item.exists && (
+                              <Badge variant="secondary" className="text-[10px] text-orange-600 bg-orange-50 border-orange-200">Exists</Badge>
+                            )}
                           </div>
+                          {item.exists && (
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <Checkbox 
+                                id={`overwrite-${idx}`} 
+                                className="h-3 w-3" 
+                                checked={item.overwrite !== false} 
+                                onCheckedChange={(c) => updateItem(idx, { overwrite: c === true })} 
+                              />
+                              <label htmlFor={`overwrite-${idx}`} className="text-[10px] text-muted-foreground font-medium cursor-pointer">
+                                Overwrite existing content
+                              </label>
+                            </div>
+                          )}
                           {item.description && (
                             <div className="text-xs text-muted-foreground truncate max-w-xs">{item.description}</div>
                           )}

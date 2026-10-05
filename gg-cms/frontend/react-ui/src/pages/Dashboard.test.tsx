@@ -116,10 +116,7 @@ describe('Dashboard page', () => {
     expect(screen.getByText('Published Articles')).toBeInTheDocument();
   });
 
-  it('renders AI Content Factory button', () => {
-    renderDashboard();
-    expect(screen.getByText('AI Content Factory')).toBeInTheDocument();
-  });
+
 });
 
 describe('Dashboard page - User', () => {

@@ -138,6 +138,32 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 				}
 			}
 
+			exists := false
+			var existingID uint
+			targetSlug := p.Slug
+			if targetSlug == "" {
+				targetSlug = slugify.Slug(p.Title)
+			}
+			
+			if strings.EqualFold(p.Type, "LEARNING_PATH") && h.lpService != nil {
+				if lp, err := h.lpService.GetByIDOrSlug(c.Request.Context(), targetSlug); err == nil && lp != nil {
+					exists = true
+					existingID = lp.ID
+				}
+			} else if h.cmsService != nil {
+				cmsType := entity.CMSType(p.Type)
+				if cmsType == entity.CMSTypeArticle || cmsType == entity.CMSTypeCourse {
+					if res, err := h.cmsService.GetBySlug(c.Request.Context(), targetSlug, cmsType); err == nil && res != nil {
+						exists = true
+						if crs, ok := res.(*entity.Course); ok {
+							existingID = crs.ID
+						} else if art, ok := res.(*entity.Article); ok {
+							existingID = art.ID
+						}
+					}
+				}
+			}
+
 			items = append(items, dto.ImportPreviewItem{
 				FileName:         p.FileName,
 				Index:            len(items),
@@ -159,6 +185,8 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 				Sections:         mapParsedSections(p.Sections),
 				Valid:            itemValid,
 				Error:            itemErr,
+				Exists:           exists,
+				ExistingID:       existingID,
 			})
 		}
 	}
@@ -195,6 +223,13 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 	isAdminUser := isSuperOrAdmin(c)
 	results := make([]dto.ImportConfirmResult, 0, len(req.Items))
 
+	var dbCategories []*entity.Category
+	if h.categoryService != nil {
+		if cats, _, err := h.categoryService.GetAll(c.Request.Context(), 0, 1000); err == nil {
+			dbCategories = cats
+		}
+	}
+
 	for _, item := range req.Items {
 		if strings.EqualFold(item.Type, "LEARNING_PATH") {
 			kind := item.Kind
@@ -209,22 +244,34 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 			var lp *entity.LearningPath
 			var err error
 			if h.lpService != nil {
-				lp, err = h.lpService.GetByIDOrSlug(c.Request.Context(), pathSlug)
-				if err != nil {
+				if item.Exists && item.ExistingID != 0 {
+					if !item.Overwrite {
+						// User chose to skip duplicate
+						results = append(results, dto.ImportConfirmResult{
+							Title:   item.Title,
+							Success: true, // skipped successfully
+							Error:   "Skipped duplicate",
+						})
+						continue
+					}
+					// Overwrite
+					desc := item.Description
+					title := item.Title
+					_, err = h.lpService.Update(c.Request.Context(), item.ExistingID, lpsvc.UpdateRequest{
+						Title:       &title,
+						Description: &desc,
+						Slug:        &pathSlug,
+					})
+					if err == nil {
+						lp, _ = h.lpService.GetByIDOrSlug(c.Request.Context(), pathSlug)
+					}
+				} else {
 					lp, err = h.lpService.Create(c.Request.Context(), lpsvc.CreateRequest{
 						Kind:        kind,
 						Title:       item.Title,
 						Description: item.Description,
 						Slug:        pathSlug,
 						CreatedByID: userID,
-					})
-				} else {
-					desc := item.Description
-					title := item.Title
-					h.lpService.Update(c.Request.Context(), lp.ID, lpsvc.UpdateRequest{
-						Title:       &title,
-						Description: &desc,
-						Slug:        &pathSlug,
 					})
 				}
 			}
@@ -288,18 +335,71 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 			interactiveMeta = &item.InteractiveMetadata
 		}
 
+		var categoryID *uint = item.CategoryID
+		if item.CategorySlug != "" && len(dbCategories) > 0 {
+			slugLower := strings.ToLower(strings.TrimSpace(item.CategorySlug))
+			slugClean := regexp.MustCompile(`[^a-z0-9]`).ReplaceAllString(slugLower, "")
+			var matched *entity.Category
+			for _, cat := range dbCategories {
+				if cat.IsVirtual {
+					continue
+				}
+				catSlugLower := strings.ToLower(cat.Slug)
+				catNameLower := strings.ToLower(cat.Name)
+				catSlugClean := regexp.MustCompile(`[^a-z0-9]`).ReplaceAllString(catSlugLower, "")
+				catNameClean := regexp.MustCompile(`[^a-z0-9]`).ReplaceAllString(catNameLower, "")
+
+				if catSlugLower == slugLower || catNameLower == slugLower ||
+					(slugClean != "" && (catSlugClean == slugClean || catNameClean == slugClean)) {
+					matched = cat
+					break
+				}
+			}
+			if matched != nil {
+				categoryID = &matched.ID
+			}
+		}
+
 		cmsType := entity.CMSType(item.Type)
-		result, err := h.cmsService.Create(c.Request.Context(), cmssvc.CreateRequest{
-			Type:        cmsType,
-			Title:       item.Title,
-			Description: desc,
-			Body:        body,
-			ArticleType: artType,
-			CourseType:  courseType,
-			InteractiveMetadata: interactiveMeta,
-			CategoryID:  item.CategoryID,
-			CreatedByID: userID,
-		})
+		var result any
+		var err error
+
+		if item.Exists && item.ExistingID != 0 {
+			if !item.Overwrite {
+				// User chose to discard/skip the duplicate
+				results = append(results, dto.ImportConfirmResult{
+					Title:   item.Title,
+					Success: true, // skipped successfully
+					Error:   "Skipped duplicate",
+				})
+				continue
+			}
+
+			// Overwrite
+			result, err = h.cmsService.Update(c.Request.Context(), item.ExistingID, cmsType, cmssvc.UpdateRequest{
+				Title:       &item.Title,
+				Description: desc,
+				Body:        body,
+				ArticleType: artType,
+				CourseType:  courseType,
+				InteractiveMetadata: interactiveMeta,
+				CategoryID:  categoryID,
+			})
+		} else {
+			// Create new
+			result, err = h.cmsService.Create(c.Request.Context(), cmssvc.CreateRequest{
+				Type:        cmsType,
+				Title:       item.Title,
+				Description: desc,
+				Body:        body,
+				ArticleType: artType,
+				CourseType:  courseType,
+				InteractiveMetadata: interactiveMeta,
+				CategoryID:  categoryID,
+				CreatedByID: userID,
+			})
+		}
+
 		if err != nil {
 			results = append(results, dto.ImportConfirmResult{
 				Title:   item.Title,
