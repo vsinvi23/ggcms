@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS articles (
     title VARCHAR(500) NOT NULL,
     description TEXT,
     body TEXT,
+    interactive_metadata JSONB,
     status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
     category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
     created_by_id INTEGER NOT NULL REFERENCES users(id),
@@ -87,6 +88,7 @@ CREATE TABLE IF NOT EXISTS courses (
     id SERIAL PRIMARY KEY,
     title VARCHAR(500) NOT NULL,
     description TEXT,
+    interactive_metadata JSONB,
     status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
     category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
     created_by_id INTEGER NOT NULL REFERENCES users(id),
@@ -5085,16 +5087,6 @@ BEGIN
 END $$;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_lpc_path_course ON learning_path_courses (learning_path_id, course_id);
--- +goose Up
--- +goose StatementBegin
-ALTER TABLE articles ADD COLUMN interactive_metadata JSONB;
-ALTER TABLE courses ADD COLUMN interactive_metadata JSONB;
--- +goose StatementEnd
-
--- (Down migration removed because goose directives are not supported by the custom runner)
-ALTER TABLE articles ADD COLUMN IF NOT EXISTS interactive_metadata JSONB;
-ALTER TABLE courses ADD COLUMN IF NOT EXISTS interactive_metadata JSONB;
-
 -- Convert 'Interview Track' courses into formal INTERVIEW Assessments
 UPDATE courses
 SET 
