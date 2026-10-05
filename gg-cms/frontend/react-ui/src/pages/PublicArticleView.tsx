@@ -456,7 +456,7 @@ export default function PublicArticleView() {
         onSaveRevision={handleSaveArticleRevision}
       />
 
-      <div className="max-w-6xl mx-auto pt-4 px-4 sm:px-6">
+      <div className="max-w-[98%] xl:max-w-[1400px] mx-auto pt-4 px-4 sm:px-6">
         {/* ── Privileged Admin Visual Diff Banner Overlay ─────────────────── */}
         {hasPendingDraft && (isAdmin || isMasterAdmin) && (
           <ContentDiffOverlay
@@ -488,7 +488,7 @@ export default function PublicArticleView() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* LEFT RAIL: Related Content & Next Steps */}
-          <aside className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-24">
+          <aside className="hidden lg:block lg:col-span-2 space-y-4 lg:sticky lg:top-24">
             {relatedItems.length > 0 && (
               <Card className="rounded-2xl border border-border p-4 space-y-3 shadow-sm bg-card">
                 <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
@@ -533,7 +533,7 @@ export default function PublicArticleView() {
           </aside>
 
           {/* MAIN ARTICLE CONTENT */}
-          <article className="lg:col-span-6 w-full min-w-0">
+          <article className="lg:col-span-8 w-full min-w-0">
             {/* Header Section */}
             <header className="mb-8">
               <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -769,7 +769,7 @@ export default function PublicArticleView() {
 
           {/* Desktop right-rail table of contents */}
           {showToc && (
-            <aside className="hidden lg:block lg:col-span-3 sticky top-24">
+            <aside className="hidden lg:block lg:col-span-2 sticky top-24">
               <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                 <List className="w-4 h-4" />
                 On this page

@@ -57,12 +57,7 @@ export function ArticleExploreCard({ item, className }: ArticleExploreCardProps)
               </h3>
             </div>
 
-            {/* Description */}
-            {item.description && (
-              <p className="text-[11px] text-muted-foreground line-clamp-2 leading-snug flex-1">
-                {item.description}
-              </p>
-            )}
+            {/* Description hidden for compact view */}
 
             {/* Footer */}
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-auto">

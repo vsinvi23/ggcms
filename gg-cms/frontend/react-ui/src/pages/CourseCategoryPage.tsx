@@ -431,15 +431,8 @@ function ExploreCard({
               {typeLabel}
             </Badge>
           </div>
-          {item.description ? (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-              {item.description}
-            </p>
-          ) : meta ? (
+          {meta && (
             <p className="text-xs text-muted-foreground">{meta}</p>
-          ) : null}
-          {item.description && meta && (
-            <p className="text-[10px] text-muted-foreground/70 mt-1">{meta}</p>
           )}
         </div>
 

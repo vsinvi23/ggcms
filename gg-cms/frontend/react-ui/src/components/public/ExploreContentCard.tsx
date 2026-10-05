@@ -135,35 +135,7 @@ export function ExploreContentCard({ item, className }: ExploreContentCardProps)
               </div>
             </div>
 
-            {/* Row 2: curriculum chapters or description */}
-            {curriculumItems.length > 0 ? (
-              <div className="flex flex-col gap-0.5">
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground/60 mb-0.5">
-                  <LayoutList className="w-3 h-3" />
-                  <span>Curriculum</span>
-                </div>
-                {curriculumItems.slice(0, 4).map((title, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-1 text-[11px] text-muted-foreground leading-snug"
-                  >
-                    <span className="mt-0.5 w-3.5 h-3.5 flex-shrink-0 flex items-center justify-center rounded-full bg-primary/10 text-primary text-[9px] font-bold">
-                      {i + 1}
-                    </span>
-                    <span className="line-clamp-1">{title}</span>
-                  </div>
-                ))}
-                {curriculumItems.length > 4 && (
-                  <span className="text-[10px] text-muted-foreground/50 pl-4.5">
-                    +{curriculumItems.length - 4} more chapters
-                  </span>
-                )}
-              </div>
-            ) : item.description ? (
-              <p className="text-[11px] text-muted-foreground line-clamp-2 leading-snug">
-                {item.description}
-              </p>
-            ) : null}
+            {/* Description and curriculum hidden for compact view */}
 
             {/* Row 3: meta footer */}
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-auto pt-0.5">
