@@ -1,6 +1,7 @@
 # ── Go build artifacts ────────────────────────────────────────────────────────
 gg-cms/backend/go-cms/server
 gg-cms/backend/go-cms/server.exe
+gg-cms/backend/go-cms/dist/
 
 # ── Runtime logs — never commit ───────────────────────────────────────────────
 *.log
