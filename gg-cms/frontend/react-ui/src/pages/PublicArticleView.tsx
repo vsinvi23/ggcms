@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { sanitizeHtml } from '@/lib/sanitize';
+import hljs from 'highlight.js';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { extractSlugFromPath, slugify, buildCourseUrl } from '@/lib/slug';
 import { PublicLayout } from '@/components/layout/PublicLayout';
@@ -197,8 +198,13 @@ export default function PublicArticleView() {
     : syncDisplayBodyHtml;
 
   useEffect(() => {
-    if (article?.contentFormat === 'tiptap' && articleBodyRef.current) {
-      hydrateMermaidDiagrams(articleBodyRef.current);
+    if (articleBodyRef.current) {
+      if (article?.contentFormat === 'tiptap') {
+        hydrateMermaidDiagrams(articleBodyRef.current);
+      }
+      articleBodyRef.current.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block as HTMLElement);
+      });
     }
   }, [displayBodyHtml, article?.contentFormat]);
 

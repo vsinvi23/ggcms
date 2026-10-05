@@ -2,7 +2,7 @@
   "name": "db-migrations",
   "version": "1.7.19",
   "description": "PostgreSQL Schema Migrations",
-  "last_migration": "002_add_interactive_metadata.sql",
-  "updated_at": "2026-10-05T02:00:27Z",
-  "db_schema_hash": "sha256:f86f6deb643049e59ed1804f6d479ec655dc3403c512284d9fe7c2f040db1cbb"
+  "last_migration": "001_initial_schema_reset.sql",
+  "updated_at": "2026-10-05T02:18:21Z",
+  "db_schema_hash": "sha256:ac89e800655275808c8181aad77ee2860a403417289b7b7cae61113f114dda6e"
 }

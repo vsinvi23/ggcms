@@ -1,5 +1,6 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { sanitizeHtml } from '@/lib/sanitize';
+import hljs from 'highlight.js';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { extractSlugFromPath, buildCourseUrl } from '@/lib/slug';
 import {
@@ -335,8 +336,13 @@ export function CourseViewPage() {
   }, [displayCourse?.body, displayCourse?.contentFormat]);
 
   React.useEffect(() => {
-    if (displayCourse?.contentFormat === 'tiptap' && courseBodyRef.current) {
-      hydrateMermaidDiagrams(courseBodyRef.current);
+    if (courseBodyRef.current) {
+      if (displayCourse?.contentFormat === 'tiptap') {
+        hydrateMermaidDiagrams(courseBodyRef.current);
+      }
+      courseBodyRef.current.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block as HTMLElement);
+      });
     }
   }, [tiptapCourseBodyHtml, displayCourse?.contentFormat]);
 
