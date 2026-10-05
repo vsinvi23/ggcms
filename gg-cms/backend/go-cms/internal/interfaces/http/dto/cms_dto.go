@@ -62,6 +62,7 @@ type CreateCMSRequest struct {
 	Body                *string              `json:"body,omitempty"`
 	ArticleType         *string              `json:"articleType,omitempty"`
 	CourseType          *string              `json:"courseType,omitempty"`
+	InteractiveMetadata *string              `json:"interactiveMetadata,omitempty"`
 	ContentFormat       *string              `json:"contentFormat,omitempty"`
 	CategoryID          *uint                `json:"categoryId,omitempty"`
 	TopicIDs            []uint               `json:"topicIds,omitempty"`
@@ -76,6 +77,7 @@ type UpdateCMSRequest struct {
 	Body                *string              `json:"body,omitempty"`
 	ArticleType         *string              `json:"articleType,omitempty"`
 	CourseType          *string              `json:"courseType,omitempty"`
+	InteractiveMetadata *string              `json:"interactiveMetadata,omitempty"`
 	ContentFormat       *string              `json:"contentFormat,omitempty"`
 	CategoryID          *uint                `json:"categoryId,omitempty"`
 	TopicIDs            []uint               `json:"topicIds,omitempty"`

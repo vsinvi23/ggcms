@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -40,6 +41,13 @@ type ServerConfig struct {
 type DatabaseConfig struct {
 	WriteURL string
 	ReadURL  string
+
+	// Per-pool limits (the write and read pools are separate). Size them so that
+	// instances x (write + read pools) stays under Postgres max_connections.
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	ConnMaxIdleTime time.Duration
 }
 
 type MongoConfig struct {
@@ -119,6 +127,10 @@ func Load() *Config {
 	viper.SetDefault("LOG_LEVEL", "info")
 	viper.SetDefault("LOG_FILE", "logs/app.log")
 	viper.SetDefault("MONGO_DATABASE", "gg_cms")
+	viper.SetDefault("DB_MAX_OPEN_CONNS", 10)
+	viper.SetDefault("DB_MAX_IDLE_CONNS", 5)
+	viper.SetDefault("DB_CONN_MAX_LIFETIME", "30m")
+	viper.SetDefault("DB_CONN_MAX_IDLE_TIME", "5m")
 	viper.SetDefault("TLS_ENABLED", false)
 	viper.SetDefault("TLS_CERT_FILE", "")
 	viper.SetDefault("TLS_KEY_FILE", "")
@@ -148,6 +160,11 @@ func Load() *Config {
 		Database: DatabaseConfig{
 			WriteURL: viper.GetString("DB_WRITE_URL"),
 			ReadURL:  viper.GetString("DB_READ_URL"),
+
+			MaxOpenConns:    viper.GetInt("DB_MAX_OPEN_CONNS"),
+			MaxIdleConns:    viper.GetInt("DB_MAX_IDLE_CONNS"),
+			ConnMaxLifetime: viper.GetDuration("DB_CONN_MAX_LIFETIME"),
+			ConnMaxIdleTime: viper.GetDuration("DB_CONN_MAX_IDLE_TIME"),
 		},
 		MongoDB: MongoConfig{
 			URI:      viper.GetString("MONGO_URI"),

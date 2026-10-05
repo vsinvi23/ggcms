@@ -11,6 +11,7 @@ import (
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/domain/repository"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
+	"github.com/serenya/go-cms/internal/interfaces/http/middleware"
 	"github.com/serenya/go-cms/pkg/pagination"
 	"github.com/serenya/go-cms/pkg/response"
 )
@@ -57,7 +58,6 @@ func (h *PublicHandler) GetPublicArticles(c *gin.Context) {
 // Accepts a slug, a UUID (publicId), or a numeric ID.
 func (h *PublicHandler) GetPublicArticle(c *gin.Context) {
 	idStr := c.Param("id")
-	isPreview := c.Query("preview") == "true"
 
 	var result interface{}
 	var err error
@@ -76,7 +76,7 @@ func (h *PublicHandler) GetPublicArticle(c *gin.Context) {
 		return
 	}
 	article, ok := result.(*entity.Article)
-	if !ok || (!isPreview && article.Status != entity.CMSStatusPublished && !article.HasPendingDraft) {
+	if !ok || (!previewAllowed(c, article.CreatedByID, article.ReviewerID) && article.Status != entity.CMSStatusPublished && !article.HasPendingDraft) {
 		response.NotFound(c, "article not found")
 		return
 	}
@@ -146,7 +146,6 @@ func (h *PublicHandler) GetPublicCourses(c *gin.Context) {
 // Accepts a slug, a UUID (publicId), or a numeric ID.
 func (h *PublicHandler) GetPublicCourse(c *gin.Context) {
 	idStr := c.Param("id")
-	isPreview := c.Query("preview") == "true"
 
 	var result interface{}
 	var err error
@@ -164,7 +163,7 @@ func (h *PublicHandler) GetPublicCourse(c *gin.Context) {
 		return
 	}
 	course, ok := result.(*entity.Course)
-	if !ok || (!isPreview && course.Status != entity.CMSStatusPublished && !course.HasPendingDraft) {
+	if !ok || (!previewAllowed(c, course.CreatedByID, course.ReviewerID) && course.Status != entity.CMSStatusPublished && !course.HasPendingDraft) {
 		response.NotFound(c, "course not found")
 		return
 	}
@@ -245,7 +244,6 @@ func (h *PublicHandler) GetPublicCMS(c *gin.Context) {
 func (h *PublicHandler) GetPublicCMSByID(c *gin.Context) {
 	idStr := c.Param("id")
 	cmsType := entity.CMSType(c.DefaultQuery("type", "ARTICLE"))
-	isPreview := c.Query("preview") == "true"
 
 	var result interface{}
 	var err error
@@ -267,7 +265,7 @@ func (h *PublicHandler) GetPublicCMSByID(c *gin.Context) {
 	switch cmsType {
 	case entity.CMSTypeCourse:
 		course, ok := result.(*entity.Course)
-		if !ok || (!isPreview && course.Status != entity.CMSStatusPublished && !course.HasPendingDraft) {
+		if !ok || (!previewAllowed(c, course.CreatedByID, course.ReviewerID) && course.Status != entity.CMSStatusPublished && !course.HasPendingDraft) {
 			response.NotFound(c, "not found")
 			return
 		}
@@ -277,7 +275,7 @@ func (h *PublicHandler) GetPublicCMSByID(c *gin.Context) {
 		response.OK(c, courseToPublicCMS(course))
 	default:
 		article, ok := result.(*entity.Article)
-		if !ok || (!isPreview && article.Status != entity.CMSStatusPublished && !article.HasPendingDraft) {
+		if !ok || (!previewAllowed(c, article.CreatedByID, article.ReviewerID) && article.Status != entity.CMSStatusPublished && !article.HasPendingDraft) {
 			response.NotFound(c, "not found")
 			return
 		}
@@ -285,6 +283,24 @@ func (h *PublicHandler) GetPublicCMSByID(c *gin.Context) {
 		h.trackView(c, &trackID, &contentTypeName)
 		response.OK(c, articleToPublicCMS(article))
 	}
+}
+
+// previewAllowed reports whether the caller asked for ?preview=true AND is
+// entitled to see unpublished content: an admin, the owner, or the assigned
+// reviewer. Identity comes from middleware.OptionalAuth; anonymous callers
+// never qualify, so the flag alone grants nothing.
+func previewAllowed(c *gin.Context, ownerID uint, reviewerID *uint) bool {
+	if c.Query("preview") != "true" {
+		return false
+	}
+	if middleware.IsAdmin(c) {
+		return true
+	}
+	uid := middleware.GetUserID(c)
+	if uid == 0 {
+		return false
+	}
+	return uid == ownerID || (reviewerID != nil && *reviewerID == uid)
 }
 
 // isNumericID returns true when s consists entirely of ASCII digits.

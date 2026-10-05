@@ -1,12 +1,15 @@
 // Package migrations embeds all SQL migration files and provides a Run
-// function to apply them in order. Files use IF NOT EXISTS / ON CONFLICT DO
-// NOTHING so they are safe to re-apply on every server start.
+// function to apply them in order. Each file is applied once (tracked in
+// schema_migrations) inside a transaction, under a Postgres advisory lock.
+// Files must never drop or reset the schema.
 package migrations
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"io/fs"
+	"os"
 	"sort"
 	"strings"
 
@@ -17,6 +20,9 @@ import (
 
 //go:embed postgres/*.sql
 var sqlFiles embed.FS
+
+// migrationLockKey is the app-wide Postgres advisory lock id for Run.
+const migrationLockKey int64 = 7424817301
 
 // Run applies every *.sql file from the embedded postgres/ directory in
 // sorted (lexicographic) order using the supplied GORM write connection.
@@ -64,6 +70,22 @@ func Run(db *gorm.DB) error {
 		return fmt.Errorf("migrations: failed to create schema_migrations table: %w", err)
 	}
 
+	// Serialise concurrent instances (e.g. Cloud Run cold starts): the advisory
+	// lock is session-scoped, so hold it on one dedicated connection.
+	sqlDB, err := db.DB()
+	if err != nil {
+		return fmt.Errorf("migrations: cannot get sql.DB: %w", err)
+	}
+	lockConn, err := sqlDB.Conn(context.Background())
+	if err != nil {
+		return fmt.Errorf("migrations: cannot get lock connection: %w", err)
+	}
+	defer lockConn.Close()
+	if _, err := lockConn.ExecContext(context.Background(), "SELECT pg_advisory_lock($1)", migrationLockKey); err != nil {
+		return fmt.Errorf("migrations: cannot acquire advisory lock: %w", err)
+	}
+	defer lockConn.ExecContext(context.Background(), "SELECT pg_advisory_unlock($1)", migrationLockKey) //nolint:errcheck
+
 	for _, name := range names {
 		var count int64
 		db.Raw("SELECT COUNT(1) FROM schema_migrations WHERE version = ?", name).Scan(&count)
@@ -77,12 +99,24 @@ func Run(db *gorm.DB) error {
 			return fmt.Errorf("migrations: cannot read %q: %w", name, err)
 		}
 		applogger.Info("migrations: applying", zap.String("file", name))
-		if err := db.Exec(string(content)).Error; err != nil {
-			return fmt.Errorf("migrations: failed to apply %q: %w", name, err)
-		}
-
-		if err := db.Exec("INSERT INTO schema_migrations (version, applied_at) VALUES (?, NOW()) ON CONFLICT (version) DO NOTHING", name).Error; err != nil {
-			return fmt.Errorf("migrations: failed to record %q in schema_migrations: %w", name, err)
+		// The file and its tracking row commit together, so a failure midway
+		// leaves nothing half-applied and the file is retried on next start.
+		if err := db.Transaction(func(tx *gorm.DB) error {
+			// Expose SEED_SAMPLE_CONTENT to the SQL (transaction-local) so sample content can be skipped.
+			if v := os.Getenv("SEED_SAMPLE_CONTENT"); v != "" {
+				if err := tx.Exec("SELECT set_config('gg.seed_sample_content', ?, true)", strings.ToLower(v)).Error; err != nil {
+					return fmt.Errorf("failed to set gg.seed_sample_content: %w", err)
+				}
+			}
+			if err := tx.Exec(string(content)).Error; err != nil {
+				return fmt.Errorf("failed to apply %q: %w", name, err)
+			}
+			if err := tx.Exec("INSERT INTO schema_migrations (version, applied_at) VALUES (?, NOW()) ON CONFLICT (version) DO NOTHING", name).Error; err != nil {
+				return fmt.Errorf("failed to record %q in schema_migrations: %w", name, err)
+			}
+			return nil
+		}); err != nil {
+			return fmt.Errorf("migrations: %w", err)
 		}
 	}
 

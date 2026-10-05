@@ -243,7 +243,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		api.POST("/admin/recover-password", adminRecoveryMW, authH.RecoverPassword)
 
 		// ----- Public content (no auth, rate-limited against scraping) -----
-		pub := api.Group("/public", middleware.PublicRateLimit())
+		pub := api.Group("/public", middleware.PublicRateLimit(), middleware.OptionalAuth(jwtManager))
 		{
 			pub.GET("/articles", pubH.GetPublicArticles)
 			pub.GET("/articles/category/:slug", pubH.GetPublicArticlesByCategory)
