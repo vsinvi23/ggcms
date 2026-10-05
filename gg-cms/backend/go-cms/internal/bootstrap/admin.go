@@ -33,7 +33,7 @@ func SeedAdmin(db *gorm.DB, cfg *config.AdminConfig) {
 	ctx := context.Background()
 
 	// ── Ensure default system groups exist ────────────────────────────────
-	defaultGroups := []string{"Admin", "Editor", "Viewer", "Moderator", "Reviewer", "Publisher"}
+	defaultGroups := []string{"Admin", "SuperAdmin", "Editor", "Viewer", "Moderator", "Reviewer", "Publisher"}
 	for _, gName := range defaultGroups {
 		db.WithContext(ctx).Exec(
 			"INSERT INTO groups (name, created_at, updated_at) VALUES (?, NOW(), NOW()) ON CONFLICT (name) DO NOTHING",

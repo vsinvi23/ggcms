@@ -169,6 +169,8 @@ type SectionRepository interface {
 	Delete(ctx context.Context, id uint) error
 	FindByID(ctx context.Context, id uint) (*entity.Section, error)
 	FindByCourseID(ctx context.Context, courseID uint) ([]*entity.Section, error)
+	// ReplaceCourseStructure atomically replaces all sections/lessons of a course with the given tree.
+	ReplaceCourseStructure(ctx context.Context, courseID uint, sections []*entity.Section) error
 }
 
 type LessonRepository interface {

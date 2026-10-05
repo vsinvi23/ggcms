@@ -96,6 +96,20 @@ export function ImportReviewRow({ item, onChange, onDelete, onSaveForLater, canD
       {/* Content View Preview Tab */}
       {activeTab === 'preview' && (
         <div className="space-y-4">
+          {item.warnings && item.warnings.length > 0 && (
+            <div className="p-3.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 space-y-1">
+              <div className="flex items-center gap-2 font-semibold text-xs">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>{item.warnings.length} warning{item.warnings.length !== 1 ? "s" : ""}</span>
+              </div>
+              <ul className="list-disc pl-5 text-xs space-y-0.5">
+                {item.warnings.map((w, i) => (
+                  <li key={i}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {!item.valid && (
             <div className="p-3.5 rounded-md bg-destructive/10 border border-destructive/30 text-destructive space-y-1">
               <div className="flex items-center gap-2 font-semibold text-xs">

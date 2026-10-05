@@ -33,10 +33,14 @@ export interface ImportPreviewItem {
   status?: string;
   tags: string[];
   sections: ImportSectionItem[];
+  /** Non-fatal issues found while parsing, e.g. an image path that does not resolve. */
+  warnings?: string[];
   valid: boolean;
   error?: string;
   exists?: boolean;
   existingId?: number;
+  /** Client-side choice for an item that already exists: replace it (default) or skip it. */
+  overwrite?: boolean;
 }
 
 export interface ImportPreviewResponse {

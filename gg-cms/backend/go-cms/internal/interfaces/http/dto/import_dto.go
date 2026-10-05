@@ -32,6 +32,8 @@ type ImportPreviewItem struct {
 	SequencedCourses []string            `json:"sequencedCourses,omitempty"`
 	Status           string              `json:"status,omitempty"`
 	Tags             []string            `json:"tags"`
+	// Warnings are non-fatal issues found while parsing (e.g. an image path that does not resolve).
+	Warnings []string `json:"warnings,omitempty"`
 	Sections         []ImportSectionItem `json:"sections,omitempty"`
 	Valid            bool                `json:"valid"`
 	Error            string              `json:"error,omitempty"`

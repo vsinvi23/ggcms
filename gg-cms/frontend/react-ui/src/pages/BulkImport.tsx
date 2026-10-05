@@ -487,8 +487,12 @@ export default function BulkImport() {
     if (!files || files.length === 0) return;
     setIsExtracting(true);
     const fileArray = Array.from(files);
-    const zipFiles = fileArray.filter((f) => f.name.toLowerCase().endsWith('.zip'));
-    const nonZipFiles = fileArray.filter((f) => !f.name.toLowerCase().endsWith('.zip'));
+    const isZip = (f: File) => f.name.toLowerCase().endsWith('.zip');
+    // Super admins send zips to the server intact so images referenced by the markdown (and
+    // inline SVG) can be imported and the server-side size limits are lifted for them. Everyone
+    // else keeps the existing client-side unpack, which carries documents only and enforces limits.
+    const zipFiles = isMasterAdmin ? [] : fileArray.filter(isZip);
+    const nonZipFiles = isMasterAdmin ? fileArray : fileArray.filter((f) => !isZip(f));
 
     let extractedFiles: File[] = [];
 

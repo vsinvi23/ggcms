@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -31,6 +32,13 @@ type ParsedItem struct {
 	Sections         []ParsedSection
 	Valid            bool
 	Error            string
+
+	// Warnings are non-fatal problems found while parsing (e.g. an image path that does not resolve).
+	Warnings []string
+	// ImageRefs are local image paths the body refers to; filled for markdown/html bodies.
+	ImageRefs []ImageRef
+	// SourcePath is the path inside a zip the item came from (empty for direct uploads).
+	SourcePath string
 }
 
 // ParsedLesson is a lesson parsed from a COURSE import's markdown/JSON structure.
@@ -49,6 +57,12 @@ type ParsedSection struct {
 	Lessons []ParsedLesson
 }
 
+// ZipResult is what a zip upload yields: the parsed documents plus any raster images found next to them.
+type ZipResult struct {
+	Items  []ParsedItem
+	Images map[string]*ImageAsset // keyed by cleaned in-zip path
+}
+
 // Parse dispatches to the correct parser based on file extension.
 func Parse(filename string, content []byte) []ParsedItem {
 	ext := strings.ToLower(filepath.Ext(filename))
@@ -62,7 +76,7 @@ func Parse(filename string, content []byte) []ParsedItem {
 	case ".html", ".htm":
 		return []ParsedItem{parseHTML(filename, string(content))}
 	case ".zip":
-		return parseZIP(filename, content)
+		return ParseZIPWithOptions(filename, content, ZipOptions{}).Items
 	default:
 		return []ParsedItem{{
 			FileName: filename,
@@ -112,14 +126,42 @@ func parseMarkdown(filename, content string) ParsedItem {
 		item.Title = strings.TrimSuffix(base, filepath.Ext(base))
 	}
 
+	// Inline <svg> blocks become sanitized data-URI images (never stored as .svg files).
+	body, svgWarns := convertInlineSVG(item.Body)
+	item.Body = body
+	item.Warnings = append(item.Warnings, svgWarns...)
+
 	if item.Type == "COURSE" {
 		overview, sections := parseMarkdownCourseStructure(item.Body)
 		item.Body = overview
 		item.Sections = sections
 	}
 
+	item.ImageRefs = collectImageRefs(item)
+
 	validate(&item)
 	return item
+}
+
+// collectImageRefs gathers the distinct local image references used by an item's body and lessons.
+func collectImageRefs(item ParsedItem) []ImageRef {
+	var refs []ImageRef
+	seen := map[string]bool{}
+	add := func(body string) {
+		for _, r := range ExtractImageRefs(body) {
+			if !seen[r.Raw] {
+				seen[r.Raw] = true
+				refs = append(refs, r)
+			}
+		}
+	}
+	add(item.Body)
+	for _, sec := range item.Sections {
+		for _, l := range sec.Lessons {
+			add(l.Body)
+		}
+	}
+	return refs
 }
 
 // parseMarkdownCourseStructure splits a COURSE markdown body into a flat overview
@@ -481,23 +523,36 @@ const (
 	maxZipDecompressionRatio = 100              // Max 100:1 ratio to prevent decompression bombs
 )
 
-func parseZIP(filename string, content []byte) []ParsedItem {
+// ZipOptions controls how a zip upload is read.
+type ZipOptions struct {
+	// CollectImages keeps raster images (png, jpeg, gif, webp) so documents can reference them by
+	// relative path. When false, images are ignored.
+	CollectImages bool
+	// NoLimits lifts the entry-count, size and decompression-ratio caps. Path-traversal, nested-zip
+	// and content-type checks always apply. Only for trusted callers: the whole archive is held in memory.
+	NoLimits bool
+}
+
+// ParseZIPWithImages parses a zip with images collected and the standard limits applied.
+func ParseZIPWithImages(filename string, content []byte) ZipResult {
+	return ParseZIPWithOptions(filename, content, ZipOptions{CollectImages: true})
+}
+
+// ParseZIPWithOptions parses every document in a zip and, if opts.CollectImages is set, also the
+// raster images next to them so markdown/html bodies can reference them by relative path.
+func ParseZIPWithOptions(filename string, content []byte, opts ZipOptions) ZipResult {
+	res := ZipResult{Images: map[string]*ImageAsset{}}
+	fail := func(name, msg string) ZipResult {
+		return ZipResult{Items: []ParsedItem{{FileName: name, Valid: false, Error: msg}}}
+	}
 	r, err := zip.NewReader(bytes.NewReader(content), int64(len(content)))
 	if err != nil {
-		return []ParsedItem{{
-			FileName: filename,
-			Valid:    false,
-			Error:    fmt.Sprintf("Wrong format: invalid zip archive (%v)", err),
-		}}
+		return fail(filename, fmt.Sprintf("Wrong format: invalid zip archive (%v)", err))
 	}
 
 	// Security Check 1: Max entries limit
-	if len(r.File) > maxZipEntries {
-		return []ParsedItem{{
-			FileName: filename,
-			Valid:    false,
-			Error:    fmt.Sprintf("Security error: ZIP archive contains %d files (maximum allowed is %d)", len(r.File), maxZipEntries),
-		}}
+	if !opts.NoLimits && len(r.File) > maxZipEntries {
+		return fail(filename, fmt.Sprintf("Security error: ZIP archive contains %d files (maximum allowed is %d)", len(r.File), maxZipEntries))
 	}
 
 	var items []ParsedItem
@@ -517,11 +572,7 @@ func parseZIP(filename string, content []byte) []ParsedItem {
 		// Security Check 3: Zip Slip / Path Traversal Prevention
 		cleanPath := filepath.Clean(f.Name)
 		if strings.HasPrefix(cleanPath, "..") || strings.Contains(f.Name, "../") || strings.Contains(f.Name, "..\\") || strings.HasPrefix(cleanPath, "/") || filepath.IsAbs(f.Name) {
-			return []ParsedItem{{
-				FileName: f.Name,
-				Valid:    false,
-				Error:    fmt.Sprintf("Security error: Zip Slip / Path traversal attempt detected in entry %q", f.Name),
-			}}
+			return fail(f.Name, fmt.Sprintf("Security error: Zip Slip / Path traversal attempt detected in entry %q", f.Name))
 		}
 
 		ext := strings.ToLower(filepath.Ext(f.Name))
@@ -530,26 +581,26 @@ func parseZIP(filename string, content []byte) []ParsedItem {
 			continue
 		}
 
-		if ext != ".md" && ext != ".markdown" && ext != ".json" && ext != ".csv" && ext != ".html" && ext != ".htm" {
-			// Skip unsupported asset files (images, binary assets) inside zip
+		isDoc := ext == ".md" || ext == ".markdown" || ext == ".json" || ext == ".csv" || ext == ".html" || ext == ".htm"
+		_, isImage := imageExts[ext]
+		if !isDoc && !isImage {
+			// Anything else (including .svg files, which are never stored) is ignored.
 			continue
+		}
+		if isImage && !opts.CollectImages {
+			continue
+		}
+		if isImage && !opts.NoLimits && len(res.Images) >= maxImagesPerZip {
+			return fail(filename, fmt.Sprintf("Security error: ZIP archive contains more than %d images", maxImagesPerZip))
 		}
 
 		// Security Check 5: Declared header uncompressed size limits
-		if f.UncompressedSize64 > maxZipSingleFileSize {
-			return []ParsedItem{{
-				FileName: f.Name,
-				Valid:    false,
-				Error:    fmt.Sprintf("Security error: File %q exceeds maximum allowed single file size of 10MB (%d bytes)", f.Name, f.UncompressedSize64),
-			}}
+		if !opts.NoLimits && f.UncompressedSize64 > maxZipSingleFileSize {
+			return fail(f.Name, fmt.Sprintf("Security error: File %q exceeds maximum allowed single file size of 10MB (%d bytes)", f.Name, f.UncompressedSize64))
 		}
 
-		if totalUncompressedSize+f.UncompressedSize64 > maxZipTotalUncompressed {
-			return []ParsedItem{{
-				FileName: filename,
-				Valid:    false,
-				Error:    fmt.Sprintf("Security error: Total uncompressed archive size exceeds limit of 50MB"),
-			}}
+		if !opts.NoLimits && totalUncompressedSize+f.UncompressedSize64 > maxZipTotalUncompressed {
+			return fail(filename, "Security error: Total uncompressed archive size exceeds limit of 50MB")
 		}
 
 		rc, err := f.Open()
@@ -563,8 +614,11 @@ func parseZIP(filename string, content []byte) []ParsedItem {
 		}
 
 		// Security Check 6: Enforce size limit during decompression with LimitReader (protects against deceptive headers)
-		limitedReader := io.LimitReader(rc, maxZipSingleFileSize+1)
-		fileBytes, readErr := io.ReadAll(limitedReader)
+		var reader io.Reader = rc
+		if !opts.NoLimits {
+			reader = io.LimitReader(rc, maxZipSingleFileSize+1)
+		}
+		fileBytes, readErr := io.ReadAll(reader)
 		rc.Close()
 
 		if readErr != nil {
@@ -576,45 +630,62 @@ func parseZIP(filename string, content []byte) []ParsedItem {
 			continue
 		}
 
-		if uint64(len(fileBytes)) > maxZipSingleFileSize {
-			return []ParsedItem{{
-				FileName: f.Name,
-				Valid:    false,
-				Error:    fmt.Sprintf("Security error: File %q exceeded 10MB limit during extraction (decompression bomb protection)", f.Name),
-			}}
+		if !opts.NoLimits && uint64(len(fileBytes)) > maxZipSingleFileSize {
+			return fail(f.Name, fmt.Sprintf("Security error: File %q exceeded 10MB limit during extraction (decompression bomb protection)", f.Name))
 		}
 
 		totalUncompressedSize += uint64(len(fileBytes))
-		if totalUncompressedSize > maxZipTotalUncompressed {
-			return []ParsedItem{{
-				FileName: filename,
-				Valid:    false,
-				Error:    "Security error: Total uncompressed archive size exceeded 50MB during extraction (decompression bomb protection)",
-			}}
+		if !opts.NoLimits && totalUncompressedSize > maxZipTotalUncompressed {
+			return fail(filename, "Security error: Total uncompressed archive size exceeded 50MB during extraction (decompression bomb protection)")
 		}
 
 		// Security Check 7: Decompression ratio check
-		if f.CompressedSize64 > 0 && (uint64(len(fileBytes))/f.CompressedSize64) > maxZipDecompressionRatio {
-			return []ParsedItem{{
-				FileName: f.Name,
-				Valid:    false,
-				Error:    fmt.Sprintf("Security error: Suspicious compression ratio detected for %q (decompression bomb protection)", f.Name),
-			}}
+		if !opts.NoLimits && f.CompressedSize64 > 0 && (uint64(len(fileBytes))/f.CompressedSize64) > maxZipDecompressionRatio {
+			return fail(f.Name, fmt.Sprintf("Security error: Suspicious compression ratio detected for %q (decompression bomb protection)", f.Name))
+		}
+
+		if isImage {
+			// The extension is not trusted: the bytes must actually be an accepted raster format.
+			if mime, ok := DetectImageMIME(fileBytes); ok {
+				p := path.Clean(strings.ReplaceAll(f.Name, "\\", "/"))
+				res.Images[p] = &ImageAsset{Path: p, Name: path.Base(p), MIME: mime, Data: fileBytes}
+			}
+			continue
 		}
 
 		parsed := Parse(f.Name, fileBytes)
+		for i := range parsed {
+			parsed[i].SourcePath = path.Clean(strings.ReplaceAll(f.Name, "\\", "/"))
+		}
 		items = append(items, parsed...)
 	}
 
 	if len(items) == 0 {
-		return []ParsedItem{{
-			FileName: filename,
-			Valid:    false,
-			Error:    "Wrong format: no importable content files (.md, .json, .csv, .html) found inside zip archive",
-		}}
+		return fail(filename, "Wrong format: no importable content files (.md, .json, .csv, .html) found inside zip archive")
 	}
 
-	return items
+	// Report references that do not resolve to an image in the zip.
+	for i := range items {
+		if !opts.CollectImages {
+			if len(items[i].ImageRefs) > 0 {
+				items[i].Warnings = append(items[i].Warnings, fmt.Sprintf("%d local image reference(s) were not imported: image import from zip is limited to super admins", len(items[i].ImageRefs)))
+			}
+			continue
+		}
+		for _, ref := range items[i].ImageRefs {
+			resolved, ok := ResolveImagePath(items[i].SourcePath, ref.Raw)
+			if !ok {
+				items[i].Warnings = append(items[i].Warnings, MissingImageWarning(ref.Raw)+" (path leaves the archive)")
+				continue
+			}
+			if _, found := LookupImage(res.Images, resolved); !found {
+				items[i].Warnings = append(items[i].Warnings, MissingImageWarning(ref.Raw))
+			}
+		}
+	}
+
+	res.Items = items
+	return res
 }
 
 func parseHTML(filename, content string) ParsedItem {

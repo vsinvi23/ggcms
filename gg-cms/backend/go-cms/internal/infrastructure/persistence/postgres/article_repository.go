@@ -25,9 +25,12 @@ func (r *articleRepository) Create(ctx context.Context, article *entity.Article)
 	if article.PublicID == "" {
 		article.PublicID = uuid.New().String()
 	}
-	if article.Slug == "" {
-		article.Slug = r.uniqueSlug(ctx, slugify.Slug(article.Title), 0)
+	// An explicit slug (e.g. imported) is kept but still made unique among live rows.
+	base := article.Slug
+	if base == "" {
+		base = slugify.Slug(article.Title)
 	}
+	article.Slug = r.uniqueSlug(ctx, base, 0)
 	return r.write.WithContext(ctx).Create(article).Error
 }
 

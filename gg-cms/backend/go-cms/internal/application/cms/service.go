@@ -23,8 +23,10 @@ type AttachmentInput struct {
 }
 
 type CreateRequest struct {
-	Type                entity.CMSType
-	Title               string
+	Type  entity.CMSType
+	Title string
+	// Slug is optional; when set (e.g. from an imported file) it is used instead of one derived from the title.
+	Slug *string
 	Description         *string
 	Body                *string
 	ArticleType         *string
@@ -227,6 +229,7 @@ func (s *service) Create(ctx context.Context, req CreateRequest) (interface{}, e
 			contentFormat = *req.ContentFormat
 		}
 		course := &entity.Course{
+			Slug:                derefString(req.Slug),
 			Title:               req.Title,
 			Description:         req.Description,
 			Body:                req.Body,
@@ -256,6 +259,7 @@ func (s *service) Create(ctx context.Context, req CreateRequest) (interface{}, e
 		articleContentFormat = *req.ContentFormat
 	}
 	article := &entity.Article{
+		Slug:                derefString(req.Slug),
 		Title:               req.Title,
 		Description:         req.Description,
 		Body:                req.Body,
@@ -1075,4 +1079,11 @@ func toAttachmentEntities(inputs []AttachmentInput, articleID, courseID *uint) [
 		}
 	}
 	return atts
+}
+
+func derefString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

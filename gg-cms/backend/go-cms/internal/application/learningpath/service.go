@@ -82,6 +82,9 @@ func (s *service) Update(ctx context.Context, id uint, req UpdateRequest) (*enti
 	if req.Description != nil {
 		lp.Description = *req.Description
 	}
+	if req.Slug != nil && *req.Slug != "" {
+		lp.Slug = *req.Slug
+	}
 	if err := s.repo.Update(ctx, lp); err != nil {
 		return nil, fmt.Errorf("failed to update learning path: %w", err)
 	}
