@@ -88,6 +88,9 @@ func (h *LessonHandler) Create(c *gin.Context) {
 	if req.Data.Section != nil {
 		sectionID = &req.Data.Section.ID
 	}
+	if !h.checkParentCourseOwnership(c, &entity.Lesson{SectionID: sectionID}) {
+		return
+	}
 	lessonType := entity.LessonType(req.Data.Type)
 	if lessonType == "" {
 		lessonType = entity.LessonTypeText

@@ -162,7 +162,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	auditH := handler.NewAuditHandler(svcs.Audit)
 	logH := handler.NewLogHandler(svcs.Settings)
 	personH := handler.NewPersonalizationHandler(svcs.Personalization)
-	importH := handler.NewImportHandler(svcs.CMS, svcs.Task, svcs.Section, svcs.Lesson, svcs.Category, svcs.LearningPath)
+	importH := handler.NewImportHandler(svcs.CMS, svcs.Task, svcs.Section, svcs.Lesson, svcs.Category, svcs.LearningPath, svcs.User, svcs.Settings)
 	factoryImportH := handler.NewFactoryImportHandler(svcs.CMS, svcs.Section, svcs.Lesson, svcs.User, svcs.Category, svcs.Topic, nil, cfg.Admin.Email)
 
 	authMW := middleware.Auth(jwtManager)
@@ -243,7 +243,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		api.POST("/admin/recover-password", adminRecoveryMW, authH.RecoverPassword)
 
 		// ----- Public content (no auth, rate-limited against scraping) -----
-		pub := api.Group("/public", middleware.PublicRateLimit())
+		pub := api.Group("/public", middleware.PublicRateLimit(), middleware.OptionalAuth(jwtManager))
 		{
 			pub.GET("/articles", pubH.GetPublicArticles)
 			pub.GET("/articles/category/:slug", pubH.GetPublicArticlesByCategory)

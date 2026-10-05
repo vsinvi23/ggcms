@@ -22,6 +22,9 @@ const stripHtml = (html: string | null | undefined): string => {
 const publicClient = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  // Send the HttpOnly session cookie so the backend can authorise ?preview=true
+  // for owners/reviewers/admins. Anonymous visitors simply have no cookie.
+  withCredentials: true,
 });
 
 const PUBLIC_ARTICLES = '/public/articles';

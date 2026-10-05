@@ -36,6 +36,9 @@ func (s *stubSectionService) Update(_ context.Context, id uint, _ sectionsvc.Upd
 	return &entity.Section{ID: id}, nil
 }
 func (s *stubSectionService) Delete(_ context.Context, id uint) error { return nil }
+func (s *stubSectionService) ReplaceCourseStructure(_ context.Context, _ uint, _ []sectionsvc.StructureSection) error {
+	return nil
+}
 
 type stubLessonService struct{}
 

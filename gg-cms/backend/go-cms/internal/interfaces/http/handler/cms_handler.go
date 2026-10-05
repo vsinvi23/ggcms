@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -139,6 +140,11 @@ func (h *CMSHandler) Create(c *gin.Context) {
 		return
 	}
 
+	if !validInteractiveMetadata(req.InteractiveMetadata) {
+		response.BadRequest(c, "interactiveMetadata must be valid JSON")
+		return
+	}
+
 	userID := middleware.GetUserID(c)
 	atts := mapAttachmentInputs(req.Attachments)
 
@@ -149,6 +155,7 @@ func (h *CMSHandler) Create(c *gin.Context) {
 		Body:                req.Body,
 		ArticleType:         req.ArticleType,
 		CourseType:          req.CourseType,
+		InteractiveMetadata: req.InteractiveMetadata,
 		ContentFormat:       req.ContentFormat,
 		CategoryID:          req.CategoryID,
 		CreatedByID:         userID,
@@ -228,12 +235,18 @@ func (h *CMSHandler) Update(c *gin.Context) {
 		return
 	}
 
+	if !validInteractiveMetadata(req.InteractiveMetadata) {
+		response.BadRequest(c, "interactiveMetadata must be valid JSON")
+		return
+	}
+
 	result, err := h.service.Update(c.Request.Context(), id, cmsType, cmssvc.UpdateRequest{
 		Title:               req.Title,
 		Description:         req.Description,
 		Body:                req.Body,
 		ArticleType:         req.ArticleType,
 		CourseType:          req.CourseType,
+		InteractiveMetadata: req.InteractiveMetadata,
 		ContentFormat:       req.ContentFormat,
 		CategoryID:          req.CategoryID,
 		ThumbnailURL:        req.ThumbnailURL,
@@ -347,6 +360,10 @@ func (h *CMSHandler) Submit(c *gin.Context) {
 		auditActionS = "course.submitted"
 	}
 	middleware.LogAudit(c, auditActionS, string(cmsType), fmt.Sprint(id), title, nil)
+}
+
+func validInteractiveMetadata(v *string) bool {
+	return v == nil || json.Valid([]byte(*v))
 }
 
 func extractCMSTitleAndOwner(result interface{}, cmsType entity.CMSType) (string, uint) {

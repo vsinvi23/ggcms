@@ -83,6 +83,19 @@ func (h *SectionHandler) Create(c *gin.Context) {
 	if req.Data.ParentSection != nil {
 		parentID = &req.Data.ParentSection.ID
 	}
+	// Ownership: the caller must own the target course (or the parent section's course).
+	target := &entity.Section{CourseID: courseID}
+	if courseID == nil && parentID != nil {
+		parent, perr := h.service.GetByID(c.Request.Context(), *parentID)
+		if perr != nil {
+			response.Forbidden(c, "cannot add a section to this parent")
+			return
+		}
+		target = parent
+	}
+	if !h.checkCourseOwnership(c, target) {
+		return
+	}
 	sec, err := h.service.Create(c.Request.Context(), sectionsvc.CreateRequest{
 		Title:           req.Data.Title,
 		Order:           req.Data.Order,

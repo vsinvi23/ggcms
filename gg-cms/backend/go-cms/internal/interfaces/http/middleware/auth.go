@@ -51,6 +51,28 @@ func Auth(jwtManager *jwtpkg.Manager) gin.HandlerFunc {
 	}
 }
 
+// OptionalAuth populates the user context when a valid JWT is present but never
+// rejects the request. Use on public routes that behave differently for
+// authenticated callers (e.g. draft preview).
+func OptionalAuth(jwtManager *jwtpkg.Manager) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenStr, _ := c.Cookie("jwt")
+		if tokenStr == "" {
+			if h := c.GetHeader("Authorization"); strings.HasPrefix(h, "Bearer ") {
+				tokenStr = strings.TrimPrefix(h, "Bearer ")
+			}
+		}
+		if tokenStr != "" {
+			if claims, err := jwtManager.Validate(tokenStr); err == nil {
+				c.Set(keyUserID, claims.UserID)
+				c.Set(keyEmail, claims.Email)
+				c.Set(keyRole, claims.Role)
+			}
+		}
+		c.Next()
+	}
+}
+
 func AdminOnly() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, _ := c.Get(keyRole)

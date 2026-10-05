@@ -53,3 +53,36 @@ func (r *sectionRepository) FindByCourseID(ctx context.Context, courseID uint) (
 		Find(&sections).Error
 	return sections, err
 }
+
+// ReplaceCourseStructure atomically replaces a course's sections and lessons: every existing
+// section (and child section) with its lessons is soft-deleted and the supplied tree is created,
+// all in one transaction. On any error nothing changes, so a failed import never leaves a course
+// with a half-built or duplicated structure.
+func (r *sectionRepository) ReplaceCourseStructure(ctx context.Context, courseID uint, sections []*entity.Section) error {
+	return r.write.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var ids []uint
+		if err := tx.Model(&entity.Section{}).Where("course_id = ?", courseID).Pluck("id", &ids).Error; err != nil {
+			return fmt.Errorf("list existing sections: %w", err)
+		}
+		if len(ids) > 0 {
+			var childIDs []uint
+			if err := tx.Model(&entity.Section{}).Where("parent_section_id IN ?", ids).Pluck("id", &childIDs).Error; err != nil {
+				return fmt.Errorf("list existing child sections: %w", err)
+			}
+			ids = append(ids, childIDs...)
+			if err := tx.Where("section_id IN ?", ids).Delete(&entity.Lesson{}).Error; err != nil {
+				return fmt.Errorf("delete existing lessons: %w", err)
+			}
+			if err := tx.Where("id IN ?", ids).Delete(&entity.Section{}).Error; err != nil {
+				return fmt.Errorf("delete existing sections: %w", err)
+			}
+		}
+		for _, s := range sections {
+			s.CourseID = &courseID
+			if err := tx.Create(s).Error; err != nil {
+				return fmt.Errorf("create section %q: %w", s.Title, err)
+			}
+		}
+		return nil
+	})
+}

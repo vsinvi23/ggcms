@@ -34,14 +34,39 @@ func NewPostgresDB(cfg *config.DatabaseConfig) (*PostgresDB, error) {
 	}
 	applogger.Info("postgres: write DB connected")
 
-	applogger.Info("postgres: connecting to read DB",
-		zap.String("url", maskURL(cfg.ReadURL)),
-	)
-	readDB, err := gorm.Open(postgres.Open(cfg.ReadURL), gormCfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to read DB: %w", err)
+	// With no separate read replica (ReadURL falls back to WriteURL) share one pool, so an
+	// instance holds MaxOpenConns connections rather than twice that.
+	readDB := writeDB
+	if cfg.ReadURL != cfg.WriteURL {
+		applogger.Info("postgres: connecting to read DB",
+			zap.String("url", maskURL(cfg.ReadURL)),
+		)
+		readDB, err = gorm.Open(postgres.Open(cfg.ReadURL), gormCfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to connect to read DB: %w", err)
+		}
+		applogger.Info("postgres: read DB connected")
+	} else {
+		applogger.Info("postgres: no read replica configured, sharing the write pool for reads")
 	}
-	applogger.Info("postgres: read DB connected")
+
+	// database/sql defaults to unlimited open connections, which exhausts Postgres under
+	// load. With a real replica the write and read pools are separate, so each gets the limits.
+	for name, db := range map[string]*gorm.DB{"write": writeDB, "read": readDB} {
+		sqlDB, err := db.DB()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get %s sql.DB: %w", name, err)
+		}
+		sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
+		sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
+		sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
+		sqlDB.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
+	}
+	applogger.Info("postgres: pool limits applied",
+		zap.Int("max_open_per_pool", cfg.MaxOpenConns),
+		zap.Int("max_idle_per_pool", cfg.MaxIdleConns),
+		zap.Duration("conn_max_lifetime", cfg.ConnMaxLifetime),
+	)
 
 	return &PostgresDB{Write: writeDB, Read: readDB}, nil
 }

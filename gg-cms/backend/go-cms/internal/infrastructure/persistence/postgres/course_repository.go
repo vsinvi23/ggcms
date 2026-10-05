@@ -25,9 +25,12 @@ func (r *courseRepository) Create(ctx context.Context, course *entity.Course) er
 	if course.PublicID == "" {
 		course.PublicID = uuid.New().String()
 	}
-	if course.Slug == "" {
-		course.Slug = r.uniqueSlug(ctx, slugify.Slug(course.Title), 0)
+	// An explicit slug (e.g. imported) is kept but still made unique among live rows.
+	base := course.Slug
+	if base == "" {
+		base = slugify.Slug(course.Title)
 	}
+	course.Slug = r.uniqueSlug(ctx, base, 0)
 	return r.write.WithContext(ctx).Create(course).Error
 }
 

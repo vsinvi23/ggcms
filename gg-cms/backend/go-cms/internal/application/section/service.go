@@ -27,6 +27,24 @@ type Service interface {
 	Delete(ctx context.Context, id uint) error
 	GetByID(ctx context.Context, id uint) (*entity.Section, error)
 	GetByCourseID(ctx context.Context, courseID uint) ([]*entity.Section, error)
+	// ReplaceCourseStructure atomically replaces a course's sections and lessons (used by import overwrite).
+	ReplaceCourseStructure(ctx context.Context, courseID uint, sections []StructureSection) error
+}
+
+// StructureLesson / StructureSection describe a section tree to be written in one step.
+type StructureLesson struct {
+	Title    string
+	Type     entity.LessonType
+	Content  *string
+	Duration int
+	Order    int
+}
+
+type StructureSection struct {
+	Title       string
+	Description *string
+	Order       int
+	Lessons     []StructureLesson
 }
 
 type service struct {
@@ -80,4 +98,23 @@ func (s *service) GetByID(ctx context.Context, id uint) (*entity.Section, error)
 
 func (s *service) GetByCourseID(ctx context.Context, courseID uint) ([]*entity.Section, error) {
 	return s.sectionRepo.FindByCourseID(ctx, courseID)
+}
+
+func (s *service) ReplaceCourseStructure(ctx context.Context, courseID uint, sections []StructureSection) error {
+	tree := make([]*entity.Section, len(sections))
+	for i, sec := range sections {
+		lessons := make([]entity.Lesson, len(sec.Lessons))
+		for j, l := range sec.Lessons {
+			lt := l.Type
+			if lt == "" {
+				lt = entity.LessonTypeText
+			}
+			lessons[j] = entity.Lesson{Title: l.Title, Type: lt, Content: l.Content, Duration: l.Duration, Order: l.Order}
+		}
+		tree[i] = &entity.Section{Title: sec.Title, Description: sec.Description, Order: sec.Order, Lessons: lessons}
+	}
+	if err := s.sectionRepo.ReplaceCourseStructure(ctx, courseID, tree); err != nil {
+		return fmt.Errorf("failed to replace course structure: %w", err)
+	}
+	return nil
 }

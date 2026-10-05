@@ -1,6 +1,3 @@
--- Terminate all other connections so we can exclusively lock and drop the schema
-SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = current_database() AND pid <> pg_backend_pid();
-DROP SCHEMA public CASCADE; CREATE SCHEMA public;
 CREATE TABLE IF NOT EXISTS schema_migrations (
 		version VARCHAR(255) PRIMARY KEY,
 		applied_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
@@ -219,6 +216,20 @@ ON CONFLICT (name) DO NOTHING;
 -- Admin user is seeded at runtime by the Go bootstrap package (internal/bootstrap/admin.go).
 -- Credentials are configured via ADMIN_EMAIL / ADMIN_PASSWORD / ADMIN_NAME in .env.
 -- No hardcoded password hashes here.
+
+-- Non-loginable system account that authors the seeded reference content below.
+-- password_hash is deliberately not a valid bcrypt hash (nothing can match it) and the
+-- account is INACTIVE (login rejects it). Seeds must not depend on the runtime admin,
+-- which does not exist yet when migrations run on a fresh database.
+--
+-- SEED_SAMPLE_CONTENT=false (env, applied by the migration runner as the session setting
+-- gg.seed_sample_content) skips this account, and with it every sample article, course and
+-- learning path below (they all select this author). Reference data (categories, topics,
+-- tags, domains, settings) is always loaded. Unset or any other value loads the samples.
+INSERT INTO users (email, password_hash, name, status)
+SELECT 'system@gg-cms.local', '!system-account-no-login', 'System', 'INACTIVE'
+WHERE current_setting('gg.seed_sample_content', true) IS DISTINCT FROM 'false'
+ON CONFLICT (email) DO NOTHING;
 -- Add role and permissions columns to groups table
 ALTER TABLE groups ADD COLUMN IF NOT EXISTS role VARCHAR(50) NOT NULL DEFAULT 'viewer';
 ALTER TABLE groups ADD COLUMN IF NOT EXISTS permissions JSONB NOT NULL DEFAULT '{}';
@@ -409,9 +420,9 @@ SET slug = REGEXP_REPLACE(
            )
 WHERE slug = '';
 
--- Index for fast slug lookup (not unique — duplicates handled at application layer)
-CREATE INDEX IF NOT EXISTS idx_articles_slug ON articles (slug);
-CREATE INDEX IF NOT EXISTS idx_courses_slug  ON courses  (slug);
+-- Slugs are unique among live rows (enforced here, before seeds run; app-side check-then-insert was racy).
+CREATE UNIQUE INDEX IF NOT EXISTS uq_articles_slug_live ON articles (slug) WHERE deleted_at IS NULL AND slug <> '';
+CREATE UNIQUE INDEX IF NOT EXISTS uq_courses_slug_live  ON courses  (slug) WHERE deleted_at IS NULL AND slug <> '';
 -- Add OAuth provider ID columns for Google and GitHub social login
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS github_id VARCHAR(255);
@@ -866,14 +877,14 @@ BEGIN
     SELECT id INTO sec_id FROM categories WHERE slug = 'cybersecurity';
 
     INSERT INTO categories (name, slug, parent_id, is_virtual, required_approvals)
-    VALUES ('Data', 'data', geek_root_id, false, 1)
-    ON CONFLICT (slug) DO NOTHING;
-    SELECT id INTO data_id FROM categories WHERE slug = 'data';
+    SELECT 'Data', 'data', geek_root_id, false, 1
+    WHERE NOT EXISTS (SELECT 1 FROM categories WHERE slug IN ('data', 'data-analytics'));
+    SELECT id INTO data_id FROM categories WHERE slug IN ('data', 'data-analytics') ORDER BY id LIMIT 1;
 
     INSERT INTO categories (name, slug, parent_id, is_virtual, required_approvals)
-    VALUES ('AI & Machine Learning', 'ai-machine-learning', geek_root_id, false, 1)
-    ON CONFLICT (slug) DO NOTHING;
-    SELECT id INTO aiml_id FROM categories WHERE slug = 'ai-machine-learning';
+    SELECT 'AI & Machine Learning', 'ai-machine-learning', geek_root_id, false, 1
+    WHERE NOT EXISTS (SELECT 1 FROM categories WHERE slug IN ('ai-machine-learning', 'artificial-intelligence'));
+    SELECT id INTO aiml_id FROM categories WHERE slug IN ('ai-machine-learning', 'artificial-intelligence') ORDER BY id LIMIT 1;
 
     -- Level 2 Subcategories
     -- Software Engineering
@@ -1149,14 +1160,14 @@ SELECT
     'A comprehensive guide to building, running, and optimizing production-grade Docker containers and multi-container microservice stacks.',
     '# Mastering Docker Containers & Microservices\n\nDocker has revolutionized software delivery by enabling developers to package applications and their dependencies into lightweight, isolated containers.\n\n## Key Concepts\n- **Images & Containers**: Understand how layer caching speeds up builds.\n- **Networking**: Multi-container network isolation.\n- **Volume Storage**: Persistent data strategies.\n\n```bash\n# Run a local container\ndocker run -d -p 8080:80 nginx:alpine\n```',
     'PUBLISHED',
-    11, -- Containers & Orchestration
+    (SELECT id FROM categories WHERE slug = 'containers-orchestration'),
     u.id,
     'art-docker-001-uuid-v4-sample-slug',
     'mastering-docker-containers-microservices',
     NOW(),
     'https://images.unsplash.com/photo-1605745341112-85968b19335b?w=600&auto=format&fit=crop'
-FROM users u WHERE u.email = 'admin@gg-cms.local'
-ON CONFLICT (public_id) DO NOTHING;
+FROM users u WHERE u.email = 'system@gg-cms.local'
+ON CONFLICT DO NOTHING;
 
 INSERT INTO articles (
     title,
@@ -1175,14 +1186,14 @@ SELECT
     'Detailed breakdown of critical vulnerabilities in modern AI applications, including prompt injection, model denial of service, and sensitive data leakage.',
     '# OWASP Top 10 for LLM & AI Applications\n\nAs Generative AI models integrate into enterprise architectures, securing the LLM processing pipeline becomes mandatory.\n\n## Top Threats\n1. **Prompt Injection**: Overriding model system prompts via untrusted input.\n2. **Insecure Output Handling**: Executing LLM outputs directly in shell scripts or database queries.\n3. **Training Data Poisoning**: Manipulating fine-tuning datasets.',
     'PUBLISHED',
-    15, -- AppSec & Threats
+    (SELECT id FROM categories WHERE slug = 'appsec-threats'),
     u.id,
     'art-owasp-002-uuid-v4-sample-slug',
     'owasp-top-10-for-llm-ai-applications',
     NOW(),
     'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop'
-FROM users u WHERE u.email = 'admin@gg-cms.local'
-ON CONFLICT (public_id) DO NOTHING;
+FROM users u WHERE u.email = 'system@gg-cms.local'
+ON CONFLICT DO NOTHING;
 
 INSERT INTO articles (
     title,
@@ -1201,14 +1212,14 @@ SELECT
     'Learn how indexing, EXPLAIN ANALYZE, query planner statistics, and connection pooling dramatically speed up database response times.',
     '# High-Performance PostgreSQL Query Optimization\n\nOptimizing database queries is the single most effective way to improve web application latency.\n\n## Techniques\n- **B-Tree & GIN Indexes**: Choosing the right index type.\n- **EXPLAIN ANALYZE**: Reading PostgreSQL execution plans.\n- **Connection Pooling**: Using PgBouncer for high concurrency.',
     'PUBLISHED',
-    16, -- Databases
+    (SELECT id FROM categories WHERE slug = 'databases'),
     u.id,
     'art-postgres-003-uuid-v4-sample-slug',
     'high-performance-postgresql-query-optimization',
     NOW(),
     'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=600&auto=format&fit=crop'
-FROM users u WHERE u.email = 'admin@gg-cms.local'
-ON CONFLICT (public_id) DO NOTHING;
+FROM users u WHERE u.email = 'system@gg-cms.local'
+ON CONFLICT DO NOTHING;
 
 INSERT INTO articles (
     title,
@@ -1227,14 +1238,14 @@ SELECT
     'Architecting scalable Retrieval-Augmented Generation systems using PgVector, hybrid search, and semantic re-ranking.',
     '# Building Enterprise RAG Architectures\n\nRetrieval-Augmented Generation connects LLMs with proprietary company knowledge bases safely.\n\n## Architecture Overview\n- Chunking documents into semantic passages.\n- Generating embeddings with OpenAI/Gemini APIs.\n- Storing vectors in PostgreSQL using `pgvector`.',
     'PUBLISHED',
-    19, -- Generative AI
+    (SELECT id FROM categories WHERE slug = 'generative-ai'),
     u.id,
     'art-rag-004-uuid-v4-sample-slug',
     'building-enterprise-rag-architectures-vector-databases',
     NOW(),
     'https://images.unsplash.com/photo-1677442136019-21780efad99a?w=600&auto=format&fit=crop'
-FROM users u WHERE u.email = 'admin@gg-cms.local'
-ON CONFLICT (public_id) DO NOTHING;
+FROM users u WHERE u.email = 'system@gg-cms.local'
+ON CONFLICT DO NOTHING;
 
 -- Seed Sample Courses
 INSERT INTO courses (
@@ -1252,14 +1263,14 @@ SELECT
     'Cloud-Native Kubernetes & DevOps Bootcamp',
     'Zero to hero guide covering Docker, Kubernetes deployment manifests, Helm charts, and GitOps CI/CD pipelines.',
     'PUBLISHED',
-    11, -- Containers & Orchestration
+    (SELECT id FROM categories WHERE slug = 'containers-orchestration'),
     u.id,
     'course-k8s-001-uuid-v4-sample-slug',
     'cloud-native-kubernetes-devops-bootcamp',
     NOW(),
     'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=600&auto=format&fit=crop'
-FROM users u WHERE u.email = 'admin@gg-cms.local'
-ON CONFLICT (public_id) DO NOTHING;
+FROM users u WHERE u.email = 'system@gg-cms.local'
+ON CONFLICT DO NOTHING;
 
 INSERT INTO courses (
     title,
@@ -1276,14 +1287,14 @@ SELECT
     'Securing Enterprise Applications & API Security',
     'Hands-on security course covering OAuth 2.0, OpenID Connect, JWT validation, and threat modeling.',
     'PUBLISHED',
-    15, -- AppSec & Threats
+    (SELECT id FROM categories WHERE slug = 'appsec-threats'),
     u.id,
     'course-sec-002-uuid-v4-sample-slug',
     'securing-enterprise-applications-api-security',
     NOW(),
     'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop'
-FROM users u WHERE u.email = 'admin@gg-cms.local'
-ON CONFLICT (public_id) DO NOTHING;
+FROM users u WHERE u.email = 'system@gg-cms.local'
+ON CONFLICT DO NOTHING;
 
 -- Seed Sample Learning Paths
 INSERT INTO learning_paths (
@@ -1297,7 +1308,7 @@ SELECT
     'Cloud Infrastructure & DevOps Mastery',
     'Master Linux, Docker, Kubernetes, Terraform, and CI/CD automation to become a certified DevOps Engineer.',
     u.id
-FROM users u WHERE u.email = 'admin@gg-cms.local'
+FROM users u WHERE u.email = 'system@gg-cms.local' AND NOT EXISTS (SELECT 1 FROM learning_paths WHERE title = 'Cloud Infrastructure & DevOps Mastery')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO learning_paths (
@@ -1311,7 +1322,7 @@ SELECT
     'Cybersecurity & Application Defense Path',
     'Learn vulnerability management, threat modeling, cloud security, and OWASP defenses.',
     u.id
-FROM users u WHERE u.email = 'admin@gg-cms.local'
+FROM users u WHERE u.email = 'system@gg-cms.local' AND NOT EXISTS (SELECT 1 FROM learning_paths WHERE title = 'Cybersecurity & Application Defense Path')
 ON CONFLICT DO NOTHING;
 -- Migration 038: Seed Catalog Content (Articles, Courses & Learning Paths)
 -- Generated automatically from content/ repository
@@ -1685,8 +1696,8 @@ Evaluating RAG performance requires automated metrics beyond manual spot-checkin
     'GUIDE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'generative-ai' OR c.slug = 'generative-ai')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'generative-ai' OR c.slug = 'generative-ai')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -1702,8 +1713,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'generative-ai' OR c.slug = 'generative-ai')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'generative-ai' OR c.slug = 'generative-ai')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -1832,8 +1843,8 @@ def calculate_psi(reference: np.ndarray, current: np.ndarray, num_buckets: int =
     'REFERENCE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'machine-learning-foundations' OR c.slug = 'machine-learning-foundations')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'machine-learning-foundations' OR c.slug = 'machine-learning-foundations')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -1849,8 +1860,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'machine-learning-foundations' OR c.slug = 'machine-learning-foundations')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'machine-learning-foundations' OR c.slug = 'machine-learning-foundations')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -1953,8 +1964,8 @@ When Cloud Run services communicate with private backend databases (e.g. Postgre
     'TUTORIAL'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'cloud-platforms' OR c.slug = 'cloud-platforms')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'cloud-platforms' OR c.slug = 'cloud-platforms')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -1970,8 +1981,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'cloud-platforms' OR c.slug = 'cloud-platforms')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'cloud-platforms' OR c.slug = 'cloud-platforms')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -2095,8 +2106,8 @@ Related Courses: kubernetes-zero-downtime-deployments, gcp-cloud-run-deployment-
     'INTERVIEW_PREP'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -2112,8 +2123,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -2241,8 +2252,8 @@ spec:
     'GUIDE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -2258,8 +2269,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -2380,8 +2391,8 @@ terraform {
     'GUIDE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'infrastructure-as-code' OR c.slug = 'infrastructure-as-code')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'infrastructure-as-code' OR c.slug = 'infrastructure-as-code')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -2397,8 +2408,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'infrastructure-as-code' OR c.slug = 'infrastructure-as-code')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'infrastructure-as-code' OR c.slug = 'infrastructure-as-code')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -2533,8 +2544,8 @@ func SanitizeLLMOutput(rawText string) string {
     'GUIDE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'appsec-threats' OR c.slug = 'appsec-threats')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'appsec-threats' OR c.slug = 'appsec-threats')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -2550,8 +2561,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'appsec-threats' OR c.slug = 'appsec-threats')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'appsec-threats' OR c.slug = 'appsec-threats')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -2706,8 +2717,8 @@ func JWTAuthMiddleware(jwtSecret []byte) func(http.Handler) http.Handler {
     'GUIDE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -2723,8 +2734,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -2839,8 +2850,8 @@ Related Courses: oauth2-oidc-implementation-guide, enterprise-application-securi
     'INTERVIEW_PREP'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -2856,8 +2867,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-access')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -3007,8 +3018,8 @@ func main() {
     'GUIDE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'pki-cryptography' OR c.slug = 'pki-cryptography')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'pki-cryptography' OR c.slug = 'pki-cryptography')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -3024,8 +3035,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'pki-cryptography' OR c.slug = 'pki-cryptography')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'pki-cryptography' OR c.slug = 'pki-cryptography')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -3163,8 +3174,8 @@ func PollOutbox(ctx context.Context, db *sql.DB) {
     'GUIDE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'data-engineering' OR c.slug = 'data-engineering')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'data-engineering' OR c.slug = 'data-engineering')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -3180,8 +3191,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'data-engineering' OR c.slug = 'data-engineering')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'data-engineering' OR c.slug = 'data-engineering')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -3274,8 +3285,8 @@ LIMIT 10;
     'GUIDE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'databases' OR c.slug = 'databases')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'databases' OR c.slug = 'databases')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -3291,8 +3302,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'databases' OR c.slug = 'databases')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'databases' OR c.slug = 'databases')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -3417,8 +3428,8 @@ func main() {
     'GUIDE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -3434,8 +3445,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -3534,8 +3545,8 @@ Related Courses: go-concurrency-patterns, grpc-vs-rest-microservices',
     'INTERVIEW_PREP'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -3551,8 +3562,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -3705,8 +3716,8 @@ Related Courses: go-concurrency-patterns, grpc-vs-rest-microservices',
     'INTERVIEW_PREP'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -3722,8 +3733,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -3908,8 +3919,8 @@ func FanIn(ctx context.Context, channels ...<-chan Result) <-chan Result {
     'GUIDE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'programming-languages' OR c.slug = 'programming-languages')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'programming-languages' OR c.slug = 'programming-languages')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -3925,8 +3936,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'programming-languages' OR c.slug = 'programming-languages')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'programming-languages' OR c.slug = 'programming-languages')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO articles (title, description, body, status, category_id, created_by_id, public_id, slug, published_at, article_type)
@@ -4068,8 +4079,8 @@ type ArticleRepository interface {
     'GUIDE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'software-design' OR c.slug = 'software-design')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'software-design' OR c.slug = 'software-design')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4085,8 +4096,8 @@ SELECT
     'MODULE'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'software-design' OR c.slug = 'software-design')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'software-design' OR c.slug = 'software-design')
+ON CONFLICT DO NOTHING;
 
 
 -- 2. SEED DEDICATED COURSES
@@ -4104,8 +4115,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'generative-ai' OR c.slug = 'generative-ai')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'generative-ai' OR c.slug = 'generative-ai')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4121,8 +4132,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'appsec-threats' OR c.slug = 'appsec-threats')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'appsec-threats' OR c.slug = 'appsec-threats')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4138,8 +4149,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'backend-apis' OR c.slug = 'backend-apis')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4155,8 +4166,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'machine-learning-foundations' OR c.slug = 'machine-learning-foundations')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'machine-learning-foundations' OR c.slug = 'machine-learning-foundations')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4172,8 +4183,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'generative-ai' OR c.slug = 'generative-ai')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'generative-ai' OR c.slug = 'generative-ai')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4189,8 +4200,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'containers-orchestration' OR c.slug = 'containers-orchestration')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4206,8 +4217,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'cloud-platforms' OR c.slug = 'cloud-platforms')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'cloud-platforms' OR c.slug = 'cloud-platforms')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4223,8 +4234,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'infrastructure-as-code' OR c.slug = 'infrastructure-as-code')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'infrastructure-as-code' OR c.slug = 'infrastructure-as-code')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4240,8 +4251,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-and-access')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'identity-access' OR c.slug = 'identity-and-access')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4257,8 +4268,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'appsec-threats' OR c.slug = 'appsec-and-threats')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'appsec-threats' OR c.slug = 'appsec-and-threats')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4274,8 +4285,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'pki-cryptography' OR c.slug = 'pki-and-cryptography')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'pki-cryptography' OR c.slug = 'pki-and-cryptography')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4291,8 +4302,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'databases' OR c.slug = 'databases')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'databases' OR c.slug = 'databases')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4308,8 +4319,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'databases' OR c.slug = 'databases')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'databases' OR c.slug = 'databases')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4325,8 +4336,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'software-design' OR c.slug = 'software-design')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'software-design' OR c.slug = 'software-design')
+ON CONFLICT DO NOTHING;
 
 
 INSERT INTO courses (title, description, status, category_id, created_by_id, public_id, slug, published_at, course_type)
@@ -4342,8 +4353,8 @@ SELECT
     'TRACK'
 FROM users u 
 CROSS JOIN categories c 
-WHERE u.email = 'admin@gg-cms.local' AND (c.slug = 'programming-languages' OR c.slug = 'programming-languages')
-ON CONFLICT (public_id) DO NOTHING;
+WHERE u.email = 'system@gg-cms.local' AND (c.slug = 'programming-languages' OR c.slug = 'programming-languages')
+ON CONFLICT DO NOTHING;
 
 
 -- 3. SEED LEARNING PATHS & JUNCTION COURSES
@@ -4354,7 +4365,7 @@ SELECT
     'Enterprise AI & LLM Systems Engineering Roadmap',
     'Comprehensive engineering roadmap for building production RAG systems, vector search pipelines, LLM guardrails, and automated drift detection.',
     u.id
-FROM users u WHERE u.email = 'admin@gg-cms.local'
+FROM users u WHERE u.email = 'system@gg-cms.local' AND NOT EXISTS (SELECT 1 FROM learning_paths WHERE title = 'Enterprise AI & LLM Systems Engineering Roadmap')
 ON CONFLICT DO NOTHING;
 
 
@@ -4388,7 +4399,7 @@ SELECT
     'Cybersecurity & Application Defense Career Path',
     'Comprehensive security path covering OAuth 2.0/OIDC delegated authorization, PKCE, X.509 PKI, mTLS microservice security, and OWASP Top 10 LLM defenses.',
     u.id
-FROM users u WHERE u.email = 'admin@gg-cms.local'
+FROM users u WHERE u.email = 'system@gg-cms.local' AND NOT EXISTS (SELECT 1 FROM learning_paths WHERE title = 'Cybersecurity & Application Defense Career Path')
 ON CONFLICT DO NOTHING;
 
 
@@ -4430,7 +4441,7 @@ SELECT
     'Cloud Infrastructure & DevOps Mastery Roadmap',
     'Master container orchestration, Kubernetes manifests, zero-downtime rolling updates, GCP Cloud Run, and modular Terraform IaC.',
     u.id
-FROM users u WHERE u.email = 'admin@gg-cms.local'
+FROM users u WHERE u.email = 'system@gg-cms.local' AND NOT EXISTS (SELECT 1 FROM learning_paths WHERE title = 'Cloud Infrastructure & DevOps Mastery Roadmap')
 ON CONFLICT DO NOTHING;
 
 
@@ -4464,7 +4475,7 @@ SELECT
     'Go Microservices & Modern Backend Engineering Roadmap',
     'Master clean architecture, concurrency patterns, gRPC vs REST APIs, Domain-Driven Design (DDD), and PostgreSQL performance tuning.',
     u.id
-FROM users u WHERE u.email = 'admin@gg-cms.local'
+FROM users u WHERE u.email = 'system@gg-cms.local' AND NOT EXISTS (SELECT 1 FROM learning_paths WHERE title = 'Go Microservices & Modern Backend Engineering Roadmap')
 ON CONFLICT DO NOTHING;
 
 
@@ -4535,8 +4546,8 @@ BEGIN
     SELECT id INTO swe_id FROM categories WHERE slug = 'software-engineering';
     SELECT id INTO cloud_id FROM categories WHERE slug = 'cloud-infrastructure';
     SELECT id INTO sec_id FROM categories WHERE slug = 'cybersecurity';
-    SELECT id INTO data_id FROM categories WHERE slug = 'data';
-    SELECT id INTO aiml_id FROM categories WHERE slug = 'ai-machine-learning';
+    SELECT id INTO data_id FROM categories WHERE slug IN ('data', 'data-analytics') ORDER BY id LIMIT 1;
+    SELECT id INTO aiml_id FROM categories WHERE slug IN ('ai-machine-learning', 'artificial-intelligence') ORDER BY id LIMIT 1;
 
     -- 1. SEED NEW SUBCATEGORIES
     -- Software Engineering
@@ -4890,7 +4901,7 @@ ON CONFLICT DO NOTHING;
 UPDATE categories
 SET name = 'Data & Analytics',
     slug = 'data-analytics'
-WHERE slug = 'data';
+WHERE slug = 'data' AND NOT EXISTS (SELECT 1 FROM categories WHERE slug = 'data-analytics');
 -- Migration 044: Rename 'ai-machine-learning' domain to 'Artificial Intelligence'
 -- In-place UPDATE (not delete+reinsert): row id is preserved, so every subcategory's
 -- parent_id and every content row's category_id FK reference remains valid.
@@ -4899,7 +4910,7 @@ WHERE slug = 'data';
 UPDATE categories
 SET name = 'Artificial Intelligence',
     slug = 'artificial-intelligence'
-WHERE slug = 'ai-machine-learning';
+WHERE slug = 'ai-machine-learning' AND NOT EXISTS (SELECT 1 FROM categories WHERE slug = 'artificial-intelligence');
 -- Migration 045: Add content_format discriminator column to articles and courses.
 -- 'blocks' (custom block editor JSON array), 'html' (legacy raw HTML),
 -- 'tiptap' (new WYSIWYG editor JSON doc). Backfilled by sniffing existing body shape.
@@ -4931,7 +4942,7 @@ UPDATE learning_paths SET slug = LOWER(REGEXP_REPLACE(title, '[^a-zA-Z0-9]+', '-
 -- 1. Identity & Application Security Engineering Roadmap
 INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
 SELECT 'SECURITY_TRACK', 'Cybersecurity & Identity Architecture', 'Deep dive into OAuth 2.0, OpenID Connect (OIDC), PKI & Cryptography, Web Application Pentesting, and Zero Trust access control.', 'cybersecurity-identity', u.id
-FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
+FROM (SELECT id FROM users WHERE email = 'system@gg-cms.local') u
 ON CONFLICT DO NOTHING;
 
 INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
@@ -4947,7 +4958,7 @@ ON CONFLICT DO NOTHING;
 -- 2. Backend Systems Engineering Roadmap
 INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
 SELECT 'STRUCTURED_PATH', 'Full-Stack Software Engineering Track', 'Master modern frontend development, backend microservices in Go, database modeling in PostgreSQL, and cloud deployments.', 'software-engineering', u.id
-FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
+FROM (SELECT id FROM users WHERE email = 'system@gg-cms.local') u
 ON CONFLICT DO NOTHING;
 
 INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
@@ -4963,7 +4974,7 @@ ON CONFLICT DO NOTHING;
 -- 3. Cloud Platform Engineering Roadmap
 INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
 SELECT 'STRUCTURED_PATH', 'Cloud Infrastructure & DevOps Mastery', 'Learn container orchestration with Kubernetes, Cloud Infrastructure on GCP & AWS, CI/CD automation, and Observability.', 'cloud-devops', u.id
-FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
+FROM (SELECT id FROM users WHERE email = 'system@gg-cms.local') u
 ON CONFLICT DO NOTHING;
 
 INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
@@ -4979,7 +4990,7 @@ ON CONFLICT DO NOTHING;
 -- 4. AI & ML Platform Engineering Roadmap
 INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
 SELECT 'STRUCTURED_PATH', 'AI & Machine Learning Engineering Track', 'Build and deploy AI applications using Large Language Models (LLMs), Vector Databases, RAG architectures, and AI Agents.', 'ai-ml-engineering', u.id
-FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
+FROM (SELECT id FROM users WHERE email = 'system@gg-cms.local') u
 ON CONFLICT DO NOTHING;
 
 INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
@@ -4995,7 +5006,7 @@ ON CONFLICT DO NOTHING;
 -- 5. System Design & Technical Interview
 INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
 SELECT 'INTERVIEW_PREP', 'System Design & Technical Interview Mastery', 'Master high-scale system design, caching strategies, load balancing, database sharding, and crack senior tech interviews.', 'system-design', u.id
-FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
+FROM (SELECT id FROM users WHERE email = 'system@gg-cms.local') u
 ON CONFLICT DO NOTHING;
 
 INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
@@ -5008,7 +5019,7 @@ ON CONFLICT DO NOTHING;
 -- 6. API Security & OWASP Top 10
 INSERT INTO learning_paths (kind, title, description, slug, created_by_id)
 SELECT 'SECURITY_TRACK', 'API Security & OWASP Top 10 Deep Dive', 'Identify, exploit, and patch API vulnerabilities based on OWASP API Security Top 10 guidelines.', 'api-security', u.id
-FROM (SELECT id FROM users ORDER BY id ASC LIMIT 1) u
+FROM (SELECT id FROM users WHERE email = 'system@gg-cms.local') u
 ON CONFLICT DO NOTHING;
 
 INSERT INTO learning_path_courses (learning_path_id, course_id, sort_order)
@@ -5105,3 +5116,60 @@ WHERE slug IN (
     'kubernetes-advanced-networking',
     'enterprise-rag-llm'
 );
+
+-- =============================================================================
+-- Integrity & scalability (kept in this single file so fresh deployments carry one SQL file)
+-- Every statement is idempotent (IF NOT EXISTS / guarded), so re-applying is safe.
+-- =============================================================================
+
+-- pg_trgm: makes ILIKE '%term%' search indexable instead of a sequential scan.
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- ---- Soft-delete-safe uniqueness -------------------------------------------
+-- Plain UNIQUE constraints also count soft-deleted rows, which blocks re-enrolling and
+-- reusing a slug after a delete. Partial indexes enforce uniqueness among live rows only.
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'enrollments'::regclass AND contype = 'u'
+               AND conkey = (SELECT array_agg(attnum ORDER BY attnum) FROM pg_attribute
+                             WHERE attrelid = 'enrollments'::regclass AND attname IN ('user_id', 'course_id'))) THEN
+        EXECUTE 'ALTER TABLE enrollments DROP CONSTRAINT ' || quote_ident((
+            SELECT conname FROM pg_constraint WHERE conrelid = 'enrollments'::regclass AND contype = 'u'
+              AND conkey = (SELECT array_agg(attnum ORDER BY attnum) FROM pg_attribute
+                            WHERE attrelid = 'enrollments'::regclass AND attname IN ('user_id', 'course_id'))
+            LIMIT 1));
+    END IF;
+END $$;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_enrollments_user_course ON enrollments (user_id, course_id) WHERE deleted_at IS NULL;
+
+-- ---- Public catalogue / hub list queries ------------------------------------
+-- Public lists filter "status = PUBLISHED OR has_pending_draft" and sort by published_at.
+CREATE INDEX IF NOT EXISTS idx_articles_public_list ON articles (published_at DESC)
+    WHERE deleted_at IS NULL AND (status = 'PUBLISHED' OR has_pending_draft);
+CREATE INDEX IF NOT EXISTS idx_courses_public_list ON courses (published_at DESC)
+    WHERE deleted_at IS NULL AND (status = 'PUBLISHED' OR has_pending_draft);
+CREATE INDEX IF NOT EXISTS idx_articles_cat_status_pub ON articles (category_id, status, published_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_courses_cat_status_pub  ON courses  (category_id, status, published_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_courses_type_status     ON courses  (course_type, status) WHERE deleted_at IS NULL;
+-- Practice / Interview Prep hubs discriminate on a key inside interactive_metadata.
+CREATE INDEX IF NOT EXISTS idx_courses_assessment_type ON courses ((interactive_metadata->>'assessmentType'))
+    WHERE interactive_metadata IS NOT NULL AND deleted_at IS NULL;
+
+-- ---- Reviewer queue ("REVIEW, unassigned, in my reviewer groups' categories") -
+CREATE INDEX IF NOT EXISTS idx_articles_review_queue ON articles (category_id) WHERE status = 'REVIEW' AND reviewer_id IS NULL AND deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_courses_review_queue  ON courses  (category_id) WHERE status = 'REVIEW' AND reviewer_id IS NULL AND deleted_at IS NULL;
+
+-- ---- Search ------------------------------------------------------------------
+-- The article search is title ILIKE OR description ILIKE OR body ILIKE; all three need an index
+-- for the planner to combine them (BitmapOr). Terms shorter than 3 characters cannot use trigrams.
+CREATE INDEX IF NOT EXISTS idx_articles_title_trgm ON articles USING gin (title gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_articles_desc_trgm  ON articles USING gin (description gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_articles_body_trgm  ON articles USING gin (body gin_trgm_ops);
+
+-- ---- Foreign-key / relation lookups that had no usable index -----------------
+CREATE INDEX IF NOT EXISTS idx_lpc_course_id            ON learning_path_courses (course_id);
+CREATE INDEX IF NOT EXISTS idx_enrollment_lessons_lesson ON enrollment_lessons (lesson_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_user_recent  ON enrollments (user_id, status, last_accessed_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_tasks_content_type       ON tasks (content_id, type);
+CREATE INDEX IF NOT EXISTS idx_sections_course_order    ON sections (course_id, "order") WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_lessons_section_order    ON lessons (section_id, "order") WHERE deleted_at IS NULL;

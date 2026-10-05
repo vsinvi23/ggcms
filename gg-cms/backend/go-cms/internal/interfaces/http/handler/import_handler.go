@@ -1,7 +1,10 @@
 package handler
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
@@ -16,7 +19,9 @@ import (
 	lpsvc "github.com/serenya/go-cms/internal/application/learningpath"
 	lessonsvc "github.com/serenya/go-cms/internal/application/lesson"
 	sectionsvc "github.com/serenya/go-cms/internal/application/section"
+	settingssvc "github.com/serenya/go-cms/internal/application/settings"
 	tasksvc "github.com/serenya/go-cms/internal/application/task"
+	usersvc "github.com/serenya/go-cms/internal/application/user"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
 	"github.com/serenya/go-cms/internal/interfaces/http/middleware"
@@ -31,13 +36,23 @@ type ImportHandler struct {
 	lessonService   lessonsvc.Service
 	categoryService categorysvc.Service
 	lpService       lpsvc.Service
+	userService     usersvc.Service
+	settingsService settingssvc.Service
 }
 
 func NewImportHandler(cmsService cmssvc.Service, taskService tasksvc.Service, sectionService sectionsvc.Service, lessonService lessonsvc.Service, extraServices ...interface{}) *ImportHandler {
 	var catSvc categorysvc.Service
 	var lpSvc lpsvc.Service
+	var userSvc usersvc.Service
+	var settingsSvc settingssvc.Service
 
 	for _, s := range extraServices {
+		if us, ok := s.(usersvc.Service); ok {
+			userSvc = us
+		}
+		if ss, ok := s.(settingssvc.Service); ok {
+			settingsSvc = ss
+		}
 		if cs, ok := s.(categorysvc.Service); ok {
 			catSvc = cs
 		}
@@ -53,6 +68,8 @@ func NewImportHandler(cmsService cmssvc.Service, taskService tasksvc.Service, se
 		lessonService:   lessonService,
 		categoryService: catSvc,
 		lpService:       lpSvc,
+		userService:     userSvc,
+		settingsService: settingsSvc,
 	}
 }
 
@@ -84,6 +101,7 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 		}
 	}
 
+	super := h.isSuperAdmin(c)
 	var items []dto.ImportPreviewItem
 	for _, fh := range files {
 		f, openErr := fh.Open()
@@ -108,7 +126,16 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 			continue
 		}
 
-		parsed := importer.Parse(fh.Filename, content)
+		var parsed []importer.ParsedItem
+		var zipImages map[string]*importer.ImageAsset
+		if strings.HasSuffix(strings.ToLower(fh.Filename), ".zip") {
+			// Images in zips and the lifted size limits are super-admin only; everyone else gets the
+			// standard limits and documents only (image references are reported, not imported).
+			zr := importer.ParseZIPWithOptions(fh.Filename, content, importer.ZipOptions{CollectImages: super, NoLimits: super})
+			parsed, zipImages = zr.Items, zr.Images
+		} else {
+			parsed = importer.Parse(fh.Filename, content)
+		}
 		for _, p := range parsed {
 			var categoryID *uint
 			itemValid := p.Valid
@@ -144,7 +171,7 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 			if targetSlug == "" {
 				targetSlug = slugify.Slug(p.Title)
 			}
-			
+
 			if strings.EqualFold(p.Type, "LEARNING_PATH") && h.lpService != nil {
 				if lp, err := h.lpService.GetByIDOrSlug(c.Request.Context(), targetSlug); err == nil && lp != nil {
 					exists = true
@@ -164,29 +191,36 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 				}
 			}
 
+			body, sections, imgWarnings := p.Body, mapParsedSections(p.Sections), []string(nil)
+			if super && len(zipImages) > 0 && len(p.ImageRefs) > 0 {
+				body, sections, imgWarnings = h.storeAndRewriteImages(c.Request.Context(), p, zipImages)
+			}
+			warnings := append(append([]string(nil), p.Warnings...), imgWarnings...)
+
 			items = append(items, dto.ImportPreviewItem{
-				FileName:         p.FileName,
-				Index:            len(items),
-				Type:             p.Type,
-				Title:            p.Title,
-				Description:      p.Description,
-				Body:             p.Body,
-				BodyFormat:       p.BodyFormat,
-				CategorySlug:     p.CategorySlug,
-				CategoryID:       categoryID,
-				ArticleType:      p.ArticleType,
-				CourseType:       p.CourseType,
+				FileName:            p.FileName,
+				Index:               len(items),
+				Type:                p.Type,
+				Title:               p.Title,
+				Description:         p.Description,
+				Body:                body,
+				BodyFormat:          p.BodyFormat,
+				CategorySlug:        p.CategorySlug,
+				CategoryID:          categoryID,
+				ArticleType:         p.ArticleType,
+				CourseType:          p.CourseType,
 				InteractiveMetadata: p.InteractiveMetadata,
-				Kind:             p.Kind,
-				Slug:             p.Slug,
-				SequencedCourses: p.SequencedCourses,
-				Status:           p.Status,
-				Tags:             p.Tags,
-				Sections:         mapParsedSections(p.Sections),
-				Valid:            itemValid,
-				Error:            itemErr,
-				Exists:           exists,
-				ExistingID:       existingID,
+				Kind:                p.Kind,
+				Slug:                p.Slug,
+				SequencedCourses:    p.SequencedCourses,
+				Status:              p.Status,
+				Tags:                p.Tags,
+				Sections:            sections,
+				Warnings:            warnings,
+				Valid:               itemValid,
+				Error:               itemErr,
+				Exists:              exists,
+				ExistingID:          existingID,
 			})
 		}
 	}
@@ -235,6 +269,10 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 			kind := item.Kind
 			if kind == "" {
 				kind = "LEARNING_PLAN"
+			}
+			if kind != "LEARNING_PLAN" && kind != "INTERVIEW_PREP" {
+				results = append(results, dto.ImportConfirmResult{Title: item.Title, Success: false, Error: fmt.Sprintf("invalid learning path kind %q (expected LEARNING_PLAN or INTERVIEW_PREP)", kind)})
+				continue
 			}
 			pathSlug := item.Slug
 			if pathSlug == "" {
@@ -306,7 +344,10 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 					}
 				}
 				if len(entries) > 0 {
-					_ = h.lpService.SetCourses(c.Request.Context(), lp.ID, entries)
+					if setErr := h.lpService.SetCourses(c.Request.Context(), lp.ID, entries); setErr != nil {
+						results = append(results, dto.ImportConfirmResult{Title: item.Title, ID: lp.ID, Success: false, Error: fmt.Sprintf("learning path saved but linking courses failed: %v", setErr)})
+						continue
+					}
 				}
 			}
 
@@ -377,26 +418,27 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 
 			// Overwrite
 			result, err = h.cmsService.Update(c.Request.Context(), item.ExistingID, cmsType, cmssvc.UpdateRequest{
-				Title:       &item.Title,
-				Description: desc,
-				Body:        body,
-				ArticleType: artType,
-				CourseType:  courseType,
+				Title:               &item.Title,
+				Description:         desc,
+				Body:                body,
+				ArticleType:         artType,
+				CourseType:          courseType,
 				InteractiveMetadata: interactiveMeta,
-				CategoryID:  categoryID,
+				CategoryID:          categoryID,
 			})
 		} else {
 			// Create new
 			result, err = h.cmsService.Create(c.Request.Context(), cmssvc.CreateRequest{
-				Type:        cmsType,
-				Title:       item.Title,
-				Description: desc,
-				Body:        body,
-				ArticleType: artType,
-				CourseType:  courseType,
+				Type:                cmsType,
+				Title:               item.Title,
+				Description:         desc,
+				Body:                body,
+				ArticleType:         artType,
+				CourseType:          courseType,
 				InteractiveMetadata: interactiveMeta,
-				CategoryID:  categoryID,
-				CreatedByID: userID,
+				CategoryID:          categoryID,
+				CreatedByID:         userID,
+				Slug:                importSlug(item),
 			})
 		}
 
@@ -443,8 +485,10 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 
 		var structureWarning string
 		if cmsType == entity.CMSTypeCourse && contentID != 0 && len(item.Sections) > 0 {
-			if err := h.createCourseStructure(c.Request.Context(), contentID, item.Sections); err != nil {
-				structureWarning = fmt.Sprintf("course created but structure import failed: %v", err)
+			// One transaction: on overwrite the old sections/lessons are replaced (not appended to), and a
+			// failure leaves the previous structure intact instead of a half-built course.
+			if err := h.sectionService.ReplaceCourseStructure(c.Request.Context(), contentID, toStructure(item.Sections)); err != nil {
+				structureWarning = fmt.Sprintf("course saved but structure import failed: %v", err)
 				log.Printf("[import] Confirm: %s (course id=%d)", structureWarning, contentID)
 			}
 		}
@@ -485,42 +529,6 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 	})
 }
 
-// createCourseStructure creates the Sections/Lessons for an imported course, mirroring
-// the pattern used by FactoryImportHandler.ingestSyncPayload for machine-ingested courses.
-// Best-effort: the course shell already exists by the time this is called, so a failure
-// here is reported as a warning rather than rolling back the course creation.
-func (h *ImportHandler) createCourseStructure(ctx context.Context, courseID uint, sections []dto.ImportSectionItem) error {
-	for _, sec := range sections {
-		createdSection, err := h.sectionService.Create(ctx, sectionsvc.CreateRequest{
-			Title:    sec.Title,
-			Order:    sec.Order,
-			CourseID: &courseID,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to create section %q: %w", sec.Title, err)
-		}
-		sectionID := createdSection.ID
-		for _, lesson := range sec.Lessons {
-			lessonType := entity.LessonType(lesson.Type)
-			if lessonType == "" {
-				lessonType = entity.LessonTypeText
-			}
-			content := lesson.Body
-			if _, err := h.lessonService.Create(ctx, lessonsvc.CreateRequest{
-				Title:     lesson.Title,
-				Type:      lessonType,
-				Content:   &content,
-				Duration:  lesson.Duration,
-				Order:     lesson.Order,
-				SectionID: &sectionID,
-			}); err != nil {
-				return fmt.Errorf("failed to create lesson %q: %w", lesson.Title, err)
-			}
-		}
-	}
-	return nil
-}
-
 func mapParsedSections(sections []importer.ParsedSection) []dto.ImportSectionItem {
 	if len(sections) == 0 {
 		return nil
@@ -552,4 +560,107 @@ func isSuperOrAdmin(c *gin.Context) bool {
 		return rLower == "admin" || rLower == "superadmin" || rLower == "super_admin" || rLower == "super-admin" || rLower == "masteradmin" || rLower == "master_admin"
 	}
 	return false
+}
+
+// importSlug returns the slug an imported item should be created with, or nil to let the
+// repository derive a unique one from the title.
+func importSlug(item dto.ImportConfirmItem) *string {
+	s := slugify.Slug(strings.TrimSpace(item.Slug))
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+func toStructure(sections []dto.ImportSectionItem) []sectionsvc.StructureSection {
+	out := make([]sectionsvc.StructureSection, len(sections))
+	for i, sec := range sections {
+		lessons := make([]sectionsvc.StructureLesson, len(sec.Lessons))
+		for j, l := range sec.Lessons {
+			body := l.Body
+			lessons[j] = sectionsvc.StructureLesson{
+				Title:    l.Title,
+				Type:     entity.LessonType(l.Type),
+				Content:  &body,
+				Duration: l.Duration,
+				Order:    l.Order,
+			}
+		}
+		out[i] = sectionsvc.StructureSection{Title: sec.Title, Order: sec.Order, Lessons: lessons}
+	}
+	return out
+}
+
+// masterAdminGroups are the group names that make a user a super admin. Plain "Admin" is a
+// regular administrator and is deliberately not in this list.
+var masterAdminGroups = []string{"superadmin", "super_admin", "super-admin", "masteradmin", "master_admin"}
+
+// isSuperAdmin reports whether the caller belongs to a super-admin group. The JWT role is just
+// "admin" for both admins and super admins, so group membership is looked up from the database.
+func (h *ImportHandler) isSuperAdmin(c *gin.Context) bool {
+	if !middleware.IsAdmin(c) || h.userService == nil {
+		return false
+	}
+	groups, err := h.userService.GetGroups(c.Request.Context(), middleware.GetUserID(c))
+	if err != nil {
+		return false
+	}
+	for _, g := range groups {
+		name := strings.ToLower(strings.TrimSpace(g.Name))
+		for _, m := range masterAdminGroups {
+			if name == m {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// storeAndRewriteImages saves each image a document references (from the uploaded zip) through
+// the configured storage provider and rewrites the references to the stored URLs. Identical
+// images are stored once. Missing images and storage failures become warnings, not errors.
+func (h *ImportHandler) storeAndRewriteImages(ctx context.Context, p importer.ParsedItem, assets map[string]*importer.ImageAsset) (string, []dto.ImportSectionItem, []string) {
+	sections := mapParsedSections(p.Sections)
+	if h.settingsService == nil {
+		return p.Body, sections, []string{"image storage is not configured; image references were left unchanged"}
+	}
+	provider, err := h.settingsService.GetStorageProvider(ctx)
+	if err != nil {
+		return p.Body, sections, []string{fmt.Sprintf("image storage unavailable (%v); image references were left unchanged", err)}
+	}
+
+	var warnings []string
+	mapping := map[string]string{}
+	stored := map[string]string{} // content hash -> URL
+	for _, ref := range p.ImageRefs {
+		resolved, ok := importer.ResolveImagePath(p.SourcePath, ref.Raw)
+		if !ok {
+			continue // already reported by the parser
+		}
+		asset, found := importer.LookupImage(assets, resolved)
+		if !found {
+			continue // already reported by the parser
+		}
+		sum := sha256.Sum256(asset.Data)
+		key := hex.EncodeToString(sum[:])
+		url, done := stored[key]
+		if !done {
+			_, publicURL, saveErr := provider.Save(bytes.NewReader(asset.Data), "import"+importer.ImageExt(asset.MIME), asset.MIME, int64(len(asset.Data)))
+			if saveErr != nil {
+				warnings = append(warnings, fmt.Sprintf("image %q could not be stored: %v", ref.Raw, saveErr))
+				continue
+			}
+			url = publicURL
+			stored[key] = url
+		}
+		mapping[ref.Raw] = url
+	}
+
+	body := importer.RewriteImageRefs(p.Body, mapping)
+	for i := range sections {
+		for j := range sections[i].Lessons {
+			sections[i].Lessons[j].Body = importer.RewriteImageRefs(sections[i].Lessons[j].Body, mapping)
+		}
+	}
+	return body, sections, warnings
 }
