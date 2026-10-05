@@ -83,9 +83,16 @@ func SeedAdmin(db *gorm.DB, cfg *config.AdminConfig) {
 		logger.Error("bootstrap: failed to query admin user", zap.Error(err))
 		return
 	} else {
-		logger.Info("bootstrap: master admin user already exists",
-			zap.String("email", cfg.Email),
-		)
+		hash, hashErr := password.Hash(cfg.Password)
+		if hashErr == nil {
+			if updateErr := db.WithContext(ctx).Model(user).Update("password_hash", hash).Error; updateErr != nil {
+				logger.Error("bootstrap: failed to update master admin password", zap.Error(updateErr))
+			} else {
+				logger.Info("bootstrap: master admin user already exists, password updated", zap.String("email", cfg.Email))
+			}
+		} else {
+			logger.Error("bootstrap: failed to hash master admin password for update", zap.Error(hashErr))
+		}
 	}
 
 	// ── Ensure master admin user belongs to ALL groups ──────────────────────
