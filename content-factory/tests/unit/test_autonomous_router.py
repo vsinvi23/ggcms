@@ -26,9 +26,13 @@ def _auth_headers() -> dict:
     token = jwt.encode(
         {
             "sub": "test-user",
-            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+            "role": "admin",
+            "iss": "gg-cms-factory-proxy",
+            "aud": "content-factory",
+            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=1),
         },
-        settings.jwt_secret,
+        settings.factory_proxy_secret,
         algorithm="HS256",
     )
     return {"Authorization": f"Bearer {token}"}

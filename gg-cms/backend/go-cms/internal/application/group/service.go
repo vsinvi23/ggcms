@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/serenya/go-cms/internal/application/identity"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/domain/repository"
 )
@@ -98,6 +99,9 @@ func (s *service) AddMember(ctx context.Context, groupID, userID uint) error {
 }
 
 func (s *service) RemoveMember(ctx context.Context, groupID, userID uint) error {
+	if err := identity.EnsureAdminRemains(ctx, s.groupRepo, userID, groupID); err != nil {
+		return err
+	}
 	members, err := s.groupRepo.FindMembers(ctx, groupID)
 	if err != nil {
 		return fmt.Errorf("failed to fetch group members: %w", err)

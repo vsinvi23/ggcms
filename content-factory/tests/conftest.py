@@ -58,6 +58,7 @@ def mock_mode_on(monkeypatch):
     suite should ever attempt a real LLM/network call.
     """
     monkeypatch.setattr(settings, "mock_mode", True)
+    monkeypatch.setattr(settings, "factory_proxy_secret", "test-factory-proxy-secret-0123456789")
 
 
 @pytest.fixture

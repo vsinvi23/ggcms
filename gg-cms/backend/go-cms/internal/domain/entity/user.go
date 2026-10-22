@@ -23,8 +23,11 @@ type User struct {
 	MobileNo     *string        `gorm:"size:20"`
 	Status       UserStatus     `gorm:"type:varchar(20);not null;default:'ACTIVE'"`
 	LastLogin    *time.Time
-	GoogleID     *string        `gorm:"column:google_id;size:255"`
-	GitHubID     *string        `gorm:"column:github_id;size:255"`
+	EmailVerified   bool           `gorm:"not null;default:false"`
+	EmailVerifiedAt *time.Time
+	PasswordSet     bool           `gorm:"not null;default:true"`
+	AvatarURL       *string
+	TokenVersion    int            `gorm:"->;column:token_version"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`

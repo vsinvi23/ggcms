@@ -2,337 +2,271 @@ package oauth
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/rand"
-	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
 	"net/http"
-	"strings"
 	"time"
 
+	"github.com/serenya/go-cms/internal/application/identity"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/domain/repository"
 	"github.com/serenya/go-cms/pkg/config"
-	jwtpkg "github.com/serenya/go-cms/pkg/jwt"
-	"golang.org/x/crypto/bcrypt"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
-	"golang.org/x/oauth2/google"
+	"github.com/serenya/go-cms/pkg/logger"
+	"go.uber.org/zap"
 )
 
-// OAuthUser holds the normalised profile returned by any provider.
-type OAuthUser struct {
-	ProviderID string
-	Email      string
-	Name       string
+const (
+	IntentLogin = "login"
+	IntentLink  = "link"
+
+	txTTL = 10 * time.Minute
+
+	StatusOK           = "ok"
+	StatusLinked       = "linked"
+	StatusLinkRequired = "link_required"
+	StatusEmailNeeded  = "email_needed"
+)
+
+type ProviderInfo struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
-// AuthResult is returned after a successful OAuth login or sign-up.
-type AuthResult struct {
-	Token string
-	User  *entity.User
+type StartResult struct {
+	URL     string
+	Binding string
+	TTL     time.Duration
 }
 
-// Service orchestrates the OAuth2 redirect flow.
+type CallbackResult struct {
+	Status   string
+	Redirect string
+	Ticket   string
+	Created  bool
+	User     *entity.User
+	Tokens   *identity.Tokens
+	Provider string
+}
+
+type IdentityInfo struct {
+	Provider  string     `json:"provider"`
+	Email     string     `json:"email,omitempty"`
+	Name      string     `json:"name,omitempty"`
+	LinkedAt  time.Time  `json:"linkedAt"`
+	LastLogin *time.Time `json:"lastLoginAt,omitempty"`
+}
+
 type Service interface {
-	// GetGoogleAuthURL builds the Google consent-page URL for the given state.
-	GetGoogleAuthURL(state string) string
-	// GetGitHubAuthURL builds the GitHub consent-page URL for the given state.
-	GetGitHubAuthURL(state string) string
-	// ExchangeGoogleCode trades an authorization code for a Google user profile.
-	ExchangeGoogleCode(ctx context.Context, code string) (*OAuthUser, error)
-	// ExchangeGitHubCode trades an authorization code for a GitHub user profile.
-	ExchangeGitHubCode(ctx context.Context, code string) (*OAuthUser, error)
-	// FindOrCreate looks up or creates a local user for the OAuth profile.
-	FindOrCreate(ctx context.Context, ou *OAuthUser, provider string) (*AuthResult, error)
-	// GenerateState creates a cryptographically signed state token.
-	GenerateState() (string, error)
-	// ValidateState verifies a state token produced by GenerateState.
-	ValidateState(state string) bool
+	Providers() []ProviderInfo
+	Start(ctx context.Context, provider, redirect, intent string, linkUserID uint) (*StartResult, error)
+	Callback(ctx context.Context, provider, code, state, providerErr, binding string, meta identity.Meta) (*CallbackResult, error)
+	ConfirmLink(ctx context.Context, ticket, password string, meta identity.Meta) (*entity.User, *identity.Tokens, error)
+	SendLinkEmail(ctx context.Context, ticket string) error
+	SubmitSignupEmail(ctx context.Context, ticket, email string) error
+	ListIdentities(ctx context.Context, userID uint) ([]IdentityInfo, error)
+	Unlink(ctx context.Context, userID uint, provider string, meta identity.Meta) (*identity.Tokens, error)
 }
 
 type service struct {
-	userRepo     repository.UserRepository
-	groupRepo    repository.GroupRepository
-	jwtManager   *jwtpkg.Manager
-	googleConfig *oauth2.Config
-	githubConfig *oauth2.Config
-	hmacSecret   []byte
+	providers map[string]Provider
+	order     []string
+	labels    map[string]string
+	txs       repository.OAuthTransactionRepository
+	identity  *identity.Service
+	sessions  *identity.Sessions
 }
 
-// NewService constructs an OAuth service.
 func NewService(
-	userRepo repository.UserRepository,
-	groupRepo repository.GroupRepository,
-	jwtManager *jwtpkg.Manager,
 	cfg *config.OAuthConfig,
+	txs repository.OAuthTransactionRepository,
+	idSvc *identity.Service,
+	sessions *identity.Sessions,
 ) Service {
-	return &service{
-		userRepo:   userRepo,
-		groupRepo:  groupRepo,
-		jwtManager: jwtManager,
-		hmacSecret: []byte(cfg.StateHMACSecret),
-		googleConfig: &oauth2.Config{
-			ClientID:     cfg.GoogleClientID,
-			ClientSecret: cfg.GoogleClientSecret,
-			RedirectURL:  cfg.GoogleRedirectURL,
-			Scopes:       []string{"openid", "email", "profile"},
-			Endpoint:     google.Endpoint,
-		},
-		githubConfig: &oauth2.Config{
-			ClientID:     cfg.GitHubClientID,
-			ClientSecret: cfg.GitHubClientSecret,
-			RedirectURL:  cfg.GitHubRedirectURL,
-			Scopes:       []string{"read:user", "user:email"},
-			Endpoint:     github.Endpoint,
-		},
+	client := &http.Client{Timeout: httpTimeout}
+	s := &service{
+		providers: map[string]Provider{},
+		labels:    map[string]string{"google": "Google", "github": "GitHub", "linkedin": "LinkedIn"},
+		txs:       txs, identity: idSvc, sessions: sessions,
 	}
-}
-
-// ── State helpers ─────────────────────────────────────────────────────────────
-
-// GenerateState returns "<nonce>.<base64url(HMAC-SHA256(secret, nonce))>".
-// This is stateless — no DB or session required to verify it.
-func (s *service) GenerateState() (string, error) {
-	nonce := make([]byte, 16)
-	if _, err := rand.Read(nonce); err != nil {
-		return "", err
+	if p := cfg.Google; p.Enabled {
+		s.register(newGoogle(p.ClientID, p.ClientSecret, p.RedirectURL, client))
 	}
-	nonceHex := hex.EncodeToString(nonce)
-	sig := s.signNonce(nonceHex)
-	return nonceHex + "." + sig, nil
-}
-
-// ValidateState verifies the HMAC signature embedded in the state token.
-func (s *service) ValidateState(state string) bool {
-	parts := strings.SplitN(state, ".", 2)
-	if len(parts) != 2 {
-		return false
+	if p := cfg.GitHub; p.Enabled {
+		s.register(newGitHub(p.ClientID, p.ClientSecret, p.RedirectURL, client))
 	}
-	expected := s.signNonce(parts[0])
-	return hmac.Equal([]byte(expected), []byte(parts[1]))
+	if p := cfg.LinkedIn; p.Enabled {
+		s.register(newLinkedIn(p.ClientID, p.ClientSecret, p.RedirectURL, client))
+	}
+	return s
 }
 
-func (s *service) signNonce(nonce string) string {
-	mac := hmac.New(sha256.New, s.hmacSecret)
-	mac.Write([]byte(nonce))
-	return base64.URLEncoding.EncodeToString(mac.Sum(nil))
+func (s *service) register(p Provider) {
+	s.providers[p.Name()] = p
+	s.order = append(s.order, p.Name())
 }
 
-// ── Auth URL builders ─────────────────────────────────────────────────────────
-
-func (s *service) GetGoogleAuthURL(state string) string {
-	return s.googleConfig.AuthCodeURL(state, oauth2.AccessTypeOnline)
+func (s *service) Providers() []ProviderInfo {
+	out := make([]ProviderInfo, 0, len(s.order))
+	for _, n := range s.order {
+		out = append(out, ProviderInfo{ID: n, Name: s.labels[n]})
+	}
+	return out
 }
 
-func (s *service) GetGitHubAuthURL(state string) string {
-	return s.githubConfig.AuthCodeURL(state)
-}
-
-// ── Code exchange ─────────────────────────────────────────────────────────────
-
-func (s *service) ExchangeGoogleCode(ctx context.Context, code string) (*OAuthUser, error) {
-	tok, err := s.googleConfig.Exchange(ctx, code)
+func (s *service) Start(ctx context.Context, provider, redirect, intent string, linkUserID uint) (*StartResult, error) {
+	p, ok := s.providers[provider]
+	if !ok {
+		return nil, newErr(CodeProviderDisabled, nil)
+	}
+	if intent != IntentLink {
+		intent = IntentLogin
+	}
+	state, err := identity.RandomToken(32)
 	if err != nil {
-		return nil, fmt.Errorf("google code exchange: %w", err)
+		return nil, newErr(CodeServerError, err)
 	}
-
-	client := s.googleConfig.Client(ctx, tok)
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	nonce, err := identity.RandomToken(32)
 	if err != nil {
-		return nil, fmt.Errorf("google userinfo: %w", err)
+		return nil, newErr(CodeServerError, err)
 	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	var info struct {
-		ID    string `json:"id"`
-		Email string `json:"email"`
-		Name  string `json:"name"`
-	}
-	if err := json.Unmarshal(body, &info); err != nil {
-		return nil, fmt.Errorf("google userinfo parse: %w", err)
-	}
-	if info.ID == "" || info.Email == "" {
-		return nil, errors.New("google userinfo: missing id or email")
-	}
-	return &OAuthUser{ProviderID: info.ID, Email: info.Email, Name: info.Name}, nil
-}
-
-func (s *service) ExchangeGitHubCode(ctx context.Context, code string) (*OAuthUser, error) {
-	tok, err := s.githubConfig.Exchange(ctx, code)
+	vb, err := identity.RandomToken(32)
 	if err != nil {
-		return nil, fmt.Errorf("github code exchange: %w", err)
+		return nil, newErr(CodeServerError, err)
 	}
-
-	client := s.githubConfig.Client(ctx, tok)
-
-	// Fetch basic profile
-	resp, err := client.Get("https://api.github.com/user")
+	verifier := base64.RawURLEncoding.EncodeToString([]byte(vb))[:64]
+	binding, err := identity.RandomToken(32)
 	if err != nil {
-		return nil, fmt.Errorf("github user: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	var profile struct {
-		ID    int    `json:"id"`
-		Login string `json:"login"`
-		Name  string `json:"name"`
-		Email string `json:"email"`
-	}
-	if err := json.Unmarshal(body, &profile); err != nil {
-		return nil, fmt.Errorf("github user parse: %w", err)
+		return nil, newErr(CodeServerError, err)
 	}
 
-	email := profile.Email
-	// Email may be empty if user hides it — fetch from emails endpoint
-	if email == "" {
-		email = s.fetchGitHubPrimaryEmail(client)
-	}
-	if email == "" {
-		return nil, errors.New("github: could not determine user email")
-	}
-
-	name := profile.Name
-	if name == "" {
-		name = profile.Login
-	}
-
-	return &OAuthUser{
-		ProviderID: fmt.Sprint(profile.ID),
-		Email:      email,
-		Name:       name,
-	}, nil
-}
-
-func (s *service) fetchGitHubPrimaryEmail(client *http.Client) string {
-	resp, err := client.Get("https://api.github.com/user/emails")
-	if err != nil {
-		return ""
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	var emails []struct {
-		Email   string `json:"email"`
-		Primary bool   `json:"primary"`
-		Verified bool  `json:"verified"`
-	}
-	if err := json.Unmarshal(body, &emails); err != nil {
-		return ""
-	}
-	for _, e := range emails {
-		if e.Primary && e.Verified {
-			return e.Email
-		}
-	}
-	// Fallback: first verified email
-	for _, e := range emails {
-		if e.Verified {
-			return e.Email
-		}
-	}
-	return ""
-}
-
-// ── User find-or-create ───────────────────────────────────────────────────────
-
-// FindOrCreate finds the local user matching the OAuth profile, or creates one.
-// Strategy:
-//  1. Find by provider ID (fastest, exact match for returning OAuth users)
-//  2. Find by email (links OAuth to existing email/password account)
-//  3. Create new user (first-time OAuth sign-up)
-func (s *service) FindOrCreate(ctx context.Context, ou *OAuthUser, provider string) (*AuthResult, error) {
-	var user *entity.User
-	var err error
-
-	// 1 — look up by provider ID
-	switch provider {
-	case "google":
-		user, err = s.userRepo.FindByGoogleID(ctx, ou.ProviderID)
-	case "github":
-		user, err = s.userRepo.FindByGitHubID(ctx, ou.ProviderID)
-	}
-
-	if err != nil {
-		// 2 — look up by email; link provider if found
-		user, err = s.userRepo.FindByEmail(ctx, ou.Email)
-		if err == nil {
-			// Link provider ID to existing account (best-effort)
-			_ = s.userRepo.UpdateOAuthID(ctx, user.ID, provider, ou.ProviderID)
-		}
-	}
-
-	if err != nil {
-		// 3 — create a new user
-		user, err = s.createOAuthUser(ctx, ou, provider)
-		if err != nil {
-			return nil, fmt.Errorf("oauth create user: %w", err)
-		}
-	}
-
-	if user.Status == entity.UserStatusDeactivated || user.Status == entity.UserStatusInactive {
-		return nil, errors.New("account is disabled")
-	}
-
-	// Update last login
 	now := time.Now()
-	_ = s.userRepo.UpdateLastLogin(ctx, user.ID, now)
-
-	// Determine role from groups
-	role := "user"
-	for _, g := range user.Groups {
-		if strings.EqualFold(g.Name, "Admin") {
-			role = "admin"
-			break
-		}
+	tx := &entity.OAuthTransaction{
+		State: state, Provider: provider, Nonce: nonce, CodeVerifier: verifier,
+		BindingHash: identity.HashToken(binding), Intent: intent,
+		RedirectPath: SafeRedirect(redirect), ExpiresAt: now.Add(txTTL), CreatedAt: now,
 	}
-
-	token, err := s.jwtManager.Generate(user.ID, user.Email, role)
-	if err != nil {
-		return nil, fmt.Errorf("oauth jwt generate: %w", err)
+	if intent == IntentLink {
+		tx.LinkUserID = &linkUserID
 	}
-
-	return &AuthResult{Token: token, User: user}, nil
+	if err := s.txs.Create(ctx, tx); err != nil {
+		return nil, newErr(CodeServerError, err)
+	}
+	return &StartResult{URL: p.AuthURL(state, nonce, pkceChallenge(verifier)), Binding: binding, TTL: txTTL}, nil
 }
 
-func (s *service) createOAuthUser(ctx context.Context, ou *OAuthUser, provider string) (*entity.User, error) {
-	// Generate a random password hash so the NOT NULL constraint is satisfied.
-	// The user will never be able to log in with email/password unless they reset it.
-	randBytes := make([]byte, 32)
-	rand.Read(randBytes)
-	hash, err := bcrypt.GenerateFromPassword(randBytes, bcrypt.DefaultCost)
+func (s *service) Callback(ctx context.Context, provider, code, state, providerErr, binding string, meta identity.Meta) (*CallbackResult, error) {
+	p, ok := s.providers[provider]
+	if !ok {
+		return nil, newErr(CodeProviderDisabled, nil)
+	}
+	if state == "" || binding == "" {
+		return nil, newErr(CodeInvalidState, nil)
+	}
+	tx, err := s.txs.Consume(ctx, state, time.Now())
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, newErr(CodeInvalidState, nil)
+		}
+		return nil, newErr(CodeServerError, err)
+	}
+	if tx.Provider != provider || subtle.ConstantTimeCompare([]byte(identity.HashToken(binding)), []byte(tx.BindingHash)) != 1 {
+		return nil, newErr(CodeInvalidState, nil)
+	}
+	if providerErr != "" {
+		if providerErr == "access_denied" {
+			return nil, newErr(CodeAccessDenied, nil)
+		}
+		return nil, newErr(CodeProviderError, nil)
+	}
+	if code == "" {
+		return nil, newErr(CodeProviderError, nil)
+	}
+
+	claims, err := p.Exchange(ctx, code, tx.CodeVerifier, tx.Nonce)
+	if err != nil {
+		logger.Warn("oauth: provider exchange failed", zap.String("provider", provider), zap.Error(err))
+		return nil, newErr(CodeProviderError, err)
+	}
+
+	res := &CallbackResult{Redirect: tx.RedirectPath, Provider: provider}
+
+	if tx.Intent == IntentLink && tx.LinkUserID != nil {
+		if err := s.identity.LinkToUser(ctx, *tx.LinkUserID, *claims); err != nil {
+			if errors.Is(err, identity.ErrIdentityAlreadyLinked) {
+				return nil, newErr(CodeIdentityAlreadyLinked, err)
+			}
+			return nil, newErr(CodeServerError, err)
+		}
+		res.Status = StatusLinked
+		return res, nil
+	}
+
+	outcome, err := s.identity.ResolveLogin(ctx, *claims)
+	if err != nil {
+		switch {
+		case errors.Is(err, identity.ErrAccountDisabled):
+			return nil, newErr(CodeAccountDisabled, err)
+		case errors.Is(err, identity.ErrEmailUnverified):
+			return nil, newErr(CodeEmailUnverified, err)
+		case errors.Is(err, identity.ErrIdentityAlreadyLinked):
+			return nil, newErr(CodeIdentityAlreadyLinked, err)
+		}
+		return nil, newErr(CodeServerError, err)
+	}
+
+	switch outcome.Kind {
+	case identity.OutcomeLinkRequired:
+		res.Status, res.Ticket = StatusLinkRequired, outcome.Ticket
+	case identity.OutcomeEmailNeeded:
+		res.Status, res.Ticket = StatusEmailNeeded, outcome.Ticket
+	default:
+		u, tokens, err := s.sessions.Issue(ctx, outcome.User.ID, meta, time.Now())
+		if err != nil {
+			if errors.Is(err, identity.ErrAccountDisabled) {
+				return nil, newErr(CodeAccountDisabled, err)
+			}
+			return nil, newErr(CodeServerError, err)
+		}
+		res.Status, res.User, res.Tokens = StatusOK, u, tokens
+		res.Created = outcome.Kind == identity.OutcomeCreated
+	}
+	return res, nil
+}
+
+func (s *service) ConfirmLink(ctx context.Context, ticket, password string, meta identity.Meta) (*entity.User, *identity.Tokens, error) {
+	u, err := s.identity.ConfirmLinkWithPassword(ctx, ticket, password)
+	if err != nil {
+		return nil, nil, err
+	}
+	return s.sessions.Issue(ctx, u.ID, meta, time.Now())
+}
+
+func (s *service) SendLinkEmail(ctx context.Context, ticket string) error {
+	return s.identity.SendLinkEmail(ctx, ticket)
+}
+
+func (s *service) SubmitSignupEmail(ctx context.Context, ticket, email string) error {
+	return s.identity.SubmitSignupEmail(ctx, ticket, email)
+}
+
+func (s *service) ListIdentities(ctx context.Context, userID uint) ([]IdentityInfo, error) {
+	list, err := s.identity.ListIdentities(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-
-	name := ou.Name
-	if name == "" {
-		name = strings.Split(ou.Email, "@")[0]
+	out := make([]IdentityInfo, 0, len(list))
+	for _, i := range list {
+		out = append(out, IdentityInfo{Provider: i.Provider, Email: i.ProviderEmail, Name: i.DisplayName, LinkedAt: i.LinkedAt, LastLogin: i.LastLoginAt})
 	}
+	return out, nil
+}
 
-	user := &entity.User{
-		Email:        ou.Email,
-		PasswordHash: string(hash),
-		Name:         name,
-		Status:       entity.UserStatusActive,
-	}
-	switch provider {
-	case "google":
-		user.GoogleID = &ou.ProviderID
-	case "github":
-		user.GitHubID = &ou.ProviderID
-	}
-
-	if err := s.userRepo.Create(ctx, user); err != nil {
+// Unlink removes the identity, revokes every other session and re-issues one for the caller.
+func (s *service) Unlink(ctx context.Context, userID uint, provider string, meta identity.Meta) (*identity.Tokens, error) {
+	if err := s.identity.Unlink(ctx, userID, provider); err != nil {
 		return nil, err
 	}
-	// Re-fetch to load Groups preload
-	return s.userRepo.FindByID(ctx, user.ID)
+	_, tokens, err := s.sessions.Issue(ctx, userID, meta, time.Now())
+	return tokens, err
 }

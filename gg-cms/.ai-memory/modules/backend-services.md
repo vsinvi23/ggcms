@@ -112,3 +112,14 @@ Two distinct paths, both in `internal/application/auth/service.go`:
 ```
 
 **SeedAdmin complexity:** 11 (graph-measured) — creates admin user + Admin group + links Geek virtual category to Admin group.
+
+## Hardening (2026-10-22)
+
+- **Roles:** `internal/application/identity/role.go` is the single role source (`RoleFromGroups`, `IsAdminGroup`, `IsSuperAdmin`, `EnsureAdminRemains`, `ErrLastAdmin`). `import_handler.go` uses `middleware.IsAdmin` and `identity.IsSuperAdmin`; no handler-local role helpers remain.
+- **Last admin:** `EnsureAdminRemains(ctx, groupRepo, userID, fromGroupID)` is called by `user.Service` (Update status/group replace, Delete, Deactivate) and `group.Service.RemoveMember`; handlers map `ErrLastAdmin` to 409. Deferred: group Delete/rename of the admin group.
+- **/factory proxy:** `router.go` mounts it only when `CONTENT_FACTORY_URL` and `FACTORY_PROXY_SECRET` (>= 32 bytes) are set; after Auth+AdminOnly+CSRF it drops Cookie/X-CSRF-Token, sets `Authorization: Bearer <service token>` (`middleware/factory_proxy.go`, iss `gg-cms-factory-proxy`, aud `content-factory`, 60 s). content-factory `backend/api/middleware/auth.py` verifies it with its own `FACTORY_PROXY_SECRET` (fail-closed 503 when unset); its SPA uses same-origin cookies + `X-CSRF-Token` (no localStorage token).
+- **Lockout:** `identity/throttle.go` (in-memory per instance; account+IP threshold 5, account-wide 20, 30 s doubling to 15 min; env `LOGIN_LOCK_*`). `auth.Service.Login` returns `ErrTooManyAttempts` -> 429 + Retry-After. Not shared across instances (Redis not a dependency; `middleware.RateLimiter` interface is the seam).
+- **Recovery:** `RecoveryIPAllowList` (`RECOVERY_ALLOWED_CIDRS`) runs before the secret check; `RecoveryAlert` audits + WARN-logs every denial/success; `auth.Service.RecoverPassword` only accepts admin targets and applies the full password policy (incl. HIBP when enabled).
+- **Audit/PII:** failed logins, lockouts, reset request/confirm, refresh-token reuse (`identity.ErrRefreshReuse`) are audited with `identity.AccountHash` instead of raw email; `middleware.DenialAudit` writes one `authz.denied` summary per actor+route every 5 min; access logs and the in-process log store mask emails (`middleware/pii.go`).
+- **Comments:** `ListReplies` loads the parent (`comment.Service.GetByID`) and applies the same content-visibility check as `GetByContent`.
+- **Tests:** `handler/authz_matrix_test.go` (CMS visibility, review comments, notification ownership, last-admin 409, tags admin-only), `group/service_test.go`, `user/service_test.go`, `identity/throttle_test.go`, `middleware/hardening_test.go`; `tests/api/*` and `run-api-tests.*` use cookie + CSRF.

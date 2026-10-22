@@ -16,7 +16,7 @@ type UserResponse struct {
 type CreateUserRequest struct {
 	Name     string  `json:"name" binding:"required"`
 	Email    string  `json:"email" binding:"required,email"`
-	Password string  `json:"password" binding:"required,min=6"`
+	Password string  `json:"password" binding:"required,max=1024"`
 	GroupID  *uint   `json:"groupId,omitempty"`
 }
 

@@ -12,6 +12,7 @@ type EnrollmentResponse struct {
 	EnrolledAt       *string    `json:"enrolledAt,omitempty"`
 	LastAccessedAt   *string    `json:"lastAccessedAt,omitempty"`
 	CompletedAt      *string    `json:"completedAt,omitempty"`
+	LastLessonID     *uint      `json:"lastLessonId,omitempty"`
 	Course           *CourseRef `json:"course,omitempty"`
 	CompletedLessons []IDRef    `json:"completedLessons,omitempty"`
 }
@@ -29,5 +30,6 @@ type UpdateEnrollmentRequest struct {
 		Progress         *float64 `json:"progress,omitempty"`
 		Status           *string  `json:"status,omitempty"`
 		CompletedLessons []IDRef  `json:"completedLessons,omitempty"`
+		LastLessonID     *uint    `json:"lastLessonId,omitempty"`
 	} `json:"data" binding:"required"`
 }

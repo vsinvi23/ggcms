@@ -19,12 +19,14 @@ const AdminRecoverySecretHeader = "X-Admin-Recovery-Secret"
 func AdminRecoverySecret(configuredSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if configuredSecret == "" {
+			RecoveryAlert(c, "admin.recovery_denied", "recovery not configured")
 			response.Unauthorized(c, "admin recovery is not configured")
 			c.Abort()
 			return
 		}
 		provided := c.GetHeader(AdminRecoverySecretHeader)
 		if provided == "" || subtle.ConstantTimeCompare([]byte(provided), []byte(configuredSecret)) != 1 {
+			RecoveryAlert(c, "admin.recovery_denied", "invalid or missing secret")
 			response.Unauthorized(c, "invalid or missing "+AdminRecoverySecretHeader)
 			c.Abort()
 			return

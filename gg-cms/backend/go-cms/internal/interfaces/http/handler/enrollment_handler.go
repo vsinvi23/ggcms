@@ -71,7 +71,7 @@ func (h *EnrollmentHandler) Create(c *gin.Context) {
 
 	enrollment, err := h.service.Enroll(c.Request.Context(), userID, courseID)
 	if err != nil {
-		response.InternalError(c, err.Error())
+		respondEnrollmentError(c, err)
 		return
 	}
 	response.Created(c, mapEnrollmentToDTO(enrollment))
@@ -103,11 +103,6 @@ func (h *EnrollmentHandler) Update(c *gin.Context) {
 		return
 	}
 
-	progress := 0.0
-	if req.Data.Progress != nil {
-		progress = *req.Data.Progress
-	}
-
 	var status *entity.EnrollmentStatus
 	if req.Data.Status != nil {
 		s := entity.EnrollmentStatus(*req.Data.Status)
@@ -118,10 +113,18 @@ func (h *EnrollmentHandler) Update(c *gin.Context) {
 	for i, l := range req.Data.CompletedLessons {
 		lessonIDs[i] = l.ID
 	}
+	if len(lessonIDs) > enrollmentsvc.MaxSyncLessonsPerCourse {
+		response.BadRequest(c, "too many lessons")
+		return
+	}
 
-	enrollment, err := h.service.UpdateProgress(c.Request.Context(), id, progress, status, lessonIDs)
+	enrollment, err := h.service.UpdateProgress(c.Request.Context(), id, enrollmentsvc.UpdateRequest{
+		Status:           status,
+		CompletedLessons: lessonIDs,
+		LastLessonID:     req.Data.LastLessonID,
+	})
 	if err != nil {
-		response.InternalError(c, err.Error())
+		respondEnrollmentError(c, err)
 		return
 	}
 	response.OK(c, mapEnrollmentToDTO(enrollment))
@@ -145,6 +148,7 @@ func mapEnrollmentToDTO(e *entity.Enrollment) dto.EnrollmentResponse {
 		s := e.CompletedAt.Format(time.RFC3339)
 		r.CompletedAt = &s
 	}
+	r.LastLessonID = e.LastLessonID
 	if e.Course.ID != 0 {
 		r.Course = &dto.CourseRef{ID: e.Course.ID, Title: e.Course.Title}
 	}

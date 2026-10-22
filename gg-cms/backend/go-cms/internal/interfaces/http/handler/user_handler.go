@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
 	"github.com/serenya/go-cms/internal/interfaces/http/middleware"
 	"github.com/serenya/go-cms/pkg/pagination"
+	"github.com/serenya/go-cms/pkg/password"
 	"github.com/serenya/go-cms/pkg/response"
 )
 
@@ -95,6 +97,11 @@ func (h *UserHandler) Create(c *gin.Context) {
 	}
 	user, err := h.service.CreateUser(c.Request.Context(), req.Email, req.Password, req.Name, req.GroupID)
 	if err != nil {
+		var pe *password.PolicyError
+		if errors.As(err, &pe) {
+			response.BadRequest(c, err.Error())
+			return
+		}
 		response.InternalError(c, err.Error())
 		return
 	}
@@ -135,6 +142,10 @@ func (h *UserHandler) Update(c *gin.Context) {
 
 	user, err := h.service.Update(c.Request.Context(), id, req.Name, req.MobileNo, req.Status, req.GroupID)
 	if err != nil {
+		if errors.Is(err, usersvc.ErrLastAdmin) {
+			response.Conflict(c, err.Error())
+			return
+		}
 		response.InternalError(c, err.Error())
 		return
 	}
@@ -155,6 +166,10 @@ func (h *UserHandler) Delete(c *gin.Context) {
 		return
 	}
 	if err := h.service.Delete(c.Request.Context(), id); err != nil {
+		if errors.Is(err, usersvc.ErrLastAdmin) {
+			response.Conflict(c, err.Error())
+			return
+		}
 		response.InternalError(c, err.Error())
 		return
 	}
@@ -185,6 +200,10 @@ func (h *UserHandler) Deactivate(c *gin.Context) {
 		return
 	}
 	if err := h.service.Deactivate(c.Request.Context(), id); err != nil {
+		if errors.Is(err, usersvc.ErrLastAdmin) {
+			response.Conflict(c, err.Error())
+			return
+		}
 		response.InternalError(c, err.Error())
 		return
 	}

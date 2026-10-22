@@ -1,8 +1,10 @@
 # GG-CMS — Codebase Overview (Graph-Derived)
 
 **Project:** `C-Vivek-Pesonal-Serenya-Project-CMS-gocms-gg-cms`  
-**Graph:** 8,150 nodes · 22,511 edges · Indexed: 2026-10-03  
+**Graph:** 9,055 nodes · 31,248 edges · Indexed: 2026-10-22
 **Branch:** `alpha-0.2`
+
+**Recent addition (2026-10-22, backend hardening):** last-admin guard shared via `identity.EnsureAdminRemains` (user Update/Delete/Deactivate + group RemoveMember → 409 `ErrLastAdmin`); `/factory` proxy now injects a 60 s HS256 service token (`middleware.FactoryServiceToken`, `FACTORY_PROXY_SECRET`) and the content-factory validates it instead of the user JWT; per-account login lockout (`identity.LoginThrottle`), recovery hardening (`RECOVERY_ALLOWED_CIDRS`, admin-only target, alerts), new audit events (`auth.login_failed/locked`, `auth.password_reset_*`, `auth.refresh_reuse_detected`, `authz.denied` summaries), email masking in logs, `GET /review-comments/:id/replies` visibility check, `middleware.RateLimiter` interface. See `modules/backend-services.md` §Hardening.
 
 **Recent addition (2026-10-03):** Learning-path flow rework — single landing page (no tabs), path-aware course player (`/course/...?path=<slug>`), public path API now returns real per-course data (published only), migrations 048/049 (path-course links + FK/unique integrity), diff-overlay XSS fix, mock/fallback data removed from the UI. See `modules/learning-paths.md`.
 

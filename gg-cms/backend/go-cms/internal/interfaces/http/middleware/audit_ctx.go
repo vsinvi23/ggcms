@@ -50,7 +50,7 @@ func LogAudit(c *gin.Context, action, targetType, targetID, targetName string, m
 	// Run asynchronously so the HTTP response is never held up by MongoDB.
 	go func() {
 		_ = svc.Log(context.Background(), actorID, actorEmail, action, targetType, targetID, targetName, meta, ip)
-		logging.GetGlobalLogStore().Record("INFO", "server_audit", action+": "+targetType+" ("+targetName+")", actorEmail, meta)
+		logging.GetGlobalLogStore().Record("INFO", "server_audit", action+": "+targetType+" ("+maskEmailsIn(targetName)+")", MaskEmail(actorEmail), meta)
 	}()
 }
 

@@ -20,9 +20,9 @@ type stubArticleRepo struct {
 func newStubArticleRepo() *stubArticleRepo {
 	return &stubArticleRepo{
 		articles: []*entity.Article{
-			{ID: 10, Title: "Go Security", CategoryID: uintPtr(1)},
-			{ID: 11, Title: "Zero Trust Basics", CategoryID: uintPtr(1)},
-			{ID: 20, Title: "GCP Cloud Infrastructure", CategoryID: uintPtr(2)},
+			{ID: 10, Title: "Go Security", CategoryID: uintPtr(1), Status: entity.CMSStatusPublished},
+			{ID: 11, Title: "Zero Trust Basics", CategoryID: uintPtr(1), Status: entity.CMSStatusPublished},
+			{ID: 20, Title: "GCP Cloud Infrastructure", CategoryID: uintPtr(2), Status: entity.CMSStatusPublished},
 		},
 	}
 }
@@ -36,7 +36,7 @@ func (s *stubArticleRepo) FindByID(ctx context.Context, id uint) (*entity.Articl
 			return a, nil
 		}
 	}
-	return &entity.Article{ID: id, Title: "Article Test"}, nil
+	return &entity.Article{ID: id, Title: "Article Test", Status: entity.CMSStatusPublished}, nil
 }
 func (s *stubArticleRepo) FindByPublicID(ctx context.Context, publicID string) (*entity.Article, error) {
 	return nil, nil
@@ -90,7 +90,7 @@ type stubCourseRepo struct {
 func newStubCourseRepo() *stubCourseRepo {
 	return &stubCourseRepo{
 		courses: []*entity.Course{
-			{ID: 30, Title: "Cloud Fundamentals", CategoryID: uintPtr(2)},
+			{ID: 30, Title: "Cloud Fundamentals", CategoryID: uintPtr(2), Status: entity.CMSStatusPublished},
 		},
 	}
 }
@@ -104,7 +104,7 @@ func (s *stubCourseRepo) FindByID(ctx context.Context, id uint) (*entity.Course,
 			return c, nil
 		}
 	}
-	return &entity.Course{ID: id, Title: "Course Test"}, nil
+	return &entity.Course{ID: id, Title: "Course Test", Status: entity.CMSStatusPublished}, nil
 }
 func (s *stubCourseRepo) FindByPublicID(ctx context.Context, publicID string) (*entity.Course, error) {
 	return nil, nil

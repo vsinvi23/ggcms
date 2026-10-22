@@ -76,3 +76,42 @@ func TestIPRateLimiter_WindowReset(t *testing.T) {
 		t.Fatal("request after window reset should be allowed")
 	}
 }
+
+func TestAuthRateLimit_IgnoresBypassHeader(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	origLimiter := authLimiter
+	authLimiter = newIPRateLimiter(1, time.Minute)
+	defer func() {
+		authLimiter.close()
+		authLimiter = origLimiter
+	}()
+
+	r := gin.New()
+	r.POST("/x", AuthRateLimit(), func(c *gin.Context) { c.Status(200) })
+	do := func() int {
+		req := httptest.NewRequest(http.MethodPost, "/x", nil)
+		req.RemoteAddr = "10.0.0.9:1"
+		req.Header.Set("X-E2E-Bypass-Rate-Limit", "1")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		return w.Code
+	}
+	if c := do(); c != 200 {
+		t.Fatalf("first: %d", c)
+	}
+	if c := do(); c != 429 {
+		t.Fatalf("header must not bypass limiter, got %d", c)
+	}
+}
+
+func TestRateLimitBypassRefusedInProduction(t *testing.T) {
+	t.Setenv("BYPASS_RATE_LIMIT", "1")
+	t.Setenv("APP_ENV", "production")
+	if rateLimitBypassEnabled() {
+		t.Fatal("bypass must be refused in production")
+	}
+	t.Setenv("APP_ENV", "development")
+	if !rateLimitBypassEnabled() {
+		t.Fatal("bypass should work outside production")
+	}
+}

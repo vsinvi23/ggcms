@@ -6,30 +6,40 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 
+	aisvc "github.com/serenya/go-cms/internal/application/ai"
+	"github.com/serenya/go-cms/internal/infrastructure/llm"
 	analyticssvc "github.com/serenya/go-cms/internal/application/analytics"
 	auditsvc "github.com/serenya/go-cms/internal/application/audit"
 	authsvc "github.com/serenya/go-cms/internal/application/auth"
+	identitysvc "github.com/serenya/go-cms/internal/application/identity"
 	categorysvc "github.com/serenya/go-cms/internal/application/category"
 	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	commentsvc "github.com/serenya/go-cms/internal/application/comment"
 	ctsvc "github.com/serenya/go-cms/internal/application/contenttype"
 	domainsvc "github.com/serenya/go-cms/internal/application/domain"
 	engagementsvc "github.com/serenya/go-cms/internal/application/engagement"
+	assessmentsvc "github.com/serenya/go-cms/internal/application/assessment"
+	certificatesvc "github.com/serenya/go-cms/internal/application/certificate"
 	enrollmentsvc "github.com/serenya/go-cms/internal/application/enrollment"
+	learnevents "github.com/serenya/go-cms/internal/application/learnevents"
 	groupsvc "github.com/serenya/go-cms/internal/application/group"
 	lpsvc "github.com/serenya/go-cms/internal/application/learningpath"
 	lessonsvc "github.com/serenya/go-cms/internal/application/lesson"
 	notificationsvc "github.com/serenya/go-cms/internal/application/notification"
 	oauthsvc "github.com/serenya/go-cms/internal/application/oauth"
 	personalizationsvc "github.com/serenya/go-cms/internal/application/personalization"
+	searchsvc "github.com/serenya/go-cms/internal/application/search"
+	seosvc "github.com/serenya/go-cms/internal/application/seo"
 	sectionsvc "github.com/serenya/go-cms/internal/application/section"
 	settingssvc "github.com/serenya/go-cms/internal/application/settings"
 	tagsvc "github.com/serenya/go-cms/internal/application/tag"
@@ -46,6 +56,7 @@ import (
 	jwtpkg "github.com/serenya/go-cms/pkg/jwt"
 	"github.com/serenya/go-cms/pkg/logger"
 	"github.com/serenya/go-cms/pkg/mailer"
+	"github.com/serenya/go-cms/pkg/metrics"
 )
 
 func main() {
@@ -113,7 +124,8 @@ func main() {
 
 	// ── Repositories (MongoDB) ────────────────────────────────────────────
 	commentRepo := mongorepo.NewCommentRepository(mongoDB.Database)
-	analyticsRepo := mongorepo.NewAnalyticsRepository(mongoDB.Database)
+	analyticsRepo := mongorepo.NewAnalyticsRepository(mongoDB.Database, cfg.Platform.AnalyticsRawRetentionDays, cfg.Platform.AnalyticsRollupRetentionDays)
+	userContentRepo := mongorepo.NewUserContentRepository(mongoDB.Database)
 	auditLogRepo := mongorepo.NewAuditLogRepository(mongoDB.Database)
 	reactionRepo := mongorepo.NewReactionRepository(mongoDB.Database)
 	highlightRepo := mongorepo.NewHighlightRepository(mongoDB.Database)
@@ -123,20 +135,64 @@ func main() {
 
 	// ── Application Services ─────────────────────────────────────────────
 	settingsSvc := settingssvc.NewService(appSettingsRepo, cfg)
+	userAuthRepo := pgrepo.NewUserAuthRepository(pgDB.Write)
+	refreshRepo := pgrepo.NewRefreshTokenRepository(pgDB.Write, pgDB.Read)
+	identityRepo := pgrepo.NewIdentityRepository(pgDB.Write, pgDB.Read)
+	oauthTxRepo := pgrepo.NewOAuthTransactionRepository(pgDB.Write)
+	emailTokenRepo := pgrepo.NewEmailTokenRepository(pgDB.Write)
+	sessionGuard := identitysvc.NewSessionGuard(userRepo)
+	sessions := identitysvc.NewSessions(userRepo, userAuthRepo, refreshRepo, jwtManager, sessionGuard,
+		time.Duration(cfg.JWT.RefreshTTLDays)*24*time.Hour)
+	// ===== NOTIF/ANALYTICS/SELF-SERVICE (wiring) =====
+	pc := cfg.Platform
+	statsRepo := pgrepo.NewPlatformStatsRepository(pgDB.Read)
+	prefsRepo := pgrepo.NewUserPreferencesRepository(pgDB.Write, pgDB.Read)
+	consentRepo := pgrepo.NewConsentRepository(pgDB.Write)
+	emailQueueRepo := pgrepo.NewEmailQueueRepository(pgDB.Write)
+	userDataRepo := pgrepo.NewUserDataRepository(pgDB.Write)
+	analyticsService := analyticssvc.NewService(analyticsRepo, statsRepo, analyticssvc.Config{IPSalt: pc.AnalyticsIPSalt, QueueSize: pc.AnalyticsQueueSize})
+	notificationService := notificationsvc.NewService(notifRepo, prefsRepo, emailQueueRepo, userRepo, notificationsvc.Options{
+		AppURL: cfg.OAuth.FrontendURL, APIURL: pc.APIBaseURL, MaxAttempt: pc.EmailMaxAttempts,
+	})
+	selfService := usersvc.NewSelfService(usersvc.SelfDeps{
+		Users: userRepo, Groups: groupRepo, Prefs: prefsRepo, Consents: consentRepo, UserData: userDataRepo,
+		UserContent: userContentRepo, Analytics: analyticsService, Sessions: sessions, PolicyVersion: pc.ConsentPolicyVersion,
+	})
+	metricsReg := metrics.New()
+	if sqlW, err := pgDB.Write.DB(); err == nil {
+		metricsReg.RegisterDBPool("write", sqlW)
+	}
+	if sqlR, err := pgDB.Read.DB(); err == nil {
+		metricsReg.RegisterDBPool("read", sqlR)
+	}
+	metricsReg.GaugeFunc("analytics_queue_depth", "Analytics events waiting to be persisted.", func() float64 {
+		d, _ := analyticsService.QueueStats()
+		return float64(d)
+	})
+	metricsReg.CounterFunc("analytics_events_dropped_total", "Analytics events dropped (queue full or insert failure).", func() float64 {
+		_, n := analyticsService.QueueStats()
+		return float64(n)
+	})
+	// ===== END NOTIF/ANALYTICS/SELF-SERVICE (wiring) =====
+	notifier := identitysvc.NewNotifier(notificationsvc.NewQueueSender(notificationService), cfg.Auth.Production)
+	identitySvc := identitysvc.NewService(userRepo, userAuthRepo, identityRepo, emailTokenRepo, sessions, notifier, cfg.OAuth.FrontendURL)
 	svcs := httpserver.Services{
-		Auth:            authsvc.NewService(userRepo, groupRepo, passwordResetRepo, jwtManager, mlr, cfg.OAuth.FrontendURL),
-		OAuth:           oauthsvc.NewService(userRepo, groupRepo, jwtManager, &cfg.OAuth),
+		Auth:            authsvc.NewService(userRepo, userAuthRepo, passwordResetRepo, sessions, identitySvc, notifier, cfg.OAuth.FrontendURL, cfg.Auth.HIBPEnabled, cfg.Auth.LoginReauthWindow,
+			authsvc.WithLoginThrottle(identitysvc.NewLoginThrottle(cfg.Auth.LockThreshold, cfg.Auth.LockAccountLimit, cfg.Auth.LockBase, cfg.Auth.LockMax))),
+		OAuth:           oauthsvc.NewService(&cfg.OAuth, oauthTxRepo, identitySvc, sessions),
+		Session:         sessionGuard,
 		User:            usersvc.NewService(userRepo, groupRepo),
 		Group:           groupsvc.NewService(groupRepo, userRepo),
 		Category:        categorysvc.NewService(categoryRepo, groupRepo, articleRepo),
 		CMS:             cmssvc.NewService(articleRepo, courseRepo, sectionRepo, groupRepo, categoryRepo, workflowEventRepo, userRepo, contentReviewRepo, settingsSvc),
 		Section:         sectionsvc.NewService(sectionRepo),
 		Lesson:          lessonsvc.NewService(lessonRepo),
-		Enrollment:      enrollmentsvc.NewService(enrollmentRepo),
 		Task:            tasksvc.NewService(taskRepo),
-		Notification:    notificationsvc.NewService(notifRepo),
+		Notification:    notificationService,
+		SelfService:     selfService,
+		Metrics:         metricsReg,
 		Comment:         commentsvc.NewService(commentRepo),
-		Analytics:       analyticssvc.NewService(analyticsRepo),
+		Analytics:       analyticsService,
 		Tag:             tagsvc.NewService(tagRepo),
 		Topic:           topicsvc.NewService(topicRepo),
 		Domain:          domainsvc.NewService(domainRepo, articleRepo, courseRepo),
@@ -148,8 +204,48 @@ func main() {
 		LearningPath:    lpsvc.NewService(learningPathRepo),
 		Audit:           auditsvc.NewService(auditLogRepo),
 		Settings:        settingsSvc,
-		Personalization: personalizationsvc.NewService(userProfileRepo, articleRepo, courseRepo, enrollmentRepo, tagRepo, topicRepo),
+		Personalization: personalizationsvc.NewService(userProfileRepo, articleRepo, courseRepo, enrollmentRepo, tagRepo, topicRepo,
+			personalizationsvc.WithFavourites(favouriteRepo), personalizationsvc.WithReactions(reactionRepo),
+			personalizationsvc.WithViews(analyticsService), personalizationsvc.WithPaths(learningPathRepo)),
 	}
+	// learning-loop:wiring
+	llTracker := learnevents.NewTracker(svcs.Analytics)
+	llNotifier := learnevents.NewNotifier(svcs.Notification)
+	llProgressRepo := pgrepo.NewEnrollmentProgressRepository(pgDB.Write, pgDB.Read)
+	llAttemptRepo := pgrepo.NewAssessmentAttemptRepository(pgDB.Write, pgDB.Read)
+	svcs.Certificate = certificatesvc.NewService(certificatesvc.Deps{
+		Certificates: pgrepo.NewCertificateRepository(pgDB.Write, pgDB.Read),
+		Users:        userRepo,
+		Courses:      llProgressRepo,
+		Tracker:      llTracker,
+		Notifier:     llNotifier,
+		PublicBase:   cfg.OAuth.FrontendURL,
+	})
+	svcs.Enrollment = enrollmentsvc.NewService(llProgressRepo, enrollmentsvc.Deps{
+		Attempts: llAttemptRepo, Certificates: svcs.Certificate, Paths: learningPathRepo, Tracker: personalizationsvc.WrapTracker(llTracker, svcs.Personalization), Notifier: llNotifier,
+	})
+	svcs.Assessment = assessmentsvc.NewService(llAttemptRepo, assessmentsvc.Deps{Completion: svcs.Enrollment, Tracker: llTracker})
+	// /learning-loop:wiring
+
+	// ai-layer:wiring
+	aiRepo := pgrepo.NewAIRepository(pgDB.Write, pgDB.Read)
+	aiGateway := aisvc.NewGateway(
+		llm.NewAnthropic(llm.AnthropicConfig{APIKey: os.Getenv("ANTHROPIC_API_KEY"), Timeout: 45 * time.Second, MaxRetries: 2}),
+		aiRepo, settingsSvc, aiAllowedLinkHosts(cfg.OAuth.FrontendURL))
+	svcs.AI = aisvc.NewService(aisvc.Deps{
+		Gateway: aiGateway, Content: aisvc.NewCMSReader(svcs.CMS), Catalog: aiRepo, Drafts: aiRepo, Chunks: aiRepo,
+		Convos: aiRepo, Moderation: aiRepo, UsageRepo: aiRepo, Settings: settingsSvc, Analytics: svcs.Analytics,
+	})
+	svcs.Comment = commentsvc.NewServiceWithScreener(commentRepo, aisvc.NewCommentScreener(svcs.AI))
+	aiCtx, aiCancel := context.WithCancel(context.Background())
+	defer aiCancel()
+	aisvc.RunIndexer(aiCtx, svcs.AI, 5*time.Minute)
+	// /ai-layer:wiring
+
+	// search-seo:wiring
+	svcs.Search = searchsvc.NewService(pgrepo.NewSearchRepository(pgDB.Write, pgDB.Read), searchsvc.WithEventTracker(svcs.Analytics))
+	svcs.SEO = seosvc.NewService(pgrepo.NewSEORepository(pgDB.Read), seosvc.Config{BaseURL: siteBaseURL(cfg.OAuth.FrontendURL)})
+	// /search-seo:wiring
 
 	// ── HTTP Router ───────────────────────────────────────────────────────
 	router, err := httpserver.NewRouter(cfg, jwtManager, svcs)
@@ -157,13 +253,39 @@ func main() {
 		logger.Fatal("failed to build router", zap.Error(err))
 	}
 
+	// ===== NOTIF/ANALYTICS/SELF-SERVICE (background jobs) =====
+	bgCtx, bgCancel := context.WithCancel(context.Background())
+	defer bgCancel()
+	if pc.AnalyticsRollupEnabled {
+		analyticsService.StartRollups(bgCtx, time.Hour)
+	}
+	if pc.EmailWorkerEnabled {
+		notificationsvc.NewWorker(notificationService, emailQueueRepo, prefsRepo, pgrepo.NewNotificationLookup(pgDB.Write), statsRepo, mlr, notificationsvc.WorkerConfig{
+			Production: cfg.Auth.Production, AppURL: cfg.OAuth.FrontendURL, RetentionDays: pc.EmailRetentionDays,
+			NotificationRetentionDays: pc.NotificationRetentionDays, DigestEnabled: pc.DigestEnabled,
+		}).Start(bgCtx)
+	}
+	if pc.MetricsAddr != "" {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", metricsReg.Handler())
+		go func() {
+			ms := &http.Server{Addr: pc.MetricsAddr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
+			if err := ms.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				logger.Error("metrics listener failed", zap.Error(err))
+			}
+		}()
+	}
+	// ===== END NOTIF/ANALYTICS/SELF-SERVICE (background jobs) =====
+
 	// ── HTTP/HTTPS Server ─────────────────────────────────────────────────
 	srv := &http.Server{
-		Addr:         ":" + cfg.Server.Port,
-		Handler:      router,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 60 * time.Second,
-		IdleTimeout:  120 * time.Second,
+		Addr:              ":" + cfg.Server.Port,
+		Handler:           router,
+		ReadHeaderTimeout: 10 * time.Second,
+		MaxHeaderBytes:    1 << 20,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	if cfg.TLS.Enabled {
@@ -212,11 +334,21 @@ func main() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		logger.Error("server forced shutdown", zap.Error(err))
 	}
+	bgCancel()
+	analyticsService.Close()
 	if err := mongoDB.Client.Disconnect(shutdownCtx); err != nil {
 		logger.Error("mongodb disconnect error", zap.Error(err))
 	}
 
 	logger.Info("server stopped cleanly")
+}
+
+func aiAllowedLinkHosts(frontendURL string) []string {
+	hosts := []string{"geekgully.com", "www.geekgully.com"}
+	if u, err := url.Parse(frontendURL); err == nil && u.Hostname() != "" {
+		hosts = append(hosts, u.Hostname())
+	}
+	return append(hosts, strings.Split(os.Getenv("AI_ALLOWED_LINK_HOSTS"), ",")...)
 }
 
 func loadCACertPool(caFile string) (*x509.CertPool, error) {

@@ -59,10 +59,10 @@ func (s *service) GetStorageProvider(ctx context.Context) (storage.Provider, err
 			PublicURL: all["storage.s3.public_url"],
 		}, nil
 	default:
-		uploadDir := all["storage.local.upload_dir"]
+		uploadDir := s.cfg.Upload.Dir
 		baseURL := all["storage.local.base_url"]
 		if uploadDir == "" {
-			uploadDir = s.cfg.Upload.Dir
+			uploadDir = "uploads"
 		}
 		if baseURL == "" {
 			baseURL = s.cfg.Upload.BaseURL

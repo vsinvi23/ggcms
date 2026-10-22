@@ -3,11 +3,15 @@ package user
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/serenya/go-cms/internal/application/identity"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/domain/repository"
 	"github.com/serenya/go-cms/pkg/password"
 )
+
+var ErrLastAdmin = identity.ErrLastAdmin
 
 type Service interface {
 	GetAll(ctx context.Context, page, size int) ([]*entity.User, int64, error)
@@ -43,6 +47,10 @@ func (s *service) GetByEmail(ctx context.Context, email string) (*entity.User, e
 }
 
 func (s *service) CreateUser(ctx context.Context, email, pass, name string, groupID *uint) (*entity.User, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if err := password.Validate(pass, email, name); err != nil {
+		return nil, err
+	}
 	hash, err := password.Hash(pass)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
@@ -52,6 +60,7 @@ func (s *service) CreateUser(ctx context.Context, email, pass, name string, grou
 		PasswordHash: hash,
 		Name:         name,
 		Status:       entity.UserStatusActive,
+		PasswordSet:  true,
 	}
 	if err := s.userRepo.Create(ctx, user); err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
@@ -90,12 +99,20 @@ func (s *service) Update(ctx context.Context, id uint, name string, mobileNo *st
 		case entity.UserStatusActive:
 			_ = s.userRepo.SetStatus(ctx, id, entity.UserStatusActive)
 		case entity.UserStatusDeactivated:
+			if err := s.ensureNotLastAdmin(ctx, id); err != nil {
+				return nil, err
+			}
 			_ = s.userRepo.SetStatus(ctx, id, entity.UserStatusDeactivated)
 		}
 	}
 
 	// Re-assign group if provided: remove from all current groups, add to new one
 	if groupID != nil && *groupID > 0 {
+		if target, err := s.groupRepo.FindByID(ctx, *groupID); err != nil || !identity.IsAdminGroup(*target) {
+			if err := s.ensureNotLastAdmin(ctx, id); err != nil {
+				return nil, err
+			}
+		}
 		currentGroups, _ := s.groupRepo.FindByUserID(ctx, id)
 		for _, g := range currentGroups {
 			_ = s.groupRepo.RemoveMember(ctx, g.ID, id)
@@ -111,7 +128,14 @@ func (s *service) Update(ctx context.Context, id uint, name string, mobileNo *st
 	return updated, nil
 }
 
+func (s *service) ensureNotLastAdmin(ctx context.Context, id uint) error {
+	return identity.EnsureAdminRemains(ctx, s.groupRepo, id, 0)
+}
+
 func (s *service) Delete(ctx context.Context, id uint) error {
+	if err := s.ensureNotLastAdmin(ctx, id); err != nil {
+		return err
+	}
 	return s.userRepo.Delete(ctx, id)
 }
 
@@ -120,6 +144,9 @@ func (s *service) Activate(ctx context.Context, id uint) error {
 }
 
 func (s *service) Deactivate(ctx context.Context, id uint) error {
+	if err := s.ensureNotLastAdmin(ctx, id); err != nil {
+		return err
+	}
 	return s.userRepo.SetStatus(ctx, id, entity.UserStatusDeactivated)
 }
 

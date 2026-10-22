@@ -1,7 +1,11 @@
-"""JWT authentication middleware + request identity injection.
+"""Service-token authentication middleware + request identity injection.
 
 Security model:
-- ALL /api/* routes require a valid Bearer JWT (shared gg-cms JWT_SECRET)
+- The gg-cms backend proxies /factory after verifying an admin session and
+  injects a short-lived HS256 service token signed with FACTORY_PROXY_SECRET
+  (iss=gg-cms-factory-proxy, aud=content-factory, exp <= 5 min). The browser
+  never holds a factory credential and the user JWT/cookies are not forwarded.
+- ALL /api/* routes require that Bearer service token
 - Exempt routes: /api/health (liveness), /docs, /openapi.json, /redoc
 - User identity (sub, email, is_admin) is injected into request.state
   so downstream handlers can enforce per-user/per-resource ownership
@@ -24,6 +28,10 @@ from backend.configs.settings import settings
 
 logger = logging.getLogger(__name__)
 
+SERVICE_TOKEN_ISSUER = "gg-cms-factory-proxy"
+SERVICE_TOKEN_AUDIENCE = "content-factory"
+SERVICE_TOKEN_MAX_LIFETIME_SECONDS = 300
+
 # Paths that bypass JWT validation (publicly accessible)
 _EXEMPT_EXACT = {"/api/health", "/factory/api/health"}
 _EXEMPT_PREFIXES = ("/docs", "/openapi", "/redoc")
@@ -33,7 +41,7 @@ ALLOWED_ORIGINS = [
     "https://geekgully.com",
     "https://www.geekgully.com",
 ] + (
-    # Allow localhost for local dev (only when JWT_SECRET is not set)
+    # Allow localhost for local dev (only when FACTORY_PROXY_SECRET is not set)
     [
         "http://localhost:5173",
         "http://localhost:8000",
@@ -41,7 +49,7 @@ ALLOWED_ORIGINS = [
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8000",
     ]
-    if not settings.jwt_secret
+    if not settings.factory_proxy_secret
     else []
 )
 
@@ -99,6 +107,9 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
             logger.info("Local test bypass enabled for %s", request.url)
             return await call_next(request)
 
+        if not settings.factory_proxy_secret:
+            return JSONResponse(status_code=503, content={"detail": "Factory authentication is not configured"})
+
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             return JSONResponse(
@@ -110,10 +121,14 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         try:
             payload: dict[str, Any] = jwt.decode(
                 token,
-                settings.jwt_secret,
+                settings.factory_proxy_secret,
                 algorithms=["HS256"],
-                options={"verify_exp": True, "require": ["sub", "exp"]},
+                audience=SERVICE_TOKEN_AUDIENCE,
+                issuer=SERVICE_TOKEN_ISSUER,
+                options={"verify_exp": True, "require": ["sub", "exp", "iat", "iss", "aud"]},
             )
+            if payload["exp"] - payload["iat"] > SERVICE_TOKEN_MAX_LIFETIME_SECONDS:
+                raise jwt.InvalidTokenError("service token lifetime too long")
         except jwt.ExpiredSignatureError:
             return JSONResponse(
                 status_code=401,
@@ -128,9 +143,7 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         # Inject verified identity into request state for downstream IDOR checks
         request.state.user_id = str(payload.get("sub", ""))
         request.state.user_email = str(payload.get("email", payload.get("name", "")))
-        # gg-cms JWT sets role="admin" for admin accounts
-        role = payload.get("role", "")
-        request.state.is_admin = role in ("admin", "super_admin") or bool(payload.get("is_admin"))
+        request.state.is_admin = payload.get("role") == "admin"
 
         return await call_next(request)
 
