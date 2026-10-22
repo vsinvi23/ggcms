@@ -557,7 +557,7 @@ const CertAxis = () => {
                 variants={fadeInRight}
                 className="flex justify-center w-full max-w-2xl mx-auto px-2 sm:px-0"
               >
-                <CLMDashboardMockup />
+                <div className="flex flex-col items-center gap-2 w-full"><CLMDashboardMockup /><p className="text-[11px] italic text-white/50">Illustrative</p></div>
               </motion.div>
             </div>
           </div>
