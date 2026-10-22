@@ -298,7 +298,7 @@ const HeroSection = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.9, delay: 0.2, ease: "easeOut" }}
           >
-            <div className="flex flex-col items-center gap-2 w-full"><PlatformMockup /><p className="text-[11px] italic text-white/50">Illustrative</p></div>
+            <PlatformMockup />
           </motion.div>
         </div>
       </div>

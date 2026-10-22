@@ -498,7 +498,7 @@ const XyberguardDLP = () => {
               variants={fadeInRight}
               className="flex justify-center w-full"
             >
-              <div className="flex flex-col items-center gap-2 w-full"><DLPDashboardMockup /><p className="text-[11px] italic text-white/50">Illustrative</p></div>
+              <DLPDashboardMockup />
             </motion.div>
           </div>
         </div>
