@@ -3,7 +3,7 @@
  * Covers: navigation, sidebar links, user info display, API data loading
  */
 import { test, expect, Page } from '@playwright/test';
-import { enableAuthBypass, ensureUserExists } from '../fixtures/auth';
+import { ensureUserExists } from '../fixtures/auth';
 
 const workerId = process.env.PW_WORKER_INDEX || process.env.PLAYWRIGHT_WORKER_INDEX || '0';
 const dashboardUserEmail = `e2e_dashboard_${workerId}@test.local`;
@@ -14,7 +14,6 @@ test.beforeAll(async () => {
 });
 
 async function createAndLoginUser(page: Page) {
-  await enableAuthBypass(page);
   await page.goto('/auth');
   await page.waitForLoadState('networkidle');
   await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(dashboardUserEmail);

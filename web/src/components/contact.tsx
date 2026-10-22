@@ -27,10 +27,7 @@ const trustPoints = [
   },
 ];
 
-const generateCaptcha = () => ({
-  a: Math.floor(Math.random() * 10) + 1,
-  b: Math.floor(Math.random() * 10) + 1,
-});
+const SUBMIT_COOLDOWN_MS = 30_000;
 
 const CONTACT_EMAIL = "info@serenyax.com";
 
@@ -48,8 +45,7 @@ const ContactUs = () => {
     website: "", // honeypot — real users never see or fill this
   });
 
-  const [captcha, setCaptcha] = useState(generateCaptcha);
-  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [lastSubmitAt, setLastSubmitAt] = useState(0);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -71,8 +67,6 @@ const ContactUs = () => {
       message: "",
       website: "",
     });
-    setCaptchaAnswer("");
-    setCaptcha(generateCaptcha());
   };
 
   const handleSubmit = async (e) => {
@@ -98,17 +92,16 @@ const ContactUs = () => {
       return;
     }
 
-    if (Number(captchaAnswer) !== captcha.a + captcha.b) {
+    if (Date.now() - lastSubmitAt < SUBMIT_COOLDOWN_MS) {
       toast({
-        title: "Verification Failed",
-        description: "Incorrect answer to the verification question. Please try again.",
+        title: "Please wait",
+        description: "Please wait a few seconds before sending another message.",
         variant: "destructive",
       });
-      setCaptchaAnswer("");
-      setCaptcha(generateCaptcha());
       return;
     }
 
+    setLastSubmitAt(Date.now());
     setLoading(true);
 
     const currentTime = new Date().toLocaleString();
@@ -312,20 +305,9 @@ const ContactUs = () => {
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <Label htmlFor="captchaAnswer">
-                  Verification: What is {captcha.a} + {captcha.b}? *
-                </Label>
-                <Input
-                  id="captchaAnswer"
-                  type="number"
-                  inputMode="numeric"
-                  value={captchaAnswer}
-                  onChange={(e) => setCaptchaAnswer(e.target.value)}
-                  required
-                  className={`${fieldClass} max-w-[140px]`}
-                />
-              </div>
+              <p className="md:col-span-2 text-xs text-gray-500 dark:text-gray-400">
+                We use your details only to respond to this enquiry.
+              </p>
 
               <div className="md:col-span-2 flex justify-center mt-2">
                 <Button

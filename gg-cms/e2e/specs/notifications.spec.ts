@@ -3,25 +3,21 @@
  * Covers: notification badge, list view, mark-read interaction
  */
 import { test, expect, Page } from '@playwright/test';
-import axios from 'axios';
-import { authBypassHeaders, enableAuthBypass, ensureUserExists } from '../fixtures/auth';
+import { apiLogin, ensureUserExists } from '../fixtures/auth';
 
 const API = process.env.API_BASE_URL || 'http://localhost:1337/api';
 const workerId = process.env.PW_WORKER_INDEX || process.env.PLAYWRIGHT_WORKER_INDEX || '0';
 const notifUserEmail = `e2e_notif_${workerId}@test.local`;
 const notifUserPassword = 'Notif@E2E123';
 
-let userJwt: string;
 let userId: string;
 
 test.beforeAll(async () => {
   const ensured = await ensureUserExists(notifUserEmail, notifUserPassword, `e2e_notif_${workerId}`, 'E2E Notification User');
-  userJwt = ensured.jwt ?? '';
-  userId = String(ensured.user?.id ?? '');
+  userId = String((ensured.user as { id?: number | string } | undefined)?.id ?? '');
 });
 
 async function loginUser(page: Page) {
-  await enableAuthBypass(page);
   await page.goto('/auth');
   await page.waitForLoadState('networkidle');
   await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(notifUserEmail);
@@ -31,33 +27,29 @@ async function loginUser(page: Page) {
 }
 
 async function seedNotification(message: string = 'Test notification') {
-  const adminLogin = await axios.post(
-    `${API}/auth/local`,
-    {
-      identifier: process.env.SEED_ADMIN_EMAIL || 'admin@cms.local',
-      password: process.env.SEED_ADMIN_PASSWORD || 'Admin@CMS2024!',
-    },
-    { headers: authBypassHeaders, validateStatus: () => true },
-  );
-  const adminJwt = adminLogin.data.jwt;
-  if (!adminJwt) return null;
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) return null;
+  const admin = await apiLogin(adminEmail, adminPassword);
+  if (!admin) return null;
 
-  const res = await axios.post(
-    `${API}/notifications`,
-    {
+  try {
+    const res = await admin.context.post('notifications', {
       data: {
-        user: userId,
-        title: 'E2E Notification',
-        message,
-        read: false,
+        data: {
+          user: userId,
+          title: 'E2E Notification',
+          message,
+          read: false,
+        },
       },
-    },
-    {
-      headers: { Authorization: `Bearer ${adminJwt}` },
-      validateStatus: () => true,
-    },
-  );
-  return res.data.data ?? null;
+      headers: await admin.csrfHeaders(),
+    });
+    const body = await res.json().catch(() => ({}));
+    return body.data ?? null;
+  } finally {
+    await admin.context.dispose();
+  }
 }
 
 test.describe('Notifications UI', () => {
