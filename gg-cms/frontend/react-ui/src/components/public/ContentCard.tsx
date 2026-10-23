@@ -5,7 +5,7 @@ import { Clock, BookOpen, Play, CheckCircle2, Eye, Award } from 'lucide-react';
 import { CmsResponseDto } from '@/api/types';
 import { cn } from '@/lib/utils';
 import { buildArticleUrl, buildCourseUrl } from '@/lib/slug';
-import { getArticleReadState, getPracticeAttempt, getCourseProgressState } from '@/lib/contentStateStore';
+import { getArticleReadState, getCourseProgressState } from '@/lib/contentStateStore';
 
 interface ContentCardProps {
   item: CmsResponseDto;
@@ -21,7 +21,6 @@ export function ContentCard({ item, className }: ContentCardProps) {
 
   const articleRead = isArticle ? getArticleReadState(item.id) : null;
   const courseProgress = isCourse ? getCourseProgressState(item.id) : null;
-  const practiceAttempt = getPracticeAttempt(item.id) || (item.slug ? getPracticeAttempt(item.slug) : null);
 
   return (
     <Link to={linkPath}>
@@ -74,11 +73,6 @@ export function ContentCard({ item, className }: ContentCardProps) {
               </Badge>
             ) : null}
 
-            {practiceAttempt?.isSubmitted && (
-              <Badge className="bg-emerald-500 text-white font-bold text-[10px] shadow-sm flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" /> Score: {practiceAttempt.score}%
-              </Badge>
-            )}
           </div>
         </div>
 
@@ -108,9 +102,6 @@ export function ContentCard({ item, className }: ContentCardProps) {
             </span>
             {articleRead?.isRead && (
               <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Completed</span>
-            )}
-            {practiceAttempt?.isSubmitted && (
-              <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Attempted</span>
             )}
           </div>
         </CardContent>

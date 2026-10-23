@@ -1,4 +1,6 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import React, { useState, useMemo } from 'react';
+import { CategoryResponseDto } from '@/api/types';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Search, BookOpen, Clock, Layers, Filter, ChevronRight, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -37,6 +39,7 @@ interface CourseCardData {
 }
 
 export function CoursesPage() {
+  usePageMeta({ title: 'Courses', description: 'Structured technical courses from fundamentals to advanced.', canonicalPath: '/courses' });
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('All');
@@ -63,7 +66,7 @@ export function CoursesPage() {
         slug: item.slug || buildCourseUrl(item),
         title: item.title,
         description: item.description || '',
-        level: (item.level as any) || 'Intermediate',
+        level: item.level || 'Intermediate',
         modulesCount: item.sectionsCount && item.sectionsCount > 0 ? item.sectionsCount : 0,
         lessonsCount: item.lessonsCount && item.lessonsCount > 0 ? item.lessonsCount : 0,
         durationText: dur,
@@ -82,7 +85,7 @@ export function CoursesPage() {
   }, [backendCourses]);
 
   const categories = useMemo(() => {
-    const flattenNames = (cats: any[]): string[] =>
+    const flattenNames = (cats: CategoryResponseDto[]): string[] =>
       cats.flatMap(c => [c.name, ...flattenNames(c.children ?? [])]);
     const fetchedNames = flattenNames(backendCategories ?? []).filter(Boolean);
     if (fetchedNames.length > 0) {

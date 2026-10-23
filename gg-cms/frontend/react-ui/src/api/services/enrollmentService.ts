@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import { EnrollmentDto, EnrollmentProgressDto } from '../types';
+import { EnrollmentDto, EnrollmentProgressDto, EnrollmentResumeDto, SyncLocalItem, SyncLocalResult } from '../types';
 
 const BASE = '/enrollments';
 
@@ -59,16 +59,23 @@ export const enrollmentService = {
   },
 
   async updateProgress(enrollmentId: number, data: EnrollmentProgressDto): Promise<EnrollmentDto> {
-    const payload: Record<string, unknown> = {};
-    if (data.progress !== undefined) payload.progress = data.progress;
-    if (data.status !== undefined) payload.status = data.status;
-    if (data.completedLessonId !== undefined) {
-      // Go CMS expects [{id: N}] array, not Strapi's {connect: [...]}
-      payload.completedLessons = [{ id: data.completedLessonId }];
-    }
-    const response = await apiClient.put(`${BASE}/${enrollmentId}`, { data: payload });
-    // Response: { success, data: enrollmentDTO }
+    const response = await apiClient.put(`${BASE}/${enrollmentId}`, { data });
     return transformEnrollment(response.data.data ?? response.data);
+  },
+
+  async getResume(courseId: number): Promise<EnrollmentResumeDto | null> {
+    try {
+      const response = await apiClient.get(`${BASE}/me/${courseId}/resume`);
+      return response.data.data ?? null;
+    } catch (err) {
+      if ((err as { response?: { status?: number } }).response?.status === 404) return null;
+      throw err;
+    }
+  },
+
+  async syncLocal(items: SyncLocalItem[]): Promise<SyncLocalResult[]> {
+    const response = await apiClient.post(`${BASE}/sync-local`, { items });
+    return response.data.data ?? [];
   },
 
   async drop(enrollmentId: number): Promise<void> {

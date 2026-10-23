@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import { authService } from '@/api/services';
+import type { SocialProvider } from '@/api/services/authService';
 import { userService } from '@/api/services/userService';
 import { toUserMessage } from '@/lib/errors';
 import { profileService } from '@/api/services/profileService';
@@ -19,6 +20,7 @@ interface AuthUser {
   avatar?: string;
   status: UserStatus;
   role: 'user' | 'admin';
+  emailVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -26,8 +28,8 @@ interface AuthContextType {
   isLoading: boolean;
   isGroupsLoading: boolean;
   login: (email: string, password: string) => Promise<{ error?: string }>;
-  signup: (email: string, password: string, name: string, mobileNo?: string) => Promise<{ error?: string }>;
-  socialLogin: (provider: 'google' | 'github') => Promise<{ error?: string }>;
+  signup: (email: string, password: string, name: string, mobileNo?: string) => Promise<{ error?: string; info?: string }>;
+  socialLogin: (provider: SocialProvider, redirect?: string) => Promise<{ error?: string }>;
   loginWithToken: (token?: string) => Promise<{ error?: string }>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -154,15 +156,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const userData = await authService.getCurrentUser() as {
-          id?: number; email?: string; name?: string; status?: string; role?: string;
-        };
+        const userData = await authService.getCurrentUser();
         const authUser: AuthUser = {
           id: userData?.id || 0,
           email: userData?.email || '',
           name: userData?.name || '',
           status: (userData?.status as UserStatus) || 'ACTIVE',
           role: isAdminRole(userData?.role) ? 'admin' : 'user',
+          emailVerified: userData?.emailVerified,
         };
         if (authUser.id > 0) {
           setUser(authUser);
@@ -205,19 +206,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       const response = await authService.login({ email, password });
+      const respUser = response.user as {
+        id?: number; email?: string; name?: string; username?: string;
+        avatar?: string; blocked?: boolean; roleType?: string; role?: string; emailVerified?: boolean;
+      } | undefined;
 
-      if (response.token) {
-        const respUser = response.user as {
-          id?: number; email?: string; name?: string; username?: string;
-          avatar?: string; blocked?: boolean; roleType?: string; role?: string;
-        } | undefined;
+      if (respUser?.id) {
         const authUser: AuthUser = {
-          id: respUser?.id || 0,
-          email: respUser?.email || email,
-          name: respUser?.name || respUser?.username || email.split('@')[0],
-          avatar: respUser?.avatar,
-          status: respUser?.blocked ? 'DEACTIVATED' : 'ACTIVE' as UserStatus,
-          role: (isAdminRole(respUser?.roleType) || isAdminRole(respUser?.role) ? 'admin' : 'user'),
+          id: respUser.id,
+          email: respUser.email || email,
+          name: respUser.name || respUser.username || email.split('@')[0],
+          avatar: respUser.avatar,
+          status: respUser.blocked ? 'DEACTIVATED' : 'ACTIVE' as UserStatus,
+          role: (isAdminRole(respUser.roleType) || isAdminRole(respUser.role) ? 'admin' : 'user'),
+          emailVerified: respUser.emailVerified,
         };
 
         // flushSync ensures state is committed before navigate('/dashboard') runs in caller
@@ -225,14 +227,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(authUser);
         });
         setUserData(authUser);
-        if (authUser.id > 0) {
-          fetchUserGroups(authUser.id);
-        }
+        fetchUserGroups(authUser.id);
         importVisitorProfile();
         return {};
       }
 
-      return { error: 'Login failed - no token received' };
+      return { error: 'Login failed. Please try again.' };
     } catch (err: unknown) {
       const error = err as { response?: { status?: number; data?: { message?: string } }; message?: string };
       if (error.response?.status === 401 || error.response?.status === 400) {
@@ -249,84 +249,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     password: string,
     name: string,
     mobileNo?: string
-  ): Promise<{ error?: string }> => {
-    setIsLoading(true);
+  ): Promise<{ error?: string; info?: string }> => {
+    if (!email || !password || !name) {
+      return { error: 'All fields are required' };
+    }
+    if (password.length < 12) {
+      return { error: 'Password must be at least 12 characters' };
+    }
     try {
-      if (!email || !password || !name) {
-        return { error: 'All fields are required' };
-      }
-      if (password.length < 6) {
-        return { error: 'Password must be at least 6 characters' };
-      }
-
-      const response = await authService.register({
+      setIsLoading(true);
+      await authService.register({
         name,
         email,
         password,
         mobileNo,
         username: email.split('@')[0],
       });
-
-      if (response.token) {
-        const respUser = response.user as {
-          id?: number; email?: string; name?: string; role?: string; roleType?: string;
-        } | undefined;
-        const authUser: AuthUser = {
-          id: respUser?.id || 0,
-          email: respUser?.email || email,
-          name: respUser?.name || name,
-          status: 'ACTIVE' as UserStatus,
-          role: (isAdminRole(respUser?.role) || isAdminRole(respUser?.roleType) ? 'admin' : 'user'),
-        };
-
-        flushSync(() => {
-          setUser(authUser);
-        });
-        setUserData(authUser);
-        if (authUser.id > 0) {
-          fetchUserGroups(authUser.id);
-        }
-        importVisitorProfile();
-        return {};
-      }
-
-      return { error: 'Registration failed - no token received' };
     } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 400) {
-        const msg = (err as { response?: { data?: { error?: { message?: string }; message?: string } } })?.response?.data;
-        const detail = msg?.error?.message || msg?.message || '';
-        if (detail.toLowerCase().includes('email') || detail.toLowerCase().includes('already')) {
-          return { error: 'An account with this email already exists.' };
-        }
-        if (detail.toLowerCase().includes('username')) {
-          return { error: 'This username is already taken.' };
-        }
-        return { error: 'Invalid registration details. Please check your input.' };
-      }
-      return { error: toUserMessage(err, 'Signup failed. Please try again.') };
-    } finally {
       setIsLoading(false);
+      return { error: toUserMessage(err, 'Signup failed. Please try again.') };
     }
+    setIsLoading(false);
+
+    // Registration is deliberately uniform (it never reveals whether the email already
+    // exists), so sign in with the same credentials to start the session.
+    const { error } = await login(email, password);
+    if (error) {
+      return { info: 'If this email can be used, we sent you a confirmation. Please sign in to continue.' };
+    }
+    return {};
   };
 
-  const socialLogin = async (provider: 'google' | 'github'): Promise<{ error?: string }> => {
-    try {
-      const url = await authService.getOAuthURL(provider);
-      // Full browser redirect — the provider will call our backend callback which
-      // in turn redirects to /auth/callback?token=... on the frontend.
-      window.location.href = url;
-      // This line is never reached (page navigates away), but we return {} to
-      // satisfy the type signature so callers don't need a special case.
-      return {};
-    } catch {
-      return { error: `Failed to start ${provider} sign-in. Please try again.` };
-    }
+  const socialLogin = async (provider: SocialProvider, redirect?: string): Promise<{ error?: string }> => {
+    // Full browser navigation: the backend 302s to the provider and the provider
+    // returns to /auth/callback on the SPA with a fixed status or error code.
+    window.location.href = authService.getSocialStartUrl(provider, redirect);
+    return {};
   };
 
-  // Called by OAuthCallback page after the backend redirects back — the JWT is
-  // already set as an HttpOnly cookie server-side, so this just confirms the
-  // session by fetching the current user and hydrating context state.
+  // Called after the backend has set the session cookies (social callback, link
+  // confirmation, emailed token): fetches the current user and hydrates context state.
   const loginWithToken = useCallback(async (): Promise<{ error?: string }> => {
     setIsLoading(true);
     try {
@@ -337,6 +299,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         name: userData?.name || '',
         status: (userData?.status as UserStatus) || 'ACTIVE',
         role: isAdminRole(userData?.role) ? 'admin' : 'user',
+        emailVerified: userData?.emailVerified,
       };
       flushSync(() => setUser(authUser));
       setUserData(authUser);
@@ -362,8 +325,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isMasterAdmin = (user?.role && masterAdminGroupNames.includes(user.role.toUpperCase())) || groupNames.some(g => masterAdminGroupNames.includes(g));
   const hasGroupWithQuickEdit = userGroups.some(
     g => g.permissions?.publicQuickEdit?.enabled === true ||
-         (g.permissions?.publicQuickEdit as any)?.edit === true ||
-         (g.permissions as any)?.publicQuickEdit === true
+         (g.permissions?.publicQuickEdit as { edit?: boolean } | undefined)?.edit === true ||
+         (g.permissions as { publicQuickEdit?: unknown } | undefined)?.publicQuickEdit === true
   );
   const canQuickEditPublic = isMasterAdmin || hasGroupWithQuickEdit;
   

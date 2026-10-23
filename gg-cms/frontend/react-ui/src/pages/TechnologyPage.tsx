@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { CategoryResponseDto } from '@/api/types';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   BookOpen, FileText, Search, ChevronRight, Layers, ArrowRight, X, Tag, SlidersHorizontal,
@@ -14,6 +15,7 @@ import { useCategories } from '@/api/hooks/useCategories';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useTopics } from '@/api/hooks/useTopics';
 import { useTags } from '@/api/hooks/useTags';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { CmsResponseDto } from '@/api/types';
 import { PublicArticleCard } from '@/components/public/PublicArticleCard';
 import { ExploreContentCard } from '@/components/public/ExploreContentCard';
@@ -49,7 +51,7 @@ const TechnologyPage = () => {
   // Flatten all categories recursively for deep slug matching
   const flatCategories = useMemo(() => {
     if (!categories) return [];
-    const flatten = (cats: any[]): any[] =>
+    const flatten = (cats: CategoryResponseDto[]): CategoryResponseDto[] =>
       cats.flatMap(c => [c, ...flatten(c.children ?? [])]);
     return flatten(categories);
   }, [categories]);
@@ -100,14 +102,21 @@ const TechnologyPage = () => {
     };
   }, [flatCategories, slug]);
 
+  usePageMeta({
+    title: category?.name ?? 'Technology',
+    description: category?.description || (category ? `Articles and courses on ${category.name}.` : undefined),
+    canonicalPath: `/technology/${slug ?? ''}`,
+    noindex: !category || category.id === 999,
+  });
+
   // Collect target category ID and all descendant category IDs (e.g. Software Engineering includes Backend & APIs)
   const targetCategoryIds = useMemo(() => {
     if (!category || category.id === 999) return [];
     const ids: number[] = [category.id];
-    const findNodeAndCollect = (cats: any[]) => {
+    const findNodeAndCollect = (cats: CategoryResponseDto[]): boolean => {
       for (const c of cats) {
         if (c.id === category.id) {
-          const collect = (node: any) => {
+          const collect = (node: CategoryResponseDto) => {
             if (node.children && Array.isArray(node.children)) {
               for (const child of node.children) {
                 ids.push(child.id);
@@ -265,7 +274,7 @@ const TechnologyPage = () => {
         <nav className="flex items-center gap-2 text-sm text-muted-foreground">
           <Link to="/" className="hover:text-primary transition-colors">Home</Link>
           <ChevronRight className="w-3.5 h-3.5" />
-          <Link to="/explore/categories" className="hover:text-primary transition-colors">Categories</Link>
+          <Link to="/technologies" className="hover:text-primary transition-colors">Technologies</Link>
           <ChevronRight className="w-3.5 h-3.5" />
           <span className="text-foreground font-medium">{category?.name ?? slug}</span>
         </nav>

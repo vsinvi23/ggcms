@@ -43,6 +43,16 @@ vi.mock('@/api/hooks/useNotifications', () => ({
   useNotifications: () => ({ data: { items: [] }, isLoading: false }),
 }));
 
+vi.mock('@/api/hooks/useAnalytics', () => ({
+  useAnalyticsOverview: () => ({ data: { mau: 12 }, isLoading: false }),
+  useAnalyticsDashboard: () => ({ data: { pageViews30d: 40, topContent: [] }, isLoading: false }),
+}));
+
+vi.mock('@/api/hooks/useEngagement', () => ({
+  useMyNotes: () => ({ data: { total: 2 }, isLoading: false }),
+  useMyHighlights: () => ({ data: { total: 3 }, isLoading: false }),
+}));
+
 vi.mock('@/config/api', () => ({
   API_BASE_URL: 'http://localhost:1337/api',
   APP_NAME: 'TestApp',
@@ -116,6 +126,12 @@ describe('Dashboard page', () => {
     expect(screen.getByText('Published Articles')).toBeInTheDocument();
   });
 
+  it('shows live monthly active users', () => {
+    renderDashboard();
+    expect(screen.getByText('Active Users (30d)')).toBeInTheDocument();
+    expect(screen.getByText('12')).toBeInTheDocument();
+  });
+
 
 });
 
@@ -137,6 +153,11 @@ describe('Dashboard page - User', () => {
   it('renders Practice Hub quick link', () => {
     renderDashboard();
     expect(screen.getByText('Practice Hub')).toBeInTheDocument();
+  });
+
+  it('shows saved notes and highlights count from the API', () => {
+    renderDashboard();
+    expect(screen.getByText('5')).toBeInTheDocument();
   });
 
   it('renders Interview Prep quick link', () => {

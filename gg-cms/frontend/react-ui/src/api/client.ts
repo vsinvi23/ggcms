@@ -6,16 +6,12 @@ import {
   USER_STORAGE_KEY,
 } from '@/config/api';
 
-// In-memory token cache for better performance and security.
-// Token is primarily stored in sessionStorage but cached in memory for quick access.
-let tokenCache: string | null = null;
-
 // Create axios instance with default config
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
-  // Auth is carried via the HttpOnly "jwt" cookie set by the backend.
-  // withCredentials: true is required so the browser attaches that cookie.
+  // Auth is carried via the HttpOnly "jwt"/"refresh_token" cookies set by the backend.
+  // withCredentials: true is required so the browser attaches them.
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -27,15 +23,11 @@ const getCsrfTokenFromCookie = (): string | null => {
   return match ? decodeURIComponent(match[1]) : null;
 };
 
-// Request interceptor — attach JWT token (legacy fallback) and CSRF header
+// Request interceptor — attach the CSRF header (auth itself is the HttpOnly cookie)
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (config.data instanceof FormData && config.headers) {
       delete config.headers['Content-Type'];
-    }
-    const token = getAuthToken();
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
     }
     const csrfToken = getCsrfTokenFromCookie();
     if (csrfToken && config.headers) {
@@ -46,56 +38,54 @@ apiClient.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 );
 
-// Response interceptor — on 401, signal logout via a custom event.
-// IMPORTANT: Never directly clear auth tokens here. The AuthContext listener
-// (onForcedLogout) handles clearing, guarded by suppressAuthLogout so that a
-// 401 from a non-critical endpoint (e.g. /users/:id/groups) during the post-login
-// groups fetch does not log the user out before the dashboard even renders.
+type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+let refreshPromise: Promise<boolean> | null = null;
+
+// One shared refresh for all concurrent 401s. The refresh token is an HttpOnly
+// cookie, so there is nothing to read here; a session may exist only while the
+// readable csrf_token cookie is present.
+const refreshSession = (): Promise<boolean> => {
+  if (!getCsrfTokenFromCookie()) return Promise.resolve(false);
+  if (!refreshPromise) {
+    refreshPromise = apiClient
+      .post('/auth/refresh')
+      .then(() => true)
+      .catch(() => false)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+};
+
+const isAuthEndpoint = (url?: string): boolean => !!url && url.startsWith('/auth/');
+
+// Response interceptor — on 401 try one silent refresh, replay the request, and
+// only signal logout (custom event handled by AuthContext) if that fails.
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ApiError>) => {
-    if (error.response?.status === 401) {
-      // Only dispatch logout when the token is absent or expired.
-      // A 401 on a permission-restricted endpoint with a still-valid token is a
-      // permissions error — dispatching auth:logout would redirect to /auth incorrectly.
-      if (!isAuthenticated()) {
-        if (!window.location.pathname.includes('/auth')) {
-          window.dispatchEvent(new CustomEvent('auth:logout'));
-        }
+  async (error: AxiosError<ApiError>) => {
+    const original = error.config as RetriableConfig | undefined;
+    if (error.response?.status === 401 && original && !original._retry && !isAuthEndpoint(original.url)) {
+      original._retry = true;
+      if (await refreshSession()) {
+        return apiClient(original);
+      }
+      if (!window.location.pathname.includes('/auth')) {
+        window.dispatchEvent(new CustomEvent('auth:logout'));
       }
     }
     return Promise.reject(error);
   }
 );
 
-// ─── Token helpers ─────────────────────────────────────────────────────────────
+// ─── Session helpers ───────────────────────────────────────────────────────────
+// The session lives in HttpOnly cookies. No token is ever stored in JS-accessible storage.
 
-export const setAuthToken = (token: string): void => {
-  tokenCache = token;
-  try {
-    sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
-    localStorage.setItem(TOKEN_STORAGE_KEY, token);
-  } catch {
-    console.warn('Storage unavailable, using memory only');
-  }
-};
-
-export const getAuthToken = (): string | null => {
-  if (tokenCache) return tokenCache;
-  try {
-    const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY) || localStorage.getItem(TOKEN_STORAGE_KEY);
-    if (stored) {
-      tokenCache = stored;
-      return stored;
-    }
-  } catch {
-    // Storage unavailable
-  }
-  return null;
-};
+export const getAuthToken = (): string | null => null;
 
 export const clearAuthToken = (): void => {
-  tokenCache = null;
   try {
     sessionStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(TOKEN_STORAGE_KEY);
@@ -139,27 +129,9 @@ export const clearAllAuthData = (): void => {
 };
 
 /**
- * Returns true if a JWT is present and has not yet expired.
- * Does NOT verify the signature — that is the server's responsibility.
+ * True while a session may exist (the readable CSRF cookie set at sign-in is present).
+ * The server remains the source of truth.
  */
-export const isAuthenticated = (): boolean => {
-  const token = getAuthToken();
-  if (!token) return false;
-  try {
-    // JWT uses base64url encoding — replace url-safe chars before decoding.
-    // Plain atob() throws on '-' and '_' which appear in most JWT payloads.
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(base64));
-    if (payload.exp && Date.now() >= payload.exp * 1000) {
-      clearAuthToken();
-      clearUserData();
-      return false;
-    }
-    return true;
-  } catch {
-    return false;
-  }
-};
+export const isAuthenticated = (): boolean => getCsrfTokenFromCookie() !== null;
 
 export default apiClient;

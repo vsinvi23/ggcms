@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Save, Send, ArrowLeft, BookOpen, Loader2, Image as ImageIcon,
-  MessageSquare, Eye, Layers, History, CheckCircle, XCircle, ArrowRight, GitBranch, PenLine,
+  MessageSquare, Eye, Layers, History, CheckCircle, XCircle, ArrowRight, GitBranch, PenLine, AlertCircle,
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -95,7 +95,7 @@ export default function AssessmentCreator() {
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
 
   // Derived review state
-  const hasReviewPermission = isAdmin || userGroups.some(g => g.permissions?.assessments?.review === true || (g.permissions as any)?.all === true);
+  const hasReviewPermission = isAdmin || userGroups.some(g => g.permissions?.assessments?.review === true || g.permissions?.all === true);
   const isCurrentUserReviewer =
     !!user && !!existingCms?.reviewerId &&
     existingCms.reviewerId === user.id &&
@@ -106,7 +106,7 @@ export default function AssessmentCreator() {
   const isOtherReviewerClaimed = isViewMode && existingCms?.status === 'REVIEW' && !!existingCms?.reviewerId && existingCms.reviewerId !== user?.id;
 
   const isApprovedState = existingCms?.status === 'APPROVED';
-  const hasPublishPermission = isAdmin || userGroups.some(g => g.permissions?.assessments?.publish === true || (g.permissions as any)?.all === true);
+  const hasPublishPermission = isAdmin || userGroups.some(g => g.permissions?.assessments?.publish === true || g.permissions?.all === true);
   const isAssignedPublisher = isApprovedState && !!user && existingCms?.reviewerId === user.id;
   const canPublish = isViewMode && isApprovedState && hasPublishPermission && isAssignedPublisher;
   const isUnclaimedApproved = isViewMode && isApprovedState && !existingCms?.reviewerId && hasPublishPermission;
@@ -185,10 +185,10 @@ export default function AssessmentCreator() {
         cmsSlug = created.slug;
         setSavedAssessmentId(cmsId);
       }
-      if (contentBlocks.length > 0) await uploadBody.mutateAsync({ id: cmsId, content: JSON.stringify(contentBlocks), type: 'COURSE', courseType: 'ASSESSMENT' });
+      if (contentBlocks.length > 0) await uploadBody.mutateAsync({ id: cmsId, content: JSON.stringify(contentBlocks), type: 'COURSE' });
       if (thumbnailFile) await uploadThumbnail.mutateAsync({ id: cmsId, file: thumbnailFile });
       if (submitForReviewAfter) {
-        await submitForReview.mutateAsync({ id: cmsId, type: 'COURSE', courseType: 'ASSESSMENT' });
+        await submitForReview.mutateAsync({ id: cmsId, type: 'COURSE' });
         toast.success('Assessment submitted for review');
         navigate('/assessments');
       } else {
@@ -204,7 +204,7 @@ export default function AssessmentCreator() {
   };
 
   const buildUpdateData = () => ({
-    type: 'COURSE', courseType: 'ASSESSMENT' as const, categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, interactiveMetadata: interactiveMetadata || undefined,
+    type: 'COURSE' as const, courseType: 'ASSESSMENT' as const, categoryId: parseInt(categoryId), title: title || undefined, description: description || undefined, interactiveMetadata: interactiveMetadata || undefined,
   });
 
   const {
@@ -269,7 +269,7 @@ export default function AssessmentCreator() {
 
   const refreshSections = useCallback(() => {
     if (assessmentIdForChapters) {
-      queryClient.refetchQueries({ queryKey: sectionKeys.byAssessment(assessmentIdForChapters) });
+      queryClient.refetchQueries({ queryKey: sectionKeys.byCourse(assessmentIdForChapters) });
     }
   }, [queryClient, assessmentIdForChapters]);
 
@@ -887,7 +887,7 @@ export default function AssessmentCreator() {
                         </CardHeader>
                         <CardContent>
                           <CourseChapterViewer
-                            assessmentId={assessmentIdForChapters}
+                            courseId={assessmentIdForChapters}
                             snapshotJson={
                               canPublish
                                 ? (existingCms?.publishedChaptersSnapshot ?? existingCms?.reviewBaselineChapters ?? undefined)
@@ -924,7 +924,7 @@ export default function AssessmentCreator() {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <CourseChapterManager assessmentId={assessmentIdForChapters} />
+                          <CourseChapterManager courseId={assessmentIdForChapters} />
                         </CardContent>
                       </Card>
                     )

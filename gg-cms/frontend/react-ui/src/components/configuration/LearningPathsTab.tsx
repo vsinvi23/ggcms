@@ -34,7 +34,7 @@ import {
   useSetLearningPathCourses,
 } from '@/api/hooks/useLearningPaths';
 import { useCmsList } from '@/api/hooks/useCms';
-import { LearningPathDto } from '@/api/services/learningPathService';
+import { LearningPathDto, LearningPathKind } from '@/api/services/learningPathService';
 import { CmsResponseDto } from '@/api/types';
 
 interface SelectedCourse {
@@ -44,7 +44,7 @@ interface SelectedCourse {
 }
 
 interface PathBuilderProps {
-  kind: 'LEARNING_PLAN' | 'INTERVIEW_PREP';
+  kind: LearningPathKind;
   path?: LearningPathDto;
   onClose: () => void;
 }
@@ -222,7 +222,7 @@ function PathBuilder({ kind, path, onClose }: PathBuilderProps) {
 }
 
 interface PathsListProps {
-  kind: 'LEARNING_PLAN' | 'INTERVIEW_PREP';
+  kind: LearningPathKind;
   title: string;
   description: string;
 }

@@ -38,4 +38,14 @@ describe('sanitizeHtml', () => {
     expect(sanitizeHtml('<p class="foo-bar baz">Hi</p>')).toBe('<p class="foo-bar baz">Hi</p>');
     expect(sanitizeHtml('<p class="foo\\" onmouseover=\\"alert(1)">Hi</p>')).toBe('<p>Hi</p>');
   });
+
+  it('removes foreignObject from SVG', () => {
+    const out = sanitizeHtml('<svg><foreignObject><p>x</p></foreignObject></svg>');
+    expect(out.toLowerCase()).not.toContain('foreignobject');
+  });
+
+  it('forces rel=noopener noreferrer on target links', () => {
+    const out = sanitizeHtml('<a href="https://example.com" target="_blank">x</a>');
+    expect(out).toContain('rel="noopener noreferrer"');
+  });
 });

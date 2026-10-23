@@ -1,12 +1,16 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { enrollmentService } from '../services/enrollmentService';
 import { EnrollmentProgressDto } from '../types';
+import { collectGuestProgress, clearGuestProgress } from '@/lib/contentStateStore';
+import { certificateKeys } from './useCertificates';
 
 // Query keys
 export const enrollmentKeys = {
   all: ['enrollments'] as const,
   mine: () => [...enrollmentKeys.all, 'mine'] as const,
   byCourse: (courseId: number) => [...enrollmentKeys.all, 'course', courseId] as const,
+  resume: (courseId: number) => [...enrollmentKeys.all, 'resume', courseId] as const,
 };
 
 /**
@@ -56,8 +60,47 @@ export const useUpdateProgress = () => {
       enrollmentId: number;
       data: EnrollmentProgressDto;
     }) => enrollmentService.updateProgress(enrollmentId, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: enrollmentKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: enrollmentKeys.all });
+      qc.invalidateQueries({ queryKey: certificateKeys.all });
+    },
   });
+};
+
+/**
+ * Hook to fetch server-side resume state (next lesson, completed lessons, assessment gate)
+ */
+export const useCourseResume = (courseId: number, enabled = true) => {
+  return useQuery({
+    queryKey: enrollmentKeys.resume(courseId),
+    queryFn: () => enrollmentService.getResume(courseId),
+    enabled: enabled && !!courseId,
+  });
+};
+
+let syncInFlight = false;
+
+/**
+ * Uploads guest (localStorage) progress once after sign-in, then clears it
+ */
+export const useSyncLocalProgress = (isAuthenticated: boolean) => {
+  const qc = useQueryClient();
+  useEffect(() => {
+    if (!isAuthenticated || syncInFlight) return;
+    const items = collectGuestProgress();
+    if (items.length === 0) return;
+    syncInFlight = true;
+    enrollmentService
+      .syncLocal(items)
+      .then(() => {
+        clearGuestProgress();
+        qc.invalidateQueries({ queryKey: enrollmentKeys.all });
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        syncInFlight = false;
+      });
+  }, [isAuthenticated, qc]);
 };
 
 /**

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,8 +25,10 @@ import { PublicLayout } from '@/components/layout/PublicLayout';
 import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
 import { usePublicLearningPathById, usePublicLearningPaths } from '@/api/hooks/usePublicCms';
 import { sectionKeys } from '@/api/hooks/useSections';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { sectionService } from '@/api/services/sectionService';
-import { useMyEnrollments, useEnroll } from '@/api/hooks/useEnrollments';
+import { useMyEnrollments, useEnroll, useSyncLocalProgress } from '@/api/hooks/useEnrollments';
+import { useLearningPathProgress } from '@/api/hooks/useLearningPaths';
 import { useAuth } from '@/contexts/AuthContext';
 import { EnrollmentDto, SectionDto } from '@/api/types';
 import { buildCourseUrl } from '@/lib/slug';
@@ -34,7 +37,6 @@ import {
   getCourseProgressState,
   getPathResumeState,
   getRecentPathSlugs,
-  getSavedCourseLessonId,
   recordRecentPath,
   savePathResumeState,
 } from '@/lib/contentStateStore';
@@ -158,9 +160,17 @@ const LearningPathPage = () => {
   };
 
   const { data: apiPath, isLoading } = usePublicLearningPathById(pathId ?? '');
+  usePageMeta({
+    title: apiPath?.title ?? 'Learning path',
+    description: apiPath?.description || undefined,
+    canonicalPath: `/learn/${apiPath?.slug || pathId || ''}`,
+    noindex: !isLoading && !apiPath,
+  });
   const { data: allPaths } = usePublicLearningPaths();
   const { data: enrollments = [] } = useMyEnrollments(isAuthenticated);
   const { mutate: enroll } = useEnroll();
+  const { data: pathProgress } = useLearningPathProgress(apiPath?.id ?? '', isAuthenticated && !!apiPath);
+  useSyncLocalProgress(isAuthenticated);
 
   const enrollmentMap = useMemo(() => {
     const m = new Map<number, EnrollmentDto>();
@@ -199,7 +209,7 @@ const LearningPathPage = () => {
     window.scrollTo(0, 0);
   }, [pathSlug]);
 
-  const resume = pathSlug ? getPathResumeState(pathSlug) : null;
+  const resume = pathSlug && !isAuthenticated ? getPathResumeState(pathSlug) : null;
 
   const launchUrl = (course: PathCourse, lessonId?: number) => {
     const params = new URLSearchParams({ path: pathSlug, learn: 'true' });
@@ -208,8 +218,12 @@ const LearningPathPage = () => {
   };
 
   const courseProgress = (courseId: number): number => {
-    const enrollment = enrollmentMap.get(courseId);
-    if (enrollment) return enrollment.status === 'completed' ? 100 : Math.round((enrollment.progress ?? 0) * 100);
+    if (isAuthenticated) {
+      const server = pathProgress?.courses.find(c => c.courseId === courseId);
+      if (server) return server.status === 'completed' ? 100 : Math.round(server.progress);
+      const enrollment = enrollmentMap.get(courseId);
+      return enrollment ? (enrollment.status === 'completed' ? 100 : Math.round(enrollment.progress ?? 0)) : 0;
+    }
     return getCourseProgressState(courseId)?.progress ?? 0;
   };
 
@@ -231,7 +245,7 @@ const LearningPathPage = () => {
 
   const skills = useMemo(() => courses.map(c => c.title).slice(0, 6), [courses]);
 
-  const relatedPaths = useMemo(() => (allPaths ?? []).filter(p => p.slug !== pathSlug && p.id !== apiPath?.id).slice(0, 3), [allPaths, apiPath]);
+  const relatedPaths = useMemo(() => (allPaths ?? []).filter(p => p.slug !== pathSlug && p.id !== apiPath?.id).slice(0, 3), [allPaths, apiPath, pathSlug]);
   const recentPaths = useMemo(() => {
     const bySlug = new Map((allPaths ?? []).map(p => [p.slug, p]));
     return getRecentPathSlugs()
@@ -250,9 +264,9 @@ const LearningPathPage = () => {
       navigate(resume.courseUrl);
       return;
     }
-    const inProgress = courses.find(c => courseStatus(c.id) === 'current') ?? courses.find(c => courseStatus(c.id) === 'upcoming') ?? courses[0];
-    const savedLesson = getSavedCourseLessonId(inProgress.id);
-    navigate(launchUrl(inProgress, savedLesson ?? undefined));
+    const next = pathProgress?.nextCourseId ? courses.find(c => c.id === pathProgress.nextCourseId) : undefined;
+    const inProgress = next ?? courses.find(c => courseStatus(c.id) === 'current') ?? courses.find(c => courseStatus(c.id) === 'upcoming') ?? courses[0];
+    navigate(launchUrl(inProgress));
   };
 
   // Ask to save state when leaving the path (any link outside the path→course flow)
@@ -357,6 +371,16 @@ const LearningPathPage = () => {
                       <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" /><span className="line-clamp-1">{skill}</span>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {isAuthenticated && pathProgress && (
+                <div className="space-y-1.5 max-w-md" role="status" aria-live="polite">
+                  <div className="flex justify-between text-xs font-semibold text-muted-foreground">
+                    <span>{pathProgress.completedCourses} of {pathProgress.totalCourses} courses completed</span>
+                    <span>{Math.round(pathProgress.progress)}%</span>
+                  </div>
+                  <Progress value={pathProgress.progress} className="h-1.5" aria-label="Learning path progress" />
                 </div>
               )}
 

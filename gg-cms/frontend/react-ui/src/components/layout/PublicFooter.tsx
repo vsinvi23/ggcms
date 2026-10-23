@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { GGLogo } from '@/components/shared/GGLogo';
+import { openPrivacySettings } from '@/lib/consent';
 
 // Only routes that are confirmed to exist in App.tsx router
 const COLS = [
@@ -99,7 +100,12 @@ export function PublicFooter() {
           style={{ color: 'rgba(255,255,255,0.3)' }}
         >
           <span>© {new Date().getFullYear()} GeekGully. All rights reserved.</span>
-          <span>Built for developers who love to learn.</span>
+          <span className="flex items-center gap-4">
+            <Link to="/privacy" className="hover:text-white">Privacy</Link>
+            <button type="button" onClick={openPrivacySettings} className="hover:text-white underline">
+              Privacy settings
+            </button>
+          </span>
         </div>
 
       </div>

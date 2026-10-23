@@ -1,4 +1,5 @@
 import { Fragment, useRef, useState, useEffect, useMemo, DragEvent } from 'react';
+import { CategoryResponseDto } from '@/api/types';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useImportPreview, useImportConfirm } from '@/api/hooks/useImport';
 import { useCategories } from '@/api/hooks/useCategories';
@@ -270,6 +271,7 @@ async function parseFileClientSide(file: File, categories: { id: number; slug: s
   let type = 'ARTICLE';
   let categorySlug = 'backend';
   let articleType = 'guide';
+  let status: string | undefined;
   let tags: string[] = [];
   let body = text;
 
@@ -327,6 +329,7 @@ async function parseFileClientSide(file: File, categories: { id: number; slug: s
       categorySlug,
       categoryId: defaultCatId,
       articleType,
+      status,
       courseType: 'full_course',
       tags,
       sections: [],
@@ -388,7 +391,7 @@ export default function BulkImport() {
 
   const { data: categoriesData } = useCategories();
   const flatCategories = useMemo(() => {
-    const flatten = (nodes: any[]): { id: number; slug: string; name: string }[] => {
+    const flatten = (nodes: CategoryResponseDto[]): { id: number; slug: string; name: string }[] => {
       let list: { id: number; slug: string; name: string }[] = [];
       for (const node of nodes) {
         if (!node.isVirtual) {
@@ -417,9 +420,9 @@ export default function BulkImport() {
     preview.mutate(files, {
       onSuccess: (res) => {
         setIsExtracting(false);
-        const rawItems = (res as any)?.items ?? (res as any)?.data?.items ?? (Array.isArray(res) ? res : []);
+        const rawItems = res?.items ?? [];
         const processedItems = Array.isArray(rawItems)
-          ? rawItems.map((it: any) => {
+          ? rawItems.map((it) => {
               let categoryId = it.categoryId;
               let valid = it.valid ?? true;
               let error = it.error;
@@ -494,7 +497,7 @@ export default function BulkImport() {
     const zipFiles = isMasterAdmin ? [] : fileArray.filter(isZip);
     const nonZipFiles = isMasterAdmin ? fileArray : fileArray.filter((f) => !isZip(f));
 
-    let extractedFiles: File[] = [];
+    const extractedFiles: File[] = [];
 
     const MAX_ZIP_ENTRIES = 500;
     const MAX_SINGLE_UNCOMPRESSED_BYTES = 10 * 1024 * 1024; // 10MB

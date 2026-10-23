@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useLearningPaths, useCreateLearningPath, useUpdateLearningPath, useDeleteLearningPath, useSetLearningPathCourses, useLearningPath } from '@/api/hooks/useLearningPaths';
+import { LearningPathDto, LearningPathKind } from '@/api/services/learningPathService';
 import { useCmsList } from '@/api/hooks/useCms';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,15 +16,7 @@ import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
 import { Textarea } from '@/components/ui/textarea';
 
-type LearningPath = {
-  id: number;
-  title: string;
-  description: string;
-  kind: string;
-  courseCount: number;
-  createdAt: string;
-  slug: string;
-};
+type LearningPath = LearningPathDto;
 
 type CourseAssignment = {
   courseId: number;
@@ -51,22 +44,22 @@ export default function LearningPathManagement() {
 
   useEffect(() => {
     if (coursesDialog.open && currentPathData?.courses) {
-      setSelectedCourses(currentPathData.courses.map((c: Record<string, unknown>) => ({
-        courseId: (c.courseId as number) || (c.id as number),
-        sortOrder: c.sortOrder as number
+      setSelectedCourses(currentPathData.courses.map((c) => ({
+        courseId: c.courseId,
+        sortOrder: c.sortOrder
       })));
     } else {
       setSelectedCourses([]);
     }
   }, [coursesDialog.open, currentPathData]);
 
-  const [formData, setFormData] = useState({ title: '', slug: '', kind: 'LEARNING_PLAN', description: '' });
+  const [formData, setFormData] = useState({ title: '', kind: 'LEARNING_PLAN', description: '' });
 
   const handleOpenForm = (lp: LearningPath | null) => {
     if (lp) {
-      setFormData({ title: lp.title || '', slug: lp.slug || '', kind: lp.kind || 'LEARNING_PLAN', description: lp.description || '' });
+      setFormData({ title: lp.title || '', kind: lp.kind || 'LEARNING_PLAN', description: lp.description || '' });
     } else {
-      setFormData({ title: '', slug: '', kind: 'LEARNING_PLAN', description: '' });
+      setFormData({ title: '', kind: 'LEARNING_PLAN', description: '' });
     }
     setFormDialog({ open: true, lp });
   };
@@ -78,10 +71,10 @@ export default function LearningPathManagement() {
     }
     try {
       if (formDialog.lp) {
-        await updateLP.mutateAsync({ id: formDialog.lp.id, data: { title: formData.title, slug: formData.slug, kind: formData.kind, description: formData.description } });
+        await updateLP.mutateAsync({ id: formDialog.lp.id, data: { title: formData.title, description: formData.description } });
         toast.success('Learning path updated');
       } else {
-        await createLP.mutateAsync({ title: formData.title, slug: formData.slug, kind: formData.kind, description: formData.description });
+        await createLP.mutateAsync({ title: formData.title, kind: formData.kind as LearningPathKind, description: formData.description });
         toast.success('Learning path created');
       }
       setFormDialog({ open: false, lp: null });
@@ -154,7 +147,7 @@ export default function LearningPathManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paths.map((lp: LearningPath) => (
+                  {paths.map((lp) => (
                     <TableRow key={lp.id}>
                       <TableCell className="font-medium">
                         {lp.title}
@@ -221,10 +214,6 @@ export default function LearningPathManagement() {
                 <Input value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="e.g. Backend Engineering Track" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Slug</label>
-                <Input value={formData.slug} onChange={e => setFormData({ ...formData, slug: e.target.value })} placeholder="e.g. backend-engineering-track" disabled={!!formDialog.lp} />
-              </div>
-              <div className="space-y-2">
                 <label className="text-sm font-medium">Kind</label>
                 <Select value={formData.kind} onValueChange={v => setFormData({ ...formData, kind: v })} disabled={!!formDialog.lp}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -276,8 +265,8 @@ export default function LearningPathManagement() {
                       <SelectValue placeholder="Select a course to add..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {allCourses.filter((c: Record<string, unknown>) => !selectedCourses.find(sc => sc.courseId === c.id)).map((c: Record<string, unknown>) => (
-                        <SelectItem key={c.id as number} value={(c.id as number).toString()}>{c.title as string}</SelectItem>
+                      {allCourses.filter((c) => !selectedCourses.find(sc => sc.courseId === c.id)).map((c) => (
+                        <SelectItem key={c.id} value={c.id.toString()}>{c.title}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -301,7 +290,7 @@ export default function LearningPathManagement() {
                         </TableRow>
                       ) : (
                         [...selectedCourses].sort((a, b) => a.sortOrder - b.sortOrder).map((sc, index) => {
-                          const courseInfo = allCourses.find((c: Record<string, unknown>) => c.id === sc.courseId);
+                          const courseInfo = allCourses.find((c) => c.id === sc.courseId);
                           return (
                             <TableRow key={sc.courseId}>
                               <TableCell>
@@ -319,7 +308,7 @@ export default function LearningPathManagement() {
                                   }}
                                 />
                               </TableCell>
-                              <TableCell>{(courseInfo?.title as string) || 'Unknown Course'}</TableCell>
+                              <TableCell>{courseInfo?.title || 'Unknown Course'}</TableCell>
                               <TableCell>
                                 <Button 
                                   variant="ghost" 

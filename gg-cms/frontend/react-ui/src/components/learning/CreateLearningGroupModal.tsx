@@ -57,7 +57,7 @@ export function CreateLearningGroupModal({
       skills,
     });
 
-    toast.success(`Learning Group "${title.trim()}" created!`);
+    toast.success(`Learning Group "${title.trim()}" created (saved on this device)`);
     setTitle('');
     setDescription('');
     onGroupCreated();

@@ -1,7 +1,8 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import React, { useState, useMemo } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { Search, Compass, Clock, ArrowRight, Filter, CheckCircle2, X } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Compass, ArrowRight, Filter } from 'lucide-react';
+import { SearchCombobox } from '@/components/search/SearchCombobox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
@@ -33,7 +34,7 @@ interface ExploreCardItem {
 
 export function ExplorePage() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  usePageMeta({ title: 'Explore Articles and Courses', description: 'Browse articles, courses and assessments across technology domains.', canonicalPath: '/explore' });
   const [selectedType, setSelectedType] = useState<string>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
@@ -131,11 +132,6 @@ export function ExplorePage() {
 
   const filteredItems = useMemo(() => {
     return allExploreItems.filter(item => {
-      const matchesSearch = searchQuery === '' ||
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
-
       let matchesType = true;
       if (selectedType !== 'All') {
         const singularType = selectedType.replace(/s$/, '').replace(/ies$/, 'y');
@@ -144,9 +140,9 @@ export function ExplorePage() {
 
       const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
 
-      return matchesSearch && matchesType && matchesCat;
+      return matchesType && matchesCat;
     });
-  }, [searchQuery, selectedType, selectedCategory]);
+  }, [allExploreItems, selectedType, selectedCategory]);
 
   return (
     <PublicLayout hideSearch>
@@ -169,21 +165,11 @@ export function ExplorePage() {
 
             {/* Centered Search Bar */}
             <div className="relative w-full max-w-md sm:w-1/2 flex justify-center">
-              <div className="relative w-full">
-                <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search articles, cheat sheets..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-8 h-9 text-xs rounded-xl bg-background border-border shadow-2xs w-full"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
+              <SearchCombobox
+                className="w-full"
+                label="Search articles and courses"
+                placeholder="Search articles, courses, cheat sheets..."
+              />
             </div>
 
             {/* Right Spacer */}
@@ -202,8 +188,8 @@ export function ExplorePage() {
                   <Filter className="w-3 h-3 text-primary" />
                   Format & Domain
                 </span>
-                {(selectedType !== 'All' || selectedCategory !== 'All' || searchQuery !== '') && (
-                  <button onClick={() => { setSelectedType('All'); setSelectedCategory('All'); setSearchQuery(''); }} className="text-[11px] text-primary hover:underline font-semibold">
+                {(selectedType !== 'All' || selectedCategory !== 'All') && (
+                  <button onClick={() => { setSelectedType('All'); setSelectedCategory('All'); }} className="text-[11px] text-primary hover:underline font-semibold">
                     Reset
                   </button>
                 )}

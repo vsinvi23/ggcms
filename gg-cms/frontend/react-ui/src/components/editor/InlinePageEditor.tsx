@@ -105,8 +105,8 @@ export function InlinePageEditor({
           : 'Draft revision saved successfully!'
       );
       onClose();
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to save inline edit.');
+    } catch (err: unknown) {
+      toast.error((err as Error)?.message || 'Failed to save inline edit.');
     } finally {
       setIsSubmitting(false);
     }

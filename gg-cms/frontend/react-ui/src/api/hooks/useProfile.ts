@@ -6,18 +6,21 @@ export const profileKeys = {
   profile: ['personalization', 'profile'] as const,
   profiles: ['personalization', 'profiles'] as const,
   recommendations: (limit: number) => ['personalization', 'recommendations', limit] as const,
+  feed: (limit: number) => ['personalization', 'feed', limit] as const,
 };
 
 const invalidateAll = (qc: ReturnType<typeof useQueryClient>) => {
   qc.invalidateQueries({ queryKey: profileKeys.profile });
   qc.invalidateQueries({ queryKey: profileKeys.profiles });
   qc.invalidateQueries({ queryKey: ['personalization', 'recommendations'] });
+  qc.invalidateQueries({ queryKey: ['personalization', 'feed'] });
 };
 
-export const useProfile = () =>
+export const useProfile = (enabled = true) =>
   useQuery({
     queryKey: profileKeys.profile,
     queryFn: () => profileService.getProfile(),
+    enabled,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -57,4 +60,12 @@ export const useRecommendations = (limit = 10) =>
     queryKey: profileKeys.recommendations(limit),
     queryFn: () => profileService.getRecommendations(limit),
     staleTime: 2 * 60 * 1000,
+  });
+
+export const usePersonalizationFeed = (limit = 10, enabled = true) =>
+  useQuery({
+    queryKey: profileKeys.feed(limit),
+    queryFn: () => profileService.getFeed(limit),
+    enabled,
+    staleTime: 30 * 1000,
   });
