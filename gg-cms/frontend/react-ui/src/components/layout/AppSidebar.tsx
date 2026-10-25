@@ -45,13 +45,12 @@ interface NavSection {
   adminOnly?: boolean;
 }
 
-import { BookOpen, FileText, ListTodo, Layers, GraduationCap, Settings2, Upload, Factory, Target, Briefcase, Sparkles } from 'lucide-react';
+import { BookOpen, FileText, ListTodo, Layers, GraduationCap, Settings2, Upload, Target, Briefcase, Sparkles } from 'lucide-react';
 import { useAiFeature } from '@/api/hooks/useAi'; // AI layer
 
 // All menu items with access control flags
 const standaloneItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' }, // visible to all authenticated users
-  { icon: Factory, label: 'AI Content Factory', href: '/factory', adminOnly: true },
   { icon: Sparkles, label: 'AI Settings', href: '/workspace/ai', adminOnly: true }, // AI layer
   { icon: Sparkles, label: 'Study Plan', href: '/study-plan', contentOnly: true }, // AI layer: hidden unless studyPlan feature on
   { icon: ListTodo, label: 'My Tasks', href: '/my-tasks', contentOnly: true },

@@ -59,7 +59,6 @@ const NotesHighlightsPage = lazy(() => import('./pages/NotesHighlightsPage'));
 const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const BulkImport = lazy(() => import('./pages/BulkImport'));
-const FactoryPage = lazy(() => import('./pages/FactoryPage'));
 // AI layer pages
 const AiAdmin = lazy(() => import('./pages/AiAdmin'));
 const StudyPlanPage = lazy(() => import('./pages/StudyPlanPage'));
@@ -243,8 +242,6 @@ const App = () => (
                 <Route path="/certificates/verify/:code" element={<VerifyCertificatePage />} />
                 <Route path="/notes-highlights" element={<ProtectedRoute><NotesHighlightsPage /></ProtectedRoute>} />
                 <Route path="/analytics" element={<Navigate to="/workspace/analytics" replace />} />
-                <Route path="/factory" element={<ProtectedRoute requireAdmin><FactoryPage /></ProtectedRoute>} />
-                <Route path="/factory/*" element={<ProtectedRoute requireAdmin><FactoryPage /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                 <Route path="/account-settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />

@@ -96,7 +96,6 @@ bump_semver() {
 # --- Load current package versions ---
 UI_VER=$(python3 -c "import json; print(json.load(open('gg-cms/frontend/react-ui/version.json'))['version'])" 2>/dev/null || echo "1.0.0")
 BACKEND_VER=$(python3 -c "import json; print(json.load(open('gg-cms/backend/go-cms/version.json'))['version'])" 2>/dev/null || echo "1.0.0")
-CF_VER=$(python3 -c "import json; print(json.load(open('content-factory/version.json'))['version'])" 2>/dev/null || echo "1.0.0")
 DB_VER=$(python3 -c "import json; print(json.load(open('gg-cms/backend/go-cms/migrations/version.json'))['version'])" 2>/dev/null || echo "1.0.0")
 SYS_VER=$(python3 -c "import json; print(json.load(open('$MANIFEST_FILE'))['current_version'])" 2>/dev/null || echo "1.0.0")
 
@@ -115,7 +114,6 @@ if [[ -n "$BUMP_TYPE" ]]; then
     case "$TARGET_PACKAGE" in
       ui) UI_VER=$(bump_semver "$UI_VER" "$BUMP_TYPE") ;;
       backend) BACKEND_VER=$(bump_semver "$BACKEND_VER" "$BUMP_TYPE") ;;
-      content-factory|cf) CF_VER=$(bump_semver "$CF_VER" "$BUMP_TYPE") ;;
       db) DB_VER=$(bump_semver "$DB_VER" "$BUMP_TYPE") ;;
       *) echo "❌ Invalid package: $TARGET_PACKAGE"; exit 1 ;;
     esac
@@ -124,7 +122,6 @@ if [[ -n "$BUMP_TYPE" ]]; then
     SYS_VER=$(bump_semver "$SYS_VER" "$BUMP_TYPE")
     UI_VER=$(bump_semver "$UI_VER" "$BUMP_TYPE")
     BACKEND_VER=$(bump_semver "$BACKEND_VER" "$BUMP_TYPE")
-    CF_VER=$(bump_semver "$CF_VER" "$BUMP_TYPE")
     DB_VER=$(bump_semver "$DB_VER" "$BUMP_TYPE")
   fi
 fi
@@ -133,7 +130,6 @@ echo "📋 Target Versions:"
 echo "   • System:          $SYS_VER"
 echo "   • React UI:        $UI_VER"
 echo "   • Go Backend:      $BACKEND_VER"
-echo "   • Content Factory: $CF_VER"
 echo "   • DB Migrations:   $DB_VER"
 echo "------------------------------------------------------------"
 
@@ -151,7 +147,6 @@ def update_ver(path, ver):
 
 update_ver('gg-cms/frontend/react-ui/version.json', '$UI_VER')
 update_ver('gg-cms/backend/go-cms/version.json', '$BACKEND_VER')
-update_ver('content-factory/version.json', '$CF_VER')
 update_ver('gg-cms/backend/go-cms/migrations/version.json', '$DB_VER')
 "
 
@@ -235,11 +230,6 @@ cat <<EOF > "$VERSION_MANIFEST"
       "version": "$DB_VER",
       "package": "gg-cms/backend/go-cms/migrations",
       "description": "PostgreSQL & MongoDB Schemas"
-    },
-    "content-factory": {
-      "version": "$CF_VER",
-      "package": "content-factory",
-      "description": "AI Content Factory Python Service"
     }
   }
 }
