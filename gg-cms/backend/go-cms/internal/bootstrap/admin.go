@@ -5,6 +5,7 @@ package bootstrap
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/pkg/config"
@@ -58,7 +59,7 @@ func SeedAdmin(db *gorm.DB, cfg *config.AdminConfig) {
 
 	// ── Ensure admin user exists ────────────────────────────────────────────
 	user := &entity.User{}
-	err = db.WithContext(ctx).Where("email = ?", cfg.Email).First(user).Error
+	err = db.WithContext(ctx).Where("lower(email) = lower(?)", cfg.Email).First(user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		hash, hashErr := password.Hash(cfg.Password)
 		if hashErr != nil {
@@ -66,10 +67,12 @@ func SeedAdmin(db *gorm.DB, cfg *config.AdminConfig) {
 			return
 		}
 		user = &entity.User{
-			Email:        cfg.Email,
+			Email:        strings.ToLower(strings.TrimSpace(cfg.Email)),
 			PasswordHash: hash,
 			Name:         cfg.Name,
 			Status:       entity.UserStatusActive,
+			EmailVerified: true,
+			PasswordSet:   true,
 		}
 		if err = db.WithContext(ctx).Create(user).Error; err != nil {
 			logger.Error("bootstrap: failed to create admin user", zap.Error(err))
@@ -165,7 +168,7 @@ func seedSecondaryAdmin(ctx context.Context, db *gorm.DB, cfg *config.AdminConfi
 	}
 
 	user := &entity.User{}
-	err := db.WithContext(ctx).Where("email = ?", cfg.GeekAdminEmail).First(user).Error
+	err := db.WithContext(ctx).Where("lower(email) = lower(?)", cfg.GeekAdminEmail).First(user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		hash, hashErr := password.Hash(cfg.GeekAdminPassword)
 		if hashErr != nil {
@@ -173,10 +176,12 @@ func seedSecondaryAdmin(ctx context.Context, db *gorm.DB, cfg *config.AdminConfi
 			return
 		}
 		user = &entity.User{
-			Email:        cfg.GeekAdminEmail,
+			Email:        strings.ToLower(strings.TrimSpace(cfg.GeekAdminEmail)),
 			PasswordHash: hash,
 			Name:         cfg.GeekAdminName,
 			Status:       entity.UserStatusActive,
+			EmailVerified: true,
+			PasswordSet:   true,
 		}
 		if err = db.WithContext(ctx).Create(user).Error; err != nil {
 			logger.Error("bootstrap: failed to create geek admin user", zap.Error(err))

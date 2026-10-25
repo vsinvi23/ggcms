@@ -38,7 +38,20 @@ func (r *passwordResetTokenRepository) FindValidByHash(ctx context.Context, toke
 }
 
 func (r *passwordResetTokenRepository) MarkUsed(ctx context.Context, id string) error {
+	res := r.write.WithContext(ctx).Model(&entity.PasswordResetToken{}).
+		Where("id = ? AND used_at IS NULL", id).
+		Update("used_at", time.Now())
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return repository.ErrNotFound
+	}
+	return nil
+}
+
+func (r *passwordResetTokenRepository) InvalidateForUser(ctx context.Context, userID uint) error {
 	return r.write.WithContext(ctx).Model(&entity.PasswordResetToken{}).
-		Where("id = ?", id).
+		Where("user_id = ? AND used_at IS NULL", userID).
 		Update("used_at", time.Now()).Error
 }

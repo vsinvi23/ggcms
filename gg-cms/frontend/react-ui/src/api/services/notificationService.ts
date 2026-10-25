@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import { NotificationDto, NotificationPagedResponse } from '../types';
+import { NotificationDto, NotificationPagedResponse, NotificationType } from '../types';
 
 const BASE = '/notifications';
 
@@ -7,6 +7,7 @@ function transformNotification(item: Record<string, unknown>): NotificationDto {
   const attrs = (item.attributes ?? item) as Record<string, unknown>;
   return {
     id: item.id as number,
+    type: ((attrs.type as NotificationType | undefined) ?? 'general'),
     title: attrs.title as string,
     message: attrs.message as string,
     read: (attrs.read ?? false) as boolean,

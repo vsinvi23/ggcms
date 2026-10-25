@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	analyticssvc "github.com/serenya/go-cms/internal/application/analytics"
+	assessmentsvc "github.com/serenya/go-cms/internal/application/assessment"
 	categorysvc "github.com/serenya/go-cms/internal/application/category"
 	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	"github.com/serenya/go-cms/internal/domain/entity"
@@ -20,6 +21,19 @@ type PublicHandler struct {
 	cmsService      cmssvc.Service
 	categoryService categorysvc.Service
 	analyticsService analyticssvc.Service
+	lessonPreview    LessonPreviewPolicy
+}
+
+func (h *PublicHandler) SetLessonPreview(p LessonPreviewPolicy) { h.lessonPreview = p }
+
+func (h *PublicHandler) publicCourse(c *gin.Context, co *entity.Course, preview bool) dto.CMSResponse {
+	r := courseToPublicCMS(co)
+	policy := h.lessonPreview
+	if policy == "" {
+		policy = LessonPreviewFirst
+	}
+	applyPublicCourseGate(c, &r, policy, preview)
+	return r
 }
 
 func NewPublicHandler(cmsService cmssvc.Service, categoryService categorysvc.Service, analyticsService analyticssvc.Service) *PublicHandler {
@@ -136,7 +150,7 @@ func (h *PublicHandler) GetPublicCourses(c *gin.Context) {
 	courses, _ := result.([]*entity.Course)
 	items := make([]dto.CMSResponse, len(courses))
 	for i, co := range courses {
-		items[i] = courseToPublicCMS(co)
+		items[i] = h.publicCourse(c, co, false)
 	}
 
 	response.StrapiPaged(c, items, total, p.Page, p.Size)
@@ -172,7 +186,7 @@ func (h *PublicHandler) GetPublicCourse(c *gin.Context) {
 	contentType := "course"
 	h.trackView(c, &trackID, &contentType)
 
-	response.OK(c, courseToPublicCMS(course))
+	response.OK(c, h.publicCourse(c, course, previewAllowed(c, course.CreatedByID, course.ReviewerID)))
 }
 
 // GET /api/public/courses/category/:slug
@@ -191,7 +205,7 @@ func (h *PublicHandler) GetPublicCoursesByCategory(c *gin.Context) {
 	var filtered []dto.CMSResponse
 	for _, co := range courses {
 		if co.Category != nil && co.Category.Slug == slug {
-			filtered = append(filtered, courseToPublicCMS(co))
+			filtered = append(filtered, h.publicCourse(c, co, false))
 		}
 	}
 	if filtered == nil {
@@ -226,7 +240,7 @@ func (h *PublicHandler) GetPublicCMS(c *gin.Context) {
 		courses, _ := result.([]*entity.Course)
 		items = make([]dto.CMSResponse, len(courses))
 		for i, co := range courses {
-			items[i] = courseToPublicCMS(co)
+			items[i] = h.publicCourse(c, co, false)
 		}
 	default:
 		articles, _ := result.([]*entity.Article)
@@ -272,7 +286,7 @@ func (h *PublicHandler) GetPublicCMSByID(c *gin.Context) {
 		contentTypeName = "course"
 		trackID := fmt.Sprintf("%d", course.ID)
 		h.trackView(c, &trackID, &contentTypeName)
-		response.OK(c, courseToPublicCMS(course))
+		response.OK(c, h.publicCourse(c, course, previewAllowed(c, course.CreatedByID, course.ReviewerID)))
 	default:
 		article, ok := result.(*entity.Article)
 		if !ok || (!previewAllowed(c, article.CreatedByID, article.ReviewerID) && article.Status != entity.CMSStatusPublished && !article.HasPendingDraft) {
@@ -349,6 +363,10 @@ func articleToPublicCMS(a *entity.Article) dto.CMSResponse {
 // courseToPublicCMS is the course equivalent of articleToPublicCMS.
 func courseToPublicCMS(c *entity.Course) dto.CMSResponse {
 	r := courseToCMS(c)
+	if c.CourseType == entity.CourseTypeAssessment && r.InteractiveMetadata != nil {
+		sanitized := assessmentsvc.SanitizeMetadata(*r.InteractiveMetadata)
+		r.InteractiveMetadata = &sanitized
+	}
 	if c.HasPendingDraft {
 		r.Title = c.PublishedTitle
 		if c.PublishedDescription != nil {
@@ -367,6 +385,9 @@ func courseToPublicCMS(c *entity.Course) dto.CMSResponse {
 }
 
 func (h *PublicHandler) trackView(c *gin.Context, contentID, contentType *string) {
+	if c.GetHeader("X-GG-Client-Analytics") != "" {
+		return
+	}
 	// Extract values before goroutine to avoid data race on gin context recycling.
 	ip := c.ClientIP()
 	ua := c.Request.UserAgent()

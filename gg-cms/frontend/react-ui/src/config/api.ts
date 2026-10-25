@@ -22,3 +22,5 @@ export const ENABLE_SOCIAL_LOGIN = import.meta.env.VITE_ENABLE_SOCIAL_LOGIN === 
 
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'CMS';
 export const APP_ENV = import.meta.env.VITE_APP_ENV || 'development';
+
+export const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || '';

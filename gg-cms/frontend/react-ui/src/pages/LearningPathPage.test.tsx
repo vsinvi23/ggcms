@@ -43,6 +43,11 @@ vi.mock('@/api/hooks/useCategories', () => ({
 vi.mock('@/api/hooks/useEnrollments', () => ({
   useMyEnrollments: () => ({ data: [] }),
   useEnroll: () => ({ mutate: vi.fn() }),
+  useSyncLocalProgress: () => undefined,
+}));
+
+vi.mock('@/api/hooks/useLearningPaths', () => ({
+  useLearningPathProgress: () => ({ data: undefined }),
 }));
 
 function renderPage() {

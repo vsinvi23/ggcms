@@ -11,3 +11,7 @@ export { sectionService } from './sectionService';
 export { lessonService } from './lessonService';
 export { enrollmentService } from './enrollmentService';
 export { tagService } from './tagService';
+export { assessmentService } from './assessmentService';
+export { certificateService } from './certificateService';
+export { analyticsService } from './analyticsService';
+export { privacyService } from './privacyService';

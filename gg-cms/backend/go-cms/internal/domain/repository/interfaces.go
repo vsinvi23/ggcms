@@ -20,6 +20,9 @@ type ArticleFilter struct {
 	// When set, returns REVIEW items with reviewer_id IS NULL whose category is linked
 	// to a reviewer group that contains the given user. Overrides Status/PubliclyVisible.
 	AvailableForUserID *uint
+	// When set, restricts results to items this user may see: PUBLISHED, own, assigned as reviewer,
+	// or REVIEW/APPROVED in a category where the user belongs to a reviewer group.
+	VisibleToUserID *uint
 }
 
 type CourseFilter struct {
@@ -33,6 +36,7 @@ type CourseFilter struct {
 	// When set, returns REVIEW items with reviewer_id IS NULL whose category is linked
 	// to a reviewer group that contains the given user. Overrides Status/PubliclyVisible.
 	AvailableForUserID *uint
+	VisibleToUserID    *uint
 }
 
 type TaskFilter struct {
@@ -53,9 +57,6 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id uint) (*entity.User, error)
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindAll(ctx context.Context, page, size int) ([]*entity.User, int64, error)
-	FindByGoogleID(ctx context.Context, googleID string) (*entity.User, error)
-	FindByGitHubID(ctx context.Context, githubID string) (*entity.User, error)
-	UpdateOAuthID(ctx context.Context, userID uint, provider, providerID string) error
 }
 
 type GroupRepository interface {
@@ -226,7 +227,7 @@ type LearningPathRepository interface {
 type NotificationRepository interface {
 	Create(ctx context.Context, notification *entity.Notification) error
 	FindByUserID(ctx context.Context, userID uint, page, size int) ([]*entity.Notification, int64, error)
-	MarkAsRead(ctx context.Context, id uint) error
+	MarkAsRead(ctx context.Context, id, userID uint) error
 	MarkAllAsRead(ctx context.Context, userID uint) error
 }
 
@@ -413,5 +414,7 @@ type AppSettingsRepository interface {
 type PasswordResetTokenRepository interface {
 	Create(ctx context.Context, token *entity.PasswordResetToken) error
 	FindValidByHash(ctx context.Context, tokenHash string) (*entity.PasswordResetToken, error)
+	// MarkUsed atomically consumes the token; ErrNotFound if it was already used.
 	MarkUsed(ctx context.Context, id string) error
+	InvalidateForUser(ctx context.Context, userID uint) error
 }

@@ -87,13 +87,13 @@ export async function previewImport(files: File[]): Promise<ImportPreviewRespons
   const form = new FormData();
   files.forEach((f) => form.append('files', f));
   const response = await apiClient.post<{ data: ImportPreviewResponse }>('/import/preview', form);
-  const resData = response.data;
-  return (resData as any)?.data || resData;
+  const resData = response.data as unknown as { data?: ImportPreviewResponse } & ImportPreviewResponse;
+  return resData.data || resData;
 }
 
 export async function confirmImport(items: ImportConfirmItem[]): Promise<ImportConfirmResponse> {
   const response = await apiClient.post<{ data: ImportConfirmResponse }>('/import/confirm', { items });
-  const resData = response.data;
-  return (resData as any)?.data || resData;
+  const resData = response.data as unknown as { data?: ImportConfirmResponse } & ImportConfirmResponse;
+  return resData.data || resData;
 }
 

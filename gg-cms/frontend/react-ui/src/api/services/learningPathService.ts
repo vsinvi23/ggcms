@@ -1,13 +1,17 @@
 import apiClient from '../client';
+import { PathProgressDto } from '../types';
 
 export interface LearningPathCourseDto {
   courseId: number;
   sortOrder: number;
 }
 
+export type LearningPathKind = 'LEARNING_PLAN' | 'INTERVIEW_PREP' | 'STRUCTURED_PATH' | 'SECURITY_TRACK' | 'PRACTICE_TRACK';
+
 export interface LearningPathDto {
   id: number;
   kind: string;
+  slug?: string;
   title: string;
   description: string;
   createdById: number;
@@ -18,7 +22,7 @@ export interface LearningPathDto {
 }
 
 export interface LearningPathCreateDto {
-  kind: string;
+  kind: LearningPathKind;
   title: string;
   description?: string;
 }
@@ -38,6 +42,11 @@ export const learningPathService = {
 
   getById: async (id: number): Promise<LearningPathDto> => {
     const response = await apiClient.get(`/learning-paths/${id}`);
+    return response.data.data;
+  },
+
+  getProgress: async (idOrSlug: number | string): Promise<PathProgressDto> => {
+    const response = await apiClient.get(`/learning-paths/${idOrSlug}/progress`);
     return response.data.data;
   },
 

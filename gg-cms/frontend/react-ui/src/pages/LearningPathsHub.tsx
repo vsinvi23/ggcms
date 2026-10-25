@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import React, { useState } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Search, GraduationCap, Clock, Layers, Filter, CheckCircle2, Lock, ArrowRight, BookOpen, FileText, Target, HelpCircle, Compass, X } from 'lucide-react';
@@ -48,6 +49,7 @@ interface LearningPathItem {
 
 export function LearningPathsHub() {
   const navigate = useNavigate();
+  usePageMeta({ title: 'Learning Paths', description: 'Follow structured learning paths from fundamentals to advanced skills.', canonicalPath: '/learning-paths' });
   const { data: dbPathsData } = usePublicLearningPaths();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -58,19 +60,19 @@ export function LearningPathsHub() {
 
   const allPaths = React.useMemo((): LearningPathItem[] => {
     if (!dbPathsData || dbPathsData.length === 0) return [];
-    return dbPathsData.map((dp: any) => ({
+    return dbPathsData.map((dp): LearningPathItem => ({
       id: String(dp.id),
       slug: dp.slug || String(dp.id),
       title: dp.title,
-      subtitle: dp.description || dp.subtitle || `Guided learning roadmap for ${dp.title}.`,
-      category: (dp.category as any) || (dp.kind ? (dp.kind.includes('Engineer') || dp.kind.includes('Architect') ? 'Career' : 'Technology') : 'Career'),
-      level: dp.level || '',
+      subtitle: dp.description || `Guided learning roadmap for ${dp.title}.`,
+      category: dp.kind.includes('Engineer') || dp.kind.includes('Architect') ? 'Career' : 'Technology',
+      level: '',
       stagesCount: dp.courseCount ?? dp.courses?.length ?? 0,
       resourcesCount: 0,
-      estimatedHours: dp.estimatedHours || 0,
-      skills: (dp.skills as string[] | undefined) || [],
-      progress: dp.progress || 0,
-      stages: dp.stages || [],
+      estimatedHours: 0,
+      skills: [],
+      progress: 0,
+      stages: [],
     }));
   }, [dbPathsData]);
 

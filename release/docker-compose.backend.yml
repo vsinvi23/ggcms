@@ -16,7 +16,7 @@ services:
 
   # ── PostgreSQL 16 (TLS) ──────────────────────────────────────────────────────
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16.4-alpine
     container_name: gg-cms-postgres
     restart: unless-stopped
     user: root
@@ -54,7 +54,7 @@ services:
 
   # ── MongoDB 7 (mTLS) ─────────────────────────────────────────────────────────
   mongodb:
-    image: mongo:7-jammy
+    image: mongo:7.0.14-jammy
     container_name: gg-cms-mongodb
     restart: unless-stopped
     command:
@@ -172,14 +172,14 @@ services:
 
   # ── pgAdmin (optional — use --profile tools) ─────────────────────────────────
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4:8.14
     container_name: gg-cms-pgadmin
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@gg-cms.local}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-Admin@123}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:?set PGADMIN_PASSWORD}
     ports:
-      - "${PGADMIN_PORT:-5050}:80"
+      - "127.0.0.1:${PGADMIN_PORT:-5050}:80"
     volumes:
       - ./data/pgadmin:/var/lib/pgadmin
     networks:

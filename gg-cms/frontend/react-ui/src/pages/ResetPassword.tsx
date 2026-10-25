@@ -67,9 +67,13 @@ const ResetPassword = () => {
                     className="pl-10"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    minLength={12}
+                    maxLength={72}
+                    autoComplete="new-password"
                     required
                   />
                 </div>
+                <p className="text-xs text-muted-foreground">At least 12 characters. Avoid common or breached passwords.</p>
               </div>
 
               <div className="space-y-2">
@@ -83,6 +87,7 @@ const ResetPassword = () => {
                     className="pl-10"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
                     required
                   />
                 </div>

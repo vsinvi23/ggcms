@@ -1,6 +1,6 @@
 // Integration test: applies the embedded migrations twice (second run must be a no-op).
-// Skipped unless SCRATCH_DSN points at a throwaway database. Set SEED_SAMPLE_CONTENT=false
-// to exercise the no-sample-content path.
+// Skipped unless SCRATCH_DSN points at a throwaway database. Set SEED_SAMPLE_CONTENT=true
+// to exercise the sample-content path (default is off).
 package migrations
 
 import (

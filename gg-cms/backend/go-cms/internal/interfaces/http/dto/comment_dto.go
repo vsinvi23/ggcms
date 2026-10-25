@@ -3,7 +3,7 @@ package dto
 type CommentAuthor struct {
 	ID    uint   `json:"id"`
 	Name  string `json:"name"`
-	Email string `json:"email"`
+	Email string `json:"email,omitempty"`
 }
 
 type CommentResponse struct {
@@ -15,6 +15,7 @@ type CommentResponse struct {
 	ParentID    *string           `json:"parentId,omitempty"`
 	Replies     []CommentResponse `json:"replies,omitempty"`
 	CreatedAt   string            `json:"createdAt"`
+	ModerationStatus string       `json:"moderationStatus,omitempty"`
 }
 
 type CreateCommentRequest struct {

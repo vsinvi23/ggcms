@@ -2,9 +2,14 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	settingssvc "github.com/serenya/go-cms/internal/application/settings"
+	"github.com/serenya/go-cms/internal/infrastructure/storage"
+	"github.com/serenya/go-cms/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type SettingsHandler struct {
@@ -19,7 +24,8 @@ func NewSettingsHandler(svc settingssvc.Service) *SettingsHandler {
 func (h *SettingsHandler) GetAll(c *gin.Context) {
 	settings, err := h.service.GetAll(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		logger.Error("settings request failed", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "internal server error"})
 		return
 	}
 	// Mask S3 secret key — never expose it in plaintext
@@ -32,7 +38,6 @@ func (h *SettingsHandler) GetAll(c *gin.Context) {
 // allowedSettingKeys is the set of keys that may be written via the settings API.
 var allowedSettingKeys = map[string]struct{}{
 	"storage.provider":         {},
-	"storage.local.upload_dir": {},
 	"storage.local.base_url":   {},
 	"storage.s3.bucket":        {},
 	"storage.s3.region":        {},
@@ -57,7 +62,8 @@ var allowedSettingKeys = map[string]struct{}{
 func (h *SettingsHandler) GetFeatures(c *gin.Context) {
 	all, err := h.service.GetAll(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		logger.Error("settings request failed", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "internal server error"})
 		return
 	}
 	boolVal := func(key, def string) bool {
@@ -98,8 +104,30 @@ func (h *SettingsHandler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "no settings provided"})
 		return
 	}
+	if v, ok := body["upload.max_size_mb"]; ok {
+		n, err := strconv.ParseInt(strings.TrimSpace(v), 10, 64)
+		if err != nil || n < 1 || n > maxUploadCeilingMB {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "upload.max_size_mb must be between 1 and " + strconv.Itoa(maxUploadCeilingMB)})
+			return
+		}
+	}
+	if v, ok := body["upload.allowed_types"]; ok {
+		for _, mt := range strings.Split(v, ",") {
+			if isForbiddenUploadType(mt) {
+				c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "upload.allowed_types contains a forbidden type: " + strings.TrimSpace(mt)})
+				return
+			}
+		}
+	}
+	if v, ok := body["storage.s3.endpoint"]; ok {
+		if err := storage.ValidateS3Endpoint(strings.TrimSpace(v)); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "internal server error"})
+			return
+		}
+	}
 	if err := h.service.SetMany(c.Request.Context(), body); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		logger.Error("settings update failed", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "internal server error"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "settings updated"})
@@ -109,7 +137,8 @@ func (h *SettingsHandler) Update(c *gin.Context) {
 func (h *SettingsHandler) TestStorage(c *gin.Context) {
 	provider, err := h.service.GetStorageProvider(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		logger.Error("settings request failed", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "internal server error"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "storage provider: " + provider.Name()})

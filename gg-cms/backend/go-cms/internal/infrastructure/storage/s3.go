@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -78,21 +77,33 @@ func (p *S3Provider) Save(file io.Reader, filename string, mimeType string, size
 		p.Region = "us-east-1" // safe: struct is created fresh per request by GetStorageProvider
 	}
 
-	ext := filepath.Ext(filename)
-	key := uuid.New().String() + ext
+	if err := ValidateS3Endpoint(p.Endpoint); err != nil {
+		return "", "", err
+	}
 
-	body, err := io.ReadAll(file)
-	if err != nil {
-		return "", "", fmt.Errorf("read upload: %w", err)
+	key := uuid.New().String() + ExtensionForMIME(mimeType)
+
+	var body io.Reader
+	contentLength := size
+	payloadHash := "UNSIGNED-PAYLOAD"
+	if size > 0 {
+		body = file
+	} else {
+		buf, err := io.ReadAll(file)
+		if err != nil {
+			return "", "", fmt.Errorf("read upload: %w", err)
+		}
+		body = bytes.NewReader(buf)
+		contentLength = int64(len(buf))
+		payloadHash = hexSHA256(buf)
 	}
 
 	now := time.Now().UTC()
 	dateISO := now.Format("20060102T150405Z")
 	dateShort := now.Format("20060102")
-	payloadHash := hexSHA256(body)
 	hostVal := p.host()
 
-	req, err := http.NewRequest("PUT", p.objectURL(key), bytes.NewReader(body))
+	req, err := http.NewRequest("PUT", p.objectURL(key), body)
 	if err != nil {
 		return "", "", err
 	}
@@ -101,7 +112,7 @@ func (p *S3Provider) Save(file io.Reader, filename string, mimeType string, size
 	req.Header.Set("Host", hostVal)
 	req.Header.Set("x-amz-date", dateISO)
 	req.Header.Set("x-amz-content-sha256", payloadHash)
-	req.ContentLength = int64(len(body))
+	req.ContentLength = contentLength
 
 	signedHeaders := "content-type;host;x-amz-content-sha256;x-amz-date"
 	canonicalHeaders := "content-type:" + mimeType + "\n" +
@@ -133,7 +144,7 @@ func (p *S3Provider) Save(file io.Reader, filename string, mimeType string, size
 		p.AccessKey, scope, signedHeaders, sig)
 	req.Header.Set("Authorization", authHeader)
 
-	client := &http.Client{Timeout: 120 * time.Second}
+	client := safeHTTPClient(120 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", "", fmt.Errorf("s3 upload: %w", err)
@@ -141,8 +152,7 @@ func (p *S3Provider) Save(file io.Reader, filename string, mimeType string, size
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		rb, _ := io.ReadAll(resp.Body)
-		return "", "", fmt.Errorf("s3 upload failed (%d): %s", resp.StatusCode, string(rb))
+		return "", "", fmt.Errorf("s3 upload failed (%d)", resp.StatusCode)
 	}
 
 	var publicURL string
@@ -157,6 +167,9 @@ func (p *S3Provider) Save(file io.Reader, filename string, mimeType string, size
 func (p *S3Provider) Delete(key string) error {
 	if p.Bucket == "" || p.AccessKey == "" || p.SecretKey == "" {
 		return fmt.Errorf("S3 not configured")
+	}
+	if err := ValidateS3Endpoint(p.Endpoint); err != nil {
+		return err
 	}
 	now := time.Now().UTC()
 	dateISO := now.Format("20060102T150405Z")
@@ -187,15 +200,14 @@ func (p *S3Provider) Delete(key string) error {
 	req.Header.Set("Authorization", fmt.Sprintf("AWS4-HMAC-SHA256 Credential=%s/%s,SignedHeaders=%s,Signature=%s",
 		p.AccessKey, scope, signedHeaders, sig))
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := safeHTTPClient(30 * time.Second)
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
-		rb, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("s3 delete failed (%d): %s", resp.StatusCode, string(rb))
+		return fmt.Errorf("s3 delete failed (%d)", resp.StatusCode)
 	}
 	return nil
 }

@@ -110,6 +110,8 @@ export interface GroupPermissions {
   users?: ResourcePerms;
   groups?: ManagePerms;
   categories?: ResourcePerms;
+  assessments?: ResourcePerms;
+  all?: boolean;
   analytics?: ViewPerms;
   settings?: ManagePerms;
   publicQuickEdit?: { enabled?: boolean };
@@ -148,6 +150,8 @@ export interface GroupResponseDto {
   id: number;
   name: string;
   role?: string;
+  roles?: string[];
+  description?: string;
   permissions?: GroupPermissions;
   users: GroupUserDto[] | null;
 }
@@ -174,6 +178,8 @@ export interface CategoryResponseDto {
   description?: string;
   requiredApprovals?: number;
   articleCount?: number;
+  courseCount?: number;
+  contentCount?: number;
   children?: CategoryResponseDto[];
 }
 
@@ -307,6 +313,12 @@ export interface CmsResponseDto {
   // Multi-review progress — populated for REVIEW-status items
   approvalCount?: number | null;
   requiredApprovals?: number | null;
+  durationMinutes?: number | null;
+  sectionsCount?: number | null;
+  lessonsCount?: number | null;
+  tags?: string[] | null;
+  level?: string | null;
+  excerpt?: string | null;
 }
 
 export interface MediaUploadResponse {
@@ -387,6 +399,7 @@ export interface ReviewCommentDto {
   author?: { id: number; name: string; email: string };
   parent?: { id: string } | null;
   replies?: ReviewCommentDto[];
+  moderationStatus?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -400,8 +413,13 @@ export interface ReviewCommentCreateDto {
 }
 
 // ─── Notification ────────────────────────────────────────────────────────────
+export type NotificationType =
+  | 'review_decision' | 'review_assigned' | 'content_published' | 'comment_reply'
+  | 'comment_mention' | 'enrollment' | 'course_completed' | 'welcome' | 'general';
+
 export interface NotificationDto {
   id: number;
+  type: NotificationType;
   title: string;
   message: string;
   read: boolean;
@@ -440,6 +458,7 @@ export interface LessonDto {
   content?: string | null;
   duration: number;
   order: number;
+  summary?: string | null;
   section?: { id: number } | null;
 }
 
@@ -520,9 +539,139 @@ export interface EnrollmentCreateDto {
 }
 
 export interface EnrollmentProgressDto {
-  completedLessonId?: number;
-  progress?: number;
-  status?: EnrollmentStatus;
+  completedLessons?: { id: number }[];
+  lastLessonId?: number;
+  status?: 'active' | 'dropped';
+}
+
+export interface EnrollmentResumeDto {
+  enrollmentId: number;
+  courseId: number;
+  status: EnrollmentStatus;
+  progress: number;
+  totalLessons: number;
+  completedCount: number;
+  completedLessonIds: number[];
+  lastLessonId: number | null;
+  nextLesson: { id: number; title: string; type: string; sectionId: number } | null;
+  awaitingAssessment: boolean;
+  assessmentId: number | null;
+}
+
+export interface SyncLocalItem {
+  courseId: number;
+  completedLessonIds: number[];
+}
+
+export interface SyncLocalResult {
+  courseId: number;
+  accepted: number;
+  rejected: number;
+  progress: number;
+  status: string;
+  error?: string;
+}
+
+export interface PathProgressCourseDto {
+  courseId: number;
+  title: string;
+  sortOrder: number;
+  enrolled: boolean;
+  status: 'completed' | 'active' | 'not_started';
+  progress: number;
+  completedAt?: string | null;
+}
+
+export interface PathProgressDto {
+  pathId: number;
+  title: string;
+  totalCourses: number;
+  completedCourses: number;
+  progress: number;
+  nextCourseId: number | null;
+  courses: PathProgressCourseDto[];
+}
+
+export interface AssessmentQuestionDto {
+  id: string;
+  text: string;
+  options: string[];
+  multiple: boolean;
+}
+
+export interface AssessmentDefinitionDto {
+  assessmentId: number;
+  title: string;
+  passMark: number;
+  questionCount: number;
+  maxAttempts: number;
+  questions: AssessmentQuestionDto[];
+}
+
+export interface AssessmentAttemptDto {
+  id: number;
+  assessmentId: number;
+  status: string;
+  score: number | null;
+  correctCount: number | null;
+  totalQuestions: number;
+  passMark: number;
+  passed: boolean | null;
+  startedAt: string;
+  submittedAt: string | null;
+  durationSeconds: number | null;
+}
+
+export interface AssessmentStartDto {
+  attempt: AssessmentAttemptDto;
+  assessment: AssessmentDefinitionDto;
+}
+
+export interface AssessmentAnswerDto {
+  questionId: string;
+  selected: number[];
+}
+
+export interface AssessmentQuestionResultDto {
+  questionId: string;
+  correct: boolean;
+  correctIndexes?: number[];
+  explanation?: string;
+}
+
+export interface AssessmentSubmitDto {
+  attempt: AssessmentAttemptDto;
+  results: AssessmentQuestionResultDto[];
+}
+
+export interface AssessmentHistoryDto {
+  assessmentId: number;
+  passMark: number;
+  attemptsUsed: number;
+  bestScore: number | null;
+  passed: boolean;
+  attempts: AssessmentAttemptDto[];
+}
+
+export interface CertificateDto {
+  code: string;
+  courseId: number;
+  courseTitle: string;
+  recipientName: string;
+  score: number | null;
+  issuedAt: string;
+  revoked: boolean;
+  verifyUrl: string;
+  pdfUrl: string;
+  linkedInUrl: string;
+}
+
+export interface CertificateVerificationDto {
+  valid: boolean;
+  recipientName?: string;
+  courseTitle?: string;
+  issuedAt?: string;
+  issuer?: string;
 }
 
 // ============================================
@@ -573,6 +722,92 @@ export interface RecommendedItem {
   categoryId: number | null;
   contentType: 'article' | 'course';
   score: number;
+  recId?: string;
+  slug?: string;
+  categoryName?: string;
+  reasonCode?: RecReasonCode;
+  reason?: string;
+  position?: number;
+}
+
+export type RecReasonCode =
+  | 'NEXT_STEP' | 'TOPIC_AFFINITY' | 'CATEGORY_PREFERENCE' | 'TAG_INTEREST' | 'TRENDING' | 'NEW'
+  | 'NEXT_IN_PATH' | 'CONTINUE_COURSE' | 'PREREQUISITE' | 'RELATED_TOPIC' | 'SAME_CATEGORY';
+
+export interface ContinueItem {
+  kind: 'path_next' | 'in_progress';
+  reasonCode: 'NEXT_IN_PATH' | 'CONTINUE_COURSE';
+  reason: string;
+  courseId: number;
+  courseSlug: string;
+  courseTitle: string;
+  progress: number;
+  pathId?: number;
+  pathSlug?: string;
+  pathTitle?: string;
+  pathCompleted?: number;
+  pathTotal?: number;
+  recId: string;
+}
+
+export interface PersonalizationFeed {
+  recId: string;
+  coldStart: boolean;
+  partial?: boolean;
+  generatedAt: string;
+  continue?: ContinueItem;
+  items: RecommendedItem[];
+}
+
+// ─── Public search ────────────────────────────────────────────────────────────
+
+export type SearchType = 'all' | 'article' | 'course';
+export type SearchLevel = 'beginner' | 'intermediate' | 'advanced' | 'expert';
+
+export interface SearchParams {
+  q?: string;
+  type?: SearchType;
+  category?: string;
+  topic?: string;
+  level?: SearchLevel;
+  page?: number;
+  size?: number;
+}
+
+export interface SearchHit {
+  type: 'article' | 'course';
+  id: number;
+  publicId: string;
+  slug: string;
+  path: string;
+  title: string;
+  titleHtml: string;
+  description?: string;
+  snippetHtml?: string;
+  thumbnailUrl?: string;
+  category?: { id: number; name: string; slug: string };
+  level?: string;
+  subtype?: string;
+  publishedAt?: string;
+  matchedLesson?: string;
+  score: number;
+}
+
+export interface SearchResponse {
+  query: string;
+  total: number;
+  page: number;
+  size: number;
+  totalPages: number;
+  hits: SearchHit[];
+}
+
+export interface SuggestResponse {
+  query: string;
+  titles: { type: 'article' | 'course'; id: number; title: string; path: string }[];
+  topics: { id: number; name: string; slug: string }[];
+  categories: { id: number; name: string; slug: string }[];
+  queries: string[];
 }
 
 // ─── Workflow Activity ────────────────────────────────────────────────────────
@@ -670,3 +905,304 @@ export interface RecommendationResponseDto {
   recommendations: RecommendationScoreDto[];
 }
 
+
+export interface TopContentDto {
+  contentId: string;
+  contentType: string;
+  views: number;
+  title?: string;
+  slug?: string;
+}
+
+export interface AnalyticsDashboardDto {
+  pageViews30d: number;
+  topContent: TopContentDto[];
+}
+
+// ─── AI layer ────────────────────────────────────────────────────────────────
+export type AiContentType = 'article' | 'course';
+export type AiDifficulty = 'easy' | 'medium' | 'hard';
+export type AiLevel = 'beginner' | 'intermediate' | 'advanced';
+export type AiDraftKind = 'summary' | 'seo' | 'quiz';
+export type AiDraftStatus = 'draft' | 'accepted' | 'rejected';
+
+export interface AiStatus {
+  enabled: boolean;
+  configured: boolean;
+  features: { editorial: boolean; moderation: boolean; tutor: boolean; quiz: boolean; studyPlan: boolean };
+}
+
+export interface AiTagSuggestion { id: number; name: string; score: number; reason?: string }
+export interface AiTagSuggestions {
+  topics: AiTagSuggestion[];
+  categories: AiTagSuggestion[];
+  tags: AiTagSuggestion[];
+  source: 'llm' | 'heuristic';
+  note?: string;
+}
+export interface AiSummaryDraft { draftId: string; tldr: string; takeaways: string[]; status: AiDraftStatus }
+export interface AiSeoDraft { draftId: string; metaTitle: string; metaDescription: string; keywords: string[]; lengthAdjusted: boolean }
+export interface AiQualityIssue {
+  severity: 'info' | 'warn' | 'error';
+  category: 'structure' | 'readability' | 'broken_link' | 'missing_section' | 'unsupported_claim';
+  message: string;
+  location?: string;
+}
+export interface AiQualityReport { score: number; issues: AiQualityIssue[]; stats?: Record<string, number>; aiUsed: boolean; note?: string }
+export interface AiQuizQuestion { type: 'mcq'; question: string; options: string[]; correctIndex: number; explanation: string; anchor?: string }
+export interface AiQuizDraft { draftId: string; difficulty: AiDifficulty; questions: AiQuizQuestion[]; status: AiDraftStatus }
+export interface AiDraft {
+  id: string;
+  kind: AiDraftKind;
+  payload: Record<string, unknown>;
+  status: AiDraftStatus;
+  createdAt: string;
+}
+
+export interface AiCitation {
+  id: string | number;
+  title: string;
+  heading?: string;
+  anchor?: string;
+  url: string;
+  contentType: AiContentType;
+  contentId: number;
+}
+export interface TutorAnswer {
+  conversationId: string;
+  messageId: number;
+  answer: string;
+  grounded: boolean;
+  citations: AiCitation[];
+}
+export interface TutorConversation { id: string; title?: string; contentType?: AiContentType; contentId?: number; createdAt?: string; updatedAt?: string }
+export interface TutorMessage {
+  id: number;
+  role: 'user' | 'assistant';
+  content: string;
+  citations?: AiCitation[];
+  grounded?: boolean;
+  rating?: number | null;
+  createdAt?: string;
+}
+export interface TutorAskRequest {
+  contentType: AiContentType;
+  contentId: number;
+  question: string;
+  conversationId?: string;
+}
+export interface StudyPlanItem { type: 'course' | 'path'; id: number; title: string; reason: string; order: number }
+export interface StudyPlan { summary: string; items: StudyPlanItem[]; note?: string }
+
+export interface AiSettingsView {
+  enabled: boolean; editorialEnabled: boolean; moderationEnabled: boolean; tutorEnabled: boolean; quizEnabled: boolean; studyPlanEnabled: boolean;
+  moderationFailClosed: boolean; modelDefault: string; modelCheap: string;
+  userPerMinute: number; globalPerMinute: number; userDailyTutor: number; userDailyOther: number;
+  monthlyBudgetUsd: number; perRequestBudgetUsd: number;
+  keyConfigured: boolean; provider: string;
+}
+export type AiSettingsUpdate = Record<string, string>;
+export interface AiUsageRow { key: string; calls: number; inputTokens: number; outputTokens: number; costMicroUsd: number; avgLatencyMs: number; errors: number }
+export interface AiUsageReport { total: AiUsageRow; byTask: AiUsageRow[]; byUser: AiUsageRow[]; byDay: AiUsageRow[] }
+export type AiModerationStatus = 'pending_review' | 'approved' | 'rejected';
+export interface AiModerationItem {
+  id: number;
+  commentId: string;
+  contentType: string;
+  contentId: number | string;
+  authorId: number;
+  excerpt: string;
+  reasons: string[];
+  source: 'heuristic' | 'llm' | 'fail_open' | 'fail_closed';
+  status: AiModerationStatus;
+  createdAt: string;
+}
+
+// ─── Analytics reports ───────────────────────────────────────────────────────
+export interface DateRange {
+  from: string;
+  to: string;
+}
+
+export interface AnalyticsTimelinePoint {
+  day: string;
+  activeUsers: number;
+  visitors: number;
+  pageViews: number;
+  newUsers: number;
+  enrollments: number;
+  completions: number;
+}
+
+export interface AnalyticsOverviewDto {
+  from: string;
+  to: string;
+  dau: number;
+  wau: number;
+  mau: number;
+  totals: {
+    pageViews: number;
+    reads: number;
+    searches: number;
+    newUsers: number;
+    enrollments: number;
+    completions: number;
+  };
+  timeline: AnalyticsTimelinePoint[];
+}
+
+export interface AnalyticsContentRow {
+  contentType: string;
+  contentId: string | number;
+  title: string;
+  slug: string;
+  views: number;
+  uniqueVisitors: number;
+  uniqueReaders: number;
+  avgReadSeconds: number;
+  completionRate: number;
+  enrollments: number;
+  completions: number;
+  trendPct: number;
+}
+
+export interface AnalyticsStaleRow {
+  contentType: string;
+  contentId: string | number;
+  title: string;
+  slug: string;
+  views: number;
+  updatedAt: string;
+}
+
+export interface AnalyticsContentDto {
+  top: AnalyticsContentRow[];
+  trending: AnalyticsContentRow[];
+  stale: AnalyticsStaleRow[];
+}
+
+export interface AnalyticsSearchRow {
+  queryHash: string;
+  queryText?: string;
+  count: number;
+  zeroResultCount: number;
+  avgResults: number;
+}
+
+export interface AnalyticsSearchDto {
+  totalSearches: number;
+  zeroResultRate: number;
+  top: AnalyticsSearchRow[];
+  zeroResults: AnalyticsSearchRow[];
+}
+
+export interface AnalyticsFunnelDto {
+  steps: { step: 'visit' | 'signup' | 'enroll' | 'complete'; count: number; conversionFromPrevious: number }[];
+  note?: string;
+}
+
+export interface AnalyticsCohortsDto {
+  weeks: number;
+  cohorts: { cohortWeek: string; size: number; retention: number[] }[];
+}
+
+export interface AnalyticsRecommendationsDto {
+  rows: { recId: string; impressions: number; clicks: number; completions: number; ctr: number; completionRate: number }[];
+  total?: number;
+  note?: string;
+}
+
+export type EngagementLevel = 'high' | 'medium' | 'low' | 'dormant';
+export type ChurnRisk = 'new' | 'low' | 'medium' | 'high';
+
+export interface UserEngagementRow {
+  userId: number;
+  name: string;
+  email: string;
+  score: number;
+  level: EngagementLevel;
+  churnRisk: ChurnRisk;
+  atRisk: boolean;
+  lastActiveAt: string | null;
+  activeDays30d: number;
+  reads30d: number;
+  lessonsCompleted30d: number;
+}
+
+export interface UserEngagementPage {
+  items: UserEngagementRow[];
+  total: number;
+  currentPage: number;
+  pageSize: number;
+}
+
+// ─── Privacy, consent and preferences ────────────────────────────────────────
+export interface PrivacyRetentionDto {
+  consentPolicyVersion: string;
+  analyticsRawEventsDays: number;
+  analyticsRollupDays: number;
+  readNotificationsDays: number;
+  sentEmailLogDays: number;
+  accountDeletion: string;
+}
+
+export interface ConsentRecord {
+  policyVersion: string;
+  analytics: boolean;
+  personalization: boolean;
+  marketing: boolean;
+  createdAt?: string;
+}
+
+export interface ConsentState {
+  current: ConsentRecord | null;
+  currentPolicyVersion: string;
+  needsReconsent: boolean;
+  history: ConsentRecord[];
+}
+
+export interface ConsentInput {
+  policyVersion: string;
+  analytics: boolean;
+  personalization: boolean;
+  marketing: boolean;
+}
+
+export interface ChannelPrefs {
+  inApp: boolean;
+  email: boolean;
+}
+
+export type PreferenceNotificationType = Exclude<NotificationType, 'general'>;
+export type DigestFrequency = 'off' | 'daily' | 'weekly';
+export type ThemePreference = 'system' | 'light' | 'dark';
+
+export interface UserPreferences {
+  notifications: Record<PreferenceNotificationType, ChannelPrefs>;
+  digestFrequency: DigestFrequency;
+  emailUnsubscribed: boolean;
+  privacy: { profilePublic: boolean; showActivity: boolean };
+  appearance: { theme: ThemePreference; language: string };
+  profile: { bio: string; location: string; jobTitle: string };
+}
+
+export interface UserPreferencesUpdate {
+  notifications?: Partial<Record<PreferenceNotificationType, Partial<ChannelPrefs>>>;
+  digestFrequency?: DigestFrequency;
+  emailUnsubscribed?: boolean;
+  privacy?: Partial<UserPreferences['privacy']>;
+  appearance?: Partial<UserPreferences['appearance']>;
+}
+
+export interface SelfProfile {
+  id: number;
+  email: string;
+  name: string;
+  mobileNo: string;
+  avatarUrl: string;
+  bio: string;
+  location: string;
+  jobTitle: string;
+}
+
+export type SelfProfileUpdate = Partial<Omit<SelfProfile, 'id' | 'email'>>;

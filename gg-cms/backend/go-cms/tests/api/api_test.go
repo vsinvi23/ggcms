@@ -18,6 +18,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -36,13 +37,31 @@ var testSuffix = fmt.Sprintf("%d", time.Now().UnixMilli())
 
 // ── HTTP helpers ──────────────────────────────────────────────────────────────
 
+// testPassword satisfies the password policy (>=12 chars, not common, not derived from email/name).
+const testPassword = "Tr1cky-Pass-Word-2026"
+
+// apiClient follows the cookie + CSRF session contract: login sets the HttpOnly jwt,
+// refresh_token and csrf_token cookies, and mutating requests echo csrf_token in X-CSRF-Token.
+// Cookies are tracked by hand because the server marks them Secure and the tests use plain HTTP.
 type apiClient struct {
-	token string
-	http  *http.Client
+	cookies map[string]string
+	http    *http.Client
 }
 
 func newClient() *apiClient {
-	return &apiClient{http: &http.Client{Timeout: 10 * time.Second}}
+	return &apiClient{cookies: map[string]string{}, http: &http.Client{Timeout: 10 * time.Second}}
+}
+
+func (c *apiClient) authenticated() bool { return c.cookies["jwt"] != "" }
+
+func (c *apiClient) storeCookies(resp *http.Response) {
+	for _, ck := range resp.Cookies() {
+		if ck.MaxAge < 0 || ck.Value == "" {
+			delete(c.cookies, ck.Name)
+		} else {
+			c.cookies[ck.Name] = ck.Value
+		}
+	}
 }
 
 func (c *apiClient) do(method, path string, body interface{}) (*http.Response, map[string]interface{}) {
@@ -53,14 +72,24 @@ func (c *apiClient) do(method, path string, body interface{}) (*http.Response, m
 	}
 	req, _ := http.NewRequest(method, baseURL+path, r)
 	req.Header.Set("Content-Type", "application/json")
-	if c.token != "" {
-		req.Header.Set("Authorization", "Bearer "+c.token)
+	var pairs []string
+	for name, value := range c.cookies {
+		pairs = append(pairs, name+"="+value)
+	}
+	if len(pairs) > 0 {
+		req.Header.Set("Cookie", strings.Join(pairs, "; "))
+	}
+	if method != http.MethodGet && method != http.MethodHead {
+		if csrf := c.cookies["csrf_token"]; csrf != "" {
+			req.Header.Set("X-CSRF-Token", csrf)
+		}
 	}
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return nil, nil
 	}
 	defer resp.Body.Close()
+	c.storeCookies(resp)
 	raw, _ := io.ReadAll(resp.Body)
 	var m map[string]interface{}
 	_ = json.Unmarshal(raw, &m)
@@ -109,9 +138,8 @@ func assertKey(t *testing.T, body map[string]interface{}, key string) {
 // ── Auth tests ────────────────────────────────────────────────────────────────
 
 // TestAuth_Register verifies:
-//   - POST /api/auth/local/register → 201
-//   - Response shape is flat { jwt, user } (Strapi-compatible, NOT wrapped in { success, data })
-//   - user object has id, email, name, status
+//   - POST /api/auth/local/register → 202 with a uniform message and no session
+//   - the account can then log in (login returns { user } and sets the session cookies)
 func TestAuth_Register(t *testing.T) {
 	c := newClient()
 	email := fmt.Sprintf("test_%s@example.com", testSuffix)
@@ -119,46 +147,47 @@ func TestAuth_Register(t *testing.T) {
 	resp, body := c.post("/api/auth/local/register", map[string]interface{}{
 		"username": "testuser_" + testSuffix,
 		"email":    email,
-		"password": "Test@1234",
+		"password": testPassword,
 		"name":     "Test User",
 	})
 
-	assertStatus(t, resp, http.StatusCreated)
+	assertStatus(t, resp, http.StatusAccepted)
+	assertKey(t, body, "message")
+	if body["jwt"] != nil || body["user"] != nil || c.authenticated() {
+		t.Errorf("register must not start a session or return a token; body = %v", body)
+	}
 
-	// Must be flat { jwt, user } — NOT { success, data: { jwt, user } }
-	assertKey(t, body, "jwt")
-	assertKey(t, body, "user")
-
-	user, ok := body["user"].(map[string]interface{})
+	loginResp, loginBody := c.post("/api/auth/local", map[string]interface{}{"identifier": email, "password": testPassword})
+	assertStatus(t, loginResp, http.StatusOK)
+	user, ok := loginBody["user"].(map[string]interface{})
 	if !ok {
-		t.Fatalf("user field is not an object: %v", body["user"])
+		t.Fatalf("user field is not an object: %v", loginBody["user"])
 	}
 	assertKey(t, user, "id")
 	assertKey(t, user, "email")
 	assertKey(t, user, "name")
 	assertKey(t, user, "status")
-
 	if user["email"] != email {
 		t.Errorf("email: got %v, want %v", user["email"], email)
 	}
 }
 
-// TestAuth_Register_DuplicateEmail verifies 409 on duplicate email.
+// TestAuth_Register_DuplicateEmail verifies a duplicate registration is indistinguishable from a new one.
 func TestAuth_Register_DuplicateEmail(t *testing.T) {
 	c := newClient()
 	email := fmt.Sprintf("dup_%s@example.com", testSuffix)
 	payload := map[string]interface{}{
 		"username": "dup_" + testSuffix,
 		"email":    email,
-		"password": "Test@1234",
+		"password": testPassword,
 		"name":     "Dup User",
 	}
 
 	resp1, _ := c.post("/api/auth/local/register", payload)
-	assertStatus(t, resp1, http.StatusCreated)
+	assertStatus(t, resp1, http.StatusAccepted)
 
 	resp2, body2 := c.post("/api/auth/local/register", payload)
-	assertStatus(t, resp2, http.StatusConflict)
+	assertStatus(t, resp2, http.StatusAccepted)
 	assertKey(t, body2, "message")
 }
 
@@ -175,11 +204,11 @@ func TestAuth_Register_InvalidPayload(t *testing.T) {
 
 // TestAuth_Login verifies:
 //   - POST /api/auth/local → 200
-//   - Flat { jwt, user } response shape
+//   - { user } response shape; the session travels in HttpOnly cookies, never in the body
 func TestAuth_Login(t *testing.T) {
 	c := newClient()
 	email := fmt.Sprintf("login_%s@example.com", testSuffix)
-	password := "Login@1234"
+	password := testPassword
 
 	// First register
 	resp, _ := c.post("/api/auth/local/register", map[string]interface{}{
@@ -188,7 +217,7 @@ func TestAuth_Login(t *testing.T) {
 		"password": password,
 		"name":     "Login User",
 	})
-	assertStatus(t, resp, http.StatusCreated)
+	assertStatus(t, resp, http.StatusAccepted)
 
 	// Now login using Strapi-style identifier field
 	loginResp, body := c.post("/api/auth/local", map[string]interface{}{
@@ -196,8 +225,15 @@ func TestAuth_Login(t *testing.T) {
 		"password":   password,
 	})
 	assertStatus(t, loginResp, http.StatusOK)
-	assertKey(t, body, "jwt")
 	assertKey(t, body, "user")
+	if body["jwt"] != nil {
+		t.Errorf("login body must not contain a jwt; body = %v", body)
+	}
+	for _, name := range []string{"jwt", "refresh_token", "csrf_token"} {
+		if c.cookies[name] == "" {
+			t.Errorf("login did not set cookie %q", name)
+		}
+	}
 }
 
 // TestAuth_Login_WrongPassword verifies 401 on bad credentials.
@@ -219,12 +255,14 @@ func TestAuth_Me(t *testing.T) {
 	regResp, regBody := c.post("/api/auth/local/register", map[string]interface{}{
 		"username": "me_" + testSuffix,
 		"email":    email,
-		"password": "Me@12345",
+		"password": testPassword,
 		"name":     "Me User",
 	})
-	assertStatus(t, regResp, http.StatusCreated)
+	assertStatus(t, regResp, http.StatusAccepted)
+	_ = regBody
 
-	c.token = regBody["jwt"].(string)
+	loginResp, _ := c.post("/api/auth/local", map[string]interface{}{"identifier": email, "password": testPassword})
+	assertStatus(t, loginResp, http.StatusOK)
 
 	meResp, meBody := c.get("/api/users/me")
 	assertStatus(t, meResp, http.StatusOK)
@@ -238,7 +276,7 @@ func TestAuth_Me(t *testing.T) {
 	assertKey(t, data, "email")
 }
 
-// TestAuth_Me_Unauthenticated verifies 401 without token.
+// TestAuth_Me_Unauthenticated verifies 401 without a session.
 func TestAuth_Me_Unauthenticated(t *testing.T) {
 	c := newClient()
 	resp, _ := c.get("/api/users/me")
@@ -302,44 +340,43 @@ func TestPublic_Course_NotFound(t *testing.T) {
 
 // ── Protected endpoint tests ──────────────────────────────────────────────────
 
-// authToken registers a fresh user and returns their JWT.
-func authToken(t *testing.T, suffix string) string {
+// authedClient registers a fresh user, logs in and returns a client holding the session cookies.
+func authedClient(t *testing.T, suffix string) *apiClient {
 	t.Helper()
 	c := newClient()
 	email := fmt.Sprintf("tok_%s@example.com", suffix)
-	resp, body := c.post("/api/auth/local/register", map[string]interface{}{
+	resp, _ := c.post("/api/auth/local/register", map[string]interface{}{
 		"username": "tok_" + suffix,
 		"email":    email,
-		"password": "Tok@12345",
+		"password": testPassword,
 		"name":     "Token User",
 	})
-	if resp == nil || resp.StatusCode != http.StatusCreated {
-		t.Fatalf("authToken: registration failed (status %v)", resp)
+	if resp == nil || resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("authedClient: registration failed (status %v)", resp)
 	}
-	jwt, ok := body["jwt"].(string)
-	if !ok || jwt == "" {
-		t.Fatalf("authToken: no jwt in response: %v", body)
+	loginResp, _ := c.post("/api/auth/local", map[string]interface{}{"identifier": email, "password": testPassword})
+	if loginResp == nil || loginResp.StatusCode != http.StatusOK || !c.authenticated() {
+		t.Fatalf("authedClient: login failed (status %v)", loginResp)
 	}
-	return jwt
+	return c
 }
 
-// adminToken logs in as the seeded admin and returns their JWT.
-// Used for tests that exercise admin-only endpoints (group/category/user management).
-func adminToken(t *testing.T) string {
+// adminClient logs in as the seeded admin (ADMIN_EMAIL / ADMIN_PASSWORD) and returns a client
+// holding the session cookies. Used for admin-only endpoints (group/category/user management).
+func adminClient(t *testing.T) *apiClient {
 	t.Helper()
+	if adminPassword == "" {
+		t.Skip("ADMIN_PASSWORD not set")
+	}
 	c := newClient()
-	resp, body := c.post("/api/auth/local", map[string]interface{}{
-		"identifier": "geekadmin@geekgully.com",
-		"password":   "Geekadmin@2026",
+	resp, _ := c.post("/api/auth/local", map[string]interface{}{
+		"identifier": adminEmail,
+		"password":   adminPassword,
 	})
-	if resp == nil || resp.StatusCode != http.StatusOK {
-		t.Fatalf("adminToken: admin login failed (status %v) — is server running with seeded admin?", resp)
+	if resp == nil || resp.StatusCode != http.StatusOK || !c.authenticated() {
+		t.Fatalf("adminClient: admin login failed (status %v) — is server running with seeded admin?", resp)
 	}
-	jwt, ok := body["jwt"].(string)
-	if !ok || jwt == "" {
-		t.Fatalf("adminToken: no jwt in admin login response: %v", body)
-	}
-	return jwt
+	return c
 }
 
 // TestUsers_GetAll verifies GET /api/users requires auth and returns a paged list.
@@ -352,7 +389,7 @@ func TestUsers_GetAll(t *testing.T) {
 	assertStatus(t, resp, http.StatusUnauthorized)
 
 	// With token → 200 with paged envelope
-	c.token = authToken(t, testSuffix+"_u")
+	c = authedClient(t, testSuffix+"_u")
 	resp, body := c.get("/api/users")
 	assertStatus(t, resp, http.StatusOK)
 	if _, ok := body["data"]; !ok {
@@ -367,7 +404,7 @@ func TestUsers_GetAll(t *testing.T) {
 // Group write operations are admin-only; this test uses the seeded admin account.
 func TestGroups_CRUD(t *testing.T) {
 	c := newClient()
-	c.token = adminToken(t)
+	c = adminClient(t)
 
 	// Create — groups use Strapi-style { data: { name } } wrapper
 	createResp, createBody := c.post("/api/user-groups", map[string]interface{}{
@@ -411,7 +448,7 @@ func TestGroups_CRUD(t *testing.T) {
 // Category write operations are admin-only; this test uses the seeded admin account.
 func TestCategories_CRUD(t *testing.T) {
 	c := newClient()
-	c.token = adminToken(t)
+	c = adminClient(t)
 
 	// Create — categories use Strapi-style { data: { name } } wrapper
 	createResp, createBody := c.post("/api/categories", map[string]interface{}{
@@ -443,7 +480,7 @@ func TestCategories_CRUD(t *testing.T) {
 // TestCMS_CRUD verifies article create / read / update / submit / delete.
 func TestCMS_CRUD(t *testing.T) {
 	c := newClient()
-	c.token = authToken(t, testSuffix+"_cms")
+	c = authedClient(t, testSuffix+"_cms")
 
 	// Create article — flat payload (no data wrapper), type+title required
 	desc := "A test article"
@@ -487,7 +524,7 @@ func TestNotifications_GetAll(t *testing.T) {
 	resp, _ := c.get("/api/notifications")
 	assertStatus(t, resp, http.StatusUnauthorized)
 
-	c.token = authToken(t, testSuffix+"_notif")
+	c = authedClient(t, testSuffix+"_notif")
 	resp, body := c.get("/api/notifications")
 	assertStatus(t, resp, http.StatusOK)
 	if _, ok := body["data"]; !ok {
@@ -516,7 +553,7 @@ func TestEnrollments_RequiresAuth(t *testing.T) {
 // A freshly registered user has "user" role and should get 403.
 func TestAnalytics_AdminOnly(t *testing.T) {
 	c := newClient()
-	c.token = authToken(t, testSuffix+"_anon")
+	c = authedClient(t, testSuffix+"_anon")
 	resp, _ := c.get("/api/analytics/dashboard")
 	// Regular user → 403 Forbidden
 	assertStatus(t, resp, http.StatusForbidden)

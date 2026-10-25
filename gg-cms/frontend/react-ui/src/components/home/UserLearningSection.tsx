@@ -114,7 +114,8 @@ const COLOR_BG: Record<string, string> = {
 
 function HighlightCard({ h }: { h: HighlightDto }) {
   const bg = COLOR_BG[h.color ?? 'yellow'] ?? COLOR_BG.yellow;
-  const url = h.contentSlug ? `/course/${h.contentSlug}` : '#';
+  const base = h.contentType === 'course' ? '/course' : '/article';
+  const url = h.contentSlug ? `${base}/${h.contentSlug}` : `${base}/${h.contentId}`;
 
   return (
     <Link to={url}>

@@ -1,8 +1,39 @@
-import apiClient, { setAuthToken, clearAuthToken, clearUserData } from '../client';
+import apiClient, { clearAuthToken, clearUserData } from '../client';
+import { API_BASE_URL } from '@/config/api';
 import { LoginRequest, RegisterRequest, AuthResponse } from '../types';
 
-// Go backend uses /auth endpoints
 const AUTH_BASE = '/auth';
+
+export type SocialProvider = 'google' | 'github' | 'linkedin';
+
+export interface AuthProviderInfo {
+  id: SocialProvider;
+  name: string;
+}
+
+export interface ConnectedIdentity {
+  provider: SocialProvider;
+  email?: string;
+  name?: string;
+  linkedAt: string;
+  lastLoginAt?: string;
+}
+
+export interface VerifyEmailResult {
+  status: 'verified' | 'linked' | 'signed_up';
+}
+
+type ApiErrorBody = { message?: string; code?: string; error?: { message?: string } };
+
+const errorBody = (error: unknown): ApiErrorBody | undefined =>
+  (error as { response?: { data?: ApiErrorBody } })?.response?.data;
+
+export const getErrorCode = (error: unknown): string | undefined => errorBody(error)?.code;
+
+const errorMessage = (error: unknown, fallback: string): string => {
+  const body = errorBody(error);
+  return body?.message || body?.error?.message || fallback;
+};
 
 // Map a raw Go backend user object to the shape expected by AuthContext.
 // Go returns role as a flat string ("admin" | "user"), not a nested object.
@@ -18,126 +49,95 @@ const mapGoUser = (u: Record<string, unknown>) => ({
   groups: [] as string[],
   groupIds: [] as number[],
   blocked: false,
-  confirmed: true,
+  confirmed: (u?.emailVerified as boolean | undefined) ?? false,
+  emailVerified: (u?.emailVerified as boolean | undefined) ?? false,
+  passwordSet: (u?.passwordSet as boolean | undefined) ?? true,
+  avatarUrl: u?.avatarUrl as string | undefined,
   lastLogin: (u?.lastLogin as string | null | undefined) || null,
   createdAt: u?.createdAt as string | undefined,
   updatedAt: u?.updatedAt as string | undefined,
 });
 
 export const authService = {
+  // The session is carried by HttpOnly cookies; the response body only contains the user.
   login: async (credentials: LoginRequest): Promise<AuthResponse> => {
     try {
       const response = await apiClient.post(`${AUTH_BASE}/local`, {
         identifier: credentials.email,
         password: credentials.password,
       });
-      
-      // Strapi returns { jwt, user } directly (not wrapped in ApiResponse)
-      const { jwt, user } = response.data;
-      
-      if (jwt) {
-        setAuthToken(jwt);
-      }
-      
-      return {
-        token: jwt,
-        user: mapGoUser(user),
-      };
+      return { token: '', user: mapGoUser(response.data.user) };
     } catch (error: unknown) {
-      const e = error as { response?: { data?: { message?: string; error?: { message?: string } } } };
-      throw new Error(e.response?.data?.message || e.response?.data?.error?.message || 'Login failed');
+      const e = error as Error & { response?: { status?: number } };
+      if (e.response?.status === 401) throw error;
+      throw new Error(errorMessage(error, 'Login failed'));
     }
   },
 
-  register: async (data: RegisterRequest): Promise<AuthResponse> => {
+  // Registration never reveals whether the email exists and does not start a session;
+  // the caller signs in afterwards.
+  register: async (data: RegisterRequest): Promise<void> => {
     try {
-      const response = await apiClient.post(`${AUTH_BASE}/local/register`, {
+      await apiClient.post(`${AUTH_BASE}/local/register`, {
         username: data.username || data.name?.replace(/\s+/g, '') || data.email.split('@')[0],
         email: data.email,
         password: data.password,
         name: data.name,
       });
-
-      const { jwt, user } = response.data;
-
-      if (jwt) {
-        setAuthToken(jwt);
-      }
-
-      return {
-        token: jwt,
-        user: mapGoUser(user),
-      };
     } catch (error: unknown) {
-      const e = error as { response?: { data?: { message?: string; error?: { message?: string } } }; message?: string };
-      console.error('Registration error:', e.response?.data);
-      throw new Error(
-        e.response?.data?.message || e.response?.data?.error?.message || e.message || 'Registration failed',
-      );
+      throw new Error(errorMessage(error, 'Registration failed'));
     }
   },
 
-  /**
-   * Get current authenticated user
-   * GET /users/me
-   * Requires authentication token
-   */
   getCurrentUser: async () => {
     try {
       const response = await apiClient.get('/users/me');
-      // Go wraps the response in { success, data }; unwrap it.
       const raw = response.data?.data ?? response.data;
       return mapGoUser(raw);
-    } catch (error) {
+    } catch {
       throw new Error('Failed to get current user');
     }
   },
 
-  /**
-   * Forgot password - request reset
-   * POST /auth/forgot-password
-   */
   forgotPassword: async (email: string) => {
     try {
       await apiClient.post(`${AUTH_BASE}/forgot-password`, { email });
       return { success: true, message: 'Password reset email sent' };
     } catch (error: unknown) {
-      const e = error as { response?: { data?: { message?: string; error?: { message?: string } } } };
-      throw new Error(e.response?.data?.message || e.response?.data?.error?.message || 'Failed to send reset email');
+      throw new Error(errorMessage(error, 'Failed to send reset email'));
     }
   },
 
-  /**
-   * Reset password with code
-   * POST /auth/reset-password
-   */
   resetPassword: async (code: string, password: string, passwordConfirmation: string) => {
     try {
-      await apiClient.post(`${AUTH_BASE}/reset-password`, {
-        code,
-        password,
-        passwordConfirmation,
-      });
+      await apiClient.post(`${AUTH_BASE}/reset-password`, { code, password, passwordConfirmation });
       return { success: true, message: 'Password reset successful' };
     } catch (error: unknown) {
-      const e = error as { response?: { data?: { message?: string; error?: { message?: string } } } };
-      throw new Error(e.response?.data?.message || e.response?.data?.error?.message || 'Failed to reset password');
+      throw new Error(errorMessage(error, 'Failed to reset password'));
     }
   },
 
-  /**
-   * Get the OAuth provider redirect URL.
-   * GET /auth/{provider} → { url: string }
-   * The caller should do window.location.href = url to start the OAuth flow.
-   */
-  getOAuthURL: async (provider: 'google' | 'github'): Promise<string> => {
-    const response = await apiClient.get(`${AUTH_BASE}/${provider}`);
-    return response.data.url as string;
+  // POST /users/me/password — revokes every other session; this device stays signed in.
+  // For social-only accounts (no password yet) currentPassword may be empty and a recent login is required.
+  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+    try {
+      await apiClient.post('/users/me/password', { currentPassword, newPassword });
+    } catch (error: unknown) {
+      const err = new Error(errorMessage(error, 'Failed to change password')) as Error & { code?: string };
+      err.code = getErrorCode(error);
+      throw err;
+    }
   },
 
-  /**
-   * Logout - clear the backend session cookie and stored token
-   */
+  // Re-prove the password to refresh the "recent login" window (needed to link accounts).
+  reauth: async (password: string): Promise<void> => {
+    try {
+      await apiClient.post(`${AUTH_BASE}/reauth`, { password });
+    } catch (error: unknown) {
+      throw new Error(errorMessage(error, 'Incorrect password'));
+    }
+  },
+
   logout: async (): Promise<void> => {
     try {
       await apiClient.post(`${AUTH_BASE}/logout`);
@@ -146,6 +146,93 @@ export const authService = {
     }
     clearAuthToken();
     clearUserData();
+  },
+
+  logoutAll: async (): Promise<void> => {
+    await apiClient.post(`${AUTH_BASE}/logout-all`);
+    clearAuthToken();
+    clearUserData();
+  },
+
+  verifyEmail: async (token: string): Promise<VerifyEmailResult> => {
+    try {
+      const response = await apiClient.post(`${AUTH_BASE}/email/verify`, { token });
+      return (response.data?.data ?? response.data) as VerifyEmailResult;
+    } catch (error: unknown) {
+      throw new Error(errorMessage(error, 'This link is invalid or has expired.'));
+    }
+  },
+
+  resendVerification: async (): Promise<void> => {
+    await apiClient.post(`${AUTH_BASE}/email/resend`);
+  },
+
+  // ── Social login ──────────────────────────────────────────────────────────
+
+  getProviders: async (): Promise<AuthProviderInfo[]> => {
+    const response = await apiClient.get(`${AUTH_BASE}/providers`);
+    const data = response.data?.data ?? response.data;
+    return (data?.providers ?? []) as AuthProviderInfo[];
+  },
+
+  // Full-page navigation target; the backend answers with a 302 to the provider.
+  getSocialStartUrl: (provider: SocialProvider, redirect?: string): string => {
+    const q = redirect ? `?redirect=${encodeURIComponent(redirect)}` : '';
+    return `${API_BASE_URL}${AUTH_BASE}/${provider}/start${q}`;
+  },
+
+  confirmLinkWithPassword: async (ticket: string, password: string): Promise<void> => {
+    try {
+      await apiClient.post(`${AUTH_BASE}/link/confirm`, { ticket, password });
+    } catch (error: unknown) {
+      throw new Error(errorMessage(error, 'Could not confirm. Check your password and try again.'));
+    }
+  },
+
+  sendLinkEmail: async (ticket: string): Promise<void> => {
+    try {
+      await apiClient.post(`${AUTH_BASE}/link/email`, { ticket });
+    } catch (error: unknown) {
+      throw new Error(errorMessage(error, 'Could not send the email.'));
+    }
+  },
+
+  submitSocialEmail: async (ticket: string, email: string): Promise<void> => {
+    try {
+      await apiClient.post(`${AUTH_BASE}/social/email`, { ticket, email });
+    } catch (error: unknown) {
+      throw new Error(errorMessage(error, 'Could not send the verification email.'));
+    }
+  },
+
+  listIdentities: async (): Promise<ConnectedIdentity[]> => {
+    const response = await apiClient.get('/users/me/identities');
+    const data = response.data?.data ?? response.data;
+    return (data?.identities ?? []) as ConnectedIdentity[];
+  },
+
+  // Returns the provider URL to navigate to. Throws an Error with .code === 'reauth_required'
+  // when the login is older than 5 minutes.
+  startLinkIdentity: async (provider: SocialProvider, redirect?: string): Promise<string> => {
+    try {
+      const response = await apiClient.post(`/users/me/identities/${provider}/link`, { redirect });
+      const data = response.data?.data ?? response.data;
+      return data.url as string;
+    } catch (error: unknown) {
+      const err = new Error(errorMessage(error, 'Could not start linking.')) as Error & { code?: string };
+      err.code = getErrorCode(error);
+      throw err;
+    }
+  },
+
+  unlinkIdentity: async (provider: SocialProvider): Promise<void> => {
+    try {
+      await apiClient.delete(`/users/me/identities/${provider}`);
+    } catch (error: unknown) {
+      const err = new Error(errorMessage(error, 'Could not unlink this account.')) as Error & { code?: string };
+      err.code = getErrorCode(error);
+      throw err;
+    }
   },
 };
 

@@ -3,9 +3,13 @@ package personalization
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/domain/repository"
+	"github.com/serenya/go-cms/pkg/logger"
+	"go.uber.org/zap"
 )
 
 // RecommendedItem is a scored content result returned by GetRecommendations.
@@ -18,16 +22,21 @@ const (
 )
 
 type RecommendedItem struct {
-	ID          uint    `json:"id"`
-	PublicID    string  `json:"publicId"`
-	Title       string  `json:"title"`
-	Description *string `json:"description"`
-	Thumbnail   *string `json:"thumbnailUrl"`
-	CategoryID  *uint   `json:"categoryId"`
-	ContentType string  `json:"contentType"` // "article" | "course"
-	Score       int     `json:"score"`
+	ID           uint    `json:"id"`
+	PublicID     string  `json:"publicId"`
+	Slug         string  `json:"slug"`
+	Title        string  `json:"title"`
+	Description  *string `json:"description"`
+	Thumbnail    *string `json:"thumbnailUrl"`
+	CategoryID   *uint   `json:"categoryId"`
+	CategoryName *string `json:"categoryName,omitempty"`
+	ContentType  string  `json:"contentType"` // "article" | "course"
+	Score        float64 `json:"score"`
+	ReasonCode   string  `json:"reasonCode"`
+	Reason       string  `json:"reason"`
+	Position     int     `json:"position"`
+	RecID        string  `json:"recId"`
 }
-
 
 type RecommendationRequest struct {
 	ContentID   uint               `json:"content_id"`
@@ -59,6 +68,8 @@ type RecommendationScore struct {
 	Title       string                    `json:"title"`
 	Description *string                   `json:"description,omitempty"`
 	Thumbnail   *string                   `json:"thumbnail_url,omitempty"`
+	Slug        string                    `json:"slug,omitempty"`
+	Position    int                       `json:"position"`
 	Score       float64                   `json:"score"`
 	ReasonCode  string                    `json:"reason_code"`
 	Reason      string                    `json:"reason"`
@@ -67,6 +78,8 @@ type RecommendationScore struct {
 
 type RecommendationResponse struct {
 	ContentID       uint                  `json:"content_id"`
+	RecID           string                `json:"rec_id"`
+	Partial         bool                  `json:"partial,omitempty"`
 	Recommendations []RecommendationScore `json:"recommendations"`
 }
 
@@ -96,6 +109,8 @@ type Service interface {
 	CreateProfile(ctx context.Context, userID uint, req CreateProfileRequest) (*entity.UserProfile, error)
 	SetActiveProfile(ctx context.Context, userID, profileID uint) (*entity.UserProfile, error)
 	GetRecommendations(ctx context.Context, userID uint, limit int) ([]RecommendedItem, error)
+	Recommend(ctx context.Context, userID uint, limit int) (*Feed, error)
+	InvalidateUser(userID uint)
 	GetRecommendationsByRequest(ctx context.Context, req RecommendationRequest) (RecommendationResponse, error)
 	GenerateTopicCandidates(ctx context.Context, req RecommendationRequest) ([]RecommendationCandidate, error)
 	GenerateRelationshipCandidates(ctx context.Context, req RecommendationRequest) ([]RecommendationCandidate, error)
@@ -110,6 +125,7 @@ type service struct {
 	enrollRepo  repository.EnrollmentRepository
 	tagRepo     repository.TagRepository
 	topicRepo   repository.TopicRepository
+	signals
 }
 
 func NewService(
@@ -119,8 +135,9 @@ func NewService(
 	enrollRepo repository.EnrollmentRepository,
 	tagRepo repository.TagRepository,
 	topicRepo repository.TopicRepository,
+	opts ...Option,
 ) Service {
-	return &service{
+	s := &service{
 		profileRepo: profileRepo,
 		articleRepo: articleRepo,
 		courseRepo:  courseRepo,
@@ -128,8 +145,12 @@ func NewService(
 		tagRepo:     tagRepo,
 		topicRepo:   topicRepo,
 	}
+	s.signals = newSignals()
+	for _, o := range opts {
+		o(s)
+	}
+	return s
 }
-
 
 func (s *service) GetProfile(ctx context.Context, userID uint) (*entity.UserProfile, error) {
 	profile, err := s.profileRepo.FindDefaultByUserID(ctx, userID)
@@ -175,6 +196,7 @@ func (s *service) UpsertProfile(ctx context.Context, userID uint, req UpsertProf
 	if err := s.profileRepo.Upsert(ctx, profile); err != nil {
 		return nil, fmt.Errorf("upsert profile: %w", err)
 	}
+	s.InvalidateUser(userID)
 	return s.profileRepo.FindDefaultByUserID(ctx, userID)
 }
 
@@ -209,6 +231,7 @@ func (s *service) CreateProfile(ctx context.Context, userID uint, req CreateProf
 	if err := s.profileRepo.Create(ctx, profile); err != nil {
 		return nil, fmt.Errorf("create profile: %w", err)
 	}
+	s.InvalidateUser(userID)
 	return profile, nil
 }
 
@@ -216,111 +239,16 @@ func (s *service) SetActiveProfile(ctx context.Context, userID, profileID uint) 
 	if err := s.profileRepo.SetDefault(ctx, userID, profileID); err != nil {
 		return nil, fmt.Errorf("set active profile: %w", err)
 	}
+	s.InvalidateUser(userID)
 	return s.profileRepo.FindDefaultByUserID(ctx, userID)
 }
 
-// GetRecommendations returns top-N content items ranked by profile affinity.
-//
-// Scoring (additive):
-//
-//	+4 per matching preferred category
-//	+3 per matching interested tag (via category → tags join)
-//	-10 if already enrolled (deprioritise content already being studied)
 func (s *service) GetRecommendations(ctx context.Context, userID uint, limit int) ([]RecommendedItem, error) {
-	if limit <= 0 {
-		limit = 10
-	}
-
-	profile, err := s.GetProfile(ctx, userID)
+	feed, err := s.Recommend(ctx, userID, limit)
 	if err != nil {
 		return nil, err
 	}
-
-	published := entity.CMSStatusPublished
-	articles, _, err := s.articleRepo.FindAll(ctx, repository.ArticleFilter{Status: &published}, 0, 200)
-	if err != nil {
-		return nil, fmt.Errorf("fetch articles: %w", err)
-	}
-	courses, _, err := s.courseRepo.FindAll(ctx, repository.CourseFilter{Status: &published}, 0, 200)
-	if err != nil {
-		return nil, fmt.Errorf("fetch courses: %w", err)
-	}
-
-	preferredCatSet := toSet(profile.PreferredCategoryIDs)
-	interestedTagSet := toSet(profile.InterestedTagIDs)
-	catTagMap, err := s.buildCategoryTagMap(ctx, articles, courses)
-	if err != nil {
-		return nil, err
-	}
-	enrolledSet, err := s.enrolledCourseIDs(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	candidates := make([]RecommendedItem, 0, len(articles)+len(courses))
-
-	for _, a := range articles {
-		score := scoreItem(a.CategoryID, preferredCatSet, interestedTagSet, catTagMap, 0)
-		candidates = append(candidates, RecommendedItem{
-			ID:          a.ID,
-			PublicID:    a.PublicID,
-			Title:       a.Title,
-			Description: a.Description,
-			Thumbnail:   a.ThumbnailURL,
-			CategoryID:  a.CategoryID,
-			ContentType: "article",
-			Score:       score,
-		})
-	}
-
-	for _, c := range courses {
-		penalty := 0
-		if _, enrolled := enrolledSet[c.ID]; enrolled {
-			penalty = -10
-		}
-		score := scoreItem(c.CategoryID, preferredCatSet, interestedTagSet, catTagMap, penalty)
-		candidates = append(candidates, RecommendedItem{
-			ID:          c.ID,
-			PublicID:    c.PublicID,
-			Title:       c.Title,
-			Description: c.Description,
-			Thumbnail:   c.ThumbnailURL,
-			CategoryID:  c.CategoryID,
-			ContentType: "course",
-			Score:       score,
-		})
-	}
-
-	sortByScore(candidates)
-
-	if limit > len(candidates) {
-		limit = len(candidates)
-	}
-	return candidates[:limit], nil
-}
-
-func scoreItem(
-	categoryID *uint,
-	preferredCats map[int64]struct{},
-	interestedTags map[int64]struct{},
-	catTagMap map[uint]map[int64]struct{},
-	penalty int,
-) int {
-	total := penalty
-	if categoryID == nil {
-		return total
-	}
-	if _, ok := preferredCats[int64(*categoryID)]; ok {
-		total += 4
-	}
-	if tagSet, ok := catTagMap[*categoryID]; ok {
-		for tagID := range interestedTags {
-			if _, hasTag := tagSet[tagID]; hasTag {
-				total += 3
-			}
-		}
-	}
-	return total
+	return feed.Items, nil
 }
 
 func (s *service) buildCategoryTagMap(ctx context.Context, articles []*entity.Article, courses []*entity.Course) (map[uint]map[int64]struct{}, error) {
@@ -351,37 +279,12 @@ func (s *service) buildCategoryTagMap(ctx context.Context, articles []*entity.Ar
 	return result, nil
 }
 
-func (s *service) enrolledCourseIDs(ctx context.Context, userID uint) (map[uint]struct{}, error) {
-	enrollments, err := s.enrollRepo.FindByUserID(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("fetch enrollments: %w", err)
-	}
-	set := make(map[uint]struct{}, len(enrollments))
-	for _, e := range enrollments {
-		set[e.CourseID] = struct{}{}
-	}
-	return set, nil
-}
-
 func toSet(ids []int64) map[int64]struct{} {
 	s := make(map[int64]struct{}, len(ids))
 	for _, id := range ids {
 		s[id] = struct{}{}
 	}
 	return s
-}
-
-// sortByScore sorts items descending by Score (insertion sort — list is small, ≤400).
-func sortByScore(items []RecommendedItem) {
-	for i := 1; i < len(items); i++ {
-		key := items[i]
-		j := i - 1
-		for j >= 0 && items[j].Score < key.Score {
-			items[j+1] = items[j]
-			j--
-		}
-		items[j+1] = key
-	}
 }
 
 func (s *service) GetRecommendationsByRequest(ctx context.Context, req RecommendationRequest) (RecommendationResponse, error) {
@@ -393,31 +296,81 @@ func (s *service) GetRecommendationsByRequest(ctx context.Context, req Recommend
 	}
 
 	var allCandidates []RecommendationCandidate
+	partial := false
+	generators := []struct {
+		name string
+		fn   func(context.Context, RecommendationRequest) ([]RecommendationCandidate, error)
+	}{
+		{"topic", s.GenerateTopicCandidates},
+		{"relationship", s.GenerateRelationshipCandidates},
+		{"category", s.GenerateCategoryCandidates},
+	}
+	for _, g := range generators {
+		cands, err := g.fn(ctx, req)
+		if err != nil {
+			partial = true
+			logger.Warn("recommendation generator failed", zap.String("generator", g.name), zap.Error(err))
+		}
+		allCandidates = append(allCandidates, cands...)
+	}
 
-	// 1. Candidate Generation
-	topicCands, _ := s.GenerateTopicCandidates(ctx, req)
-	allCandidates = append(allCandidates, topicCands...)
-
-	relCands, _ := s.GenerateRelationshipCandidates(ctx, req)
-	allCandidates = append(allCandidates, relCands...)
-
-	catCands, _ := s.GenerateCategoryCandidates(ctx, req)
-	allCandidates = append(allCandidates, catCands...)
-
-	// 2. Ranking & Invariants
 	ranked, err := s.RankCandidates(ctx, allCandidates, req)
 	if err != nil {
 		return RecommendationResponse{}, err
 	}
 
-	if len(ranked) > req.Limit {
-		ranked = ranked[:req.Limit]
+	recs, hydrateFailed := s.hydratePublished(ctx, ranked, req.Limit)
+	if hydrateFailed {
+		partial = true
+	}
+	for i := range recs {
+		recs[i].Position = i + 1
 	}
 
 	return RecommendationResponse{
 		ContentID:       req.ContentID,
-		Recommendations: ranked,
+		RecID:           s.newRecID(),
+		Partial:         partial,
+		Recommendations: recs,
 	}, nil
+}
+
+func (s *service) hydratePublished(ctx context.Context, ranked []RecommendationScore, limit int) ([]RecommendationScore, bool) {
+	out := make([]RecommendationScore, 0, limit)
+	failed := false
+	for _, r := range ranked {
+		if len(out) >= limit {
+			break
+		}
+		switch strings.ToUpper(r.ContentType) {
+		case "ARTICLE":
+			a, err := s.articleRepo.FindByID(ctx, r.ContentID)
+			if err != nil {
+				failed = true
+				logger.Warn("recommendation hydrate failed", zap.Uint("id", r.ContentID), zap.Error(err))
+				continue
+			}
+			if a == nil || a.Status != entity.CMSStatusPublished {
+				continue
+			}
+			r.Title, r.Description, r.Thumbnail, r.Slug = a.Title, a.Description, a.ThumbnailURL, a.Slug
+		case "COURSE":
+			c, err := s.courseRepo.FindByID(ctx, r.ContentID)
+			if err != nil {
+				failed = true
+				logger.Warn("recommendation hydrate failed", zap.Uint("id", r.ContentID), zap.Error(err))
+				continue
+			}
+			if c == nil || c.Status != entity.CMSStatusPublished {
+				continue
+			}
+			r.Title, r.Description, r.Thumbnail, r.Slug = c.Title, c.Description, c.ThumbnailURL, c.Slug
+		default:
+			continue
+		}
+		out = append(out, r)
+	}
+	return out, failed
 }
 
 // GenerateTopicCandidates finds other content sharing at least one topic with
@@ -430,7 +383,10 @@ func (s *service) GenerateTopicCandidates(ctx context.Context, req Recommendatio
 	}
 
 	topics, err := s.topicRepo.GetContentTopics(ctx, req.ContentID, req.ContentType)
-	if err != nil || len(topics) == 0 {
+	if err != nil {
+		return nil, err
+	}
+	if len(topics) == 0 {
 		return nil, nil
 	}
 	topicIDs := make([]uint, len(topics))
@@ -467,14 +423,21 @@ func (s *service) GenerateRelationshipCandidates(ctx context.Context, req Recomm
 	}
 
 	topics, err := s.topicRepo.GetContentTopics(ctx, req.ContentID, req.ContentType)
-	if err != nil || len(topics) == 0 {
+	if err != nil {
+		return nil, err
+	}
+	if len(topics) == 0 {
 		return nil, nil
 	}
 
 	var candidates []RecommendationCandidate
+	var firstErr error
 	for _, top := range topics {
 		reachable, err := s.topicRepo.FindReachable(ctx, top.ID, 2)
 		if err != nil {
+			if firstErr == nil {
+				firstErr = err
+			}
 			continue
 		}
 		for _, r := range reachable {
@@ -483,6 +446,9 @@ func (s *service) GenerateRelationshipCandidates(ctx context.Context, req Recomm
 			}
 			entries, err := s.topicRepo.FindContentByTopicIDs(ctx, []uint{r.Topic.ID}, req.ContentID, req.ContentType, 20)
 			if err != nil {
+				if firstErr == nil {
+					firstErr = err
+				}
 				continue
 			}
 			for _, e := range entries {
@@ -496,7 +462,7 @@ func (s *service) GenerateRelationshipCandidates(ctx context.Context, req Recomm
 			}
 		}
 	}
-	return candidates, nil
+	return candidates, firstErr
 }
 
 // GenerateCategoryCandidates returns other published content in the same category as
@@ -511,13 +477,19 @@ func (s *service) GenerateCategoryCandidates(ctx context.Context, req Recommenda
 	switch req.ContentType {
 	case "ARTICLE":
 		a, err := s.articleRepo.FindByID(ctx, req.ContentID)
-		if err != nil || a == nil {
+		if err != nil {
+			return nil, err
+		}
+		if a == nil {
 			return nil, nil
 		}
 		categoryID = a.CategoryID
 	case "COURSE":
 		c, err := s.courseRepo.FindByID(ctx, req.ContentID)
-		if err != nil || c == nil {
+		if err != nil {
+			return nil, err
+		}
+		if c == nil {
 			return nil, nil
 		}
 		categoryID = c.CategoryID
@@ -636,14 +608,15 @@ func (s *service) RankCandidates(ctx context.Context, candidates []Recommendatio
 		})
 	}
 
-	// 4. Deterministic ordering: score DESC, content_id ASC
-	for i := 0; i < len(scored)-1; i++ {
-		for j := i + 1; j < len(scored); j++ {
-			if scored[j].Score > scored[i].Score || (scored[j].Score == scored[i].Score && scored[j].ContentID < scored[i].ContentID) {
-				scored[i], scored[j] = scored[j], scored[i]
-			}
+	sort.Slice(scored, func(i, j int) bool {
+		if scored[i].Score != scored[j].Score {
+			return scored[i].Score > scored[j].Score
 		}
-	}
+		if scored[i].ContentID != scored[j].ContentID {
+			return scored[i].ContentID < scored[j].ContentID
+		}
+		return scored[i].ContentType < scored[j].ContentType
+	})
 
 	return scored, nil
 }

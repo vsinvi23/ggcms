@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
   Users, UserCheck, UserX, UserPlus, Shield, UserCog, ArrowRight, CheckSquare, BookOpen,
-  Bell, Sparkles, Zap, Flame, Compass, Bookmark, Clock, Layers, FileText, Settings2, BarChart3, Bot, Check
+  Bell, Sparkles, Zap, Flame, Compass, Bookmark, Clock, Layers, FileText, Settings2, BarChart3, Bot, Check, Target, Briefcase
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +16,9 @@ import { useTasksQuery } from '@/api/hooks/useTasks';
 import { useNotifications } from '@/api/hooks/useNotifications';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useDomains } from '@/api/hooks/useDomains';
+import { useAnalyticsDashboard, useAnalyticsOverview } from '@/api/hooks/useAnalytics';
+import { useMyHighlights, useMyNotes } from '@/api/hooks/useEngagement';
+import { rangeFromDays } from '@/lib/analyticsHelpers';
 import { UserDto } from '@/api/types';
 
 // ─── Admin Dashboard ──────────────────────────────────────────────────────────
@@ -23,17 +26,16 @@ import { UserDto } from '@/api/types';
 function AdminDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: usersData, isLoading: usersLoading } = useUsersQuery({ page: 0, size: 200 });
-  const { data: publicCmsData } = usePublicCmsList({ page: 1, pageSize: 6 });
+  const { data: usersData, isLoading: usersLoading } = useUsersQuery({ page: 0, size: 1 });
+  const { data: publicCmsData } = usePublicCmsList({ size: 6 });
   const { data: domainsData } = useDomains();
+  const { data: overview, isLoading: overviewLoading } = useAnalyticsOverview(rangeFromDays(30));
+  const { data: analytics, isLoading: analyticsLoading } = useAnalyticsDashboard();
 
-  const users: UserDto[] = usersData?.items ?? [];
-  const totalUsers = usersData?.totalElements ?? usersData?.total ?? users.length;
-  const activeUsers = users.filter((u) => u.status?.toUpperCase() === 'ACTIVE').length;
-  const pendingUsers = users.filter((u) => u.status?.toUpperCase() === 'PENDING').length;
+  const totalUsers = usersData?.totalElements ?? usersData?.total ?? 0;
   
-  const featuredArticles = publicCmsData?.data ?? [];
-  const domains = domainsData?.data ?? [];
+  const featuredArticles = publicCmsData?.items ?? [];
+  const domains = domainsData ?? [];
 
   return (
     <div className="space-y-8 animate-fade-in pb-8">
@@ -57,7 +59,7 @@ function AdminDashboard() {
               Welcome back, {user?.name?.split(' ')[0] || 'Admin'}! 👋
             </h1>
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-              Your platform currently hosts <span className="font-semibold text-white">{domains.length || 5} tech domains</span> with live automated content review pipelines.
+              Your platform currently hosts <span className="font-semibold text-white">{domains.length} tech domains</span> with live automated content review pipelines.
             </p>
           </div>
 
@@ -90,11 +92,6 @@ function AdminDashboard() {
             ) : (
               <div className="text-3xl font-extrabold text-foreground">{totalUsers}</div>
             )}
-            <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
-              <span className="text-emerald-500 font-bold">● {activeUsers} active</span>
-              <span>•</span>
-              <span>{pendingUsers} pending</span>
-            </div>
           </CardContent>
         </Card>
 
@@ -106,8 +103,8 @@ function AdminDashboard() {
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="text-3xl font-extrabold text-foreground">{domains.length || 5}</div>
-            <p className="text-xs text-muted-foreground mt-2">Cloud, DevOps, AI, Security, Data</p>
+            <div className="text-3xl font-extrabold text-foreground">{domains.length}</div>
+            <p className="text-xs text-muted-foreground mt-2 truncate">{domains.slice(0, 5).map((d) => d.name).join(', ')}</p>
           </CardContent>
         </Card>
 
@@ -119,21 +116,27 @@ function AdminDashboard() {
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="text-3xl font-extrabold text-foreground">{publicCmsData?.meta?.pagination?.total ?? featuredArticles.length}</div>
-            <p className="text-xs text-muted-foreground mt-2">Peer-reviewed technical guides</p>
+            <div className="text-3xl font-extrabold text-foreground">{publicCmsData?.total ?? featuredArticles.length}</div>
+            <p className="text-xs text-muted-foreground mt-2">Live in the public library</p>
           </CardContent>
         </Card>
 
         <Card className="border-border/60 shadow-sm hover:shadow-md transition-all bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Security & Roles</CardTitle>
+            <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Active Users (30d)</CardTitle>
             <div className="p-2 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
               <Shield className="w-5 h-5" />
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="text-3xl font-extrabold text-foreground">3-Tier IA</div>
-            <p className="text-xs text-muted-foreground mt-2">Group & Category matrix live</p>
+            {overviewLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <div className="text-3xl font-extrabold text-foreground">{overview?.mau?.toLocaleString() ?? '-'}</div>
+            )}
+            <p className="text-xs text-muted-foreground mt-2">
+              {analyticsLoading ? 'Loading page views' : (analytics?.pageViews30d ?? 0).toLocaleString() + ' page views'}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -248,12 +251,14 @@ function UserDashboard() {
   const navigate = useNavigate();
   const { data: tasksData, isLoading: tasksLoading } = useTasksQuery({ page: 1, pageSize: 5 });
   const { data: notificationsData, isLoading: notifLoading } = useNotifications();
-  const { data: publicCmsData } = usePublicCmsList({ page: 1, pageSize: 4 });
+  const { data: publicCmsData } = usePublicCmsList({ size: 4 });
+  const { data: notesData, isLoading: notesLoading } = useMyNotes(0, 1);
+  const { data: highlightsData, isLoading: highlightsLoading } = useMyHighlights(0, 1);
 
   const tasks = tasksData?.items ?? [];
   const pendingTasks = tasks.filter((t) => t.status !== 'done' && t.status !== 'completed').length;
   const unreadNotifs = notificationsData?.items?.filter((n) => !n.read).length ?? 0;
-  const articles = publicCmsData?.data ?? [];
+  const articles = publicCmsData?.items ?? [];
 
   return (
     <div className="space-y-8 animate-fade-in pb-8">
@@ -270,9 +275,6 @@ function UserDashboard() {
               <Badge variant="outline" className="border-sky-400/40 text-sky-300 bg-sky-500/10 text-xs font-semibold">
                 <Flame className="w-3.5 h-3.5 mr-1 text-amber-400" />
                 Developer Workspace
-              </Badge>
-              <Badge variant="outline" className="border-emerald-500/40 text-emerald-400 bg-emerald-500/10 text-xs font-medium">
-                Active Streak: 5 Days 🔥
               </Badge>
             </div>
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
@@ -367,8 +369,39 @@ function UserDashboard() {
             </div>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="text-3xl font-extrabold text-foreground">Active</div>
-            <p className="text-xs text-muted-foreground mt-2">Personal code snippets saved</p>
+            {notesLoading || highlightsLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-3xl font-extrabold text-foreground">{(notesData?.total ?? 0) + (highlightsData?.total ?? 0)}</div>
+            )}
+            <p className="text-xs text-muted-foreground mt-2">Notes and highlights you saved</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <Card
+          onClick={() => navigate('/practice')}
+          className="border-border/60 shadow-sm hover:shadow-md hover:border-primary/40 transition-all cursor-pointer bg-card"
+        >
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary"><Target className="w-5 h-5" /></div>
+            <div>
+              <div className="font-bold text-foreground">Practice Hub</div>
+              <p className="text-xs text-muted-foreground">Test yourself with quizzes and assessments</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card
+          onClick={() => navigate('/interview-prep')}
+          className="border-border/60 shadow-sm hover:shadow-md hover:border-primary/40 transition-all cursor-pointer bg-card"
+        >
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary"><Briefcase className="w-5 h-5" /></div>
+            <div>
+              <div className="font-bold text-foreground">Interview Prep</div>
+              <p className="text-xs text-muted-foreground">Work through interview questions at your own pace</p>
+            </div>
           </CardContent>
         </Card>
       </div>

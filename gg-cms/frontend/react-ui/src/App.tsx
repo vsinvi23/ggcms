@@ -1,6 +1,4 @@
 import { lazy, Suspense, Component, ReactNode } from 'react';
-import { Provider } from 'react-redux';
-import { store } from './store';
 import { AuthProvider } from './contexts/AuthContext';
 import { FeatureFlagProvider } from './contexts/FeatureFlagContext';
 import { Toaster } from '@/components/ui/toaster';
@@ -9,6 +7,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/layout/ProtectedRoute';
+import { OnboardingGate } from './components/personalization/OnboardingGate';
+import { ConsentBanner } from './components/privacy/ConsentBanner';
 
 const UserManagementPage = lazy(() => import('./pages/UserManagement'));
 const UserManagementDashboard = lazy(() => import('./pages/UserManagementDashboard'));
@@ -29,6 +29,7 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const Settings = lazy(() => import('./pages/Settings'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const UserSettings = lazy(() => import('./pages/UserSettings'));
+const HelpPage = lazy(() => import('./pages/HelpPage'));
 const PublicHome = lazy(() => import('./pages/PublicHome'));
 const Auth = lazy(() => import('./pages/Auth'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -43,6 +44,7 @@ const PracticeHub = lazy(() => import('./pages/PracticeHub'));
 const InterviewPrepHub = lazy(() => import('./pages/InterviewPrepHub'));
 const CourseCategoryPage = lazy(() => import('./pages/CourseCategoryPage'));
 const SearchResults = lazy(() => import('./pages/SearchResults'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
 const LearningPathPage = lazy(() => import('./pages/LearningPathPage'));
 const TopicsPage = lazy(() => import('./pages/TopicsPage'));
 const TopicDetailPage = lazy(() => import('./pages/TopicDetailPage'));
@@ -51,11 +53,18 @@ const CourseViewPage = lazy(() => import('./pages/CourseViewPage'));
 const PublicArticleView = lazy(() => import('./pages/PublicArticleView'));
 const PublicCourseView = lazy(() => import('./pages/PublicCourseView'));
 const MyLearning = lazy(() => import('./pages/MyLearning'));
+const CertificatesPage = lazy(() => import('./pages/CertificatesPage'));
+const VerifyCertificatePage = lazy(() => import('./pages/VerifyCertificatePage'));
 const NotesHighlightsPage = lazy(() => import('./pages/NotesHighlightsPage'));
 const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const BulkImport = lazy(() => import('./pages/BulkImport'));
 const FactoryPage = lazy(() => import('./pages/FactoryPage'));
+// AI layer pages
+const AiAdmin = lazy(() => import('./pages/AiAdmin'));
+const StudyPlanPage = lazy(() => import('./pages/StudyPlanPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const UnsubscribePage = lazy(() => import('./pages/UnsubscribePage'));
 
 import { logClientError } from '@/lib/errorLogStore';
 
@@ -118,7 +127,6 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <Provider store={store}>
     <QueryClientProvider client={queryClient}>
       <FeatureFlagProvider>
       <AuthProvider>
@@ -127,6 +135,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <AppErrorBoundary>
+            <OnboardingGate />
             <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
               <Routes>
                 {/* Public Clean Intent Routes */}
@@ -136,6 +145,7 @@ const App = () => (
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/search" element={<SearchResults />} />
+                <Route path="/onboarding" element={<Onboarding />} />
                 
                 {/* Intent-Driven Pages */}
                 <Route path="/courses" element={<CoursesPage />} />
@@ -210,6 +220,9 @@ const App = () => (
                 <Route path="/workspace/content-overview" element={<ProtectedRoute requireAdmin><AdminContentOverview /></ProtectedRoute>} />
                 <Route path="/workspace/configuration" element={<ProtectedRoute requireAdmin><ConfigurationPage /></ProtectedRoute>} />
                 <Route path="/workspace/analytics" element={<ProtectedRoute requireAdmin><Analytics /></ProtectedRoute>} />
+                {/* AI layer */}
+                <Route path="/workspace/ai" element={<ProtectedRoute requireAdmin><AiAdmin /></ProtectedRoute>} />
+                <Route path="/study-plan" element={<ProtectedRoute><StudyPlanPage /></ProtectedRoute>} />
                 
                 {/* Legacy & Shortcut Alias Redirects */}
                 <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
@@ -226,6 +239,8 @@ const App = () => (
                 <Route path="/bulk-import" element={<Navigate to="/dashboard/import" replace />} />
                 <Route path="/my-tasks" element={<ProtectedRoute><MyTasks /></ProtectedRoute>} />
                 <Route path="/my-learning" element={<ProtectedRoute><MyLearning /></ProtectedRoute>} />
+                <Route path="/certificates" element={<ProtectedRoute><CertificatesPage /></ProtectedRoute>} />
+                <Route path="/certificates/verify/:code" element={<VerifyCertificatePage />} />
                 <Route path="/notes-highlights" element={<ProtectedRoute><NotesHighlightsPage /></ProtectedRoute>} />
                 <Route path="/analytics" element={<Navigate to="/workspace/analytics" replace />} />
                 <Route path="/factory" element={<ProtectedRoute requireAdmin><FactoryPage /></ProtectedRoute>} />
@@ -233,16 +248,19 @@ const App = () => (
                 <Route path="/settings" element={<ProtectedRoute requireAdmin><Settings /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                 <Route path="/account-settings" element={<ProtectedRoute><UserSettings /></ProtectedRoute>} />
+                <Route path="/help" element={<HelpPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/unsubscribe" element={<UnsubscribePage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            <ConsentBanner />
             </AppErrorBoundary>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
       </FeatureFlagProvider>
     </QueryClientProvider>
-  </Provider>
 );
 
 export default App;

@@ -72,6 +72,8 @@ type Service interface {
 	// ClaimReview assigns the calling user as the reviewer. Fails if another reviewer has already claimed it,
 	// or if the caller is not an admin and not a member of the content's category reviewer group.
 	ClaimReview(ctx context.Context, id uint, cmsType entity.CMSType, userID uint, callerIsAdmin bool) error
+	// IsReviewerForCategory reports whether the user belongs to a reviewer group of the category.
+	IsReviewerForCategory(ctx context.Context, userID, categoryID uint) bool
 	// AssignReviewer lets an admin set a specific reviewer without changing the CMS status.
 	AssignReviewer(ctx context.Context, id uint, cmsType entity.CMSType, assignerID, targetUserID uint) error
 	// ReassignReview releases the current reviewer assignment (sets reviewer_id to nil) and
@@ -153,6 +155,7 @@ func (s *service) GetAll(ctx context.Context, cmsType entity.CMSType, filter rep
 			CourseType:      filter.CourseType,
 			Search:          filter.Search,
 			PubliclyVisible: filter.PubliclyVisible,
+			VisibleToUserID: filter.VisibleToUserID,
 		}
 		return s.courseRepo.FindAll(ctx, cf, page, size)
 	default:
@@ -516,6 +519,10 @@ func (s *service) Submit(ctx context.Context, id uint, cmsType entity.CMSType, r
 
 // isUserReviewerForCategory returns true if the user belongs to at least one reviewer
 // group linked to the given category.
+func (s *service) IsReviewerForCategory(ctx context.Context, userID, categoryID uint) bool {
+	return s.isUserReviewerForCategory(ctx, userID, categoryID)
+}
+
 func (s *service) isUserReviewerForCategory(ctx context.Context, userID uint, categoryID uint) bool {
 	reviewerGroups, err := s.categoryRepo.FindReviewerGroups(ctx, categoryID)
 	if err != nil || len(reviewerGroups) == 0 {

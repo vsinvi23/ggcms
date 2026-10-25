@@ -222,13 +222,14 @@ ON CONFLICT (name) DO NOTHING;
 -- account is INACTIVE (login rejects it). Seeds must not depend on the runtime admin,
 -- which does not exist yet when migrations run on a fresh database.
 --
--- SEED_SAMPLE_CONTENT=false (env, applied by the migration runner as the session setting
--- gg.seed_sample_content) skips this account, and with it every sample article, course and
--- learning path below (they all select this author). Reference data (categories, topics,
--- tags, domains, settings) is always loaded. Unset or any other value loads the samples.
+-- DEV/TEST ONLY: SEED_SAMPLE_CONTENT=true (env, applied by the migration runner as the session
+-- setting gg.seed_sample_content) creates this account and with it every sample article, course
+-- and learning path below (they all select this author). Default is off, and the runner forces
+-- it off when APP_ENV=production. Reference data (categories, topics, tags, domains, settings)
+-- is always loaded.
 INSERT INTO users (email, password_hash, name, status)
 SELECT 'system@gg-cms.local', '!system-account-no-login', 'System', 'INACTIVE'
-WHERE current_setting('gg.seed_sample_content', true) IS DISTINCT FROM 'false'
+WHERE current_setting('gg.seed_sample_content', true) = 'true'
 ON CONFLICT (email) DO NOTHING;
 -- Add role and permissions columns to groups table
 ALTER TABLE groups ADD COLUMN IF NOT EXISTS role VARCHAR(50) NOT NULL DEFAULT 'viewer';
@@ -1165,7 +1166,7 @@ SELECT
     'art-docker-001-uuid-v4-sample-slug',
     'mastering-docker-containers-microservices',
     NOW(),
-    'https://images.unsplash.com/photo-1605745341112-85968b19335b?w=600&auto=format&fit=crop'
+    '/placeholder.svg'
 FROM users u WHERE u.email = 'system@gg-cms.local'
 ON CONFLICT DO NOTHING;
 
@@ -1191,7 +1192,7 @@ SELECT
     'art-owasp-002-uuid-v4-sample-slug',
     'owasp-top-10-for-llm-ai-applications',
     NOW(),
-    'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop'
+    '/placeholder.svg'
 FROM users u WHERE u.email = 'system@gg-cms.local'
 ON CONFLICT DO NOTHING;
 
@@ -1217,7 +1218,7 @@ SELECT
     'art-postgres-003-uuid-v4-sample-slug',
     'high-performance-postgresql-query-optimization',
     NOW(),
-    'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=600&auto=format&fit=crop'
+    '/placeholder.svg'
 FROM users u WHERE u.email = 'system@gg-cms.local'
 ON CONFLICT DO NOTHING;
 
@@ -1243,7 +1244,7 @@ SELECT
     'art-rag-004-uuid-v4-sample-slug',
     'building-enterprise-rag-architectures-vector-databases',
     NOW(),
-    'https://images.unsplash.com/photo-1677442136019-21780efad99a?w=600&auto=format&fit=crop'
+    '/placeholder.svg'
 FROM users u WHERE u.email = 'system@gg-cms.local'
 ON CONFLICT DO NOTHING;
 
@@ -1268,7 +1269,7 @@ SELECT
     'course-k8s-001-uuid-v4-sample-slug',
     'cloud-native-kubernetes-devops-bootcamp',
     NOW(),
-    'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=600&auto=format&fit=crop'
+    '/placeholder.svg'
 FROM users u WHERE u.email = 'system@gg-cms.local'
 ON CONFLICT DO NOTHING;
 
@@ -1292,7 +1293,7 @@ SELECT
     'course-sec-002-uuid-v4-sample-slug',
     'securing-enterprise-applications-api-security',
     NOW(),
-    'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=600&auto=format&fit=crop'
+    '/placeholder.svg'
 FROM users u WHERE u.email = 'system@gg-cms.local'
 ON CONFLICT DO NOTHING;
 

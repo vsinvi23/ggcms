@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import React, { useState, useMemo } from 'react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import {
@@ -25,9 +26,24 @@ import { useNavigate } from 'react-router-dom';
 import { usePublicCmsList, usePublicLearningPaths } from '@/api/hooks/usePublicCms';
 import { useCategories } from '@/api/hooks/useCategories';
 import { buildCourseUrl, buildArticleUrl } from '@/lib/slug';
+import { HomePersonalizationWidget } from '@/components/personalization/HomePersonalizationWidget';
+
+const SITE_NAME = 'GeekGully';
 
 export function PublicHome() {
   const navigate = useNavigate();
+  const websiteJsonLd = useMemo(() => ({
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE_NAME,
+    url: window.location.origin,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: `${window.location.origin}/search?q={search_term_string}` },
+      'query-input': 'required name=search_term_string',
+    },
+  }), []);
+  usePageMeta({ title: 'Learn Smarter, Grow Faster', description: 'Structured courses, in-depth articles and hands-on practice for engineers.', canonicalPath: '/', jsonLd: websiteJsonLd });
   const [activeTimeFilter, setActiveTimeFilter] = useState<'5' | '15' | '30'>('5');
 
   // Live dynamic backend database API hooks
@@ -151,6 +167,10 @@ export function PublicHome() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section aria-label="Personalised recommendations" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <HomePersonalizationWidget />
         </section>
 
         {/* Section 2 — Featured Courses (Dynamic, Compact Display) */}
@@ -336,7 +356,7 @@ export function PublicHome() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {learningPaths.map((path: any, idx: number) => (
+              {learningPaths.map((path, idx) => (
                 <div
                   key={`${path.id}-${idx}`}
                   className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md space-y-4"

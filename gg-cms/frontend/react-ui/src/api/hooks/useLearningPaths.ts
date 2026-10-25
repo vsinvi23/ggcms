@@ -9,6 +9,7 @@ import {
 export const learningPathKeys = {
   all: ['learning-paths'] as const,
   list: (kind?: string) => [...learningPathKeys.all, 'list', kind] as const,
+  progress: (id: number | string) => [...learningPathKeys.all, 'progress', id] as const,
   detail: (id: number) => [...learningPathKeys.all, id] as const,
 };
 
@@ -73,5 +74,13 @@ export const useSetLearningPathCourses = () => {
       qc.invalidateQueries({ queryKey: learningPathKeys.all });
       qc.invalidateQueries({ queryKey: ['public-cms'] });
     },
+  });
+};
+
+export const useLearningPathProgress = (idOrSlug: number | string, enabled = true) => {
+  return useQuery({
+    queryKey: learningPathKeys.progress(idOrSlug),
+    queryFn: () => learningPathService.getProgress(idOrSlug),
+    enabled: enabled && !!idOrSlug,
   });
 };

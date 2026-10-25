@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Save, Send, ArrowLeft, BookOpen, Loader2, Image as ImageIcon,
-  MessageSquare, Eye, Layers, History, CheckCircle, XCircle, ArrowRight, GitBranch, PenLine,
+  MessageSquare, Eye, Layers, History, CheckCircle, XCircle, ArrowRight, GitBranch, PenLine, AlertCircle,
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -40,6 +40,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { sectionKeys } from '@/api/hooks/useSections';
 import { useCmsWorkflowActions } from '@/hooks/useCmsWorkflowActions';
 import { TopicMultiSelect } from '@/components/ui/TopicMultiSelect';
+import { EditorialAiPanel } from '@/components/ai/EditorialAiPanel'; // AI layer
 import { useContentTopics } from '@/api/hooks/useTopics';
 import { slugify } from '@/lib/slug';
 import { toUserMessage } from '@/lib/errors';
@@ -91,7 +92,7 @@ export default function CourseCreator() {
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
 
   // Derived review state
-  const hasReviewPermission = isAdmin || userGroups.some(g => g.permissions?.courses?.review === true || (g.permissions as any)?.all === true);
+  const hasReviewPermission = isAdmin || userGroups.some(g => g.permissions?.courses?.review === true || g.permissions?.all === true);
   const isCurrentUserReviewer =
     !!user && !!existingCms?.reviewerId &&
     existingCms.reviewerId === user.id &&
@@ -102,7 +103,7 @@ export default function CourseCreator() {
   const isOtherReviewerClaimed = isViewMode && existingCms?.status === 'REVIEW' && !!existingCms?.reviewerId && existingCms.reviewerId !== user?.id;
 
   const isApprovedState = existingCms?.status === 'APPROVED';
-  const hasPublishPermission = isAdmin || userGroups.some(g => g.permissions?.courses?.publish === true || (g.permissions as any)?.all === true);
+  const hasPublishPermission = isAdmin || userGroups.some(g => g.permissions?.courses?.publish === true || g.permissions?.all === true);
   const isAssignedPublisher = isApprovedState && !!user && existingCms?.reviewerId === user.id;
   const canPublish = isViewMode && isApprovedState && hasPublishPermission && isAssignedPublisher;
   const isUnclaimedApproved = isViewMode && isApprovedState && !existingCms?.reviewerId && hasPublishPermission;
@@ -1130,6 +1131,14 @@ export default function CourseCreator() {
 
             {/* Sidebar */}
             <div className="col-span-12 lg:col-span-4 space-y-6">
+              {/* AI layer: editorial assistant (hidden unless enabled); nothing applies without a click */}
+              <EditorialAiPanel
+                contentType="course"
+                contentId={existingCmsId > 0 ? existingCmsId : undefined}
+                onApplyTopic={(id) => setSelectedTopicIds((prev) => (prev.includes(id) ? prev : [...prev, id]))}
+                onApplyCategory={(id) => setCategoryId(String(id))}
+                onApplyDescription={setDescription}
+              />
               {/* Reviewer Feedback (edit mode only) */}
               {!isViewMode && existingCms?.reviewerComment && (
                 <Card className="border-amber-500/50 bg-amber-500/5">

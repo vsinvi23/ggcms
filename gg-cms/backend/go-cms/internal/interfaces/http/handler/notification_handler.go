@@ -1,9 +1,14 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
+	"net/url"
+
 	"github.com/gin-gonic/gin"
 	notificationsvc "github.com/serenya/go-cms/internal/application/notification"
 	"github.com/serenya/go-cms/internal/domain/entity"
+	"github.com/serenya/go-cms/internal/domain/repository"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
 	"github.com/serenya/go-cms/internal/interfaces/http/middleware"
 	"github.com/serenya/go-cms/pkg/pagination"
@@ -42,7 +47,7 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 		response.BadRequest(c, "invalid notification ID")
 		return
 	}
-	if err := h.service.MarkAsRead(c.Request.Context(), id); err != nil {
+	if err := h.service.MarkAsRead(c.Request.Context(), id, middleware.GetUserID(c)); err != nil {
 		response.InternalError(c, err.Error())
 		return
 	}
@@ -62,10 +67,40 @@ func (h *NotificationHandler) MarkAllAsRead(c *gin.Context) {
 func mapNotifToDTO(n *entity.Notification) dto.NotificationResponse {
 	return dto.NotificationResponse{
 		ID:        n.ID,
+		Type:      n.Type,
 		Title:     n.Title,
 		Message:   n.Message,
 		Read:      n.Read,
 		Link:      n.Link,
 		CreatedAt: n.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
+}
+
+const unsubscribePage = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Unsubscribe</title></head>
+<body><h1>%s</h1>%s</body></html>`
+
+const invalidUnsubscribe = "<p>This unsubscribe link is invalid or expired.</p>"
+
+// GET /api/notifications/unsubscribe?token= shows a confirmation page so link prefetchers cannot unsubscribe.
+func (h *NotificationHandler) UnsubscribePage(c *gin.Context) {
+	token := c.Query("token")
+	if len(token) != 64 {
+		c.Data(404, "text/html; charset=utf-8", []byte(fmt.Sprintf(unsubscribePage, "Link not valid", invalidUnsubscribe)))
+		return
+	}
+	form := `<p>Stop all emails from GeekGully?</p><form method="post" action="/api/notifications/unsubscribe?token=` + url.QueryEscape(token) + `"><button type="submit">Unsubscribe</button></form>`
+	c.Data(200, "text/html; charset=utf-8", []byte(fmt.Sprintf(unsubscribePage, "Unsubscribe", form)))
+}
+
+// POST /api/notifications/unsubscribe?token= is also the RFC 8058 one-click target.
+func (h *NotificationHandler) Unsubscribe(c *gin.Context) {
+	if err := h.service.UnsubscribeByToken(c.Request.Context(), c.Query("token")); err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			c.Data(404, "text/html; charset=utf-8", []byte(fmt.Sprintf(unsubscribePage, "Link not valid", invalidUnsubscribe)))
+			return
+		}
+		response.InternalError(c, "could not unsubscribe")
+		return
+	}
+	c.Data(200, "text/html; charset=utf-8", []byte(fmt.Sprintf(unsubscribePage, "You are unsubscribed", "<p>You will no longer receive emails from us. You can change this any time in your notification settings.</p>")))
 }

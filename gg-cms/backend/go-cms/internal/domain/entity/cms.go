@@ -67,6 +67,7 @@ type Article struct {
 	ThumbnailURL        *string   `gorm:"size:1024"`
 	ThumbnailStorageKey *string   `gorm:"size:1024"`
 	PublishedAt         *time.Time
+	Level               *string `gorm:"column:level;type:varchar(20)"`
 	Version             int `gorm:"not null;default:1"`
 	// Versioning snapshot — holds the last-published state while a new draft is in review.
 	HasPendingDraft      bool    `gorm:"column:has_pending_draft;not null;default:false"`
@@ -107,6 +108,9 @@ type Course struct {
 	ThumbnailURL        *string    `gorm:"size:1024"`
 	ThumbnailStorageKey *string    `gorm:"size:1024"`
 	PublishedAt         *time.Time
+	AssessmentID          *uint `gorm:"column:assessment_id"`
+	RequireAssessmentPass bool  `gorm:"column:require_assessment_pass;not null;default:false"`
+	Level                 *string `gorm:"column:level;type:varchar(20)"`
 	Version             int `gorm:"not null;default:1"`
 	// Versioning snapshot — holds the last-published state while a new draft is in review.
 	HasPendingDraft      bool    `gorm:"column:has_pending_draft;not null;default:false"`

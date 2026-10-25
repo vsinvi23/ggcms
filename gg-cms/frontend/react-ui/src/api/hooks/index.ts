@@ -11,3 +11,7 @@ export * from './useSections';
 export * from './useLessons';
 export * from './useEnrollments';
 export * from './useTags';
+export * from './useAssessments';
+export * from './useCertificates';
+export * from './useAnalytics';
+export * from './usePrivacy';

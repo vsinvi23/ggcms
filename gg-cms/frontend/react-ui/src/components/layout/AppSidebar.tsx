@@ -16,6 +16,7 @@ import {
   ChevronRight,
   ChevronDown,
   UserCog,
+  Award,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -44,17 +45,23 @@ interface NavSection {
   adminOnly?: boolean;
 }
 
-import { BookOpen, FileText, ListTodo, Layers, GraduationCap, Settings2, Upload, Factory, Target, Briefcase } from 'lucide-react';
+import { BookOpen, FileText, ListTodo, Layers, GraduationCap, Settings2, Upload, Factory, Target, Briefcase, Sparkles } from 'lucide-react';
+import { useAiFeature } from '@/api/hooks/useAi'; // AI layer
 
 // All menu items with access control flags
 const standaloneItems: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' }, // visible to all authenticated users
   { icon: Factory, label: 'AI Content Factory', href: '/factory', adminOnly: true },
+  { icon: Sparkles, label: 'AI Settings', href: '/workspace/ai', adminOnly: true }, // AI layer
+  { icon: Sparkles, label: 'Study Plan', href: '/study-plan', contentOnly: true }, // AI layer: hidden unless studyPlan feature on
   { icon: ListTodo, label: 'My Tasks', href: '/my-tasks', contentOnly: true },
   { icon: BookOpen, label: 'Manage Courses', href: '/workspace/courses', contentOnly: true },
   { icon: Target, label: 'Manage Assessments', href: '/workspace/assessments', contentOnly: true },
   { icon: FileText, label: 'Manage Articles', href: '/workspace/articles', contentOnly: true },
   { icon: GraduationCap, label: 'My Learning', href: '/my-learning', contentOnly: true },
+  { icon: Award, label: 'My Certificates', href: '/certificates', contentOnly: true },
+  { icon: Target, label: 'Practice Hub', href: '/practice', contentOnly: true },
+  { icon: Briefcase, label: 'Interview Prep', href: '/interview-prep', contentOnly: true },
   { icon: Globe, label: 'All Content (Admin)', href: '/workspace/content-overview', adminOnly: true },
   { icon: Upload, label: 'Bulk Import', href: '/dashboard/import', contentOnly: true },
 ];
@@ -100,7 +107,10 @@ export function AppSidebar() {
   const canSeeContentItems = isAuthenticated;
 
   // Filter items based on permissions
+  const studyPlanGate = useAiFeature('studyPlan'); // AI layer
+  const studyPlanOn = studyPlanGate.visible || studyPlanGate.needsVerification;
   const visibleStandaloneItems = standaloneItems.filter(item => {
+    if (item.href === '/study-plan' && !studyPlanOn) return false;
     if (item.adminOnly) return canSeeAdminItems;
     if (item.contentOnly) return canSeeContentItems;
     return true;

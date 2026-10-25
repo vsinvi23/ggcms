@@ -11,6 +11,9 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+// AI layer: sidebar gates the Study Plan link on AI status
+vi.mock('@/api/hooks/useAi', () => ({ useAiFeature: () => ({ visible: false, needsVerification: false, isLoading: false }) }));
+
 // Mock NavLink to avoid complex active-class logic in tests
 vi.mock('@/components/NavLink', () => ({
   NavLink: ({ children, to }: { children: React.ReactNode; to: string }) => (

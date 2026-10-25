@@ -16,6 +16,7 @@ type LessonResponse struct {
 	Title     string  `json:"title"`
 	Type      string  `json:"type"`
 	Content   *string `json:"content,omitempty"`
+	Locked    bool    `json:"locked,omitempty"`
 	Duration  int     `json:"duration"`
 	Order     int     `json:"order"`
 	SectionID *uint   `json:"sectionId,omitempty"`

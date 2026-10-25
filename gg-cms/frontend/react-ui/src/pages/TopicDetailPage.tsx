@@ -10,7 +10,8 @@ import { ContentCard } from '@/components/public/ContentCard';
 import { Button } from '@/components/ui/button';
 
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
-import { TopicContentDto } from '@/api/types';
+import { usePageMeta } from '@/hooks/usePageMeta';
+import { CmsResponseDto } from '@/api/types';
 
 import { useState } from 'react';
 import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
@@ -26,6 +27,12 @@ const TopicDetailPage = () => {
   };
   const { data: topics = [], isLoading: loadingTopics } = useTopics();
   const topic = useMemo(() => topics.find(t => t.slug === slug), [topics, slug]);
+  usePageMeta({
+    title: topic?.name ?? 'Topic',
+    description: topic?.description || (topic ? `Articles and courses about ${topic.name}.` : undefined),
+    canonicalPath: `/topics/${slug ?? ''}`,
+    noindex: !loadingTopics && !topic,
+  });
 
   const { data: relationships = [] } = useTopicRelationships(topic?.id ?? null);
   const { data: explicitContent = [], isLoading: loadingExplicitContent } = useTopicContent(topic?.id ?? null);
@@ -33,7 +40,7 @@ const TopicDetailPage = () => {
 
   const loadingContent = loadingExplicitContent || loadingPublicCms;
 
-  const content: TopicContentDto[] = useMemo(() => {
+  const content: CmsResponseDto[] = useMemo(() => {
     if (explicitContent && explicitContent.length > 0) return explicitContent;
     if (!topic || !publicCms?.items) return [];
 
@@ -48,16 +55,7 @@ const TopicDetailPage = () => {
         return title.includes(nameLower) || title.includes(slugLower) ||
                desc.includes(nameLower) || desc.includes(slugLower) ||
                cat.includes(nameLower) || cat.includes(slugLower);
-      })
-      .map(item => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        type: (item.type === 'ARTICLE' || !!item.articleType ? 'ARTICLE' : 'COURSE') as 'ARTICLE' | 'COURSE',
-        slug: item.slug ?? '',
-        relationship_type: 'TAGGED',
-        primary_topic_id: topic.id,
-      }));
+      });
   }, [explicitContent, topic, publicCms]);
 
   const prerequisites = relationships.filter(r => r.relationship_type === 'PREREQUISITE_OF' || r.relationship_type === 'BUILDS_ON');

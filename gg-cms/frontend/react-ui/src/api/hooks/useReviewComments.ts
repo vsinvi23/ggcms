@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reviewCommentService } from '../services/reviewCommentService';
-import { ReviewCommentCreateDto } from '../types';
+import { ReviewCommentCreateDto, ReviewCommentContentType } from '../types';
 
 // Query keys
 export const commentKeys = {
@@ -44,7 +44,9 @@ export const useCreateComment = () => {
 export const useDeleteComment = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => reviewCommentService.deleteComment(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: commentKeys.all }),
+    mutationFn: ({ id }: { id: string | number; contentType: ReviewCommentContentType; contentId: string }) =>
+      reviewCommentService.deleteComment(id),
+    onSuccess: (_, data) =>
+      qc.invalidateQueries({ queryKey: commentKeys.list(data.contentType, data.contentId) }),
   });
 };

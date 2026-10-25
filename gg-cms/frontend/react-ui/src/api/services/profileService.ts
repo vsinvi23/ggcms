@@ -1,5 +1,5 @@
 import apiClient from '../client';
-import type { UserProfileDto, UpsertProfileRequest, CreateProfileRequest, RecommendedItem } from '../types';
+import type { UserProfileDto, UpsertProfileRequest, CreateProfileRequest, RecommendedItem, PersonalizationFeed } from '../types';
 
 export const profileService = {
   getProfile: async (): Promise<UserProfileDto> => {
@@ -32,5 +32,10 @@ export const profileService = {
       params: { limit },
     });
     return res.data.data ?? [];
+  },
+
+  getFeed: async (limit = 10): Promise<PersonalizationFeed> => {
+    const res = await apiClient.get('/personalization/feed', { params: { limit } });
+    return res.data.data;
   },
 };

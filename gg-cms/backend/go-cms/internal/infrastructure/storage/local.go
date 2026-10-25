@@ -24,7 +24,7 @@ func NewLocalProvider(uploadDir, baseURL string) *LocalProvider {
 func (p *LocalProvider) Name() string { return "local" }
 
 func (p *LocalProvider) Save(file io.Reader, filename string, mimeType string, size int64) (string, string, error) {
-	ext := filepath.Ext(filename)
+	ext := ExtensionForMIME(mimeType)
 	key := uuid.New().String() + ext
 	dst := filepath.Join(p.UploadDir, key)
 	f, err := os.Create(dst)
@@ -39,5 +39,5 @@ func (p *LocalProvider) Save(file io.Reader, filename string, mimeType string, s
 }
 
 func (p *LocalProvider) Delete(key string) error {
-	return os.Remove(filepath.Join(p.UploadDir, key))
+	return os.Remove(filepath.Join(p.UploadDir, filepath.Base(key)))
 }

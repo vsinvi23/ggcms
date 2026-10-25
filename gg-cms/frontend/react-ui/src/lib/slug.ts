@@ -28,7 +28,7 @@ export function slugify(title: string | null | undefined): string {
  *
  * Uses the server-provided `slug` when available, falls back to slugifying the title.
  */
-export function buildArticleUrl(item: Pick<CmsResponseDto, 'id' | 'slug' | 'title' | 'categoryName'>): string {
+export function buildArticleUrl(item: Pick<CmsResponseDto, 'slug' | 'title' | 'categoryName'> & { id?: number }): string {
   const articleSlug = item.slug || slugify(item.title);
   if (item.categoryName) {
     return `/article/${slugify(item.categoryName)}/${articleSlug}`;
@@ -41,7 +41,7 @@ export function buildArticleUrl(item: Pick<CmsResponseDto, 'id' | 'slug' | 'titl
  * Format: /course/{categorySlug}/{courseSlug}  (if category is available)
  *      or /course/{courseSlug}                 (no category)
  */
-export function buildCourseUrl(item: Pick<CmsResponseDto, 'id' | 'slug' | 'title' | 'categoryName'>): string {
+export function buildCourseUrl(item: Pick<CmsResponseDto, 'slug' | 'title' | 'categoryName'> & { id?: number }): string {
   const courseSlug = item.slug || slugify(item.title);
   if (item.categoryName) {
     return `/course/${slugify(item.categoryName)}/${courseSlug}`;

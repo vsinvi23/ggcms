@@ -1,13 +1,3 @@
-export interface PracticeAttempt {
-  quizId: string;
-  selectedAnswers: Record<number, number>;
-  isSubmitted: boolean;
-  score: number;
-  totalQuestions: number;
-  correctCount: number;
-  submittedAt: string;
-}
-
 export type ArticleStatus = 'UNREAD' | 'REFERRED' | 'READ';
 
 export interface ArticleReadState {
@@ -33,44 +23,8 @@ export interface CourseProgressState {
   lastAccessedAt?: string;
 }
 
-const PRACTICE_ATTEMPTS_KEY = 'ggcms_practice_attempts';
 const ARTICLE_READ_STATES_KEY = 'ggcms_article_read_states';
 const COURSE_PROGRESS_STATES_KEY = 'ggcms_course_progress_states';
-
-export function getPracticeAttempts(): Record<string, PracticeAttempt> {
-  try {
-    const raw = localStorage.getItem(PRACTICE_ATTEMPTS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-export function getPracticeAttempt(quizId: string | number): PracticeAttempt | null {
-  if (!quizId) return null;
-  const attempts = getPracticeAttempts();
-  return attempts[String(quizId)] || null;
-}
-
-export function savePracticeAttempt(attempt: PracticeAttempt): void {
-  try {
-    const attempts = getPracticeAttempts();
-    attempts[String(attempt.quizId)] = attempt;
-    localStorage.setItem(PRACTICE_ATTEMPTS_KEY, JSON.stringify(attempts));
-  } catch (e) {
-    console.warn('Failed to save practice attempt to localStorage:', e);
-  }
-}
-
-export function clearPracticeAttempt(quizId: string | number): void {
-  try {
-    const attempts = getPracticeAttempts();
-    delete attempts[String(quizId)];
-    localStorage.setItem(PRACTICE_ATTEMPTS_KEY, JSON.stringify(attempts));
-  } catch (e) {
-    console.warn('Failed to clear practice attempt in localStorage:', e);
-  }
-}
 
 export function getArticleReadStates(): Record<string, ArticleReadState> {
   try {
@@ -248,4 +202,62 @@ export function recordRecentPath(pathSlug: string): void {
   } catch {
     // ignore
   }
+}
+
+const GUEST_COMPLETED_PREFIX = 'ggcms_completed_lessons_';
+
+export interface GuestProgressItem {
+  courseId: number;
+  completedLessonIds: number[];
+}
+
+export function collectGuestProgress(): GuestProgressItem[] {
+  const byCourse = new Map<number, Set<number>>();
+  const add = (courseId: number, ids: unknown) => {
+    if (!Number.isInteger(courseId) || courseId <= 0 || !Array.isArray(ids)) return;
+    const set = byCourse.get(courseId) ?? new Set<number>();
+    ids.forEach(id => {
+      if (Number.isInteger(id) && id > 0) set.add(id as number);
+    });
+    if (set.size > 0) byCourse.set(courseId, set);
+  };
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(GUEST_COMPLETED_PREFIX)) {
+        add(Number(key.slice(GUEST_COMPLETED_PREFIX.length)), readJson<unknown>(key, []));
+      }
+    }
+  } catch {
+    return [];
+  }
+  Object.values(getCourseProgressStates()).forEach(state => add(Number(state.courseId), state.completedLessons));
+  return Array.from(byCourse, ([courseId, ids]) => ({ courseId, completedLessonIds: Array.from(ids) })).slice(0, 50);
+}
+
+export function clearGuestProgress(): void {
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(GUEST_COMPLETED_PREFIX) || key?.startsWith(COURSE_RESUME_PREFIX)) keys.push(key);
+    }
+    keys.forEach(k => localStorage.removeItem(k));
+    localStorage.removeItem(COURSE_PROGRESS_STATES_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function saveGuestCompletedLessons(courseId: number, ids: number[]): void {
+  try {
+    localStorage.setItem(`${GUEST_COMPLETED_PREFIX}${courseId}`, JSON.stringify(ids));
+  } catch {
+    // ignore
+  }
+}
+
+export function getGuestCompletedLessons(courseId: number): number[] {
+  const ids = readJson<unknown>(`${GUEST_COMPLETED_PREFIX}${courseId}`, []);
+  return Array.isArray(ids) ? ids.filter((n): n is number => Number.isInteger(n)) : [];
 }

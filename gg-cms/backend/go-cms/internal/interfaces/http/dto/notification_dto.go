@@ -2,6 +2,7 @@ package dto
 
 type NotificationResponse struct {
 	ID        uint    `json:"id"`
+	Type      string  `json:"type"`
 	Title     string  `json:"title"`
 	Message   string  `json:"message"`
 	Read      bool    `json:"read"`

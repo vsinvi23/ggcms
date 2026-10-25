@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { sanitizeHtml } from '@/lib/sanitize';
 import hljs from 'highlight.js';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { extractSlugFromPath, buildCourseUrl } from '@/lib/slug';
 import {
   ChevronLeft, ChevronDown, ChevronRight, Search, Play, X,
@@ -10,6 +11,7 @@ import {
   Sparkles, LayoutList, AlertTriangle, Layers
 } from 'lucide-react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
+import { AuthModal } from '@/components/auth/AuthModal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -31,7 +33,8 @@ import { toast } from 'sonner';
 import { toUserMessage } from '@/lib/errors';
 import { usePublicCmsById, usePublicCmsList, usePublicLearningPathById, usePublicLearningPaths } from '@/api/hooks/usePublicCms';
 import { useSectionsByCourse } from '@/api/hooks/useSections';
-import { useMyEnrollment, useEnroll, useUpdateProgress } from '@/api/hooks/useEnrollments';
+import { useMyEnrollment, useEnroll, useUpdateProgress, useCourseResume, useSyncLocalProgress } from '@/api/hooks/useEnrollments';
+import { AssessmentTaker } from '@/components/assessment/AssessmentTaker';
 import { useAuth } from '@/contexts/AuthContext';
 import { parseBodyToHtml } from '@/lib/htmlParser';
 import { renderTipTapDocToHtml } from '@/lib/tiptapRenderer';
@@ -41,18 +44,16 @@ import { HighlightOverlay } from '@/components/engagement/HighlightOverlay';
 import { HighlightsPanel } from '@/components/engagement/HighlightsPanel';
 import { InteractionBar } from '@/components/engagement/InteractionBar';
 import { CommentsSection } from '@/components/shared/CommentsSection';
+import { TutorPanel } from '@/components/ai/TutorPanel'; // AI layer
 
-import { QuestionNavigator } from '@/components/shared/QuestionNavigator';
 import { ModuleLessonNavigator } from '@/components/shared/ModuleLessonNavigator';
 import { PathCourseNavigator } from '@/components/shared/PathCourseNavigator';
-import { 
-  getPracticeAttempt, 
-  savePracticeAttempt, 
-  clearPracticeAttempt,
+import {
   markCourseAsReferred,
   updateCourseProgress,
   getCourseProgressState,
-  getSavedCourseLessonId,
+  getGuestCompletedLessons,
+  saveGuestCompletedLessons,
   savePathResumeState,
 } from '@/lib/contentStateStore';
 
@@ -202,7 +203,7 @@ export function CourseViewPage() {
   const lessonParam = Number(searchParams.get('lesson')) || null;
   const autoLaunch = searchParams.get('learn') === 'true' || !!lessonParam;
   const { data: paramPath } = usePublicLearningPathById(pathParam ?? '');
-  const { isAuthenticated, isAdmin, isMasterAdmin, canQuickEditPublic } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, isAdmin, isMasterAdmin, canQuickEditPublic } = useAuth();
   const [isViewingPending, setIsViewingPending] = useState(false);
   const [isInlineEditing, setIsInlineEditing] = useState(false);
   const [diffViewMode, setDiffViewMode] = useState<DiffViewMode>('diff');
@@ -219,7 +220,6 @@ export function CourseViewPage() {
           title: data.title,
           description: data.description,
           body: data.body,
-          status: data.submitForReview ? 'REVIEW' : 'DRAFT',
         },
       });
 
@@ -266,6 +266,8 @@ export function CourseViewPage() {
   const { data: enrollment } = useMyEnrollment(numericCourseId, isAuthenticated && !!numericCourseId);
   const { mutate: enroll, mutateAsync: enrollAsync } = useEnroll();
   const { mutateAsync: updateProgress, isPending: isMarkingComplete } = useUpdateProgress();
+  const { data: resume, isLoading: resumeLoading } = useCourseResume(numericCourseId, isAuthenticated && !!numericCourseId);
+  useSyncLocalProgress(isAuthenticated);
   const { data: allCoursesData } = usePublicCmsList({ type: 'COURSE', size: 30 });
 
   // State management for navigation & interactive tools
@@ -281,51 +283,36 @@ export function CourseViewPage() {
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [pendingNavigationUrl, setPendingNavigationUrl] = useState<string | null>(null);
 
-  // Interactive Practice Quiz state
-  const [practiceQuestionIdx, setPracticeQuestionIdx] = useState(0);
-  const [practiceAnswers, setPracticeAnswers] = useState<Record<number, number>>({});
-  const [isPracticeSubmitted, setIsPracticeSubmitted] = useState(false);
-
-  React.useEffect(() => {
-    if (courseId) {
-      const saved = getPracticeAttempt(courseId);
-      if (saved) {
-        setPracticeAnswers(saved.selectedAnswers || {});
-        setIsPracticeSubmitted(!!saved.isSubmitted);
-      }
-    }
-  }, [courseId]);
-
-  const handlePracticeSubmit = () => {
-    setIsPracticeSubmitted(true);
-    if (courseId) {
-      savePracticeAttempt({
-        quizId: String(courseId),
-        selectedAnswers: practiceAnswers,
-        isSubmitted: true,
-        score: 0,
-        totalQuestions: allLessons.length,
-        correctCount: 0,
-        submittedAt: new Date().toISOString(),
-      });
-    }
-  };
-
-  const handlePracticeRetake = () => {
-    if (courseId) {
-      clearPracticeAttempt(courseId);
-    }
-    setPracticeAnswers({});
-    setIsPracticeSubmitted(false);
-    setPracticeQuestionIdx(0);
-  };
-
   // Real course data from backend API
   const displayCourse = useMemo(() => {
     if (course) return course;
     if (!courseId) return null;
     return null;
   }, [course, courseId]);
+
+  usePageMeta({
+    title: displayCourse?.title ?? 'Course',
+    description: displayCourse?.description?.slice(0, 160) ?? undefined,
+    canonicalPath: window.location.pathname,
+    jsonLd: displayCourse ? [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Course',
+        name: displayCourse.title,
+        description: displayCourse.description ?? undefined,
+        provider: { '@type': 'Organization', name: 'GeekGully', sameAs: window.location.origin },
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: window.location.origin },
+          ...(displayCourse.categoryName ? [{ '@type': 'ListItem', position: 2, name: displayCourse.categoryName }] : []),
+          { '@type': 'ListItem', position: displayCourse.categoryName ? 3 : 2, name: displayCourse.title },
+        ],
+      },
+    ] : undefined,
+  });
 
   const [tiptapCourseBodyHtml, setTiptapCourseBodyHtml] = useState('');
 
@@ -346,23 +333,7 @@ export function CourseViewPage() {
     }
   }, [tiptapCourseBodyHtml, displayCourse?.contentFormat]);
 
-  // Detect if this course is a Practice Course / Interactive Quiz / Assessment
-  const isPracticeCourse = useMemo(() => {
-    const cat = (displayCourse?.categoryName || '').toLowerCase();
-    const slug = (displayCourse?.slug || courseId || '').toLowerCase();
-    const title = (displayCourse?.title || '').toLowerCase();
-    return (
-      cat.includes('practice') ||
-      cat.includes('quiz') ||
-      cat.includes('assessment') ||
-      slug.includes('practice') ||
-      slug.includes('quiz') ||
-      slug.includes('assessment') ||
-      title.includes('practice') ||
-      title.includes('quiz') ||
-      title.includes('assessment')
-    );
-  }, [displayCourse, courseId]);
+  const isAssessmentCourse = displayCourse?.courseType === 'ASSESSMENT';
 
   // Real sections & lessons data from backend API
   const displaySections = useMemo((): SectionDto[] => {
@@ -371,41 +342,54 @@ export function CourseViewPage() {
 
   // Expand all sections by default once sections load
   React.useEffect(() => {
-    if (displaySections.length > 0 && expandedSections.length === 0) {
-      setExpandedSections(displaySections.map(s => s.id));
+    if (displaySections.length > 0) {
+      setExpandedSections(prev => (prev.length === 0 ? displaySections.map(s => s.id) : prev));
     }
   }, [displaySections]);
 
   const isEnrolled = !!enrollment;
 
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [pendingLessonId, setPendingLessonId] = useState<number | null>(null);
+  const selectLesson = React.useCallback((id: number | null) => {
+    if (id !== null && !isAuthenticated) {
+      setPendingLessonId(id);
+      setAuthModalOpen(true);
+      return;
+    }
+    setSelectedLessonId(id);
+  }, [isAuthenticated]);
+  React.useEffect(() => {
+    if (!isAuthenticated || pendingLessonId === null) return;
+    setSelectedLessonId(pendingLessonId);
+    setPendingLessonId(null);
+    setAuthModalOpen(false);
+    if (numericCourseId && !isEnrolled) enroll(numericCourseId);
+  }, [isAuthenticated, pendingLessonId, numericCourseId, isEnrolled, enroll]);
+
   // Launch gracefully: jump to the requested lesson, else resume the saved one, else the first
   const [autoLaunched, setAutoLaunched] = useState(false);
   React.useEffect(() => {
-    if (autoLaunched || !autoLaunch || !numericCourseId || isPracticeCourse) return;
+    if (autoLaunched || !autoLaunch || !numericCourseId || isAssessmentCourse || authLoading) return;
+    if (isAuthenticated && !lessonParam && resumeLoading) return;
     const lessons = displaySections.flatMap(getAllLessons);
     if (lessons.length === 0) return;
-    const wanted = lessonParam ?? getSavedCourseLessonId(numericCourseId);
+    const wanted = lessonParam ?? resume?.nextLesson?.id ?? resume?.lastLessonId ?? null;
     const target = lessons.find(l => l.id === wanted) ?? lessons[0];
-    setSelectedLessonId(target.id);
+    selectLesson(target.id);
     setAutoLaunched(true);
-  }, [autoLaunch, autoLaunched, displaySections, isPracticeCourse, lessonParam, numericCourseId]);
+  }, [autoLaunch, autoLaunched, authLoading, isAuthenticated, resume, resumeLoading, displaySections, isAssessmentCourse, lessonParam, numericCourseId, selectLesson]);
 
-  // Local completed lessons state stored in localStorage for persistent offline/guest progress
-  const [localCompletedIds, setLocalCompletedIds] = useState<number[]>([]);
+  const [guestCompletedIds, setGuestCompletedIds] = useState<number[]>([]);
   React.useEffect(() => {
-    if (!numericCourseId) return;
-    try {
-      const saved = localStorage.getItem(`ggcms_completed_lessons_${numericCourseId}`);
-      setLocalCompletedIds(saved ? JSON.parse(saved) : []);
-    } catch {
-      setLocalCompletedIds([]);
-    }
-  }, [numericCourseId]);
+    setGuestCompletedIds(numericCourseId ? getGuestCompletedLessons(numericCourseId) : []);
+  }, [numericCourseId, isAuthenticated]);
 
   const completedLessonIds: number[] = useMemo(() => {
-    const fromApi = (enrollment?.completedLessons ?? []).map(l => l.id);
-    return Array.from(new Set([...fromApi, ...localCompletedIds]));
-  }, [enrollment, localCompletedIds]);
+    if (!isAuthenticated) return guestCompletedIds;
+    const fromServer = resume?.completedLessonIds ?? (enrollment?.completedLessons ?? []).map(l => l.id);
+    return Array.from(new Set(fromServer));
+  }, [isAuthenticated, enrollment, resume, guestCompletedIds]);
   const allLessons = useMemo(() => displaySections.flatMap(getAllLessons), [displaySections]);
   const totalLessons = allLessons.length;
   const totalModules = displaySections.length;
@@ -414,18 +398,16 @@ export function CourseViewPage() {
   // Automatically mark course as referred when opened, and update course progress
   React.useEffect(() => {
     const id = numericCourseId || courseId;
-    if (id) {
+    if (id && !isAuthenticated) {
       markCourseAsReferred(id);
       if (totalLessons > 0) {
         updateCourseProgress(id, completedLessonIds, totalLessons);
       }
     }
-  }, [numericCourseId, courseId, completedLessonIds, totalLessons]);
+  }, [numericCourseId, courseId, completedLessonIds, totalLessons, isAuthenticated]);
 
-  const courseState = useMemo(() => {
-    const id = numericCourseId || courseId;
-    return id ? getCourseProgressState(id) : null;
-  }, [numericCourseId, courseId, completedLessonIds, totalLessons]);
+  const courseStateId = numericCourseId || courseId;
+  const courseState = courseStateId && !isAuthenticated ? getCourseProgressState(courseStateId) : null;
 
   // Dynamic approximate duration calculation
   const calculatedDurationMinutes = useMemo(() => {
@@ -458,13 +440,18 @@ export function CourseViewPage() {
   }, [calculatedDurationMinutes]);
 
   const completedCount = completedLessonIds.length;
-  const progressPercent = totalLessons > 0
-    ? Math.round((completedCount / totalLessons) * 100)
-    : Math.round((enrollment?.progress ?? 0) * 100);
+  const progressPercent = isAuthenticated
+    ? Math.round(resume?.progress ?? enrollment?.progress ?? 0)
+    : totalLessons > 0
+      ? Math.round((completedCount / totalLessons) * 100)
+      : 0;
+  const awaitingAssessment = isAuthenticated && !!resume?.awaitingAssessment;
+  const serverCompleted = isAuthenticated && (enrollment?.status === 'completed' || resume?.status === 'completed');
 
   // Save current course progress & lesson state locally and to backend
   const saveCurrentCourseState = React.useCallback(() => {
     if (numericCourseId && selectedLessonId !== null) {
+      if (isAuthenticated) return;
       try {
         const state = {
           courseId: numericCourseId,
@@ -486,7 +473,7 @@ export function CourseViewPage() {
         });
       }
     }
-  }, [numericCourseId, selectedLessonId, completedLessonIds, pathSlug, displayCourse, courseId]);
+  }, [isAuthenticated, numericCourseId, selectedLessonId, completedLessonIds, pathSlug, displayCourse, courseId]);
 
   // Intercept click on any external link when in an active lesson
   React.useEffect(() => {
@@ -603,7 +590,7 @@ export function CourseViewPage() {
 
   const handleEnroll = () => {
     if (!isAuthenticated) {
-      navigate('/auth');
+      setAuthModalOpen(true);
       return;
     }
     enroll(numericCourseId, {
@@ -619,44 +606,31 @@ export function CourseViewPage() {
   };
 
   const handleMarkComplete = async (lId: number) => {
-    const updated = completedLessonIds.includes(lId)
-      ? completedLessonIds
-      : [...completedLessonIds, lId];
-
-    setLocalCompletedIds(updated);
-    try {
-      localStorage.setItem(`ggcms_completed_lessons_${numericCourseId || 0}`, JSON.stringify(updated));
-    } catch (e) {
-      console.warn('Could not save progress to localStorage:', e);
-    }
-
-    const newProgress = totalLessons > 0 ? updated.length / totalLessons : 0;
-
     if (!isAuthenticated) {
+      const updated = guestCompletedIds.includes(lId) ? guestCompletedIds : [...guestCompletedIds, lId];
+      setGuestCompletedIds(updated);
+      saveGuestCompletedLessons(numericCourseId || 0, updated);
       toast.success('Progress saved on this device. Sign in to sync it to your account.');
       return;
     }
 
     try {
       const active = enrollment ?? (await enrollAsync(numericCourseId));
-      if (active?.id) {
-        await updateProgress({
-          enrollmentId: active.id,
-          data: {
-            completedLessonId: lId,
-            progress: newProgress,
-            status: newProgress >= 1 ? 'completed' : 'active',
-          },
+      if (!active?.id) return;
+      const updated = await updateProgress({
+        enrollmentId: active.id,
+        data: { completedLessons: [{ id: lId }], lastLessonId: lId },
+      });
+      if (updated.status === 'completed') {
+        toast.success('Congratulations! Course completed!', {
+          description: 'Your certificate is being issued.',
+          action: { label: 'View certificates', onClick: () => navigate('/certificates') },
         });
+      } else {
+        toast.success('Lesson marked complete');
       }
     } catch (err) {
-      toast.error(toUserMessage(err, 'Progress saved locally but failed to sync to your account.'));
-      return;
-    }
-
-    toast.success('Lesson marked complete');
-    if (newProgress >= 1) {
-      toast.success('Congratulations! Course completed! 🎓');
+      toast.error(toUserMessage(err, 'Could not save your progress. Please try again.'));
     }
   };
 
@@ -738,7 +712,7 @@ export function CourseViewPage() {
         Full viewport container with Left Navigation Sidebar + Right Content View
       */}
       <div className="min-h-screen bg-background text-foreground pb-12">
-        <div className="w-full max-w-[1550px] mx-auto px-4 sm:px-6 lg:px-10 xl:pl-[8%] xl:pr-14 pt-5 space-y-5">
+        <div className="w-full max-w-[1940px] mx-auto px-4 sm:px-6 lg:px-10 xl:pl-[8%] xl:pr-14 pt-5 space-y-5">
           {/* Top Header Bar */}
           <div className="flex items-center gap-3 border-b border-border pb-3 flex-wrap">
             <Button variant="ghost" size="sm" onClick={() => navigate(pathSlug ? `/learn/${pathSlug}` : '/courses')} className="rounded-xl gap-1 text-xs shrink-0">
@@ -747,27 +721,37 @@ export function CourseViewPage() {
             <span className="text-sm font-semibold text-foreground truncate max-w-[60ch]">
               {paramPath ? paramPath.title : (displayCourse?.title ?? title)}
             </span>
-            {isPracticeCourse && (
+            {isAssessmentCourse && (
               <Badge variant="outline" className="text-xs font-semibold">
-                Practice Assessment Track
+                Assessment
               </Badge>
             )}
           </div>
+
+          {awaitingAssessment && resume?.assessmentId && (
+            <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3">
+              <p className="text-sm font-semibold text-foreground">
+                You have finished every lesson. Pass the final assessment to complete this course and earn your certificate.
+              </p>
+              <Button size="sm" onClick={() => navigate(`/practice/${resume.assessmentId}`)} className="rounded-xl font-bold">
+                Take the assessment
+              </Button>
+            </div>
+          )}
+          {serverCompleted && (
+            <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+              <p className="text-sm font-semibold text-foreground">Course completed. Your certificate is ready.</p>
+              <Button size="sm" variant="outline" onClick={() => navigate('/certificates')} className="rounded-xl font-bold gap-1.5">
+                <Award className="w-4 h-4" /> View certificate
+              </Button>
+            </div>
+          )}
 
           {/* 2-Column Runner Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
             {/* LEFT COLUMN: Sticky Modules/Lessons Navigator (4 Cols) */}
             <div className="lg:col-span-3 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto pr-0.5">
-              {isPracticeCourse ? (
-                <QuestionNavigator
-                  totalQuestions={totalLessons || 4}
-                  currentIndex={practiceQuestionIdx}
-                  attemptedMap={practiceAnswers}
-                  onSelectQuestion={(idx) => setPracticeQuestionIdx(idx)}
-                  questions={allLessons.length > 0 ? allLessons : [1, 2, 3, 4].map(n => ({ title: `Question ${n}` }))}
-                  title="Questions Navigator"
-                />
-              ) : pathSlug && parentPath && numericCourseId ? (
+              {isAssessmentCourse ? null : pathSlug && parentPath && numericCourseId ? (
                 <PathCourseNavigator
                   pathTitle={parentPath.title}
                   pathSlug={pathSlug}
@@ -781,14 +765,14 @@ export function CourseViewPage() {
                   currentCourseId={numericCourseId}
                   sections={displaySections}
                   selectedLessonId={selectedLessonId}
-                  onSelectLesson={setSelectedLessonId}
+                  onSelectLesson={selectLesson}
                   completedLessonIds={completedLessonIds}
                 />
               ) : (
                 <ModuleLessonNavigator
                   sections={displaySections}
                   selectedLessonId={selectedLessonId}
-                  onSelectLesson={setSelectedLessonId}
+                  onSelectLesson={selectLesson}
                   completedLessonIds={completedLessonIds}
                   title="Modules & Lessons"
                   categoryName={displayCourse?.categoryName}
@@ -798,135 +782,16 @@ export function CourseViewPage() {
 
             {/* MIDDLE COLUMN: Content Runner Card */}
             <div className={cn("space-y-4 min-w-0 pr-2 lg:pr-6 lg:col-span-7")}>
-              {isPracticeCourse ? (
-                /* ── PRACTICE COURSE RUNNER ────── */
-                <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-md">
-                  <div className="border-b border-border pb-4 space-y-1">
-                    <h2 className="text-2xl font-extrabold text-foreground">{title}</h2>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+              {isAssessmentCourse ? (
+                isAuthenticated ? (
+                  <AssessmentTaker assessmentId={numericCourseId} title={title} description={description} />
+                ) : (
+                  <div className="bg-card border border-border rounded-2xl p-8 text-center space-y-3">
+                    <h2 className="text-lg font-extrabold">{title}</h2>
+                    <p className="text-xs text-muted-foreground">Sign in to take this assessment and keep your scores.</p>
+                    <Button onClick={() => setAuthModalOpen(true)} className="rounded-xl text-xs font-bold">Sign in to start</Button>
                   </div>
-
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                      <span>Question {practiceQuestionIdx + 1} of {totalLessons || 4}</span>
-                      <span>{Math.round(((practiceQuestionIdx + 1) / (totalLessons || 4)) * 100)}% Complete</span>
-                    </div>
-                    <Progress value={((practiceQuestionIdx + 1) / (totalLessons || 4)) * 100} className="h-1.5" />
-
-                    <div className="space-y-4">
-                      <h3 className="text-base font-bold text-foreground leading-snug">
-                        {allLessons[practiceQuestionIdx]?.title || `What is the primary architectural principle of ${title}?`}
-                      </h3>
-
-                      <div className="space-y-2.5 pt-2">
-                        {(() => {
-                          let options = [
-                            'Separation of concerns, modular component isolation, and resilient boundary design',
-                            'Direct hardcoding of transient credentials inside application source files',
-                            'Bypassing network encryption and TLS certificates in local microservices',
-                            'Executing synchronous blocking calls on UI looper threads under load',
-                          ];
-                          
-                          try {
-                            // First try to parse from course-level interactiveMetadata
-                            if (displayCourse?.interactiveMetadata) {
-                               const meta = typeof displayCourse.interactiveMetadata === 'string' ? JSON.parse(displayCourse.interactiveMetadata) : displayCourse.interactiveMetadata;
-                               if (meta?.questions && meta.questions[practiceQuestionIdx]?.options) {
-                                   options = meta.questions[practiceQuestionIdx].options;
-                               }
-                            }
-                            
-                            // If still using default options, try to parse from the individual lesson content
-                            const lessonContent = allLessons[practiceQuestionIdx]?.content || '';
-                            const cleanContent = lessonContent.replace(/<[^>]+>/g, '').trim();
-                            if (cleanContent.startsWith('{')) {
-                              const parsed = JSON.parse(cleanContent);
-                              if (parsed.options && Array.isArray(parsed.options)) {
-                                options = parsed.options;
-                              }
-                            }
-                          } catch (e) {
-                            // Silently fallback to defaults if JSON parsing fails
-                          }
-                          
-                          return options.map((opt, optIdx) => {
-                            const isSelected = practiceAnswers[practiceQuestionIdx] === optIdx;
-                            return (
-                              <button
-                                key={optIdx}
-                                onClick={() => setPracticeAnswers(prev => ({ ...prev, [practiceQuestionIdx]: optIdx }))}
-                                className={cn(
-                                  'w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between cursor-pointer',
-                                  isSelected
-                                    ? 'bg-primary/10 border-primary text-primary font-bold shadow-xs'
-                                    : 'bg-card border-border text-foreground hover:bg-muted/60'
-                                )}
-                              >
-                                <span>{opt}</span>
-                                <div className={cn(
-                                  'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
-                                  isSelected ? 'border-primary bg-primary text-white' : 'border-muted-foreground/40'
-                                )}>
-                                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                                </div>
-                              </button>
-                            );
-                          });
-                        })()}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-border">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={practiceQuestionIdx === 0}
-                        onClick={() => setPracticeQuestionIdx(prev => prev - 1)}
-                        className="rounded-xl text-xs"
-                      >
-                        <ChevronLeft className="w-4 h-4 mr-1" /> Previous Question
-                      </Button>
-
-                      {practiceQuestionIdx < (totalLessons || 4) - 1 ? (
-                        <Button
-                          size="sm"
-                          onClick={() => setPracticeQuestionIdx(prev => prev + 1)}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-bold"
-                        >
-                          Next Question <ChevronRight className="w-4 h-4 ml-1" />
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={handlePracticeSubmit}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-xs font-bold"
-                        >
-                          Submit Practice Test 🎉
-                        </Button>
-                      )}
-                    </div>
-
-                    {isPracticeSubmitted && (
-                      <div className="p-4 rounded-2xl bg-primary/10 border border-primary/30 space-y-3 animate-fade-in">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-bold text-primary flex items-center gap-1.5">
-                            <CheckCircle2 className="w-4 h-4 text-primary" /> Practice Set Submitted
-                          </h4>
-                          <Button
-                            size="sm"
-                            onClick={handlePracticeRetake}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold rounded-xl"
-                          >
-                            Retake Practice Test
-                          </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          Your answers have been saved to your progress history on this device.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                )
               ) : selectedLessonId === null ? (
                 /* ── STANDARD COURSE OVERVIEW VIEW ──────────────────────────────── */
               <div className="space-y-8">
@@ -947,17 +812,23 @@ export function CourseViewPage() {
                       ) : (
                         <Badge variant="outline" className="text-xs">{displayCourse?.categoryName || 'Engineering'}</Badge>
                       )}
-                      {courseState?.isCompleted ? (
+                      {isAuthenticated ? (
+                        serverCompleted ? (
+                          <Badge className="bg-primary text-white font-bold text-xs border-none">
+                            <Award className="w-3.5 h-3.5 mr-1" /> Course Completed
+                          </Badge>
+                        ) : isEnrolled ? (
+                          <Badge variant="outline" className="border-primary/40 text-primary bg-primary/10 font-bold text-xs">
+                            <Clock className="w-3.5 h-3.5 mr-1" /> In progress ({progressPercent}%)
+                          </Badge>
+                        ) : null
+                      ) : courseState?.isCompleted ? (
                         <Badge className="bg-primary text-white font-bold text-xs border-none">
                           <Award className="w-3.5 h-3.5 mr-1" /> Course Completed (100%)
                         </Badge>
                       ) : courseState?.isReferred ? (
                         <Badge variant="outline" className="border-primary/40 text-primary bg-primary/10 font-bold text-xs">
                           <Clock className="w-3.5 h-3.5 mr-1" /> Referred ({courseState.progress}%)
-                        </Badge>
-                      ) : isEnrolled ? (
-                        <Badge className="bg-primary text-white border-none text-xs">
-                          <CheckCircle2 className="w-3 h-3 mr-1" /> Enrolled
                         </Badge>
                       ) : null}
                     </div>
@@ -992,11 +863,12 @@ export function CourseViewPage() {
                         size="lg"
                         onClick={() => {
                           if (isAuthenticated && !isEnrolled && numericCourseId) enroll(numericCourseId);
-                          if (allLessons.length > 0) setSelectedLessonId(allLessons[0].id);
+                          const resumeId = isAuthenticated ? resume?.nextLesson?.id : undefined;
+                          if (allLessons.length > 0) selectLesson(resumeId ?? allLessons[0].id);
                         }}
                         className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-2 font-bold px-6 shadow-md"
                       >
-                        <Play className="w-4 h-4" /> Start Learning
+                        <Play className="w-4 h-4" /> {isAuthenticated && resume && resume.completedCount > 0 && resume.nextLesson ? 'Continue where you left off' : 'Start Learning'}
                       </Button>
                       <Button
                         variant="outline"
@@ -1055,7 +927,7 @@ export function CourseViewPage() {
                             {/* Module Header */}
                             <div
                               onClick={() => {
-                                if (sectionLessons.length > 0) setSelectedLessonId(sectionLessons[0].id);
+                                if (sectionLessons.length > 0) selectLesson(sectionLessons[0].id);
                               }}
                               className="p-4 bg-muted/30 flex items-start justify-between gap-4 cursor-pointer hover:bg-muted/60 transition-colors"
                             >
@@ -1090,7 +962,7 @@ export function CourseViewPage() {
                                   return (
                                     <button
                                       key={lesson.id || lIdx}
-                                      onClick={() => setSelectedLessonId(lesson.id)}
+                                      onClick={() => selectLesson(lesson.id)}
                                       className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-primary/5 transition-colors group cursor-pointer"
                                     >
                                       <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -1154,7 +1026,7 @@ export function CourseViewPage() {
                 <div className="sticky top-0 z-20 bg-card rounded-t-2xl p-4 sm:p-6 pb-2 border-b border-border shadow-xs">
                   {/* Breadcrumbs */}
                   <nav className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap pb-1.5 border-b border-border/60">
-                    <button onClick={() => setSelectedLessonId(null)} className="hover:text-foreground transition-colors font-medium">
+                    <button onClick={() => selectLesson(null)} className="hover:text-foreground transition-colors font-medium">
                       {title}
                     </button>
                     {currentSection && (
@@ -1245,7 +1117,7 @@ export function CourseViewPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setSelectedLessonId(prevLesson.id)}
+                            onClick={() => selectLesson(prevLesson.id)}
                             className="rounded-xl gap-1"
                           >
                             <ChevronLeft className="h-4 w-4" /> Previous
@@ -1255,7 +1127,7 @@ export function CourseViewPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setSelectedLessonId(nextLesson.id)}
+                            onClick={() => selectLesson(nextLesson.id)}
                             className="rounded-xl gap-1"
                           >
                             Next <ChevronRight className="h-4 w-4" />
@@ -1271,7 +1143,7 @@ export function CourseViewPage() {
                           {nextLesson && (
                             <Button
                               size="sm"
-                              onClick={() => setSelectedLessonId(nextLesson.id)}
+                              onClick={() => selectLesson(nextLesson.id)}
                               className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl gap-1 font-bold"
                             >
                               Next Lesson <ChevronRight className="h-4 w-4" />
@@ -1282,7 +1154,7 @@ export function CourseViewPage() {
                         <Button
                           onClick={async () => {
                             await handleMarkComplete(currentLesson.id);
-                            if (nextLesson) setSelectedLessonId(nextLesson.id);
+                            if (nextLesson) selectLesson(nextLesson.id);
                           }}
                           disabled={isMarkingComplete}
                           className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold gap-2"
@@ -1292,6 +1164,9 @@ export function CourseViewPage() {
                         </Button>
                       )}
                     </div>
+
+                    {/* AI layer: course tutor (hidden unless enabled and email verified) */}
+                    {numericCourseId > 0 && <TutorPanel contentType="course" contentId={numericCourseId} className="mt-8" />}
 
                     {/* Discussion section */}
                     <div ref={discussRef} className="pt-8 border-t border-border">
@@ -1318,7 +1193,7 @@ export function CourseViewPage() {
             </aside>
           ) : (
             <aside className="hidden lg:block lg:col-span-2 space-y-4 lg:sticky lg:top-16 pl-1">
-              {/* Reserved space for future advertisements, notes, or widgets (reduced width) */}
+              {/* TUTOR_PANEL_SLOT: F3 mounts TutorPanel here (lesson aside) */}
             </aside>
           )}
         </div>
@@ -1367,6 +1242,15 @@ export function CourseViewPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AuthModal
+        open={authModalOpen}
+        redirectToDashboard={false}
+        onOpenChange={(open) => {
+          setAuthModalOpen(open);
+          if (!open) setPendingLessonId(null);
+        }}
+      />
 
       <EduCourseStyles />
     </PublicLayout>

@@ -37,9 +37,7 @@ import (
 	"testing"
 )
 
-// ── Admin credentials — optional, only used by TestAuthFlow_AdminLogin ────────
-// No other test depends on admin credentials.
-// Set ADMIN_EMAIL + ADMIN_PASSWORD env vars to run that one test.
+// ── Admin credentials — from ADMIN_EMAIL / ADMIN_PASSWORD; admin tests skip when unset ──
 
 var (
 	adminEmail = func() string {
@@ -52,7 +50,7 @@ var (
 		if v := os.Getenv("ADMIN_PASSWORD"); v != "" {
 			return v
 		}
-		return "Geekadmin@2026"
+		return ""
 	}()
 )
 
@@ -82,7 +80,7 @@ func setupTestUser(t *testing.T, label string) *testUser {
 
 	email := fmt.Sprintf("tw_%s_%s@test.invalid", label, testSuffix)
 	username := fmt.Sprintf("tw_%s_%s", label, testSuffix)
-	password := "Testuser@1234"
+	password := testPassword
 
 	// ── Step 1: register ──────────────────────────────────────────────────────
 	regC := newClient()
@@ -92,18 +90,9 @@ func setupTestUser(t *testing.T, label string) *testUser {
 		"password": password,
 		"name":     "Test User " + label,
 	})
-	if regResp == nil || regResp.StatusCode != 201 {
+	if regResp == nil || regResp.StatusCode != 202 {
 		t.Fatalf("setupTestUser[%s]: register failed (status %v): %v", label, regResp, regBody)
 	}
-	if regBody["jwt"] == nil {
-		t.Fatalf("setupTestUser[%s]: register returned no jwt: %v", label, regBody)
-	}
-	userObj, ok := regBody["user"].(map[string]interface{})
-	if !ok {
-		t.Fatalf("setupTestUser[%s]: register returned no user object: %v", label, regBody)
-	}
-	rawID, _ := userObj["id"].(float64)
-	userID := fmt.Sprintf("%v", userObj["id"])
 
 	// ── Step 2: login with the same credentials ───────────────────────────────
 	loginC := newClient()
@@ -114,13 +103,17 @@ func setupTestUser(t *testing.T, label string) *testUser {
 	if loginResp == nil || loginResp.StatusCode != 200 {
 		t.Fatalf("setupTestUser[%s]: login failed (status %v): %v", label, loginResp, loginBody)
 	}
-	jwt, ok := loginBody["jwt"].(string)
-	if !ok || jwt == "" {
-		t.Fatalf("setupTestUser[%s]: login returned no jwt: %v", label, loginBody)
+	if !loginC.authenticated() {
+		t.Fatalf("setupTestUser[%s]: login did not set the session cookies", label)
 	}
-	loginC.token = jwt
+	userObj, ok := loginBody["user"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("setupTestUser[%s]: login returned no user object: %v", label, loginBody)
+	}
+	rawID, _ := userObj["id"].(float64)
+	userID := fmt.Sprintf("%v", userObj["id"])
 
-	// ── Step 3: verify /api/users/me with the login-derived JWT ──────────────
+	// ── Step 3: verify /api/users/me with the login session ──────────────
 	meResp, meBody := loginC.get("/api/users/me")
 	if meResp == nil || meResp.StatusCode != 200 {
 		t.Fatalf("setupTestUser[%s]: /users/me failed (status %v)", label, meResp)
@@ -174,16 +167,21 @@ func TestAuthFlow_Register_Success(t *testing.T) {
 	resp, body := c.post("/api/auth/local/register", map[string]interface{}{
 		"username": "reg_ok_" + testSuffix,
 		"email":    email,
-		"password": "Register@1234",
+		"password": testPassword,
 		"name":     "Reg OK User",
 	})
-	assertStatus(t, resp, 201)
-	assertKey(t, body, "jwt")
-	assertKey(t, body, "user")
+	assertStatus(t, resp, 202)
+	assertKey(t, body, "message")
+	if body["jwt"] != nil || body["user"] != nil || c.authenticated() {
+		t.Errorf("register must not start a session or return a token; body = %v", body)
+	}
 
-	user, ok := body["user"].(map[string]interface{})
+	// Cleanup: log in and let the user delete themselves
+	loginResp, loginBody := c.post("/api/auth/local", map[string]interface{}{"identifier": email, "password": testPassword})
+	assertStatus(t, loginResp, 200)
+	user, ok := loginBody["user"].(map[string]interface{})
 	if !ok {
-		t.Fatalf("user is not an object: %v", body["user"])
+		t.Fatalf("user is not an object: %v", loginBody["user"])
 	}
 	for _, field := range []string{"id", "email", "name", "status"} {
 		assertKey(t, user, field)
@@ -191,33 +189,31 @@ func TestAuthFlow_Register_Success(t *testing.T) {
 	if user["email"] != email {
 		t.Errorf("email: got %v, want %v", user["email"], email)
 	}
-
-	// Cleanup: user deletes themselves using the JWT returned at registration
 	userID := fmt.Sprintf("%v", user["id"])
-	jwt := body["jwt"].(string)
-	c.token = jwt
 	t.Cleanup(func() { c.delete("/api/users/" + userID) })
 }
 
-// TestAuthFlow_Register_DuplicateEmail verifies 409 when the same email is used twice.
+// TestAuthFlow_Register_DuplicateEmail verifies a duplicate registration is indistinguishable from a new one.
 func TestAuthFlow_Register_DuplicateEmail(t *testing.T) {
 	email := fmt.Sprintf("dup_%s@test.invalid", testSuffix)
 	payload := map[string]interface{}{
 		"username": "dup_" + testSuffix,
 		"email":    email,
-		"password": "Dup@12345",
+		"password": testPassword,
 		"name":     "Dup User",
 	}
 
 	c := newClient()
 	r1, b1 := c.post("/api/auth/local/register", payload)
-	assertStatus(t, r1, 201)
-	userID := fmt.Sprintf("%v", b1["user"].(map[string]interface{})["id"])
-	c.token = b1["jwt"].(string)
+	assertStatus(t, r1, 202)
+	_ = b1
+	lr, lb := c.post("/api/auth/local", map[string]interface{}{"identifier": email, "password": testPassword})
+	assertStatus(t, lr, 200)
+	userID := fmt.Sprintf("%v", lb["user"].(map[string]interface{})["id"])
 	t.Cleanup(func() { c.delete("/api/users/" + userID) })
 
 	r2, b2 := c.post("/api/auth/local/register", payload)
-	assertStatus(t, r2, 409)
+	assertStatus(t, r2, 202)
 	assertKey(t, b2, "message")
 }
 
@@ -233,7 +229,7 @@ func TestAuthFlow_Register_MissingFields(t *testing.T) {
 }
 
 // TestAuthFlow_Login_WithRegisteredCredentials verifies a user can log in after
-// registration and the JWT + user fields are correct.
+// registration and the session cookies + user fields are correct.
 func TestAuthFlow_Login_WithRegisteredCredentials(t *testing.T) {
 	u := setupTestUser(t, "login_ok")
 
@@ -245,12 +241,9 @@ func TestAuthFlow_Login_WithRegisteredCredentials(t *testing.T) {
 		"password":   u.password,
 	})
 	assertStatus(t, resp, 200)
-	assertKey(t, body, "jwt")
 	assertKey(t, body, "user")
-
-	jwt := body["jwt"].(string)
-	if jwt == "" {
-		t.Fatal("jwt is empty on second login")
+	if !c.authenticated() {
+		t.Fatal("second login did not set the session cookies")
 	}
 
 	loginUser, ok := body["user"].(map[string]interface{})
@@ -317,7 +310,7 @@ func TestAuthFlow_Me_ReturnsCorrectProfile(t *testing.T) {
 // call /users/me → assert all three steps return consistent data.
 func TestAuthFlow_FullCycle(t *testing.T) {
 	email := fmt.Sprintf("fullcycle_%s@test.invalid", testSuffix)
-	password := "FullCycle@1234"
+	password := testPassword
 
 	// ── 1. Register ───────────────────────────────────────────────────────────
 	c := newClient()
@@ -327,21 +320,8 @@ func TestAuthFlow_FullCycle(t *testing.T) {
 		"password": password,
 		"name":     "Full Cycle User",
 	})
-	assertStatus(t, regResp, 201)
-	assertKey(t, regBody, "jwt")
-	assertKey(t, regBody, "user")
-
-	regUser := regBody["user"].(map[string]interface{})
-	userID := fmt.Sprintf("%v", regUser["id"])
-	// Cleanup: user deletes themselves using the registration JWT
-	regJwt := regBody["jwt"].(string)
-	cleanupC := newClient()
-	cleanupC.token = regJwt
-	t.Cleanup(func() { cleanupC.delete("/api/users/" + userID) })
-
-	if regUser["email"] != email {
-		t.Errorf("register: email mismatch: got %v, want %v", regUser["email"], email)
-	}
+	assertStatus(t, regResp, 202)
+	assertKey(t, regBody, "message")
 
 	// ── 2. Login ──────────────────────────────────────────────────────────────
 	loginC := newClient()
@@ -350,19 +330,17 @@ func TestAuthFlow_FullCycle(t *testing.T) {
 		"password":   password,
 	})
 	assertStatus(t, loginResp, 200)
-	assertKey(t, loginBody, "jwt")
-
-	jwt := loginBody["jwt"].(string)
-	if jwt == "" {
-		t.Fatal("login: jwt is empty")
+	if !loginC.authenticated() {
+		t.Fatal("login: session cookies not set")
 	}
 	loginUser := loginBody["user"].(map[string]interface{})
-	if fmt.Sprintf("%v", loginUser["id"]) != userID {
-		t.Errorf("login: user id mismatch: got %v, want %v", loginUser["id"], userID)
+	userID := fmt.Sprintf("%v", loginUser["id"])
+	t.Cleanup(func() { loginC.delete("/api/users/" + userID) })
+	if loginUser["email"] != email {
+		t.Errorf("login: email mismatch: got %v, want %v", loginUser["email"], email)
 	}
 
 	// ── 3. /users/me ──────────────────────────────────────────────────────────
-	loginC.token = jwt
 	meResp, meBody := loginC.get("/api/users/me")
 	assertStatus(t, meResp, 200)
 
@@ -377,22 +355,21 @@ func TestAuthFlow_FullCycle(t *testing.T) {
 
 // TestAuthFlow_AdminLogin verifies the seeded admin account is reachable.
 func TestAuthFlow_AdminLogin(t *testing.T) {
+	if adminPassword == "" {
+		t.Skip("ADMIN_PASSWORD not set")
+	}
 	c := newClient()
 	resp, body := c.post("/api/auth/local", map[string]interface{}{
 		"identifier": adminEmail,
 		"password":   adminPassword,
 	})
 	assertStatus(t, resp, 200)
-	assertKey(t, body, "jwt")
 	assertKey(t, body, "user")
-
-	jwt := body["jwt"].(string)
-	if jwt == "" {
-		t.Fatal("admin jwt is empty")
+	if !c.authenticated() {
+		t.Fatal("admin login did not set the session cookies")
 	}
 
-	// Validate JWT via /users/me
-	c.token = jwt
+	// Validate the session via /users/me
 	meResp, meBody := c.get("/api/users/me")
 	assertStatus(t, meResp, 200)
 

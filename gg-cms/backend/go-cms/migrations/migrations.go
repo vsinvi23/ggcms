@@ -102,11 +102,8 @@ func Run(db *gorm.DB) error {
 		// The file and its tracking row commit together, so a failure midway
 		// leaves nothing half-applied and the file is retried on next start.
 		if err := db.Transaction(func(tx *gorm.DB) error {
-			// Expose SEED_SAMPLE_CONTENT to the SQL (transaction-local) so sample content can be skipped.
-			if v := os.Getenv("SEED_SAMPLE_CONTENT"); v != "" {
-				if err := tx.Exec("SELECT set_config('gg.seed_sample_content', ?, true)", strings.ToLower(v)).Error; err != nil {
-					return fmt.Errorf("failed to set gg.seed_sample_content: %w", err)
-				}
+			if err := tx.Exec("SELECT set_config('gg.seed_sample_content', ?, true)", seedSampleContent()).Error; err != nil {
+				return fmt.Errorf("failed to set gg.seed_sample_content: %w", err)
 			}
 			if err := tx.Exec(string(content)).Error; err != nil {
 				return fmt.Errorf("failed to apply %q: %w", name, err)
@@ -127,4 +124,16 @@ func Run(db *gorm.DB) error {
 
 	applogger.Info("migrations: done", zap.Int("count", len(names)))
 	return nil
+}
+
+// seedSampleContent reports "true" only when SEED_SAMPLE_CONTENT=true and the
+// environment is not production. Sample content is for dev/test only.
+func seedSampleContent() string {
+	if strings.EqualFold(os.Getenv("APP_ENV"), "production") {
+		return "false"
+	}
+	if strings.EqualFold(os.Getenv("SEED_SAMPLE_CONTENT"), "true") {
+		return "true"
+	}
+	return "false"
 }
