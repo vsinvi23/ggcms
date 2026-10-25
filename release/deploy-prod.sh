@@ -164,12 +164,10 @@ last_dep = history['history'][0]['components'] if history.get('history') and len
 target_ui = manifest.get('components', {}).get('ui', {}).get('version', '0.0.0')
 target_backend = manifest.get('components', {}).get('backend', {}).get('version', '0.0.0')
 target_db = manifest.get('components', {}).get('db', {}).get('version', '0.0.0')
-target_cf = manifest.get('components', {}).get('content-factory', {}).get('version', '0.0.0')
 
 dep_ui = last_dep.get('ui', '0.0.0')
 dep_backend = last_dep.get('backend', '0.0.0')
 dep_db = last_dep.get('db', '0.0.0')
-dep_cf = last_dep.get('content-factory', '0.0.0')
 
 def needs_update(target, dep):
     def parse(v): return [int(x) for x in v.split('.')] if '.' in v else [0,0,0]
@@ -178,32 +176,30 @@ def needs_update(target, dep):
 ui_delta = needs_update(target_ui, dep_ui)
 backend_delta = needs_update(target_backend, dep_backend)
 db_delta = needs_update(target_db, dep_db)
-cf_delta = needs_update(target_cf, dep_cf)
 
 # If UI changes, backend container image also requires re-bundling
 if ui_delta:
     backend_delta = True
 
-print(f'{str(ui_delta).lower()}|{str(backend_delta).lower()}|{str(db_delta).lower()}|{str(cf_delta).lower()}|{target_ui}|{dep_ui}|{target_backend}|{dep_backend}|{target_db}|{dep_db}|{target_cf}|{dep_cf}')
+print(f'{str(ui_delta).lower()}|{str(backend_delta).lower()}|{str(db_delta).lower()}|{target_ui}|{dep_ui}|{target_backend}|{dep_backend}|{target_db}|{dep_db}')
 ")
 
-IFS='|' read -r UI_DELTA BACKEND_DELTA DB_DELTA CF_DELTA T_UI D_UI T_BE D_BE T_DB D_DB T_CF D_CF <<< "$DELTAS"
+IFS='|' read -r UI_DELTA BACKEND_DELTA DB_DELTA T_UI D_UI T_BE D_BE T_DB D_DB <<< "$DELTAS"
 
 # Explicit component flags override deltas
 if [[ ${#TARGET_COMPONENTS[@]} -gt 0 ]]; then
-  UI_DELTA=false; BACKEND_DELTA=false; DB_DELTA=false; CF_DELTA=false
+  UI_DELTA=false; BACKEND_DELTA=false; DB_DELTA=false
   for comp in "${TARGET_COMPONENTS[@]}"; do
     case "$comp" in
       ui) UI_DELTA=true; BACKEND_DELTA=true ;;
       backend) BACKEND_DELTA=true ;;
       db) DB_DELTA=true ;;
-      content-factory|cf) CF_DELTA=true ;;
     esac
   done
 fi
 
 if [[ "$FORCE_DEPLOY" == "true" ]]; then
-  UI_DELTA=true; BACKEND_DELTA=true; DB_DELTA=true; CF_DELTA=true
+  UI_DELTA=true; BACKEND_DELTA=true; DB_DELTA=true
 fi
 
 echo "============================================================"
@@ -215,7 +211,6 @@ echo "------------------------------------------------------------"
 echo "React UI        v$T_UI        v$D_UI            $([ "$UI_DELTA" == "true" ] && echo '🚀 UPDATE DELTA' || echo '✅ UP TO DATE')"
 echo "Go Backend      v$T_BE        v$D_BE            $([ "$BACKEND_DELTA" == "true" ] && echo '🚀 UPDATE DELTA' || echo '✅ UP TO DATE')"
 echo "DB Migrations   v$T_DB        v$D_DB            $([ "$DB_DELTA" == "true" ] && echo '🚀 UPDATE DELTA' || echo '✅ UP TO DATE')"
-echo "Content Factory v$T_CF        v$D_CF            $([ "$CF_DELTA" == "true" ] && echo '🚀 UPDATE DELTA' || echo '✅ UP TO DATE')"
 echo "============================================================"
 
 if [[ "$CHECK_ONLY" == "true" ]]; then
@@ -223,7 +218,7 @@ if [[ "$CHECK_ONLY" == "true" ]]; then
   exit 0
 fi
 
-if [[ "$UI_DELTA" != "true" && "$BACKEND_DELTA" != "true" && "$DB_DELTA" != "true" && "$CF_DELTA" != "true" ]]; then
+if [[ "$UI_DELTA" != "true" && "$BACKEND_DELTA" != "true" && "$DB_DELTA" != "true" ]]; then
   echo "✨ All components are up-to-date! No deployment required."
   exit 0
 fi
@@ -274,17 +269,8 @@ if [[ "$BACKEND_DELTA" == "true" || "$UI_DELTA" == "true" ]]; then
   DEPLOYED_DELTAS+=("backend@v$T_BE" "ui@v$T_UI")
 fi
 
-# --- Deploy Content Factory Delta ---
-if [[ "$CF_DELTA" == "true" && "$INCLUDE_CONTENT_FACTORY" == "true" ]]; then
-  echo "------------------------------------------------------------"
-  echo "🚀 [GATE 7/9] Deploying AI Content Factory (v$T_CF)..."
-  echo "------------------------------------------------------------"
-  bash release/gcp/production/deploy-content-factory.sh
-  DEPLOYED_DELTAS+=("content-factory@v$T_CF")
-else
-  echo "ℹ️ Content Factory deployment excluded. Removing from GCP if it exists..."
-  gcloud run services delete content-factory-backend --region="$REGION" --project="$PROJECT_ID" --quiet >/dev/null 2>&1 || true
-fi
+# Ensure Content Factory service is decommissioned on GCP
+gcloud run services delete content-factory-backend --region="$REGION" --project="$PROJECT_ID" --quiet >/dev/null 2>&1 || true
 
 # --- Step 4: Record Deployment History & Publish Backup Manifest (Gate Step 8 & 9) ---
 echo "▶ Logging deployment execution to $HISTORY_FILE..."

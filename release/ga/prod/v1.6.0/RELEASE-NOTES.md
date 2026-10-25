@@ -2,14 +2,14 @@
 
 - **Target Environment**: prod
 - **Release Version**: v1.6.0
-- **Build Timestamp**: 2026-10-25T15:18:22Z
-- **Git Commit**: 365e1eb9
+- **Build Timestamp**: 2026-10-25T15:33:10Z
+- **Git Commit**: 1c099641
 
 ## Component Version Matrix
 - **React UI**: v1.8.0
 - **Go Backend**: v1.8.0
 - **DB Migrations**: v1.8.0
-- **AI Content Factory**: v1.7.0
+- **AI Content Factory**: v
 
 ## Deployment Contract & Security Signature
 - **API Contract Version**: v1
@@ -18,6 +18,7 @@
 
 ## Recent Change Log (Git Commits)
 ```
+1c099641 chore(release): GA release package v1.8.0 with migrations 001-006
 365e1eb9 chore(memory): update codebase-memory graph index after merge
 38f39024 feat(gcp): add free-tier database consolidation and billing circuit breaker
 00d3c4b8 Merge branch 'feat/platform-hardening-learning-loop-ai' into main
@@ -27,5 +28,4 @@
 fe45182b revert(web): remove marketing-site changes from this branch
 bb0c6412 test(e2e,web): cookie-based auth fixtures; remove fabricated marketing content
 856a5aa5 docs: product gap, security, mock-data, AI and analytics review with specs
-6bab4ef1 feat(backend): security hardening, identity, learning loop, analytics, search and AI layer
 ```
