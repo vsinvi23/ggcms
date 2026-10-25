@@ -3,7 +3,7 @@
  * Covers: list, create course, add section, enroll
  */
 import { test, expect, Page } from '@playwright/test';
-import { enableAuthBypass, ensureUserExists } from '../fixtures/auth';
+import { ensureUserExists } from '../fixtures/auth';
 
 const workerId = process.env.PW_WORKER_INDEX || process.env.PLAYWRIGHT_WORKER_INDEX || '0';
 const courseUserEmail = `e2e_courses_${workerId}@test.local`;
@@ -14,11 +14,10 @@ test.beforeAll(async () => {
 });
 
 async function loginUser(page: Page) {
-  await enableAuthBypass(page);
   await page.goto('/auth');
   await page.waitForLoadState('networkidle');
-  await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(userEmail);
-  await page.locator('input[type="password"]').first().fill(userPassword);
+  await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(courseUserEmail);
+  await page.locator('input[type="password"]').first().fill(courseUserPassword);
   await page.locator('button[type="submit"]').first().click();
   await page.waitForURL((url) => !url.pathname.includes('/auth'), { timeout: 15_000 });
 }

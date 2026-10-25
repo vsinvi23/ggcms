@@ -57,7 +57,7 @@ function AssignDialog({ item, open, onClose }: { item: CmsResponseDto | null; op
   const handleAssign = async () => {
     if (!item || !selectedId) return;
     try {
-      await assignReviewer.mutateAsync({ id: item.id, userId: Number(selectedId), type: 'COURSE', courseType: 'ASSESSMENT' });
+      await assignReviewer.mutateAsync({ id: item.id, userId: Number(selectedId), type: 'COURSE' });
       toast.success('Reviewer assigned');
       setSelectedId('');
       onClose();
@@ -145,7 +145,7 @@ export default function AssessmentManagement() {
 
   const handleUnassign = async (assessment: CmsResponseDto) => {
     try {
-      await reassignReview.mutateAsync({ id: assessment.id, type: 'COURSE', courseType: 'ASSESSMENT', note: '' });
+      await reassignReview.mutateAsync({ id: assessment.id, type: 'COURSE', note: '' });
       toast.success('Assignee removed');
     } catch (err) {
       toast.error(toUserMessage(err, 'Failed to remove assignee'));
@@ -158,7 +158,7 @@ export default function AssessmentManagement() {
   const handleDelete = async () => {
     if (!deleteDialog.assessment) return;
     try {
-      await deleteCms.mutateAsync({ id: deleteDialog.assessment.id, type: 'COURSE', courseType: 'ASSESSMENT' });
+      await deleteCms.mutateAsync({ id: deleteDialog.assessment.id, type: 'COURSE' });
       toast.success('Assessment deleted');
       setDeleteDialog({ open: false, assessment: null });
       refetch();
@@ -170,7 +170,7 @@ export default function AssessmentManagement() {
   const handleSubmitForReview = async () => {
     if (!submitDialog.assessment) return;
     try {
-      await submitForReview.mutateAsync({ id: submitDialog.assessment.id, type: 'COURSE', courseType: 'ASSESSMENT', data: {} });
+      await submitForReview.mutateAsync({ id: submitDialog.assessment.id, type: 'COURSE', data: {} });
       toast.success('Assessment submitted for review');
       setSubmitDialog({ open: false, assessment: null });
       refetch();
@@ -181,7 +181,7 @@ export default function AssessmentManagement() {
 
   const handleClaimReview = async (assessment: CmsResponseDto) => {
     try {
-      await claimReview.mutateAsync({ id: assessment.id, type: 'COURSE', courseType: 'ASSESSMENT' });
+      await claimReview.mutateAsync({ id: assessment.id, type: 'COURSE' });
       navigate(`/assessments/${assessment.slug ?? assessment.id}/edit?mode=view`);
     } catch (err) {
       toast.error(toUserMessage(err, 'Failed to claim — it may have been taken by someone else'));

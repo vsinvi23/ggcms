@@ -10,10 +10,12 @@ export const notifKeys = {
 /**
  * Hook to fetch notifications
  */
-export const useNotifications = (params?: { read?: boolean; page?: number }) => {
+export const useNotifications = (params?: { read?: boolean; page?: number; pageSize?: number }, enabled = true) => {
   return useQuery({
     queryKey: notifKeys.list(params),
     queryFn: () => notificationService.getNotifications(params),
+    enabled,
+    refetchInterval: 60_000,
   });
 };
 

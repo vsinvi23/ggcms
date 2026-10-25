@@ -77,7 +77,7 @@ function HighlightRow({
   const bg       = COLOR_BG[color]      ?? COLOR_BG.yellow;
   const iconColor= COLOR_ICON[color]    ?? COLOR_ICON.yellow;
   const iconBg   = COLOR_ICON_BG[color] ?? COLOR_ICON_BG.yellow;
-  const courseUrl = h.contentSlug ? `/course/${h.contentSlug}` : null;
+  const courseUrl = `${h.contentType === 'course' ? '/course' : '/article'}/${h.contentSlug || h.contentId}`;
 
   return (
     <div className="border border-border rounded-lg bg-card overflow-hidden">

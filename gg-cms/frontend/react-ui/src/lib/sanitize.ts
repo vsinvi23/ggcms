@@ -8,7 +8,7 @@ const ALLOWED_TAGS = [
   'hr','span','div','section','article',
   // Mermaid SVG output (rendered client-side by the TipTap WYSIWYG editor)
   'svg','g','path','text','tspan','rect','circle','ellipse','line','polygon','polyline',
-  'marker','defs','foreignObject',
+  'marker','defs',
 ];
 
 const ALLOWED_ATTR = [
@@ -21,6 +21,12 @@ const ALLOWED_ATTR = [
 ];
 
 const SAFE_CLASS_PATTERN = /^[a-zA-Z0-9 -]*$/;
+
+DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+  if (node.getAttribute('target')) {
+    node.setAttribute('rel', 'noopener noreferrer');
+  }
+});
 
 DOMPurify.addHook('uponSanitizeAttribute', (_node, data) => {
   if (data.attrName === 'class' && !SAFE_CLASS_PATTERN.test(data.attrValue)) {
@@ -36,4 +42,10 @@ DOMPurify.addHook('uponSanitizeAttribute', (_node, data) => {
 export const sanitizeHtml = (html: string): string => {
   if (!html) return '';
   return DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR, ALLOW_DATA_ATTR: false, FORCE_BODY: true });
+};
+
+/** Sanitize server-highlighted search text: only <mark> survives, no attributes. */
+export const sanitizeMarkHtml = (html: string | null | undefined): string => {
+  if (!html) return '';
+  return DOMPurify.sanitize(html, { ALLOWED_TAGS: ['mark'], ALLOWED_ATTR: [], FORCE_BODY: true });
 };

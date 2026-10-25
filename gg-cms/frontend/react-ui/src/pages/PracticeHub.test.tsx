@@ -1,18 +1,17 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import PracticeHub from './PracticeHub';
-import { 
-  getPracticeAttempt, 
-  savePracticeAttempt, 
-  clearPracticeAttempt, 
-  markArticleAsRead, 
+import {
+  markArticleAsRead,
   markArticleAsReferred,
   getArticleReadState,
   markCourseAsReferred,
   updateCourseProgress,
-  getCourseProgressState
+  getCourseProgressState,
+  collectGuestProgress,
+  clearGuestProgress,
 } from '@/lib/contentStateStore';
 
 // Mock components & hooks
@@ -20,21 +19,10 @@ vi.mock('@/components/layout/PublicLayout', () => ({
   PublicLayout: ({ children }: { children: React.ReactNode }) => <div data-testid="public-layout">{children}</div>,
 }));
 
+const cmsItems = vi.hoisted(() => ({ items: [] as Record<string, unknown>[] }));
+
 vi.mock('@/api/hooks/usePublicCms', () => ({
-  usePublicCmsList: () => ({
-    data: {
-      items: [
-        {
-          id: 101,
-          title: 'OAuth 2.0 Security Practice Test',
-          slug: 'oauth-security-practice',
-          description: 'Comprehensive OAuth test',
-          type: 'COURSE',
-          categoryName: 'Security',
-        },
-      ],
-    },
-  }),
+  usePublicCmsList: () => ({ data: { items: cmsItems.items }, isLoading: false }),
 }));
 
 vi.mock('@/api/hooks/useCategories', () => ({
@@ -48,38 +36,19 @@ describe('contentStateStore', () => {
     localStorage.clear();
   });
 
-  it('saves and retrieves practice attempt', () => {
-    expect(getPracticeAttempt('101')).toBeNull();
-
-    savePracticeAttempt({
-      quizId: '101',
-      selectedAnswers: { 0: 0, 1: 0, 2: 1, 3: 0 },
-      isSubmitted: true,
-      score: 100,
-      totalQuestions: 4,
-      correctCount: 4,
-      submittedAt: new Date().toISOString(),
-    });
-
-    const saved = getPracticeAttempt('101');
-    expect(saved).not.toBeNull();
-    expect(saved?.score).toBe(100);
-    expect(saved?.isSubmitted).toBe(true);
-  });
-
-  it('clears practice attempt on retake', () => {
-    savePracticeAttempt({
-      quizId: '101',
-      selectedAnswers: { 0: 0 },
-      isSubmitted: true,
-      score: 100,
-      totalQuestions: 4,
-      correctCount: 4,
-      submittedAt: new Date().toISOString(),
-    });
-
-    clearPracticeAttempt('101');
-    expect(getPracticeAttempt('101')).toBeNull();
+  it('collects guest progress for sync and clears it afterwards', () => {
+    localStorage.setItem('ggcms_completed_lessons_7', JSON.stringify([1, 2]));
+    updateCourseProgress(9, [4], 4);
+    const items = collectGuestProgress();
+    expect(items).toEqual(
+      expect.arrayContaining([
+        { courseId: 7, completedLessonIds: [1, 2] },
+        { courseId: 9, completedLessonIds: [4] },
+      ]),
+    );
+    clearGuestProgress();
+    expect(collectGuestProgress()).toEqual([]);
+    expect(localStorage.getItem('ggcms_completed_lessons_7')).toBeNull();
   });
 
   it('marks article as referred and read correctly', () => {
@@ -123,19 +92,63 @@ describe('contentStateStore', () => {
   });
 });
 
+const auth = vi.hoisted(() => ({ isAuthenticated: true }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => auth }));
+vi.mock('@/components/auth/AuthModal', () => ({ AuthModal: () => null }));
+vi.mock('@/components/assessment/AssessmentTaker', () => ({
+  AssessmentTaker: ({ assessmentId }: { assessmentId: number }) => <div data-testid="taker">{assessmentId}</div>,
+}));
+
+const assessment = {
+  id: 101,
+  title: 'OAuth 2.0 Security Practice Test',
+  slug: 'oauth-security-practice',
+  description: 'Comprehensive OAuth test',
+  type: 'COURSE',
+  courseType: 'ASSESSMENT',
+  categoryName: 'Security',
+  interactiveMetadata: JSON.stringify({ questions: [{ id: 'q1', question: 'Q?', options: ['a', 'b'] }] }),
+};
+
 describe('PracticeHub Component', () => {
   beforeEach(() => {
     localStorage.clear();
+    auth.isAuthenticated = true;
   });
 
-  it('renders practice hub heading and quiz cards', () => {
-    render(
-      <BrowserRouter>
-        <PracticeHub />
-      </BrowserRouter>
-    );
+  it('shows an empty state when no assessments exist', () => {
+    cmsItems.items = [];
+    render(<MemoryRouter><PracticeHub /></MemoryRouter>);
+    expect(screen.getByText(/No practice tests are published yet/)).toBeInTheDocument();
+  });
 
-    expect(screen.getByText('Practice')).toBeInTheDocument();
-    expect(screen.getAllByText('OAuth 2.0 Security Practice Test Assessment').length).toBeGreaterThan(0);
+  it('lists real assessments and ignores non-assessment courses', () => {
+    cmsItems.items = [assessment, { ...assessment, id: 5, title: 'Plain course', courseType: 'STANDARD' }];
+    render(<MemoryRouter><PracticeHub /></MemoryRouter>);
+    expect(screen.getByText('OAuth 2.0 Security Practice Test')).toBeInTheDocument();
+    expect(screen.queryByText('Plain course')).toBeNull();
+    expect(screen.getByText('1 questions')).toBeInTheDocument();
+  });
+
+  it('mounts the server-backed taker for a selected assessment', () => {
+    cmsItems.items = [assessment];
+    render(
+      <MemoryRouter initialEntries={['/practice/oauth-security-practice']}>
+        <Routes><Route path="/practice/:quizId" element={<PracticeHub />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId('taker')).toHaveTextContent('101');
+  });
+
+  it('asks anonymous visitors to sign in instead of starting a test', () => {
+    auth.isAuthenticated = false;
+    cmsItems.items = [assessment];
+    render(
+      <MemoryRouter initialEntries={['/practice/101']}>
+        <Routes><Route path="/practice/:quizId" element={<PracticeHub />} /></Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.queryByTestId('taker')).toBeNull();
+    expect(screen.getByRole('button', { name: /Sign in to start/i })).toBeInTheDocument();
   });
 });

@@ -54,6 +54,11 @@ func (h *CMSHandler) GetAll(c *gin.Context) {
 		filter.CourseType = &cType
 	}
 
+	if !middleware.IsAdmin(c) {
+		uid := middleware.GetUserID(c)
+		filter.VisibleToUserID = &uid
+	}
+
 	result, total, err := h.service.GetAll(c.Request.Context(), cmsType, filter, p.Page, p.Size)
 	if err != nil {
 		response.InternalError(c, err.Error())
@@ -121,6 +126,10 @@ func (h *CMSHandler) GetByID(c *gin.Context) {
 	}
 
 	dto := toCMSResponse(result, cmsType)
+	if !h.canViewContent(c, dto, false) {
+		response.NotFound(c, "not found")
+		return
+	}
 	if dto.Status == "REVIEW" {
 		if numID, parseErr := parseID(c, "id"); parseErr == nil {
 			if count, required, err2 := h.service.GetReviewProgress(c.Request.Context(), numID, cmsType); err2 == nil {
@@ -593,6 +602,14 @@ func (h *CMSHandler) GetActivity(c *gin.Context) {
 	}
 	cmsType := entity.CMSType(c.DefaultQuery("type", "ARTICLE"))
 
+	if !middleware.IsAdmin(c) {
+		item, getErr := h.service.GetByID(c.Request.Context(), id, cmsType)
+		if getErr != nil || !h.canViewContent(c, toCMSResponse(item, cmsType), true) {
+			response.NotFound(c, "not found")
+			return
+		}
+	}
+
 	events, err := h.service.GetActivity(c.Request.Context(), id, cmsType)
 	if err != nil {
 		response.InternalError(c, err.Error())
@@ -742,6 +759,30 @@ func (h *CMSHandler) SaveReviewNote(c *gin.Context) {
 		return
 	}
 	response.OK(c, gin.H{"message": "review note saved"})
+}
+
+// canViewContent reports whether the caller may read the item. Published items are readable by any
+// authenticated user unless privilegedOnly is set; otherwise only admins, the owner, the assigned
+// reviewer, or a reviewer of the item's category (while in REVIEW/APPROVED) may.
+func (h *CMSHandler) canViewContent(c *gin.Context, d dto.CMSResponse, privilegedOnly bool) bool {
+	return canViewCMS(c, h.service, d, privilegedOnly)
+}
+
+func canViewCMS(c *gin.Context, svc cmssvc.Service, d dto.CMSResponse, privilegedOnly bool) bool {
+	if middleware.IsAdmin(c) {
+		return true
+	}
+	if !privilegedOnly && d.Status == string(entity.CMSStatusPublished) {
+		return true
+	}
+	uid := middleware.GetUserID(c)
+	if d.CreatedBy == uid || (d.ReviewerID != nil && *d.ReviewerID == uid) {
+		return true
+	}
+	if (d.Status == string(entity.CMSStatusReview) || d.Status == string(entity.CMSStatusApproved)) && d.CategoryID != nil {
+		return svc.IsReviewerForCategory(c.Request.Context(), uid, *d.CategoryID)
+	}
+	return false
 }
 
 func toCMSResponse(result interface{}, cmsType entity.CMSType) dto.CMSResponse {

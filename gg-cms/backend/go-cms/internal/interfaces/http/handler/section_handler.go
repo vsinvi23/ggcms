@@ -14,9 +14,12 @@ import (
 )
 
 type SectionHandler struct {
-	service sectionsvc.Service
-	cmsSvc  cmssvc.Service
+	service       sectionsvc.Service
+	cmsSvc        cmssvc.Service
+	lessonPreview LessonPreviewPolicy
 }
+
+func (h *SectionHandler) SetLessonPreview(p LessonPreviewPolicy) { h.lessonPreview = p }
 
 func NewSectionHandler(svc sectionsvc.Service, cmsSvc cmssvc.Service) *SectionHandler {
 	return &SectionHandler{service: svc, cmsSvc: cmsSvc}
@@ -57,6 +60,19 @@ func (h *SectionHandler) GetAll(c *gin.Context) {
 		response.BadRequest(c, "invalid course ID")
 		return
 	}
+	policy := h.lessonPreview
+	if policy == "" {
+		policy = LessonPreviewFirst
+	}
+	gated := policy.gates(c)
+	if gated && h.cmsSvc != nil {
+		res, cerr := h.cmsSvc.GetByID(c.Request.Context(), uint(courseID64), entity.CMSTypeCourse)
+		course, ok := res.(*entity.Course)
+		if cerr != nil || !ok || (course.Status != entity.CMSStatusPublished && !course.HasPendingDraft) {
+			response.NotFound(c, "course not found")
+			return
+		}
+	}
 	sections, err := h.service.GetByCourseID(c.Request.Context(), uint(courseID64))
 	if err != nil {
 		response.InternalError(c, err.Error())
@@ -65,6 +81,9 @@ func (h *SectionHandler) GetAll(c *gin.Context) {
 	result := make([]dto.SectionResponse, len(sections))
 	for i, s := range sections {
 		result[i] = mapSectionToDTO(s)
+	}
+	if gated {
+		gateSections(result, policy)
 	}
 	response.OK(c, result)
 }

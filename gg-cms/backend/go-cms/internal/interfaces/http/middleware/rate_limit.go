@@ -3,13 +3,35 @@ package middleware
 import (
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-const authRateLimitBypassHeader = "X-E2E-Bypass-Rate-Limit"
+// RateLimiter is the seam for a shared (e.g. Redis-backed) limiter. Only the
+// in-memory, per-instance implementation exists: no Redis client is a
+// dependency of this module, so REDIS_URL is not consumed yet.
+type RateLimiter interface {
+	Allow(key string) bool
+}
+
+func NewInMemoryRateLimiter(limit int, window time.Duration) RateLimiter {
+	return newIPRateLimiter(limit, window)
+}
+
+// RateLimitWith enforces any RateLimiter implementation per client IP.
+func RateLimitWith(rl RateLimiter) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !rl.Allow(c.ClientIP()) {
+			c.Header("Retry-After", "60")
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"success": false, "message": "too many requests, please try again later"})
+			return
+		}
+		c.Next()
+	}
+}
 
 type ipWindow struct {
 	count     int
@@ -39,6 +61,8 @@ func newIPRateLimiter(limit int, window time.Duration) *ipRateLimiter {
 func (rl *ipRateLimiter) close() {
 	close(rl.stop)
 }
+
+func (rl *ipRateLimiter) Allow(key string) bool { return rl.allow(key) }
 
 func (rl *ipRateLimiter) allow(ip string) bool {
 	rl.mu.Lock()
@@ -74,8 +98,29 @@ func (rl *ipRateLimiter) evict() {
 	}
 }
 
+func rateLimitBypassEnabled() bool {
+	return os.Getenv("BYPASS_RATE_LIMIT") == "1" && !strings.EqualFold(os.Getenv("APP_ENV"), "production")
+}
+
 // authLimiter allows 10 auth requests per IP per minute.
 var authLimiter = newIPRateLimiter(10, time.Minute)
+
+var strictLimiter = newIPRateLimiter(5, time.Minute)
+
+// clientLogLimiter allows 30 client log submissions per IP per minute.
+var clientLogLimiter = newIPRateLimiter(30, time.Minute)
+
+// ClientLogRateLimit rate-limits the client log sink.
+func ClientLogRateLimit() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !clientLogLimiter.allow(c.ClientIP()) {
+			c.Header("Retry-After", "60")
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"success": false, "message": "too many requests"})
+			return
+		}
+		c.Next()
+	}
+}
 
 // publicLimiter allows 60 public API requests per IP per minute to prevent scraping/exhaustion.
 var publicLimiter = newIPRateLimiter(60, time.Minute)
@@ -83,9 +128,9 @@ var publicLimiter = newIPRateLimiter(60, time.Minute)
 // AuthRateLimit is a Gin middleware that enforces per-IP rate limiting on auth endpoints.
 // Set BYPASS_RATE_LIMIT=1 to disable for integration test runs.
 func AuthRateLimit() gin.HandlerFunc {
-	bypass := os.Getenv("BYPASS_RATE_LIMIT") == "1"
+	bypass := rateLimitBypassEnabled()
 	return func(c *gin.Context) {
-		if bypass || c.GetHeader(authRateLimitBypassHeader) == "1" {
+		if bypass {
 			c.Next()
 			return
 		}
@@ -102,11 +147,26 @@ func AuthRateLimit() gin.HandlerFunc {
 	}
 }
 
+// StrictRateLimit enforces a tight per-IP limit (5/min) on sensitive machine/break-glass endpoints.
+func StrictRateLimit() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !strictLimiter.allow(c.ClientIP()) {
+			c.Header("Retry-After", "60")
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+				"success": false,
+				"message": "too many requests, please try again later",
+			})
+			return
+		}
+		c.Next()
+	}
+}
+
 // PublicRateLimit is a Gin middleware enforcing per-IP rate limiting on public content & topics endpoints.
 func PublicRateLimit() gin.HandlerFunc {
-	bypass := os.Getenv("BYPASS_RATE_LIMIT") == "1"
+	bypass := rateLimitBypassEnabled()
 	return func(c *gin.Context) {
-		if bypass || c.GetHeader(authRateLimitBypassHeader) == "1" {
+		if bypass {
 			c.Next()
 			return
 		}

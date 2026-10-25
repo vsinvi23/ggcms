@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
+import { CmsResponseDto } from '@/api/types';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useCategories } from '@/api/hooks/useCategories';
 import { cn } from '@/lib/utils';
@@ -14,6 +16,11 @@ import { QuestionNavigator } from '@/components/shared/QuestionNavigator';
 import { getQuestionAttempt, saveQuestionAttempt } from '@/lib/interviewAttemptStore';
 import { UnsavedChangesModal } from '@/components/interview/UnsavedChangesModal';
 import { toast } from 'sonner';
+
+export interface RelatedCourseLink {
+  slug: string;
+  title: string;
+}
 
 export interface InterviewQuestionItem {
   id: string;
@@ -23,6 +30,7 @@ export interface InterviewQuestionItem {
   answerExplanation: string;
   commonMistakes: string[];
   relatedConcepts: string[];
+  relatedCourses?: RelatedCourseLink[];
 }
 
 export interface InterviewCourse {
@@ -31,67 +39,13 @@ export interface InterviewCourse {
   title: string;
   description: string;
   difficulty: 'Entry' | 'Intermediate' | 'Senior' | 'Staff';
-  role: 'Backend' | 'Cloud' | 'DevOps' | 'Security' | 'SRE' | 'Software Engineer';
+  role: string;
   round: 'Coding' | 'Technical' | 'System Design' | 'Scenario' | 'Behavioral';
   estimatedHours: number;
   questions: InterviewQuestionItem[];
 }
-function generateQuestionsForTrack(slug: string): InterviewQuestionItem[] {
-  const cleanTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  return [
-    {
-      id: `${slug}-q1`,
-      questionNumber: 1,
-      question: `How would you architect a high-availability, production-grade system for ${cleanTitle}?`,
-      thinkPrompt: 'Consider microservice decoupling, stateless API layers, caching strategies, and database indexing.',
-      answerExplanation: `1. System Boundaries: Define distinct microservices with REST/gRPC API boundaries.
-2. Resiliency: Implement circuit breakers, rate limiters, and retry logic with exponential backoff.
-3. Storage & Caching: Use PostgreSQL for relational data and Redis for hot data caching.`,
-      commonMistakes: ['Coupling domain logic across service boundaries', 'Omitting rate limiting on public API gateways'],
-      relatedConcepts: [cleanTitle, 'Architecture', 'Microservices', 'Resiliency'],
-      relatedCourses: [{ slug: 'grpc-vs-rest-microservices', title: 'gRPC vs REST Microservices Architecture' }],
-    },
-    {
-      id: `${slug}-q2`,
-      questionNumber: 2,
-      question: `What telemetry and observability metrics are essential for diagnosing issues in ${cleanTitle}?`,
-      thinkPrompt: 'Evaluate OpenTelemetry tracing, Prometheus metrics, structured JSON logging, and alerting thresholds.',
-      answerExplanation: `1. Golden Signals: Track Latency, Traffic, Error Rates, and Saturation.
-2. Tracing: Inject distributed trace IDs across HTTP request headers.
-3. Alerting: Configure PagerDuty alerts on p99 latency spikes and error rate breaches (>1%).`,
-      commonMistakes: ['Logging sensitive credentials in plain text', 'Alerting on transient non-actionable spikes'],
-      relatedConcepts: ['Observability', 'OpenTelemetry', 'Prometheus', 'Metrics'],
-      relatedCourses: [{ slug: 'kubernetes-zero-downtime-deployments', title: 'Kubernetes Telemetry & Zero Downtime' }],
-    },
-    {
-      id: `${slug}-q3`,
-      questionNumber: 3,
-      question: `How do you handle database concurrency, distributed locking, and cache invalidation in ${cleanTitle}?`,
-      thinkPrompt: 'Consider pessimistic vs optimistic locking, Redis cache eviction policies, and CDC sync.',
-      answerExplanation: `1. Optimistic Locking: Use version numbers on database records to prevent lost updates under low contention.
-2. Cache Invalidation: Implement write-through caching or tail DB logs via Change Data Capture (CDC) to keep Redis synchronized.
-3. Distributed Locks: Use Redis/etcd locks with fencing tokens when coordinating shared resources across cluster nodes.`,
-      commonMistakes: ['Using long-running database transactions for external network calls', 'Omitting TTLs on cache entries'],
-      relatedConcepts: ['Concurrency', 'Cache Invalidation', 'CDC', 'Optimistic Locking'],
-      relatedCourses: [{ slug: 'postgresql-indexing-and-query-tuning', title: 'PostgreSQL Indexing & Query Tuning' }],
-    },
-    {
-      id: `${slug}-q4`,
-      questionNumber: 4,
-      question: `How would you scale ${cleanTitle} for 10x traffic growth while preserving low-latency SLA guarantees?`,
-      thinkPrompt: 'Evaluate horizontal autoscaling (HPA), read replica pooling, CDN edge caching, and asynchronous job processing.',
-      answerExplanation: `1. Autoscaling: Configure Kubernetes Horizontal Pod Autoscaler (HPA) targeting 70% CPU/Memory utilization.
-2. Read Scaling: Offload read queries to PostgreSQL read replicas using a connection pooler like PgBouncer.
-3. Async Queues: Move heavy computations and background tasks to asynchronous workers via Kafka/RabbitMQ.`,
-      commonMistakes: ['Over-provisioning fixed hardware instead of leveraging dynamic autoscaling', 'Sending heavy background tasks synchronously during request execution'],
-      relatedConcepts: ['Scalability', 'Autoscaling', 'Read Replicas', 'Async Queues'],
-      relatedCourses: [{ slug: 'gcp-cloud-run-deployment-guide', title: 'GCP Cloud Run & Cloud Native Scale' }],
-    },
-  ];
-}
-
-function extractQuestionsFromCmsItem(item: any): InterviewQuestionItem[] {
-  const contentStr = item.body || item.content || item.description || '';
+function extractQuestionsFromCmsItem(item: CmsResponseDto): InterviewQuestionItem[] {
+  const contentStr = item.body || item.description || '';
   
   // Check if content has Markdown or HTML structured questions
   if (contentStr.includes('Q1:') || contentStr.includes('Question 1') || contentStr.includes('### Question') || contentStr.includes('1. Question')) {
@@ -156,7 +110,7 @@ function extractQuestionsFromCmsItem(item: any): InterviewQuestionItem[] {
       }
       
       if (relatedConcepts.length === 0) {
-        relatedConcepts.push(item.categoryName || 'Engineering', 'Architecture');
+        if (item.categoryName) relatedConcepts.push(item.categoryName);
       }
       
       parsedQuestions.push({
@@ -165,7 +119,7 @@ function extractQuestionsFromCmsItem(item: any): InterviewQuestionItem[] {
         question: questionText,
         thinkPrompt: thinkPrompt || 'Analyze scalability, fault tolerance, and concurrency.',
         answerExplanation: answerExplanation.trim() || `Key concepts for ${questionText}:\n1. Evaluate system boundaries and data flow.\n2. Ensure zero single points of failure.\n3. Apply caching and database indexing.`,
-        commonMistakes: commonMistakes.length > 0 ? commonMistakes : ['Neglecting bottleneck analysis under peak load'],
+        commonMistakes,
         relatedConcepts,
         relatedCourses,
       });
@@ -176,10 +130,11 @@ function extractQuestionsFromCmsItem(item: any): InterviewQuestionItem[] {
     }
   }
   
-  return generateQuestionsForTrack(item.slug || item.title || 'engineering');
+  return [];
 }
 
 export function InterviewPrepHub() {
+  usePageMeta({ title: 'Interview Preparation', description: 'Interview questions and prep tracks by role and technology.', canonicalPath: '/interview-prep' });
   const navigate = useNavigate();
   const { trackSlug } = useParams<{ trackSlug?: string }>();
 
@@ -217,7 +172,9 @@ export function InterviewPrepHub() {
         try {
           const parsed = JSON.parse(item.interactiveMetadata);
           return parsed.assessmentType === 'INTERVIEW';
-        } catch(e) {}
+        } catch {
+          return false;
+        }
       }
       return false; // exclude if not specifically an interview assessment
     });
@@ -227,8 +184,8 @@ export function InterviewPrepHub() {
       slug: item.slug || String(item.id),
       title: item.title.includes('Track') || item.title.includes('Interview') ? item.title : `${item.title} Interview Track`,
       description: item.description || `Technical interview prep track for ${item.title}.`,
-      difficulty: (item.level as any) || 'Senior',
-      role: (item.categoryName as any) || 'Software Engineer',
+      difficulty: (item.level as InterviewCourse['difficulty'] | null | undefined) || 'Senior',
+      role: item.categoryName || 'Software Engineer',
       round: idx % 2 === 0 ? 'System Design' : 'Technical',
       estimatedHours: item.durationMinutes ? Math.ceil(item.durationMinutes / 60) : 8,
       questions: extractQuestionsFromCmsItem(item),
@@ -259,23 +216,7 @@ export function InterviewPrepHub() {
   useEffect(() => {
     if (trackSlug) {
       const found = allInterviewCourses.find(c => c.id === trackSlug || c.slug === trackSlug);
-      if (found) {
-        startTrack(found);
-      } else {
-        const cleanTitle = trackSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        const fallbackTrack: InterviewCourse = {
-          id: trackSlug,
-          slug: trackSlug,
-          title: cleanTitle.includes('Track') || cleanTitle.includes('Prep') ? cleanTitle : `${cleanTitle} Interview Track`,
-          description: `Interactive technical interview preparation track focused on ${cleanTitle}.`,
-          difficulty: 'Senior',
-          role: 'Software Engineer',
-          round: 'System Design',
-          estimatedHours: 8,
-          questions: generateQuestionsForTrack(trackSlug),
-        };
-        startTrack(fallbackTrack);
-      }
+      if (found) startTrack(found);
     }
   }, [trackSlug, allInterviewCourses]);
 
@@ -284,8 +225,8 @@ export function InterviewPrepHub() {
     if (activeTrack && activeTrack.questions[currentQuestionIdx]) {
       const currentQ = activeTrack.questions[currentQuestionIdx];
       const savedAttempt = getQuestionAttempt(activeTrack.slug, currentQ.id);
-      if (savedAttempt?.attemptedText && !userNotes[currentQ.id]) {
-        setUserNotes(prev => ({ ...prev, [currentQ.id]: savedAttempt.attemptedText }));
+      if (savedAttempt?.attemptedText) {
+        setUserNotes(prev => (prev[currentQ.id] ? prev : { ...prev, [currentQ.id]: savedAttempt.attemptedText }));
       }
       setIsDirty(false);
     }
@@ -310,7 +251,7 @@ export function InterviewPrepHub() {
       const text = userNotes[currentQ.id] || '';
       saveQuestionAttempt(activeTrack.slug, currentQ.id, text);
       setIsDirty(false);
-      toast.success('Answer attempt draft saved!');
+      toast.success('Draft saved on this device only');
     }
   };
 

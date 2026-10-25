@@ -2,6 +2,9 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUsersQuery } from '@/api/hooks/useUsers';
+import { useGroupsQuery } from '@/api/hooks/useGroups';
+import { useAnalyticsOverview, useUserEngagement } from '@/api/hooks/useAnalytics';
+import { rangeFromDays } from '@/lib/analyticsHelpers';
 import { UserDto } from '@/api/types';
 import { useMemo } from 'react';
 import {
@@ -30,26 +33,23 @@ const getInitials = (name: string): string => {
 };
 
 export default function UserManagementDashboard() {
-  const { data: usersData, isLoading, error } = useUsersQuery({ page: 0, size: 200 });
+  const { data: usersData, isLoading: usersLoading, error } = useUsersQuery({ page: 0, size: 10 });
+  const { data: groupsData, isLoading: groupsLoading } = useGroupsQuery({ page: 0, size: 100 });
+  const { data: overview, isLoading: overviewLoading } = useAnalyticsOverview(rangeFromDays(30));
+  const { data: engagement, isLoading: engagementLoading } = useUserEngagement(0, 100);
+  const isLoading = usersLoading || groupsLoading;
 
   const users: UserDto[] = useMemo(() => usersData?.items ?? [], [usersData]);
 
-  const totalUsers = usersData?.totalElements ?? usersData?.total ?? users.length;
-  const activeCount = users.filter((u) => u.status?.toUpperCase() === 'ACTIVE').length;
-  const deactivatedCount = users.filter(
-    (u) => u.status?.toUpperCase() === 'INACTIVE' || u.status?.toUpperCase() === 'DEACTIVATED'
-  ).length;
-  const pendingCount = users.filter((u) => u.status?.toUpperCase() === 'PENDING').length;
+  const totalUsers = usersData?.totalElements ?? usersData?.total ?? 0;
 
-  // Group distribution by first group name
-  const groupDistribution = useMemo(() => {
-    const dist: Record<string, number> = {};
-    users.forEach((user) => {
-      const groupName = user.groups?.[0] ?? 'No Group';
-      dist[groupName] = (dist[groupName] ?? 0) + 1;
-    });
-    return dist;
-  }, [users]);
+  const groupDistribution = useMemo(
+    () =>
+      (groupsData?.items ?? [])
+        .map((g) => ({ name: g.name, count: g.users?.length ?? 0 }))
+        .sort((a, b) => b.count - a.count),
+    [groupsData]
+  );
 
   // Recent users — sorted by createdAt descending, take 5
   const recentUsers = useMemo(() => {
@@ -58,13 +58,16 @@ export default function UserManagementDashboard() {
       .slice(0, 5);
   }, [users]);
 
-  // Recently active users — those with a lastLogin, sorted by lastLogin descending
-  const recentlyActiveUsers = useMemo(() => {
-    return users
-      .filter((u) => !!u.lastLogin)
-      .sort((a, b) => new Date(b.lastLogin!).getTime() - new Date(a.lastLogin!).getTime())
-      .slice(0, 5);
-  }, [users]);
+  // Recently active users from the engagement report (last activity of any kind)
+  const recentlyActiveUsers = useMemo(
+    () =>
+      [...(engagement?.items ?? [])]
+        .filter((u) => !!u.lastActiveAt)
+        .sort((a, b) => new Date(b.lastActiveAt!).getTime() - new Date(a.lastActiveAt!).getTime())
+        .slice(0, 5),
+    [engagement],
+  );
+  const atRiskCount = (engagement?.items ?? []).filter((u) => u.atRisk).length;
 
   const stats = [
     {
@@ -74,30 +77,34 @@ export default function UserManagementDashboard() {
       color: 'text-primary',
       bgColor: 'bg-primary/10',
       description: 'All registered users',
+      loading: undefined as boolean | undefined,
     },
     {
-      title: 'Active Users',
-      value: activeCount,
-      icon: UserCheck,
+      title: 'Groups',
+      value: groupsData?.totalElements ?? groupDistribution.length,
+      icon: Shield,
       color: 'text-success',
       bgColor: 'bg-success/10',
-      description: 'Currently active accounts',
+      description: 'User groups',
+      loading: undefined as boolean | undefined,
     },
     {
-      title: 'Deactivated',
-      value: deactivatedCount,
-      icon: UserX,
-      color: 'text-destructive',
-      bgColor: 'bg-destructive/10',
-      description: 'Suspended accounts',
+      title: 'Active Users (30d)',
+      value: overview?.mau ?? 0,
+      icon: Activity,
+      color: 'text-info',
+      bgColor: 'bg-info/10',
+      description: (overview?.totals.newUsers ?? 0) + ' new in the last 30 days',
+      loading: overviewLoading,
     },
     {
-      title: 'Pending Invites',
-      value: pendingCount,
-      icon: UserPlus,
+      title: 'At Risk of Churn',
+      value: atRiskCount,
+      icon: AlertCircle,
       color: 'text-warning',
       bgColor: 'bg-warning/10',
-      description: 'Awaiting acceptance',
+      description: 'Among 100 users in the engagement report',
+      loading: engagementLoading,
     },
   ];
 
@@ -149,7 +156,7 @@ export default function UserManagementDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {isLoading ? (
+                  {(stat.loading ?? isLoading) ? (
                     <Skeleton className="h-9 w-16" />
                   ) : (
                     <div className="text-3xl font-bold">{stat.value}</div>
@@ -182,11 +189,11 @@ export default function UserManagementDashboard() {
                     </div>
                   ))}
                 </div>
-              ) : Object.keys(groupDistribution).length === 0 ? (
-                <p className="text-sm text-muted-foreground">No users found</p>
+              ) : groupDistribution.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No groups found</p>
               ) : (
-                Object.entries(groupDistribution).map(([groupName, count]) => {
-                  const pct = users.length > 0 ? Math.round((count / users.length) * 100) : 0;
+                groupDistribution.map(({ name: groupName, count }) => {
+                  const pct = totalUsers > 0 ? Math.min(100, Math.round((count / totalUsers) * 100)) : 0;
                   return (
                     <div key={groupName} className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -270,10 +277,10 @@ export default function UserManagementDashboard() {
                 <Activity className="w-5 h-5 text-info" />
                 Recently Active
               </CardTitle>
-              <CardDescription>Latest user activity</CardDescription>
+              <CardDescription>Latest activity across the platform</CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {engagementLoading ? (
                 <div className="space-y-4">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <div key={n} className="flex items-center gap-3">
@@ -288,10 +295,10 @@ export default function UserManagementDashboard() {
               ) : (
                 <div className="space-y-4">
                   {recentlyActiveUsers.map((user) => (
-                    <div key={user.id} className="flex items-center gap-3">
+                    <div key={user.userId} className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                         <AvatarFallback className="bg-muted text-muted-foreground text-xs">
-                          {getInitials(user.name ?? user.email)}
+                          {getInitials(user.name || user.email)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
@@ -299,7 +306,7 @@ export default function UserManagementDashboard() {
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Clock className="w-3 h-3" />
                           <span>
-                            Last login: {format(new Date(user.lastLogin!), 'MMM d, h:mm a')}
+                            Last active: {format(new Date(user.lastActiveAt!), 'MMM d, h:mm a')}
                           </span>
                         </div>
                       </div>

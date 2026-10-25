@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -99,6 +100,7 @@ function getTopicIcon(name: string) {
 
 const TopicsPage = () => {
   const navigate = useNavigate();
+  usePageMeta({ title: 'Topics', description: 'Browse technical topics and the articles and courses covering them.', canonicalPath: '/topics' });
 
   // Real live backend API hooks (no mock/random data)
   const { data: topics = [], isLoading: loadingTopics } = useTopics();

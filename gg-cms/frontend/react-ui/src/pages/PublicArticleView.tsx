@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { sanitizeHtml } from '@/lib/sanitize';
 import hljs from 'highlight.js';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { extractSlugFromPath, slugify, buildCourseUrl } from '@/lib/slug';
+import { usePageMeta } from '@/hooks/usePageMeta';
+import { extractSlugFromPath, slugify, buildArticleUrl, buildCourseUrl } from '@/lib/slug';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { usePublicCmsById, usePublicCmsBody, usePublicArticlesByCategory, usePublicCoursesByCategory, usePublicCmsList } from '@/api/hooks/usePublicCms';
 import { useContentTopics, useTopicContent } from '@/api/hooks/useTopics';
@@ -33,6 +34,8 @@ import { InteractionBar } from '@/components/engagement/InteractionBar';
 import { HighlightOverlay } from '@/components/engagement/HighlightOverlay';
 import { HighlightsPanel } from '@/components/engagement/HighlightsPanel';
 import { CommentsSection } from '@/components/shared/CommentsSection';
+import { TutorPanel } from '@/components/ai/TutorPanel'; // AI layer
+import { TldrBlock } from '@/components/ai/TldrBlock'; // AI layer
 import { TopicChip } from '@/components/public/TopicChip';
 import { ContentCard } from '@/components/public/ContentCard';
 import { cn } from '@/lib/utils';
@@ -72,8 +75,10 @@ function ArticleSkeleton() {
 
 import { PublicQuickEditBar } from '@/components/editor/PublicQuickEditBar';
 import { InlinePageEditor } from '@/components/editor/InlinePageEditor';
-import { ContentDiffOverlay, DiffViewMode, computeWordDiff } from '@/components/engagement/ContentDiffOverlay';
+import { ContentDiffOverlay, DiffViewMode } from '@/components/engagement/ContentDiffOverlay';
+import { computeWordDiff } from '@/lib/wordDiff';
 import { useAuth } from '@/contexts/AuthContext';
+import { useContentReadTracking } from '@/hooks/useTrack';
 import { useUpdateCms, useSubmitCmsForReview, useCmsById } from '@/api/hooks/useCms';
 
 // Helper for saving article revision
@@ -107,6 +112,35 @@ export default function PublicArticleView() {
   const { data: article, isLoading: loadingArticle, error } = usePublicCmsById(articleId, true, isPreview);
   const { data: bodyHtml, isLoading: loadingBody } = usePublicCmsBody(articleId, !!article, isPreview);
 
+  useContentReadTracking(article && !isPreview ? article.id : undefined, 'article');
+
+  usePageMeta({
+    title: article?.title ?? 'Article',
+    description: article?.description?.slice(0, 160) ?? undefined,
+    canonicalPath: isPreview ? undefined : window.location.pathname,
+    jsonLd: article && !isPreview ? [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: article.title,
+        description: article.description ?? undefined,
+        datePublished: article.publishedAt ?? undefined,
+        dateModified: article.updatedAt ?? article.publishedAt ?? undefined,
+        image: article.thumbnailUrl ?? undefined,
+        mainEntityOfPage: new URL(window.location.pathname, window.location.origin).toString(),
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: window.location.origin },
+          ...(article.categoryName ? [{ '@type': 'ListItem', position: 2, name: article.categoryName }] : []),
+          { '@type': 'ListItem', position: article.categoryName ? 3 : 2, name: article.title },
+        ],
+      },
+    ] : undefined,
+  });
+
   // Fetch the real, unmasked draft via the authenticated CMS endpoint whenever this
   // content has a pending draft — the public endpoint above always substitutes the
   // published snapshot for hasPendingDraft=true content, so it can never show the
@@ -126,7 +160,6 @@ export default function PublicArticleView() {
           title: data.title,
           description: data.description,
           body: data.body,
-          status: data.submitForReview ? 'REVIEW' : 'DRAFT',
         },
       });
 
@@ -163,9 +196,10 @@ export default function PublicArticleView() {
 
   const handleToggleRead = () => {
     if (article?.id) {
-      const updated = markArticleAsRead(article.id);
-      setArticleState(updated);
-      toast.success(updated.isRead ? 'Marked as read' : 'Updated read status');
+      const nextRead = !articleState?.isRead;
+      markArticleAsRead(article.id, nextRead);
+      setArticleState(getArticleReadState(article.id));
+      toast.success(nextRead ? 'Marked as read' : 'Marked as unread');
     }
   };
 
@@ -209,7 +243,6 @@ export default function PublicArticleView() {
   }, [displayBodyHtml, article?.contentFormat]);
 
   useEffect(() => {
-    let frameId: number;
 
     const extractHeadings = () => {
       const container = articleBodyRef.current;
@@ -245,7 +278,7 @@ export default function PublicArticleView() {
     };
 
     // Defer querySelectorAll to next frame to ensure React innerHTML has mounted
-    frameId = requestAnimationFrame(extractHeadings);
+    const frameId = requestAnimationFrame(extractHeadings);
 
     return () => {
       cancelAnimationFrame(frameId);
@@ -462,7 +495,7 @@ export default function PublicArticleView() {
         onSaveRevision={handleSaveArticleRevision}
       />
 
-      <div className="max-w-[98%] xl:max-w-[1400px] mx-auto pt-4 px-4 sm:px-6">
+      <div className="max-w-[98%] xl:max-w-[1750px] mx-auto pt-4 px-4 sm:px-6">
         {/* ── Privileged Admin Visual Diff Banner Overlay ─────────────────── */}
         {hasPendingDraft && (isAdmin || isMasterAdmin) && (
           <ContentDiffOverlay
@@ -503,7 +536,7 @@ export default function PublicArticleView() {
                 <ul className="space-y-1.5">
                   {relatedItems.slice(0, 4).map((item) => (
                     <li key={item.id}>
-                      <Link to={`/explore/articles/${item.slug || item.id}`} className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 hover:bg-primary/5 group">
+                      <Link to={buildArticleUrl(item)} className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 hover:bg-primary/5 group">
                         <span className="min-w-0">
                           <span className="block text-xs font-semibold text-foreground group-hover:text-primary line-clamp-2">{item.title}</span>
                           {item.categoryName && <span className="block text-[11px] text-muted-foreground">{item.categoryName}</span>}
@@ -618,6 +651,9 @@ export default function PublicArticleView() {
                   </Badge>
                 ) : null}
               </div>
+
+              {/* AI layer: accepted TL;DR only */}
+              {article?.id && <TldrBlock contentId={article.id} />}
 
               {/* Topic chips */}
               {topics.length > 0 && (
@@ -764,6 +800,9 @@ export default function PublicArticleView() {
                 </Button>
               </div>
             </div>
+
+            {/* AI layer: article tutor (hidden unless enabled and email verified) */}
+            {article?.id && <TutorPanel contentType="article" contentId={article.id} className="mt-8" />}
 
             {/* Discuss / Comments section anchor */}
             <div ref={discussRef} className="mt-8 pt-6 border-t border-border">

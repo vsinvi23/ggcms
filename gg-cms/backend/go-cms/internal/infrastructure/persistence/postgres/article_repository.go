@@ -224,6 +224,16 @@ func (r *articleRepository) SetReviewer(ctx context.Context, id uint, reviewerID
 }
 
 func applyArticleFilter(db *gorm.DB, f repository.ArticleFilter) *gorm.DB {
+	if f.VisibleToUserID != nil {
+		db = db.Where(
+			`(articles.status = 'PUBLISHED' OR articles.created_by_id = ? OR articles.reviewer_id = ?
+			 OR (articles.status IN ('REVIEW','APPROVED') AND articles.category_id IN (
+			     SELECT crg.category_id FROM category_reviewer_groups crg
+			     JOIN user_groups ug ON crg.group_id = ug.group_id
+			     WHERE ug.user_id = ?
+			 )))`, *f.VisibleToUserID, *f.VisibleToUserID, *f.VisibleToUserID,
+		)
+	}
 	if f.AvailableForUserID != nil {
 		// Return REVIEW items with no reviewer assigned whose category is in a reviewer group
 		// that the given user belongs to.
@@ -253,8 +263,8 @@ func applyArticleFilter(db *gorm.DB, f repository.ArticleFilter) *gorm.DB {
 		db = db.Where("category_id = ?", *f.CategoryID)
 	}
 	if f.Search != nil && *f.Search != "" {
-		q := "%" + *f.Search + "%"
-		db = db.Where("title ILIKE ? OR description ILIKE ? OR body ILIKE ?", q, q, q)
+		q := "%" + escapeLike(*f.Search) + "%"
+		db = db.Where("articles.search_vector @@ websearch_to_tsquery('simple', ?) OR articles.title ILIKE ?", *f.Search, q)
 	}
 	return db
 }

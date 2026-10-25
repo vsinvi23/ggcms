@@ -3,10 +3,10 @@
  * Covers: registration, login, logout, protected route redirect, invalid credentials
  */
 import { test, expect } from '@playwright/test';
-import { enableAuthBypass, ensureUserExists } from '../fixtures/auth';
+import { ensureUserExists } from '../fixtures/auth';
 
 const authEmail = process.env.E2E_AUTH_EMAIL || 'e2e_auth_user@test.local';
-const authPassword = process.env.E2E_AUTH_PASSWORD || 'AuthE2E@123';
+const authPassword = process.env.E2E_AUTH_PASSWORD || 'AuthE2E@12345';
 
 test.beforeAll(async () => {
   await ensureUserExists(authEmail, authPassword, 'e2e_auth_user', 'E2E Auth User');
@@ -61,7 +61,6 @@ test.describe('Authentication', () => {
   test('valid credentials redirect to dashboard', async ({ page }) => {
     await ensureUserExists(authEmail, authPassword, 'e2e_auth_user', 'E2E Auth User');
 
-    await enableAuthBypass(page);
     await page.goto('/auth');
     await page.waitForLoadState('networkidle');
 
@@ -81,7 +80,6 @@ test.describe('Authentication', () => {
   test('after login, dashboard is accessible', async ({ page }) => {
     await ensureUserExists(authEmail, authPassword, 'e2e_auth_user', 'E2E Auth User');
 
-    await enableAuthBypass(page);
     await page.goto('/auth');
     await page.waitForLoadState('networkidle');
 
@@ -98,10 +96,9 @@ test.describe('Authentication', () => {
     expect(page.url()).not.toContain('/auth');
   });
 
-  test('sessionStorage contains JWT after login', async ({ page }) => {
+  test('session is held in cookies, not in browser storage, after login', async ({ page }) => {
     await ensureUserExists(authEmail, authPassword, 'e2e_auth_user', 'E2E Auth User');
 
-    await enableAuthBypass(page);
     await page.goto('/auth');
     await page.waitForLoadState('networkidle');
 
@@ -111,15 +108,20 @@ test.describe('Authentication', () => {
 
     await page.waitForURL((url) => !url.pathname.includes('/auth'), { timeout: 15_000 });
 
-    // Check sessionStorage for JWT
-    const jwt = await page.evaluate(() => {
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i)!;
-        const val = sessionStorage.getItem(key);
-        if (val && val.split('.').length === 3) return val;
+    const cookies = await page.context().cookies();
+    const jwtCookie = cookies.find((c) => c.name === 'jwt');
+    expect(jwtCookie?.httpOnly).toBe(true);
+    expect(cookies.some((c) => c.name === 'csrf_token')).toBe(true);
+
+    const tokenInStorage = await page.evaluate(() => {
+      const looksLikeJwt = (v: string | null) => !!v && v.split('.').length === 3;
+      for (const store of [sessionStorage, localStorage]) {
+        for (let i = 0; i < store.length; i++) {
+          if (looksLikeJwt(store.getItem(store.key(i)!))) return true;
+        }
       }
-      return null;
+      return false;
     });
-    expect(jwt).toBeTruthy();
+    expect(tokenInStorage).toBe(false);
   });
 });

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -50,7 +51,6 @@ func NewFactoryImportHandler(cmsService cmssvc.Service, sectionService sectionsv
 	}
 }
 
-
 // ingestResult is the internal, transport-agnostic result of ingesting a payload.
 type ingestResult struct {
 	NumericID   uint
@@ -64,6 +64,7 @@ type ingestResult struct {
 // Body: FactorySyncPayload (see dto/factory_sync_dto.go). Protected by
 // middleware.FactorySecret, NOT by JWT auth.
 func (h *FactoryImportHandler) Ingest(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 20<<20)
 	var payload dto.FactorySyncPayload
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		msg := err.Error()
@@ -73,8 +74,8 @@ func (h *FactoryImportHandler) Ingest(c *gin.Context) {
 
 	systemUserID, err := h.resolveSystemUserID(c.Request.Context())
 	if err != nil {
-		msg := "factory ingest is misconfigured: " + err.Error()
-		log.Printf("[factory-import] %s", msg)
+		msg := "factory ingest is misconfigured"
+		log.Printf("[factory-import] %s: %v", msg, err)
 		c.JSON(500, dto.FactorySyncResult{Success: false, Message: &msg})
 		return
 	}

@@ -149,6 +149,7 @@ func NewHandler(cmsSvc cmssvc.Service, catSvc categorysvc.Service) (*Handler, er
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					page, _ := p.Args["page"].(int)
 					size, _ := p.Args["size"].(int)
+					page, size = clampPage(page, size)
 					status := entity.CMSStatusPublished
 					filter := repository.ArticleFilter{Status: &status}
 					result, total, err := cmsSvc.GetAll(p.Context, entity.CMSTypeArticle, filter, page, size)
@@ -189,6 +190,7 @@ func NewHandler(cmsSvc cmssvc.Service, catSvc categorysvc.Service) (*Handler, er
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 					page, _ := p.Args["page"].(int)
 					size, _ := p.Args["size"].(int)
+					page, size = clampPage(page, size)
 					status := entity.CMSStatusPublished
 					filter := repository.ArticleFilter{Status: &status}
 					result, total, err := cmsSvc.GetAll(p.Context, entity.CMSTypeCourse, filter, page, size)
@@ -242,12 +244,17 @@ func NewHandler(cmsSvc cmssvc.Service, catSvc categorysvc.Service) (*Handler, er
 
 // Handle processes a GraphQL request.
 func (h *Handler) Handle(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 2*maxQueryBytes)
 	var params struct {
 		Query         string                 `json:"query"`
 		OperationName string                 `json:"operationName"`
 		Variables     map[string]interface{} `json:"variables"`
 	}
 	if err := c.ShouldBindJSON(&params); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errors": []gin.H{{"message": "invalid request body"}}})
+		return
+	}
+	if err := validateQueryLimits(params.Query); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"errors": []gin.H{{"message": err.Error()}}})
 		return
 	}

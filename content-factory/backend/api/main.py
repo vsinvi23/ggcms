@@ -44,8 +44,8 @@ async def rewrite_factory_prefix(request: Request, call_next):
 app.add_middleware(JWTAuthMiddleware)
 
 # ── CORS — restricted to geekgully.com + localhost dev ───────────────────────
-# In production (JWT_SECRET configured) only geekgully.com origins are accepted.
-# Localhost origins are allowed only in local dev where JWT_SECRET is absent.
+# In production (FACTORY_PROXY_SECRET configured) only geekgully.com origins are accepted.
+# Localhost origins are allowed only in local dev where FACTORY_PROXY_SECRET is absent.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,

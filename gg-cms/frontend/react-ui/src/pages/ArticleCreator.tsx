@@ -38,6 +38,7 @@ import {
   GitBranch,
   PenLine,
   Info,
+  AlertCircle,
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -62,6 +63,7 @@ import { renderTipTapDocToHtml } from '@/lib/tiptapRenderer';
 import { useAllowedCategories } from '@/hooks/useAllowedCategories';
 import { useAuth } from '@/contexts/AuthContext';
 import { TopicMultiSelect } from '@/components/ui/TopicMultiSelect';
+import { EditorialAiPanel } from '@/components/ai/EditorialAiPanel'; // AI layer
 import { useContentTopics } from '@/api/hooks/useTopics';
 import { useCmsWorkflowActions } from '@/hooks/useCmsWorkflowActions';
 import { slugify } from '@/lib/slug';
@@ -120,14 +122,14 @@ export default function ArticleCreator() {
     existingCms.reviewerId === user.id &&
     existingCms.status === 'REVIEW';
 
-  const hasReviewPermission = isAdmin || userGroups.some(g => g.permissions?.articles?.review === true || (g.permissions as any)?.all === true);
+  const hasReviewPermission = isAdmin || userGroups.some(g => g.permissions?.articles?.review === true || g.permissions?.all === true);
   const isUnclaimedReview = isViewMode && existingCms?.status === 'REVIEW' && !existingCms?.reviewerId && hasReviewPermission;
   const isUnclaimedReviewNoPermission = isViewMode && existingCms?.status === 'REVIEW' && !existingCms?.reviewerId && !hasReviewPermission;
   const isOtherReviewerClaimed = isViewMode && existingCms?.status === 'REVIEW' && !!existingCms?.reviewerId && existingCms.reviewerId !== user?.id;
 
   // APPROVED state — only the assigned publisher (reviewerId === current user) with publish permission can publish
   const isApprovedState = existingCms?.status === 'APPROVED';
-  const hasPublishPermission = isAdmin || userGroups.some(g => g.permissions?.articles?.publish === true || (g.permissions as any)?.all === true);
+  const hasPublishPermission = isAdmin || userGroups.some(g => g.permissions?.articles?.publish === true || g.permissions?.all === true);
   const isAssignedPublisher = isApprovedState && !!user && existingCms?.reviewerId === user.id;
   const canPublish = isViewMode && isApprovedState && hasPublishPermission && isAssignedPublisher;
   const isUnclaimedApproved = isViewMode && isApprovedState && !existingCms?.reviewerId && hasPublishPermission;
@@ -962,6 +964,14 @@ export default function ArticleCreator() {
 
             {/* Sidebar */}
             <div className="col-span-12 lg:col-span-4 space-y-6">
+              {/* AI layer: editorial assistant (hidden unless enabled); nothing applies without a click */}
+              <EditorialAiPanel
+                contentType="article"
+                contentId={existingCmsId > 0 ? existingCmsId : undefined}
+                onApplyTopic={(id) => setSelectedTopicIds((prev) => (prev.includes(id) ? prev : [...prev, id]))}
+                onApplyCategory={(id) => setCategoryId(String(id))}
+                onApplyDescription={setDescription}
+              />
               {/* Reviewer Feedback (edit mode) */}
               {!isViewMode && existingCms?.reviewerComment && (
                 <Card className="border-amber-500/50 bg-amber-500/5">

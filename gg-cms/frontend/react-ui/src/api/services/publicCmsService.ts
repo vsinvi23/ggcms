@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { API_BASE_URL, MEDIA_BASE_URL } from '@/config/api';
 import { CmsResponseDto } from '../types';
+import { clientAnalyticsHeaders } from '@/lib/analytics';
 
 // Strip HTML tags and decode common HTML entities for plain text display
 const stripHtml = (html: string | null | undefined): string => {
@@ -144,7 +145,10 @@ export const publicCmsService = {
    */
   getById: async (id: string | number, type: 'ARTICLE' | 'COURSE' = 'ARTICLE', preview = false): Promise<CmsResponseDto> => {
     const base = type === 'COURSE' ? PUBLIC_COURSES : PUBLIC_ARTICLES;
-    const response = await publicClient.get(`${base}/${id}`, { params: preview ? { preview: 'true' } : undefined });
+    const response = await publicClient.get(`${base}/${id}`, {
+      params: preview ? { preview: 'true' } : undefined,
+      headers: type === 'ARTICLE' && !preview ? clientAnalyticsHeaders() : undefined,
+    });
     return transformPublicItem(response.data.data ?? response.data, type);
   },
 
@@ -207,7 +211,10 @@ export const publicCmsService = {
    */
   getBody: async (id: string | number, type: 'ARTICLE' | 'COURSE' = 'ARTICLE', preview = false): Promise<string> => {
     const base = type === 'COURSE' ? PUBLIC_COURSES : PUBLIC_ARTICLES;
-    const response = await publicClient.get(`${base}/${id}`, { params: preview ? { preview: 'true' } : undefined });
+    const response = await publicClient.get(`${base}/${id}`, {
+      params: preview ? { preview: 'true' } : undefined,
+      headers: type === 'ARTICLE' && !preview ? clientAnalyticsHeaders() : undefined,
+    });
     const item = response.data.data ?? response.data;
     // Prefer body (rich HTML), then content (Strapi article field), then excerpt/description as last resort
     return item.body || item.content || item.description || item.excerpt || '';
@@ -242,6 +249,7 @@ export interface PublicLearningPathDto {
   description: string;
   slug?: string;
   courseCount?: number;
+  createdAt?: string;
   courses?: PublicLearningPathCourseDto[];
 }
 

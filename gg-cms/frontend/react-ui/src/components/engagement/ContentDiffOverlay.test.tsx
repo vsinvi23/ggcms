@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { ContentDiffOverlay, computeWordDiff } from './ContentDiffOverlay';
+import { ContentDiffOverlay } from './ContentDiffOverlay';
+import { computeWordDiff } from '@/lib/wordDiff';
 
 describe('computeWordDiff helper', () => {
   it('correctly marks added words with ins tag', () => {

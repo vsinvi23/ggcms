@@ -234,6 +234,16 @@ func (r *courseRepository) SetReviewer(ctx context.Context, id uint, reviewerID 
 }
 
 func applyCourseFilter(db *gorm.DB, f repository.CourseFilter) *gorm.DB {
+	if f.VisibleToUserID != nil {
+		db = db.Where(
+			`(courses.status = 'PUBLISHED' OR courses.created_by_id = ? OR courses.reviewer_id = ?
+			 OR (courses.status IN ('REVIEW','APPROVED') AND courses.category_id IN (
+			     SELECT crg.category_id FROM category_reviewer_groups crg
+			     JOIN user_groups ug ON crg.group_id = ug.group_id
+			     WHERE ug.user_id = ?
+			 )))`, *f.VisibleToUserID, *f.VisibleToUserID, *f.VisibleToUserID,
+		)
+	}
 	if f.AvailableForUserID != nil {
 		// Return REVIEW items with no reviewer assigned whose category is in a reviewer group
 		// that the given user belongs to.
@@ -265,25 +275,18 @@ func applyCourseFilter(db *gorm.DB, f repository.CourseFilter) *gorm.DB {
 		db = db.Where("course_type = ?", *f.CourseType)
 	}
 	if f.Search != nil && *f.Search != "" {
-		q := "%" + *f.Search + "%"
+		q := "%" + escapeLike(*f.Search) + "%"
 		db = db.Where(
-			`courses.title ILIKE ?
-			OR courses.description ILIKE ?
+			`courses.search_vector @@ websearch_to_tsquery('simple', ?)
+			OR courses.title ILIKE ?
 			OR EXISTS (
-				SELECT 1 FROM sections
-				WHERE sections.course_id = courses.id
-				  AND sections.deleted_at IS NULL
-				  AND (sections.title ILIKE ? OR sections.description ILIKE ?)
-			)
-			OR EXISTS (
-				SELECT 1 FROM lessons l
-				JOIN sections s ON l.section_id = s.id
+				SELECT 1 FROM sections s
+				LEFT JOIN lessons l ON l.section_id = s.id AND l.deleted_at IS NULL
 				WHERE s.course_id = courses.id
 				  AND s.deleted_at IS NULL
-				  AND l.deleted_at IS NULL
-				  AND (l.title ILIKE ? OR l.content ILIKE ?)
+				  AND (s.search_vector @@ websearch_to_tsquery('simple', ?) OR l.search_vector @@ websearch_to_tsquery('simple', ?))
 			)`,
-			q, q, q, q, q, q,
+			*f.Search, q, *f.Search, *f.Search,
 		)
 	}
 	return db

@@ -102,32 +102,25 @@ function buildUrl(path: string, query?: RequestOptions["query"]): string {
   return url.toString()
 }
 
-function getStoredToken(): string | null {
-  const keys = ["authToken", "token", "auth_token", "jwt", "access_token", "gg_cms_token"]
-  for (const key of keys) {
-    const val = localStorage.getItem(key) ?? sessionStorage.getItem(key)
-    if (val) return val
-  }
-  return null
+export function csrfHeaders(method: string): Record<string, string> {
+  if (method === "GET" || method === "HEAD") return {}
+  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/)
+  return match ? { "X-CSRF-Token": decodeURIComponent(match[1]) } : {}
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, query, formData } = options
   const url = buildUrl(path, query)
 
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> = csrfHeaders(method)
   if (!formData && body !== undefined) {
     headers["Content-Type"] = "application/json"
   }
-  const token = getStoredToken()
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`
-  }
-
   let res: Response
   try {
     res = await fetch(url, {
       method,
+      credentials: "same-origin",
       headers: Object.keys(headers).length > 0 ? headers : undefined,
       body: formData ? formData : body !== undefined ? JSON.stringify(body) : undefined,
     })

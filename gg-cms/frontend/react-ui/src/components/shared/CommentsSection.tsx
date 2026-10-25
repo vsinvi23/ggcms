@@ -128,7 +128,7 @@ const CommentItem = ({
 
 interface CommentsSectionProps {
   contentType: ReviewCommentContentType;
-  contentId: number;
+  contentId: number | string;
 }
 
 export function CommentsSection({ contentType, contentId }: CommentsSectionProps) {
@@ -147,9 +147,10 @@ export function CommentsSection({ contentType, contentId }: CommentsSectionProps
   const handlePost = async () => {
     if (!newComment.trim()) return;
     try {
-      await createComment({ content: newComment.trim(), contentType, contentId: String(contentId) });
+      const created = await createComment({ content: newComment.trim(), contentType, contentId: String(contentId) });
       setNewComment('');
-      toast.success('Comment posted');
+      if (created.moderationStatus === 'pending_review') toast.info('Your comment is awaiting review and will appear once approved.');
+      else toast.success('Comment posted');
     } catch (err) {
       toast.error(toUserMessage(err, 'Failed to post comment'));
     }
@@ -157,8 +158,9 @@ export function CommentsSection({ contentType, contentId }: CommentsSectionProps
 
   const handleReply = async (parentId: string, content: string) => {
     try {
-      await createComment({ content, contentType, contentId: String(contentId), parentId });
-      toast.success('Reply posted');
+      const created = await createComment({ content, contentType, contentId: String(contentId), parentId });
+      if (created.moderationStatus === 'pending_review') toast.info('Your reply is awaiting review and will appear once approved.');
+      else toast.success('Reply posted');
     } catch (err) {
       toast.error(toUserMessage(err, 'Failed to post reply'));
     }

@@ -18,9 +18,20 @@ TOTAL_TESTS=0
 PASSED_TESTS=0
 FAILED_TESTS=0
 
-# JWT token (will be set after login)
-JWT_TOKEN=""
+# Session cookies (jwt, refresh_token, csrf_token) are kept in a curl cookie jar after login.
+# The password must satisfy the policy (>=12 chars, not common).
+COOKIE_JAR=$(mktemp)
+trap 'rm -f "$COOKIE_JAR"' EXIT
+TEST_PASSWORD="Tr1cky-Pass-Word-2026"
 USER_ID=""
+
+has_session() {
+    awk '$6 == "jwt" { found = 1 } END { exit !found }' "$COOKIE_JAR"
+}
+
+csrf_token() {
+    awk '$6 == "csrf_token" { print $7 }' "$COOKIE_JAR"
+}
 
 # Function to print test header
 print_header() {
@@ -58,24 +69,17 @@ api_request() {
     local data=$3
     local auth=$4
     
-    if [ "$auth" = "true" ]; then
-        if [ -z "$data" ]; then
-            curl -s -X $method "${BASE_URL}${endpoint}" \
-                -H "Authorization: Bearer $JWT_TOKEN"
-        else
-            curl -s -X $method "${BASE_URL}${endpoint}" \
-                -H "Content-Type: application/json" \
-                -H "Authorization: Bearer $JWT_TOKEN" \
-                -d "$data"
-        fi
+    local csrf_header=()
+    if [ "$method" != "GET" ] && [ "$method" != "HEAD" ]; then
+        csrf_header=(-H "X-CSRF-Token: $(csrf_token)")
+    fi
+
+    if [ -z "$data" ]; then
+        curl -s -X $method "${BASE_URL}${endpoint}" -b "$COOKIE_JAR" -c "$COOKIE_JAR" "${csrf_header[@]}"
     else
-        if [ -z "$data" ]; then
-            curl -s -X $method "${BASE_URL}${endpoint}"
-        else
-            curl -s -X $method "${BASE_URL}${endpoint}" \
-                -H "Content-Type: application/json" \
-                -d "$data"
-        fi
+        curl -s -X $method "${BASE_URL}${endpoint}" -b "$COOKIE_JAR" -c "$COOKIE_JAR" "${csrf_header[@]}" \
+            -H "Content-Type: application/json" \
+            -d "$data"
     fi
 }
 
@@ -103,45 +107,43 @@ check_server() {
 test_auth() {
     print_header "Authentication API Tests"
     
-    # TC-AUTH-001: Register new user
+    # TC-AUTH-001: Register new user (202, no session) then log in (session cookies)
     print_test "TC-AUTH-001: Register new user"
     response=$(api_request POST "/auth/local/register" '{
         "username": "testuser",
         "email": "testuser@example.com",
-        "password": "Test123!",
+        "password": "'"$TEST_PASSWORD"'",
         "name": "Test User"
     }' false)
-    
-    if echo "$response" | grep -q "jwt"; then
-        JWT_TOKEN=$(echo "$response" | grep -o '"jwt":"[^"]*' | sed 's/"jwt":"//')
-        USER_ID=$(echo "$response" | grep -o '"id":[0-9]*' | head -1 | sed 's/"id"://')
-        print_success "User registered successfully (ID: $USER_ID)"
+
+    if echo "$response" | grep -q '"success":true'; then
+        print_success "Registration accepted"
     else
-        # User might already exist, try login
-        print_test "User exists, trying login instead"
-        response=$(api_request POST "/auth/local" '{
-            "identifier": "testuser@example.com",
-            "password": "Test123!"
-        }' false)
-        
-        if echo "$response" | grep -q "jwt"; then
-            JWT_TOKEN=$(echo "$response" | grep -o '"jwt":"[^"]*' | sed 's/"jwt":"//')
-            USER_ID=$(echo "$response" | grep -o '"id":[0-9]*' | head -1 | sed 's/"id"://')
-            print_success "User logged in successfully (ID: $USER_ID)"
-        else
-            print_failure "Registration/Login failed" "$response"
-            return 1
-        fi
+        print_failure "Registration failed" "$response"
     fi
-    
+
+    print_test "Login after registration"
+    response=$(api_request POST "/auth/local" '{
+        "identifier": "testuser@example.com",
+        "password": "'"$TEST_PASSWORD"'"
+    }' false)
+
+    if has_session; then
+        USER_ID=$(echo "$response" | grep -o '"id":[0-9]*' | head -1 | sed 's/"id"://')
+        print_success "User logged in successfully (ID: $USER_ID)"
+    else
+        print_failure "Registration/Login failed" "$response"
+        return 1
+    fi
+
     # TC-AUTH-002: Login with email
     print_test "TC-AUTH-002: Login with email"
     response=$(api_request POST "/auth/local" '{
         "identifier": "testuser@example.com",
-        "password": "Test123!"
+        "password": "'"$TEST_PASSWORD"'"
     }' false)
     
-    if echo "$response" | grep -q "jwt"; then
+    if has_session; then
         print_success "Login with email successful"
     else
         print_failure "Login with email failed" "$response"

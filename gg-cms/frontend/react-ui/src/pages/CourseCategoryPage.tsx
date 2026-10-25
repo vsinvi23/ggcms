@@ -582,7 +582,7 @@ function ApiContentList({
     else if (sortBy === 'oldest') sorted.sort((a, b) => new Date(a.publishedAt ?? a.createdAt).getTime() - new Date(b.publishedAt ?? b.createdAt).getTime());
     else sorted.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
     return sorted;
-  }, [allItems, selectedCategoryIds, selectedTypes, selectedTagIds, allTags, searchQuery, sortBy, isArticle]);
+  }, [allItems, categories, flatCategories, activeDomainId, selectedCategoryIds, selectedTypes, selectedTagIds, allTags, searchQuery, sortBy, isArticle]);
 
   const toggleCategory = (id: number) =>
     setSelectedCategoryIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -1016,8 +1016,8 @@ function AllCategoriesCatalog() {
   const { data: domainsData, isLoading: domainsLoading } = useDomains();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const categories = categoriesData ?? [];
-  const domains = domainsData ?? [];
+  const categories = useMemo(() => categoriesData ?? [], [categoriesData]);
+  const domains = useMemo(() => domainsData ?? [], [domainsData]);
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;

@@ -88,6 +88,8 @@ func (s *stubCMSService) Reject(_ context.Context, _ uint, _ entity.CMSType, _ u
 func (s *stubCMSService) GetActivity(_ context.Context, _ uint, _ entity.CMSType) ([]*entity.WorkflowEvent, error) {
 	return nil, nil
 }
+func (s *stubCMSService) IsReviewerForCategory(_ context.Context, _, _ uint) bool { return false }
+
 func (s *stubCMSService) ClaimReview(_ context.Context, _ uint, _ entity.CMSType, _ uint, _ bool) error {
 	return nil
 }

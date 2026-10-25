@@ -91,6 +91,9 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">
+        Skip to main content
+      </a>
 
       {/* ── Dark header — Logo | nav tabs | search trigger | auth ─────────── */}
       <header className="shrink-0 bg-sidebar border-b border-sidebar-border z-30">
@@ -287,7 +290,7 @@ export function PublicLayout({ children, hideSearch: _hideSearch = false }: Publ
       </header>
 
       {/* ── Page content ──────────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-auto bg-background">
+      <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto bg-background focus:outline-none">
         {children}
         <PublicFooter />
       </main>

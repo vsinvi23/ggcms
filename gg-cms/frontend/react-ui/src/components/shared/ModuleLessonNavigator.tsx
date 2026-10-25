@@ -28,8 +28,8 @@ export const ModuleLessonNavigator: React.FC<ModuleLessonNavigatorProps> = ({
 
   // Expand all sections by default once sections load
   React.useEffect(() => {
-    if (sections.length > 0 && expandedSections.length === 0) {
-      setExpandedSections(sections.map(s => s.id));
+    if (sections.length > 0) {
+      setExpandedSections(prev => (prev.length === 0 ? sections.map(s => s.id) : prev));
     }
   }, [sections]);
 

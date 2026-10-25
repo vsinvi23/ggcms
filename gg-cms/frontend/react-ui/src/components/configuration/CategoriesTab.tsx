@@ -235,7 +235,7 @@ export function CategoriesTab() {
   const updateMutation = useUpdateCategory();
   const deleteMutation = useDeleteCategory();
 
-  const flatItems = pagedData?.items || [];
+  const flatItems = useMemo(() => pagedData?.items || [], [pagedData]);
   
   // Use backend tree categories if available, or build tree from flat items
   const categories = useMemo(() => {

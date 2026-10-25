@@ -19,12 +19,12 @@ import (
 
 // ─── stubs ────────────────────────────────────────────────────────────────────
 
-type stubAnalyticsService struct{}
+type stubAnalyticsService struct{ analyticssvc.Service }
 
 func (stubAnalyticsService) TrackPageView(context.Context, *uint, *string, *string, string, string) error {
 	return nil
 }
-func (stubAnalyticsService) TrackEvent(context.Context, string, *uint, *string, *string, map[string]interface{}, string, string) error {
+func (stubAnalyticsService) TrackEvent(context.Context, string, *uint, *string, *string, map[string]interface{}) error {
 	return nil
 }
 func (stubAnalyticsService) GetDashboardStats(context.Context) (map[string]interface{}, error) {

@@ -1,4 +1,5 @@
-import { Bell, Search, ChevronDown, LogOut, User, Settings, Sparkles, Shield } from 'lucide-react';
+import { NotificationBell } from '@/components/shared/NotificationBell';
+import { Search, ChevronDown, LogOut, User, Settings, Sparkles, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { GGLogo } from '@/components/shared/GGLogo';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -77,10 +78,7 @@ export function Header() {
         </Button>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
-        </Button>
+        <NotificationBell />
 
         {/* User Menu */}
         <DropdownMenu>

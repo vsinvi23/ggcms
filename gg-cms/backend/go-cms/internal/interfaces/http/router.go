@@ -1,22 +1,28 @@
 package http
 
 import (
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	aisvc "github.com/serenya/go-cms/internal/application/ai"
 	analyticssvc "github.com/serenya/go-cms/internal/application/analytics"
 	auditsvc "github.com/serenya/go-cms/internal/application/audit"
 	authsvc "github.com/serenya/go-cms/internal/application/auth"
+	"github.com/serenya/go-cms/internal/application/identity"
 	categorysvc "github.com/serenya/go-cms/internal/application/category"
 	cmssvc "github.com/serenya/go-cms/internal/application/cms"
 	commentsvc "github.com/serenya/go-cms/internal/application/comment"
 	ctsvc "github.com/serenya/go-cms/internal/application/contenttype"
 	domainsvc "github.com/serenya/go-cms/internal/application/domain"
 	engagementsvc "github.com/serenya/go-cms/internal/application/engagement"
+	assessmentsvc "github.com/serenya/go-cms/internal/application/assessment"
+	certificatesvc "github.com/serenya/go-cms/internal/application/certificate"
 	enrollmentsvc "github.com/serenya/go-cms/internal/application/enrollment"
 	groupsvc "github.com/serenya/go-cms/internal/application/group"
 	lpsvc "github.com/serenya/go-cms/internal/application/learningpath"
@@ -24,6 +30,8 @@ import (
 	notificationsvc "github.com/serenya/go-cms/internal/application/notification"
 	oauthsvc "github.com/serenya/go-cms/internal/application/oauth"
 	personalizationsvc "github.com/serenya/go-cms/internal/application/personalization"
+	searchsvc "github.com/serenya/go-cms/internal/application/search"
+	seosvc "github.com/serenya/go-cms/internal/application/seo"
 	sectionsvc "github.com/serenya/go-cms/internal/application/section"
 	settingssvc "github.com/serenya/go-cms/internal/application/settings"
 	tagsvc "github.com/serenya/go-cms/internal/application/tag"
@@ -34,6 +42,9 @@ import (
 	"github.com/serenya/go-cms/internal/interfaces/http/handler"
 	"github.com/serenya/go-cms/internal/interfaces/http/middleware"
 	"github.com/serenya/go-cms/pkg/config"
+	"github.com/serenya/go-cms/pkg/metrics"
+	"github.com/serenya/go-cms/internal/interfaces/http/dto"
+	"github.com/serenya/go-cms/pkg/response"
 	jwtpkg "github.com/serenya/go-cms/pkg/jwt"
 )
 
@@ -47,6 +58,10 @@ type Services struct {
 	Section         sectionsvc.Service
 	Lesson          lessonsvc.Service
 	Enrollment      enrollmentsvc.Service
+	// learning-loop:services
+	Assessment  assessmentsvc.Service
+	Certificate certificatesvc.Service
+	// /learning-loop:services
 	Task            tasksvc.Service
 	Notification    notificationsvc.Service
 	Comment         commentsvc.Service
@@ -62,8 +77,18 @@ type Services struct {
 	LearningPath    lpsvc.Service
 	Audit           auditsvc.Service
 	OAuth           oauthsvc.Service
+	Session         *identity.SessionGuard
 	Settings        settingssvc.Service
 	Personalization personalizationsvc.Service
+	Search          searchsvc.Service
+	SEO             seosvc.Service
+	// ===== NOTIF/ANALYTICS/SELF-SERVICE (services) =====
+	SelfService usersvc.SelfService
+	Metrics     *metrics.Registry
+	// ===== END NOTIF/ANALYTICS/SELF-SERVICE (services) =====
+	// ===== AI LAYER (services) =====
+	AI aisvc.Service
+	// ===== END AI LAYER (services) =====
 }
 
 // NewRouter wires all services to handlers and returns a configured Gin engine.
@@ -71,7 +96,26 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	gin.SetMode(cfg.Server.GinMode)
 
 	r := gin.New()
+	var trustedProxies []string
+	for _, t := range strings.Split(os.Getenv("TRUSTED_PROXIES"), ",") {
+		if t = strings.TrimSpace(t); t != "" {
+			trustedProxies = append(trustedProxies, t)
+		}
+	}
+	if err := r.SetTrustedProxies(trustedProxies); err != nil {
+		return nil, err
+	}
+	// ===== NOTIF/ANALYTICS/SELF-SERVICE (middleware) =====
+	r.Use(middleware.RequestID())
+	if svcs.Metrics != nil {
+		r.Use(middleware.Metrics(svcs.Metrics))
+	}
+	if svcs.Notification != nil {
+		r.Use(handler.NewNotifyEvents(svcs.Notification, svcs.CMS, svcs.Comment, svcs.User).Middleware())
+	}
+	// ===== END NOTIF/ANALYTICS/SELF-SERVICE (middleware) =====
 	r.Use(middleware.Logger())
+	r.Use(middleware.SecurityHeaders())
 	r.Use(middleware.CORS())
 	r.Use(gin.Recovery())
 	// Canonical Domain Redirect Middleware (Redirect .run.app requests to https://geekgully.com)
@@ -88,17 +132,23 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	})
 	// Attach audit service to every request context so handlers can call middleware.LogAudit
 	r.Use(middleware.AuditMiddleware(svcs.Audit))
+	r.Use(middleware.DenialAudit(svcs.Audit, 5*time.Minute))
+	if os.Getenv("REDIS_URL") != "" {
+		log.Println("WARNING: REDIS_URL is set but no shared rate limiter is built in; limits remain per instance")
+	}
+	recoveryCIDRs, err := middleware.ParseCIDRs(cfg.Recovery.AllowedCIDRs)
+	if err != nil {
+		return nil, err
+	}
 
 	// Serve uploaded files statically
-	r.Static("/uploads", cfg.Upload.Dir)
+	uploads := r.Group("/uploads", middleware.UploadHeaders())
+	uploads.StaticFS("/", gin.Dir(cfg.Upload.Dir, false))
 
 	// Reverse proxy /factory and /factory/* to Content Factory Cloud Run service
-	factoryURLStr := os.Getenv("CONTENT_FACTORY_URL")
-	if factoryURLStr == "" {
-		factoryURLStr = "https://content-factory-backend-274495931884.us-central1.run.app"
-	}
+	factoryURLStr := cfg.Import.FactoryURL
 	var factoryHandler gin.HandlerFunc
-	if factoryTarget, err := url.Parse(factoryURLStr); err == nil {
+	if factoryTarget, err := url.Parse(factoryURLStr); err == nil && factoryURLStr != "" && factoryTarget.Host != "" && cfg.Import.FactoryProxySecret != "" {
 		factoryProxy := httputil.NewSingleHostReverseProxy(factoryTarget)
 		originalDirector := factoryProxy.Director
 		factoryProxy.Director = func(req *http.Request) {
@@ -107,7 +157,19 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			req.URL.Scheme = factoryTarget.Scheme
 			req.URL.Host = factoryTarget.Host
 		}
+		factoryProxy.ModifyResponse = func(resp *http.Response) error {
+			resp.Header.Del("Set-Cookie")
+			return nil
+		}
 		factoryHandler = func(c *gin.Context) {
+			token, err := middleware.FactoryServiceToken(cfg.Import.FactoryProxySecret, middleware.GetUserID(c), middleware.GetUserEmail(c))
+			if err != nil {
+				response.InternalError(c, "factory proxy unavailable")
+				return
+			}
+			c.Request.Header.Del("Cookie")
+			c.Request.Header.Del("X-CSRF-Token")
+			c.Request.Header.Set("Authorization", "Bearer "+token)
 			factoryProxy.ServeHTTP(c.Writer, c.Request)
 		}
 	}
@@ -138,7 +200,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 
 	// Initialise all HTTP handlers
 	authH := handler.NewAuthHandler(svcs.Auth)
-	oauthH := handler.NewOAuthHandler(svcs.OAuth, cfg.OAuth.FrontendURL)
+	oauthH := handler.NewOAuthHandler(svcs.OAuth, cfg.OAuth.FrontendURL, cfg.Auth.LoginReauthWindow)
 	userH := handler.NewUserHandler(svcs.User)
 	groupH := handler.NewGroupHandler(svcs.Group)
 	catH := handler.NewCategoryHandler(svcs.Category)
@@ -146,9 +208,13 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	secH := handler.NewSectionHandler(svcs.Section, svcs.CMS)
 	lesH := handler.NewLessonHandler(svcs.Lesson, svcs.Section, svcs.CMS)
 	enrH := handler.NewEnrollmentHandler(svcs.Enrollment)
+	// learning-loop:handlers
+	assessH := handler.NewAssessmentHandler(svcs.Assessment)
+	certH := handler.NewCertificateHandler(svcs.Certificate)
+	// /learning-loop:handlers
 	taskH := handler.NewTaskHandler(svcs.Task)
 	notifH := handler.NewNotificationHandler(svcs.Notification)
-	commH := handler.NewCommentHandler(svcs.Comment)
+	commH := handler.NewCommentHandler(svcs.Comment, svcs.CMS)
 	mediaH := handler.NewMediaHandler(cfg.Upload, svcs.Settings)
 	settingsH := handler.NewSettingsHandler(svcs.Settings)
 	pubH := handler.NewPublicHandler(svcs.CMS, svcs.Category, svcs.Analytics)
@@ -162,10 +228,19 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	auditH := handler.NewAuditHandler(svcs.Audit)
 	logH := handler.NewLogHandler(svcs.Settings)
 	personH := handler.NewPersonalizationHandler(svcs.Personalization)
+	// search-seo:handlers
+	lessonPreview := handler.ParseLessonPreview(os.Getenv("PUBLIC_LESSON_PREVIEW"))
+	secH.SetLessonPreview(lessonPreview)
+	pubH.SetLessonPreview(lessonPreview)
+	searchH := handler.NewSearchHandler(svcs.Search)
+	seoH := handler.NewSEOHandler(svcs.SEO, "dist/index.html")
+	// /search-seo:handlers
+	aiH := handler.NewAIHandler(svcs.AI)
 	importH := handler.NewImportHandler(svcs.CMS, svcs.Task, svcs.Section, svcs.Lesson, svcs.Category, svcs.LearningPath, svcs.User, svcs.Settings)
 	factoryImportH := handler.NewFactoryImportHandler(svcs.CMS, svcs.Section, svcs.Lesson, svcs.User, svcs.Category, svcs.Topic, nil, cfg.Admin.Email)
 
-	authMW := middleware.Auth(jwtManager)
+	handler.ConfigureAuthCookies(cfg.Auth.CookieSecure, cfg.Auth.CookieDomain)
+	authMW := middleware.Auth(jwtManager, svcs.Session)
 	factorySecretMW := middleware.FactorySecret(cfg.Import.FactorySyncSecret)
 	adminRecoveryMW := middleware.AdminRecoverySecret(cfg.Recovery.AdminRecoverySecret)
 
@@ -174,6 +249,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		factoryGroup := r.Group("/factory")
 		factoryGroup.Use(authMW)
 		factoryGroup.Use(middleware.AdminOnly())
+		factoryGroup.Use(middleware.CSRF())
 		factoryGroup.Any("", factoryHandler)
 		factoryGroup.Any("/*filepath", factoryHandler)
 	}
@@ -191,11 +267,35 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		api.POST("/auth/forgot-password", middleware.AuthRateLimit(), authH.ForgotPassword)
 		api.POST("/auth/reset-password", middleware.AuthRateLimit(), authH.ResetPassword)
 
-		// ----- Auth (public) — OAuth social login -----
-		api.GET("/auth/google", oauthH.GoogleRedirect)
-		api.GET("/auth/google/callback", oauthH.GoogleCallback)
-		api.GET("/auth/github", oauthH.GitHubRedirect)
-		api.GET("/auth/github/callback", oauthH.GitHubCallback)
+		// ===== AUTH / IDENTITY ROUTES (session model, email verification, social login) =====
+		api.POST("/auth/refresh", middleware.AuthRateLimit(), middleware.CSRF(), authH.Refresh)
+		api.POST("/auth/logout", middleware.CSRF(), authH.Logout)
+		api.POST("/auth/email/verify", middleware.AuthRateLimit(), authH.VerifyEmail)
+		api.GET("/auth/providers", middleware.PublicRateLimit(), oauthH.Providers)
+		api.GET("/auth/:provider/start", middleware.AuthRateLimit(), oauthH.Start)
+		api.GET("/auth/:provider/callback", middleware.AuthRateLimit(), oauthH.Callback)
+		api.POST("/auth/link/confirm", middleware.AuthRateLimit(), oauthH.ConfirmLink)
+		api.POST("/auth/link/email", middleware.AuthRateLimit(), oauthH.SendLinkEmail)
+		api.POST("/auth/social/email", middleware.AuthRateLimit(), oauthH.SubmitSignupEmail)
+		// ===== END AUTH / IDENTITY ROUTES =====
+
+		// ===== NOTIF/ANALYTICS/SELF-SERVICE ROUTES (public) =====
+		meH := handler.NewMeHandler(svcs.SelfService, svcs.Notification, svcs.Auth, cfg.Auth.LoginReauthWindow, dto.RetentionPolicyResponse{
+			ConsentPolicyVersion:   cfg.Platform.ConsentPolicyVersion,
+			AnalyticsRawEventsDays: cfg.Platform.AnalyticsRawRetentionDays,
+			AnalyticsRollupDays:    cfg.Platform.AnalyticsRollupRetentionDays,
+			ReadNotificationsDays:  cfg.Platform.NotificationRetentionDays,
+			SentEmailLogDays:       cfg.Platform.EmailRetentionDays,
+			AccountDeletion:        "Account deletion is immediate: personal data, analytics events, notes, highlights, favourites and reactions are purged; the account row is anonymised.",
+		})
+		api.POST("/analytics/events", middleware.AnalyticsIngestRateLimit(), middleware.OptionalAuth(jwtManager, svcs.Session), analyticsH.Ingest)
+		api.GET("/privacy/retention", middleware.PublicRateLimit(), meH.Retention)
+		api.GET("/notifications/unsubscribe", middleware.PublicRateLimit(), notifH.UnsubscribePage)
+		api.POST("/notifications/unsubscribe", middleware.PublicRateLimit(), notifH.Unsubscribe)
+		if svcs.Metrics != nil && cfg.Platform.MetricsAddr == "" {
+			r.GET("/metrics", middleware.MetricsGuard(cfg.Platform.MetricsToken, authMW, middleware.AdminOnly()), gin.WrapH(svcs.Metrics.Handler()))
+		}
+		// ===== END NOTIF/ANALYTICS/SELF-SERVICE ROUTES (public) =====
 
 		// ----- Feature flags (public — rate-limited) -----
 		api.GET("/features", middleware.PublicRateLimit(), settingsH.GetFeatures)
@@ -215,7 +315,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 
 
 		// ----- Sections (public read — course curriculum preview) -----
-		api.GET("/sections", middleware.PublicRateLimit(), secH.GetAll)
+		api.GET("/sections", middleware.PublicRateLimit(), middleware.OptionalAuth(jwtManager, svcs.Session), secH.GetAll)
 
 		// ----- Categories (public read) -----
 		api.GET("/categories", middleware.PublicRateLimit(), catH.GetAll)
@@ -227,23 +327,24 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		// ----- Learning paths (public read) -----
 		api.GET("/learning-paths", middleware.PublicRateLimit(), lpH.GetAll)
 		api.GET("/learning-paths/:id", middleware.PublicRateLimit(), lpH.GetByID)
+		// learning-loop:public
+		api.GET("/public/certificates/:code", middleware.PublicRateLimit(), middleware.CertVerifyRateLimit(), certH.Verify)
+		// /learning-loop:public
 
-		// ----- Review comments (public read, protected write) -----
-		api.GET("/review-comments", middleware.PublicRateLimit(), commH.GetByContent)
-		api.GET("/review-comments/:id/replies", middleware.PublicRateLimit(), commH.ListReplies)
+		// ----- Review comments (authenticated only — see protected group) -----
 
 		// ----- Factory sync ingest (secret-header auth, NOT JWT) -----
 		// Called machine-to-machine by the Python "content factory" app, which has
 		// no user session — protected by X-Factory-Sync-Secret instead of authMW.
-		api.POST("/import/ingest", factorySecretMW, factoryImportH.Ingest)
+		api.POST("/import/ingest", middleware.StrictRateLimit(), factorySecretMW, factoryImportH.Ingest)
 
 		// ----- Admin break-glass password recovery (secret-header auth, NOT JWT) -----
 		// For when the master admin is locked out and can't rely on email delivery
 		// or a JWT — protected by X-Admin-Recovery-Secret instead of authMW.
-		api.POST("/admin/recover-password", adminRecoveryMW, authH.RecoverPassword)
+		api.POST("/admin/recover-password", middleware.StrictRateLimit(), middleware.RecoveryIPAllowList(recoveryCIDRs), adminRecoveryMW, authH.RecoverPassword)
 
 		// ----- Public content (no auth, rate-limited against scraping) -----
-		pub := api.Group("/public", middleware.PublicRateLimit(), middleware.OptionalAuth(jwtManager))
+		pub := api.Group("/public", middleware.PublicRateLimit(), middleware.OptionalAuth(jwtManager, svcs.Session))
 		{
 			pub.GET("/articles", pubH.GetPublicArticles)
 			pub.GET("/articles/category/:slug", pubH.GetPublicArticlesByCategory)
@@ -254,6 +355,10 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			// Unified CMS endpoint (type=ARTICLE|COURSE)
 			pub.GET("/cms", pubH.GetPublicCMS)
 			pub.GET("/cms/:id", pubH.GetPublicCMSByID)
+			// search-seo:public-routes
+			pub.GET("/search", searchH.Search)
+			pub.GET("/search/suggest", searchH.Suggest)
+			// /search-seo:public-routes
 		}
 
 		// ----- Protected routes -----
@@ -263,11 +368,36 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		{
 			// Current user
 			p.GET("users/me", authH.Me)
-			p.POST("auth/logout", authH.Logout)
+			// ===== AUTH / IDENTITY (authenticated) =====
+			p.POST("auth/logout-all", authH.LogoutAll)
+			p.POST("auth/reauth", middleware.AuthRateLimit(), authH.Reauth)
+			p.POST("auth/email/resend", middleware.AuthRateLimit(), authH.ResendVerification)
+			p.POST("users/me/password", middleware.AuthRateLimit(), authH.ChangePassword)
+			p.GET("users/me/identities", oauthH.ListIdentities)
+			p.POST("users/me/identities/:provider/link", middleware.AuthRateLimit(), oauthH.StartLink)
+			p.DELETE("users/me/identities/:provider", oauthH.Unlink)
+			// ===== END AUTH / IDENTITY (authenticated) =====
 
-			// Users — read: any authenticated user; write: admin only
+			// ===== NOTIF/ANALYTICS/SELF-SERVICE ROUTES (authenticated) =====
+			p.PUT("users/me", meH.UpdateProfile)
+			p.GET("users/me/consent", meH.GetConsent)
+			p.POST("users/me/consent", meH.RecordConsent)
+			p.GET("users/me/export", middleware.AuthRateLimit(), meH.Export)
+			p.DELETE("users/me", middleware.AuthRateLimit(), meH.Delete)
+			p.GET("users/me/preferences", meH.GetPreferences)
+			p.PUT("users/me/preferences", meH.UpdatePreferences)
+			p.GET("analytics/overview", middleware.AdminOnly(), analyticsH.Overview)
+			p.GET("analytics/content", middleware.AdminOnly(), analyticsH.Content)
+			p.GET("analytics/search", middleware.AdminOnly(), analyticsH.Search)
+			p.GET("analytics/funnel", middleware.AdminOnly(), analyticsH.Funnel)
+			p.GET("analytics/cohorts", middleware.AdminOnly(), analyticsH.Cohorts)
+			p.GET("analytics/recommendations", middleware.AdminOnly(), analyticsH.Recommendations)
+			p.GET("analytics/users/engagement", middleware.AdminOnly(), analyticsH.Engagement)
+			// ===== END NOTIF/ANALYTICS/SELF-SERVICE ROUTES (authenticated) =====
+
+			// Users — list: admin only; read/update own profile; write: admin only
 			// PUT /users/:id is intentionally not AdminOnly — ownership check is in the handler
-			p.GET("users", userH.GetAll)
+			p.GET("users", middleware.AdminOnly(), userH.GetAll)
 			p.POST("users", middleware.AdminOnly(), userH.Create)
 			p.GET("users/:id", userH.GetByID)
 			p.GET("users/:id/groups", userH.GetGroups)
@@ -282,7 +412,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.POST("user-groups", middleware.AdminOnly(), groupH.Create)
 			p.PUT("user-groups/:id", middleware.AdminOnly(), groupH.Update)
 			p.DELETE("user-groups/:id", middleware.AdminOnly(), groupH.Delete)
-			p.GET("user-groups/:id/members", groupH.GetMembers)
+			p.GET("user-groups/:id/members", middleware.AdminOnly(), groupH.GetMembers)
 			p.POST("user-groups/:id/members", middleware.AdminOnly(), groupH.AddMember)
 			p.DELETE("user-groups/:id/members/:userId", middleware.AdminOnly(), groupH.RemoveMember)
 			p.GET("user-groups/:id/categories", catH.GetGroupCategories)
@@ -300,8 +430,8 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.GET("categories/:id/reviewers", catH.GetReviewers)
 
 			// Tags (GET is public — see above; only write operations require auth)
-			p.POST("tags", tagH.Create)
-			p.DELETE("tags/:id", tagH.Delete)
+			p.POST("tags", middleware.AdminOnly(), tagH.Create)
+			p.DELETE("tags/:id", middleware.AdminOnly(), tagH.Delete)
 
 			// Topics (GET is public — see above; write operations are admin only)
 			p.POST("topics", middleware.AdminOnly(), topicH.Create)
@@ -354,6 +484,19 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.GET("enrollments", enrH.GetAll)
 			p.POST("enrollments", enrH.Create)
 			p.PUT("enrollments/:id", enrH.Update)
+			// learning-loop:routes
+			p.GET("enrollments/me/:courseId/resume", enrH.Resume)
+			p.POST("enrollments/sync-local", enrH.SyncLocal)
+			p.GET("learning-paths/:id/progress", enrH.PathProgress)
+			p.GET("assessments/:id", assessH.Get)
+			p.POST("assessments/:id/attempts", assessH.Start)
+			p.GET("assessments/:id/attempts/me", assessH.History)
+			p.POST("assessments/:id/attempts/:attemptId/submit", assessH.Submit)
+			p.PUT("courses/:id/completion-requirement", middleware.AdminOnly(), assessH.SetCourseRequirement)
+			p.GET("certificates/me", certH.ListMine)
+			p.GET("certificates/:code/pdf", certH.PDF)
+			p.POST("certificates/:code/revoke", middleware.AdminOnly(), certH.Revoke)
+			// /learning-loop:routes
 
 			// Tasks
 			p.GET("tasks", taskH.GetAll)
@@ -368,6 +511,8 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.PATCH("notifications/:id/read", notifH.MarkAsRead)
 
 			// Review comments (write/delete only — GET is public above)
+			p.GET("review-comments", commH.GetByContent)
+			p.GET("review-comments/:id/replies", commH.ListReplies)
 			p.POST("review-comments", commH.Create)
 			p.DELETE("review-comments/:id", commH.Delete)
 
@@ -386,7 +531,7 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.GET("audit/download", middleware.AdminOnly(), auditH.Download)
 
 			// Log management & debug logs
-			p.POST("logs/client", logH.RecordClientLog)
+			p.POST("logs/client", middleware.ClientLogRateLimit(), logH.RecordClientLog)
 			p.GET("logs/debug", middleware.AdminOnly(), logH.GetDebugLogs)
 			p.GET("logs/download", middleware.AdminOnly(), logH.DownloadLogs)
 
@@ -397,6 +542,37 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 			p.POST("personalization/profiles", personH.CreateProfile)
 			p.PUT("personalization/profiles/:id/activate", personH.ActivateProfile)
 			p.GET("personalization/recommendations", personH.GetRecommendations)
+			p.GET("personalization/feed", personH.GetFeed)
+
+			// ===== AI LAYER (routes) =====
+			ai := p.Group("ai")
+			{
+				ai.GET("status", aiH.Status)
+				ai.POST("tags/suggest", aiH.SuggestTags)
+				ai.POST("summary", aiH.Summary)
+				ai.POST("seo", aiH.SEO)
+				ai.POST("quality-check", aiH.QualityCheck)
+				ai.POST("quiz/generate", aiH.GenerateQuiz)
+				ai.GET("drafts", aiH.ListDrafts)
+				ai.POST("drafts/:id/accept", aiH.AcceptDraft)
+				ai.POST("drafts/:id/reject", aiH.RejectDraft)
+
+				ai.POST("tutor/ask", middleware.RequireVerifiedEmail(), aiH.Ask)
+				ai.GET("tutor/conversations", aiH.ListConversations)
+				ai.GET("tutor/conversations/:id", aiH.GetConversation)
+				ai.DELETE("tutor/conversations/:id", aiH.DeleteConversation)
+				ai.POST("tutor/messages/:id/feedback", aiH.Feedback)
+				ai.POST("study-plan", middleware.RequireVerifiedEmail(), aiH.StudyPlan)
+
+				ai.GET("moderation", middleware.AdminOnly(), aiH.ModerationQueue)
+				ai.POST("moderation/:id/approve", middleware.AdminOnly(), aiH.ApproveModeration)
+				ai.POST("moderation/:id/reject", middleware.AdminOnly(), aiH.RejectModeration)
+				ai.GET("usage", middleware.AdminOnly(), aiH.Usage)
+				ai.GET("settings", middleware.AdminOnly(), aiH.GetSettings)
+				ai.PUT("settings", middleware.AdminOnly(), aiH.UpdateSettings)
+				ai.POST("admin/reindex", middleware.AdminOnly(), aiH.Reindex)
+			}
+			// ===== END AI LAYER (routes) =====
 
 			// App settings (admin only)
 			p.GET("settings", middleware.AdminOnly(), settingsH.GetAll)
@@ -437,15 +613,18 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 		}
 	}
 
+	// search-seo:crawler-routes
+	r.GET("/sitemap.xml", middleware.PublicRateLimit(), seoH.Sitemap)
+	r.GET("/sitemaps/:file", middleware.PublicRateLimit(), seoH.Sitemap)
+	r.GET("/robots.txt", middleware.PublicRateLimit(), seoH.Robots)
+	// /search-seo:crawler-routes
+
 	// Serve React SPA frontend HTML for non-API routes
 	if _, err := os.Stat("dist"); err == nil {
 		r.NoRoute(func(c *gin.Context) {
 			path := c.Request.URL.Path
 			if !strings.HasPrefix(path, "/api") && !strings.HasPrefix(path, "/graphql") && !strings.HasPrefix(path, "/uploads") {
-				c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
-				c.Header("Pragma", "no-cache")
-				c.Header("Expires", "0")
-				c.File("dist/index.html")
+				seoH.ServeSPA(c)
 				return
 			}
 			c.JSON(404, gin.H{"code": 404, "message": "route not found"})

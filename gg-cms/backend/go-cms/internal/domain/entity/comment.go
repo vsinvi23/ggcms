@@ -19,4 +19,6 @@ type ReviewComment struct {
 	Replies     []ReviewComment     `bson:"replies,omitempty" json:"replies,omitempty"`
 	CreatedAt   time.Time           `bson:"created_at" json:"createdAt"`
 	UpdatedAt   time.Time           `bson:"updated_at" json:"updatedAt"`
+	// ModerationStatus is set on create only ("pending_review") and is never persisted here.
+	ModerationStatus string `bson:"-" json:"moderationStatus,omitempty"`
 }

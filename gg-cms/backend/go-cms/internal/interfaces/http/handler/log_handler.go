@@ -37,6 +37,7 @@ func (h *LogHandler) RecordClientLog(c *gin.Context) {
 		}
 	}
 
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 8<<10)
 	var req clientLogRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "invalid log payload")
@@ -44,9 +45,12 @@ func (h *LogHandler) RecordClientLog(c *gin.Context) {
 	}
 
 	level := strings.ToUpper(strings.TrimSpace(req.Level))
-	if level == "" {
+	switch level {
+	case "DEBUG", "INFO", "WARN", "ERROR":
+	default:
 		level = "INFO"
 	}
+	req.Message = sanitizeLogText(req.Message, 1000)
 
 	userEmail := middleware.GetUserEmail(c)
 	logging.GetGlobalLogStore().Record(level, "ui_client", req.Message, userEmail, req.Metadata)
@@ -74,4 +78,17 @@ func (h *LogHandler) DownloadLogs(c *gin.Context) {
 
 	c.Header("Content-Disposition", "attachment; filename="+filename)
 	c.Data(http.StatusOK, contentType, data)
+}
+
+func sanitizeLogText(s string, max int) string {
+	s = strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return ' '
+		}
+		return r
+	}, s)
+	if len(s) > max {
+		s = s[:max]
+	}
+	return s
 }

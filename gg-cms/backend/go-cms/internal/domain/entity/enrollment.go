@@ -22,6 +22,7 @@ type Enrollment struct {
 	Progress       float64          `gorm:"not null;default:0"`
 	EnrolledAt     *time.Time
 	LastAccessedAt *time.Time
+	LastLessonID   *uint
 	CompletedAt    *time.Time
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

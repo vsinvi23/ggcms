@@ -1,573 +1,157 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { Search, Target, CheckCircle2, AlertTriangle, Trophy, BarChart3, Clock, ArrowRight, HelpCircle, BookOpen, Filter, X, RefreshCw, ArrowLeft } from 'lucide-react';
+import { AuthModal } from '@/components/auth/AuthModal';
+import { AssessmentTaker } from '@/components/assessment/AssessmentTaker';
+import { Search, Target, Clock, ArrowRight, HelpCircle, Filter, X, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Quiz, QuestionItem } from '@/types/knowledge-graph';
 import { usePublicCmsList } from '@/api/hooks/usePublicCms';
-import { buildCourseUrl } from '@/lib/slug';
 import { useCategories } from '@/api/hooks/useCategories';
-import { cn } from '@/lib/utils';
-import { QuestionNavigator } from '@/components/shared/QuestionNavigator';
-import { 
-  getPracticeAttempts, 
-  getPracticeAttempt, 
-  savePracticeAttempt, 
-  clearPracticeAttempt, 
-  PracticeAttempt 
-} from '@/lib/contentStateStore';
+import { useAuth } from '@/contexts/AuthContext';
+import { CmsResponseDto } from '@/api/types';
 
-
-
-function generateQuestionsForSlug(slug: string): QuestionItem[] {
-  const cleanTitle = slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  return [
-    {
-      id: `${slug}-1`,
-      question: `What is a primary architectural principle of ${cleanTitle}?`,
-      options: [
-        'Separation of concerns and modular component isolation',
-        'Direct hardcoding of credentials inside application source files',
-        'Bypassing network encryption in local dev environments',
-        'Executing synchronous blocking calls on UI looper threads',
-      ],
-      correctOptionIndex: 0,
-      explanation: `${cleanTitle} relies on clear separation of concerns, abstraction boundaries, and resilient microservice design.`,
-      topicSlug: slug,
-    },
-    {
-      id: `${slug}-2`,
-      question: `Which approach is best practice when scaling ${cleanTitle} for high-traffic workloads?`,
-      options: [
-        'Horizontal pod autoscaling combined with connection pooling and caching',
-        'Increasing single-node RAM without load balancing',
-        'Disabling database indexing to speed up write throughput',
-        'Storing transient session states in local container filesystems',
-      ],
-      correctOptionIndex: 0,
-      explanation: 'Stateless service scaling with connection pooling and caching ensures linear horizontal scalability under load.',
-      topicSlug: slug,
-    },
-    {
-      id: `${slug}-3`,
-      question: `How should security and authentication be enforced in ${cleanTitle}?`,
-      options: [
-        'Relying on perimeter firewalls without internal token validation',
-        'Enforcing Zero Trust verification with JWT Bearer tokens and TLS encryption',
-        'Using hardcoded fallback tokens in HTTP client headers',
-        'Disabling CORS checks on public API endpoints',
-      ],
-      correctOptionIndex: 1,
-      explanation: 'Zero Trust architecture mandates cryptographically validated tokens and TLS encryption across every boundary.',
-      topicSlug: slug,
-    },
-    {
-      id: `${slug}-4`,
-      question: `What metric is most critical for monitoring health in ${cleanTitle}?`,
-      options: [
-        'Latency percentiles (p95/p99), error rate, and saturation',
-        'Raw git commit count per developer per day',
-        'Total line count of client-side bundles',
-        'Database table column count',
-      ],
-      correctOptionIndex: 0,
-      explanation: 'SRE Golden Signals (Latency, Traffic, Errors, and Saturation) provide the most accurate visibility into system performance.',
-      topicSlug: slug,
-    },
-  ];
+interface AssessmentItem {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  questionCount: number;
+  minutes: number | null;
 }
+
+const countQuestions = (metadata: string | null | undefined): number => {
+  if (!metadata) return 0;
+  try {
+    const parsed = JSON.parse(metadata) as { questions?: unknown[] };
+    return Array.isArray(parsed.questions) ? parsed.questions.length : 0;
+  } catch {
+    return 0;
+  }
+};
+
+const toAssessment = (item: CmsResponseDto): AssessmentItem => ({
+  id: item.id,
+  slug: item.slug || String(item.id),
+  title: item.title,
+  description: item.description || '',
+  category: item.categoryName || 'General',
+  questionCount: countQuestions(item.interactiveMetadata),
+  minutes: item.durationMinutes ?? null,
+});
 
 export function PracticeHub() {
   const navigate = useNavigate();
   const { quizId } = useParams<{ quizId?: string }>();
+  const { isAuthenticated } = useAuth();
 
-  // Live backend database API hooks - fetching both ARTICLES and COURSES from PostgreSQL
-  const { data: publicArticles } = usePublicCmsList({ size: 50, type: 'ARTICLE' });
-  const { data: publicCourses } = usePublicCmsList({ size: 50, type: 'COURSE' });
+  const { data: publicCourses, isLoading, isError, refetch } = usePublicCmsList({ size: 100, type: 'COURSE', courseType: 'ASSESSMENT' });
   const { data: backendCategories } = useCategories();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
-  const [showAllMorePractice, setShowAllMorePractice] = useState(false);
-  
-  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [attempts, setAttempts] = useState<Record<string, PracticeAttempt>>(() => getPracticeAttempts());
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [authOpen, setAuthOpen] = useState(false);
 
-  const refreshAttempts = () => {
-    setAttempts(getPracticeAttempts());
-  };
-
-  const combinedCmsItems = useMemo(() => {
-    const articles = publicArticles?.items || [];
-    const courses = publicCourses?.items || [];
-    return [...courses, ...articles];
-  }, [publicArticles, publicCourses]);
-
-  const dbQuizzes = useMemo((): Quiz[] => {
-    if (combinedCmsItems.length === 0) return [];
-    
-    const validAssessments = combinedCmsItems.filter(item => {
-      if (item.courseType === 'ASSESSMENT' && item.interactiveMetadata) {
-        try {
-          const parsed = JSON.parse(item.interactiveMetadata);
-          return parsed.assessmentType === 'PRACTICE';
-        } catch(e) {}
-      }
-      return false; // exclude if not specifically a practice assessment
-    });
-
-    return validAssessments.map((item, idx) => {
-      let parsedQuestions = null;
-      if (item.interactiveMetadata) {
-        try {
-          const parsed = JSON.parse(item.interactiveMetadata);
-          if (parsed && Array.isArray(parsed.questions)) {
-            parsedQuestions = parsed.questions;
-          }
-        } catch (e) {
-          console.error("Failed to parse interactive metadata for item", item.id);
-        }
-      }
-      const questions = parsedQuestions || generateQuestionsForSlug(item.slug || item.title);
-
-      return {
-      id: `${item.type.toLowerCase()}-${item.id}-${idx}`,
-      slug: item.slug || String(item.id),
-      title: item.title.includes('Assessment') || item.title.includes('Quiz') ? item.title : `${item.title} Assessment`,
-      description: item.description || `Test key concepts and practice hands-on scenarios for ${item.title}.`,
-      topicSlug: item.tags?.[0] || item.slug || 'general',
-      domainSlug: (item.categoryName || 'Engineering').toLowerCase(),
-      difficulty: (item.level as any)?.toLowerCase() || 'intermediate',
-      questionsCount: questions.length || 4,
-      estimatedMinutes: item.durationMinutes || 10,
-      questions,
-    };
-    });
-  }, [combinedCmsItems]);
-
-  const allQuizzes = useMemo(() => {
-    return dbQuizzes;
-  }, [dbQuizzes]);
-
-  const remainingQuizzes = useMemo(() => {
-    return allQuizzes.filter(q => activeQuiz && q.id !== activeQuiz.id);
-  }, [allQuizzes, activeQuiz]);
-
-  const displayedQuizzes = useMemo(() => {
-    return showAllMorePractice ? remainingQuizzes : remainingQuizzes.slice(0, 3);
-  }, [remainingQuizzes, showAllMorePractice]);
+  const assessments = useMemo(
+    () => (publicCourses?.items ?? []).filter(i => i.courseType === 'ASSESSMENT').map(toAssessment),
+    [publicCourses],
+  );
 
   const categories = useMemo(() => {
     const fetched = (backendCategories ?? []).map(c => c.name).filter(Boolean);
-    if (fetched.length > 0) {
-      return ['All', ...Array.from(new Set(fetched))];
-    }
-    return ['All', 'Quizzes', 'Tests', 'Coding', 'Hands-on Labs', 'Challenges'];
+    return ['All', ...Array.from(new Set(fetched))];
   }, [backendCategories]);
 
-  const startQuiz = (quiz: Quiz, forceRetake: boolean = false) => {
-    setActiveQuiz(quiz);
-    setCurrentQuestionIdx(0);
-
-    if (forceRetake) {
-      clearPracticeAttempt(quiz.id);
-      if (quiz.slug) clearPracticeAttempt(quiz.slug);
-      refreshAttempts();
-      setSelectedAnswers({});
-      setIsSubmitted(false);
-      return;
-    }
-
-    const saved = getPracticeAttempt(quiz.id) || (quiz.slug ? getPracticeAttempt(quiz.slug) : null);
-    if (saved) {
-      setSelectedAnswers(saved.selectedAnswers || {});
-      setIsSubmitted(!!saved.isSubmitted);
-    } else {
-      setSelectedAnswers({});
-      setIsSubmitted(false);
-    }
-  };
-
-  const handleRetake = (quiz: Quiz) => {
-    startQuiz(quiz, true);
-  };
-
-  useEffect(() => {
-    if (quizId) {
-      const found = allQuizzes.find(q => q.id === quizId || q.slug === quizId);
-      if (found) {
-        startQuiz(found);
-      } else {
-        const cleanTitle = quizId.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        const fallbackQuiz: Quiz = {
-          id: quizId,
-          slug: quizId,
-          title: cleanTitle.includes('Quiz') || cleanTitle.includes('Test') ? cleanTitle : `${cleanTitle} Practice Test`,
-          description: `Comprehensive interactive practice assessment for ${cleanTitle}.`,
-          topicSlug: quizId,
-          domainSlug: 'practice',
-          difficulty: 'intermediate',
-          questionsCount: 4,
-          estimatedMinutes: 10,
-          questions: generateQuestionsForSlug(quizId),
-        };
-        startQuiz(fallbackQuiz);
-      }
-    }
-  }, [quizId, allQuizzes]);
-
-  const handleSelectOption = (qIdx: number, optionIdx: number) => {
-    if (isSubmitted) return;
-    setSelectedAnswers(prev => ({ ...prev, [qIdx]: optionIdx }));
-  };
-
-  const calculateScore = () => {
-    if (!activeQuiz) return 0;
-    let correct = 0;
-    activeQuiz.questions.forEach((q, i) => {
-      if (selectedAnswers[i] === q.correctOptionIndex) {
-        correct++;
-      }
+  const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return assessments.filter(a => {
+      if (selectedCategory !== 'All' && a.category !== selectedCategory) return false;
+      return !q || a.title.toLowerCase().includes(q) || a.description.toLowerCase().includes(q);
     });
-    return Math.round((correct / activeQuiz.questions.length) * 100);
-  };
+  }, [assessments, searchQuery, selectedCategory]);
 
-  const handleSubmit = () => {
-    if (!activeQuiz) return;
-    setIsSubmitted(true);
-    let correct = 0;
-    activeQuiz.questions.forEach((q, i) => {
-      if (selectedAnswers[i] === q.correctOptionIndex) {
-        correct++;
-      }
-    });
-    const score = Math.round((correct / activeQuiz.questions.length) * 100);
-    const newAttempt: PracticeAttempt = {
-      quizId: activeQuiz.id,
-      selectedAnswers,
-      isSubmitted: true,
-      score,
-      totalQuestions: activeQuiz.questions.length,
-      correctCount: correct,
-      submittedAt: new Date().toISOString(),
-    };
-    savePracticeAttempt(newAttempt);
-    if (activeQuiz.slug && activeQuiz.slug !== activeQuiz.id) {
-      savePracticeAttempt({ ...newAttempt, quizId: activeQuiz.slug });
-    }
-    refreshAttempts();
-  };
+  const active = quizId ? assessments.find(a => a.slug === quizId || String(a.id) === quizId) ?? null : null;
 
   return (
     <PublicLayout hideSearch>
       <div className="min-h-screen bg-background text-foreground pb-12">
-        {/* Clean Sub-Header Bar */}
         <div className="border-b border-border bg-card/40 px-4 sm:px-6 lg:px-8 py-3.5">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3 shrink-0 sm:w-1/4">
               <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <Target className="w-5 h-5" />
+                <Target className="w-5 h-5" aria-hidden="true" />
               </div>
               <div>
-                <h1 className="text-lg font-extrabold tracking-tight">
-                  Practice
-                </h1>
-                <p className="text-[11px] text-muted-foreground hidden lg:block">Quizzes & tests</p>
+                <h1 className="text-lg font-extrabold tracking-tight">Practice</h1>
+                <p className="text-[11px] text-muted-foreground hidden lg:block">Quizzes &amp; tests</p>
               </div>
             </div>
 
-            {/* Centered Search Bar */}
-            {!activeQuiz && (
-              <div className="relative w-full max-w-md sm:w-1/2 flex justify-center">
-                <div className="relative w-full">
-                  <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Search practice quizzes..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-8 h-9 text-xs rounded-xl bg-background border-border shadow-2xs w-full"
-                  />
-                  {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
+            {!active && (
+              <div className="relative w-full max-w-md sm:w-1/2">
+                <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <Input
+                  type="text"
+                  aria-label="Search practice tests"
+                  placeholder="Search practice tests..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-8 h-9 text-xs rounded-xl bg-background border-border shadow-2xs w-full"
+                />
+                {searchQuery && (
+                  <button type="button" aria-label="Clear search" onClick={() => setSearchQuery('')} className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             )}
-
             <div className="sm:w-1/4" />
           </div>
         </div>
 
-        {activeQuiz ? (
-          /* 3-Column Interactive Quiz View */
-          <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-5 pt-5 space-y-5">
-            <div className="flex items-center gap-3 border-b border-border pb-3">
-              <Button variant="ghost" size="sm" onClick={() => setActiveQuiz(null)} className="rounded-xl gap-1 text-xs">
-                <ArrowLeft className="w-3.5 h-3.5" /> Back
-              </Button>
-              <span className="text-sm font-semibold text-foreground truncate">{activeQuiz.title}</span>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-              
-              {/* LEFT COLUMN: Questions Navigator (3 Cols) */}
-              <div className="lg:col-span-3 lg:sticky lg:top-16 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto">
-                <QuestionNavigator
-                  totalQuestions={activeQuiz.questions.length}
-                  currentIndex={currentQuestionIdx}
-                  attemptedMap={selectedAnswers}
-                  onSelectQuestion={(idx) => setCurrentQuestionIdx(idx)}
-                  questions={activeQuiz.questions}
-                  title="Questions"
-                />
+        {quizId && !active && !isLoading ? (
+          <div role="status" className="max-w-3xl mx-auto px-4 pt-10 text-center space-y-3">
+            <p className="text-sm text-muted-foreground">This practice test could not be found.</p>
+            <Button variant="outline" size="sm" onClick={() => navigate('/practice')}>Browse practice tests</Button>
+          </div>
+        ) : active ? (
+          <div className="max-w-3xl mx-auto px-3 sm:px-4 pt-5 space-y-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate('/practice')} className="rounded-xl gap-1 text-xs">
+              <ArrowLeft className="w-3.5 h-3.5" /> All practice tests
+            </Button>
+            {isAuthenticated ? (
+              <AssessmentTaker assessmentId={active.id} title={active.title} description={active.description} />
+            ) : (
+              <div className="bg-card border border-border rounded-2xl p-8 text-center space-y-3">
+                <h2 className="text-lg font-extrabold">{active.title}</h2>
+                <p className="text-xs text-muted-foreground">Sign in to take this test and keep your scores.</p>
+                <Button onClick={() => setAuthOpen(true)} className="rounded-xl text-xs font-bold">Sign in to start</Button>
               </div>
-
-              {/* CENTER COLUMN: Main Content & Question Runner (6 Cols) */}
-              <div className="lg:col-span-6 space-y-6 min-w-0">
-                <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
-                  <div className="border-b border-border pb-4 space-y-1">
-                    <h2 className="text-xl font-extrabold text-foreground">{activeQuiz.title}</h2>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{activeQuiz.description}</p>
-                  </div>
-
-                  {activeQuiz.questions.length === 0 ? (
-                    <div className="py-12 text-center text-muted-foreground text-sm">
-                      Full practice set coming soon. Select &ldquo;OAuth 2.0 & OIDC Practice Test&rdquo; for live interactive questions.
-                    </div>
-                  ) : !isSubmitted ? (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
-                        <span>Question {currentQuestionIdx + 1} of {activeQuiz.questions.length}</span>
-                        <span>{Math.round(((currentQuestionIdx + 1) / activeQuiz.questions.length) * 100)}% Complete</span>
-                      </div>
-                      <Progress value={((currentQuestionIdx + 1) / activeQuiz.questions.length) * 100} className="h-1.5" />
-
-                      <div className="space-y-4">
-                        <h3 className="text-base font-bold text-foreground leading-snug">
-                          {activeQuiz.questions[currentQuestionIdx].question}
-                        </h3>
-
-                        <div className="space-y-2.5 pt-2">
-                          {activeQuiz.questions[currentQuestionIdx].options.map((opt, optIdx) => {
-                            const isSelected = selectedAnswers[currentQuestionIdx] === optIdx;
-                            return (
-                              <button
-                                key={optIdx}
-                                onClick={() => handleSelectOption(currentQuestionIdx, optIdx)}
-                                className={cn(
-                                  'w-full text-left p-3.5 rounded-xl border text-xs font-medium transition-all flex items-center justify-between',
-                                  isSelected
-                                    ? 'bg-primary/10 border-primary text-primary font-bold shadow-xs'
-                                    : 'bg-card border-border text-foreground hover:bg-muted/60'
-                                )}
-                              >
-                                <span>{opt}</span>
-                                <div className={cn(
-                                  'w-4 h-4 rounded-full border flex items-center justify-center shrink-0',
-                                  isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40'
-                                )}>
-                                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-background" />}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-4 border-t border-border">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={currentQuestionIdx === 0}
-                          onClick={() => setCurrentQuestionIdx(prev => prev - 1)}
-                          className="rounded-xl text-xs"
-                        >
-                          Previous
-                        </Button>
-
-                        {currentQuestionIdx < activeQuiz.questions.length - 1 ? (
-                          <Button
-                            size="sm"
-                            disabled={selectedAnswers[currentQuestionIdx] === undefined}
-                            onClick={() => setCurrentQuestionIdx(prev => prev + 1)}
-                            className="rounded-xl text-xs font-bold"
-                          >
-                            Next Question
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            disabled={Object.keys(selectedAnswers).length < activeQuiz.questions.length}
-                            onClick={handleSubmit}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs"
-                          >
-                            Submit Test
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-6 text-center">
-                      <div className="p-6 rounded-3xl bg-primary/5 border border-primary/20 space-y-2">
-                        <Trophy className="w-12 h-12 text-primary mx-auto mb-1" />
-                        <h3 className="text-3xl font-extrabold text-foreground">{calculateScore()}% Score</h3>
-                        <p className="text-xs text-muted-foreground">
-                          Correct Answers: {activeQuiz.questions.filter((q, i) => selectedAnswers[i] === q.correctOptionIndex).length} / {activeQuiz.questions.length}
-                        </p>
-                      </div>
-
-                      <div className="space-y-4 text-left">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Question Review</h4>
-                        {activeQuiz.questions.map((q, i) => {
-                          const isCorrect = selectedAnswers[i] === q.correctOptionIndex;
-                          return (
-                            <div key={q.id} className={cn(
-                              'p-4 rounded-2xl border text-xs space-y-2',
-                              isCorrect ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-rose-500/5 border-rose-500/30'
-                            )}>
-                              <div className="flex items-center gap-2 font-bold">
-                                {isCorrect ? <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />}
-                                <span>Q{i+1}: {q.question}</span>
-                              </div>
-                              <p className="text-muted-foreground leading-relaxed pl-6">
-                                <span className="font-semibold text-foreground">Explanation:</span> {q.explanation}
-                              </p>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 pt-2 justify-center">
-                        <Button size="sm" onClick={() => handleRetake(activeQuiz)} className="rounded-xl text-xs font-bold bg-primary text-primary-foreground gap-1.5">
-                          <RefreshCw className="w-3.5 h-3.5" /> Retake Test
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => { setActiveQuiz(null); navigate('/explore'); }} className="rounded-xl text-xs">
-                          <BookOpen className="w-3.5 h-3.5 mr-1" /> Practice Weak Areas
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* RIGHT COLUMN: Related content */}
-              <div className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-16">
-                
-                {/* Related Practice Sets */}
-                <div className="bg-card border border-border rounded-2xl p-4 space-y-3 shadow-2xs">
-                  <div className="flex items-center justify-between border-b border-border pb-2">
-                    <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <HelpCircle className="w-4 h-4 text-primary" />
-                      More Practice Sets
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {displayedQuizzes.map(q => {
-                      const itemAttempt = attempts[q.id] || (q.slug ? attempts[q.slug] : null);
-                      return (
-                        <div key={q.id} className="p-3 rounded-xl border border-border hover:border-primary/40 transition-all bg-card/60 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Badge variant="secondary" className="text-[10px] font-bold">{q.domainSlug.toUpperCase()}</Badge>
-                            {itemAttempt?.isSubmitted ? (
-                              <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] font-bold">
-                                Score: {itemAttempt.score}%
-                              </Badge>
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground capitalize font-semibold">{q.difficulty}</span>
-                            )}
-                          </div>
-                          <h4 className="text-xs font-bold text-foreground line-clamp-1">{q.title}</h4>
-                          <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1">
-                            <span>{q.questionsCount} Questions &bull; {q.estimatedMinutes}m</span>
-                            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] font-bold text-primary" onClick={() => startQuiz(q)}>
-                              Switch <ArrowRight className="w-3 h-3 ml-0.5" />
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {remainingQuizzes.length > 3 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowAllMorePractice(prev => !prev)}
-                      className="w-full text-xs font-semibold text-primary hover:bg-primary/5 h-8 rounded-xl pt-1"
-                    >
-                      {showAllMorePractice
-                        ? 'Show Less'
-                        : `Show More (${remainingQuizzes.length - 3} more sets)`}
-                    </Button>
-                  )}
-                </div>
-
-                {/* Related Learning Courses (live published courses) */}
-                {(publicCourses?.items ?? []).length > 0 && (
-                  <div className="bg-card border border-border rounded-2xl p-4 space-y-3 shadow-2xs">
-                    <div className="flex items-center justify-between border-b border-border pb-2">
-                      <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <BookOpen className="w-4 h-4 text-primary" />
-                        Related Courses
-                      </span>
-                    </div>
-
-                    <div className="space-y-2.5">
-                      {(publicCourses?.items ?? []).slice(0, 3).map(c => (
-                        <div key={c.id} className="p-3 rounded-xl border border-border/70 space-y-1.5 bg-card/40">
-                          <h4 className="text-xs font-bold text-foreground line-clamp-1">{c.title}</h4>
-                          {c.description && <p className="text-[11px] text-muted-foreground line-clamp-2">{c.description}</p>}
-                          <Button size="sm" variant="outline" className="w-full text-[11px] font-semibold h-7 rounded-lg mt-1" onClick={() => navigate(buildCourseUrl(c))}>
-                            Study Course
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-              </div>
-
-            </div>
+            )}
           </div>
         ) : (
-          /* 2-Column Space-Optimized Grid */
           <div className="w-full max-w-[1800px] mx-auto px-3 sm:px-4 lg:px-5 pt-5">
             <div className="grid grid-cols-1 md:grid-cols-[250px_minmax(0,1fr)] gap-5">
-              
-              {/* Left-Aligned Compact Filter Panel */}
-              <div className="space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs md:sticky md:top-16 md:max-h-[calc(100vh-5rem)] md:overflow-y-auto">
+              <div className="space-y-3 bg-card border border-border rounded-2xl p-3.5 h-fit shadow-2xs md:sticky md:top-16">
                 <div className="flex items-center justify-between border-b border-border pb-2">
                   <span className="font-bold text-[11px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Filter className="w-3 h-3 text-primary" />
-                    Practice Type
+                    <Filter className="w-3 h-3 text-primary" aria-hidden="true" /> Category
                   </span>
                   {selectedCategory !== 'All' && (
-                    <button onClick={() => setSelectedCategory('All')} className="text-[11px] text-primary hover:underline font-semibold">
-                      Reset
-                    </button>
+                    <button type="button" onClick={() => setSelectedCategory('All')} className="text-[11px] text-primary hover:underline font-semibold">Reset</button>
                   )}
                 </div>
-
                 <div className="flex flex-wrap gap-1">
                   {categories.map(cat => (
                     <button
                       key={cat}
+                      type="button"
+                      aria-pressed={selectedCategory === cat}
                       onClick={() => setSelectedCategory(cat)}
                       className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                        selectedCategory === cat
-                          ? 'bg-primary text-primary-foreground shadow-2xs'
-                          : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'
+                        selectedCategory === cat ? 'bg-primary text-primary-foreground' : 'bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground'
                       }`}
                     >
                       {cat}
@@ -576,92 +160,53 @@ export function PracticeHub() {
                 </div>
               </div>
 
-              {/* Right Column — Cards Grid */}
               <div className="min-w-0 space-y-4">
-                
-
-                {/* Quizzes Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
-                  {allQuizzes.map(quiz => {
-                    const itemAttempt = attempts[quiz.id] || (quiz.slug ? attempts[quiz.slug] : null);
-                    return (
-                      <div
-                        key={quiz.id}
-                        className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md group"
-                      >
+                {isError ? (
+                  <div role="alert" className="py-16 text-center text-sm text-muted-foreground space-y-3">
+                    <p>Could not load practice tests.</p>
+                    <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+                  </div>
+                ) : filtered.length === 0 ? (
+                  <div role="status" aria-live="polite" className="py-16 text-center text-sm text-muted-foreground">
+                    {isLoading
+                      ? 'Loading practice tests...'
+                      : assessments.length === 0
+                        ? 'No practice tests are published yet. Check back soon.'
+                        : 'No practice tests match your filters.'}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+                    {filtered.map(a => (
+                      <div key={a.id} className="bg-card border border-border hover:border-primary/50 rounded-2xl p-5 flex flex-col justify-between transition-all hover:shadow-md">
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <Badge variant="secondary" className="text-[10px] font-bold">
-                              {quiz.domainSlug.toUpperCase()}
-                            </Badge>
-                            {itemAttempt?.isSubmitted ? (
-                              <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] font-bold flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" /> Score: {itemAttempt.score}%
-                              </Badge>
-                            ) : (
-                              <span className="text-[11px] font-semibold text-muted-foreground capitalize">
-                                {quiz.difficulty}
-                              </span>
+                          <Badge variant="secondary" className="text-[10px] font-bold">{a.category.toUpperCase()}</Badge>
+                          <h3 className="text-base font-extrabold text-foreground">{a.title}</h3>
+                          {a.description && <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{a.description}</p>}
+                          <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium pt-1">
+                            {a.questionCount > 0 && (
+                              <span className="flex items-center gap-1"><HelpCircle className="w-3.5 h-3.5 text-primary" aria-hidden="true" />{a.questionCount} questions</span>
+                            )}
+                            {a.minutes && (
+                              <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-primary" aria-hidden="true" />{a.minutes} mins</span>
                             )}
                           </div>
-
-                          <h3 className="text-base font-extrabold text-foreground group-hover:text-primary transition-colors">
-                            {quiz.title}
-                          </h3>
-
-                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                            {quiz.description}
-                          </p>
-
-                          <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-medium pt-1">
-                            <span className="flex items-center gap-1">
-                              <HelpCircle className="w-3.5 h-3.5 text-primary" />
-                              {quiz.questionsCount} questions
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5 text-primary" />
-                              {quiz.estimatedMinutes} mins
-                            </span>
-                          </div>
                         </div>
-
-                        <div className="pt-4 border-t border-border/60 mt-4 flex items-center gap-2">
-                          {itemAttempt?.isSubmitted ? (
-                            <>
-                              <Button
-                                onClick={() => startQuiz(quiz)}
-                                variant="outline"
-                                className="flex-1 justify-center font-bold rounded-xl text-xs h-9"
-                              >
-                                <span>View Score</span>
-                              </Button>
-                              <Button
-                                onClick={() => handleRetake(quiz)}
-                                className="flex-1 justify-center font-bold rounded-xl text-xs h-9 bg-primary text-primary-foreground gap-1.5"
-                              >
-                                <RefreshCw className="w-3.5 h-3.5" />
-                                <span>Retake Test</span>
-                              </Button>
-                            </>
-                          ) : (
-                            <Button
-                              onClick={() => startQuiz(quiz)}
-                              className="w-full justify-between font-bold rounded-xl text-xs h-9 bg-primary text-primary-foreground"
-                            >
-                              <span>{Object.keys(itemAttempt?.selectedAnswers || {}).length > 0 ? 'Continue Practice Test' : 'Start Practice Test'}</span>
-                              <ArrowRight className="w-4 h-4" />
-                            </Button>
-                          )}
+                        <div className="pt-4 border-t border-border/60 mt-4">
+                          <Button onClick={() => navigate(`/practice/${a.slug}`)} className="w-full justify-between font-bold rounded-xl text-xs h-9">
+                            <span>Open test</span>
+                            <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                          </Button>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
       </div>
+      <AuthModal open={authOpen} onOpenChange={setAuthOpen} redirectToDashboard={false} />
     </PublicLayout>
   );
 }

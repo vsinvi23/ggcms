@@ -30,6 +30,7 @@ function transformComment(item: Record<string, unknown>): ReviewCommentDto {
         : null,
     // Strapi nests replies under .data; our backend returns them as a plain array
     replies: ((repliesField?.data ?? attrs.replies ?? []) as Record<string, unknown>[]).map((r) => transformComment(r)),
+    moderationStatus: attrs.moderationStatus as string | undefined,
     createdAt: attrs.createdAt as string,
     updatedAt: (attrs.updatedAt ?? attrs.createdAt) as string,
   };
@@ -64,7 +65,7 @@ export const reviewCommentService = {
     return transformComment(response.data.data);
   },
 
-  async deleteComment(id: number): Promise<void> {
+  async deleteComment(id: string | number): Promise<void> {
     await apiClient.delete(`${BASE}/${id}`);
   },
 };

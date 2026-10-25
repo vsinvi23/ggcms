@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	categorysvc "github.com/serenya/go-cms/internal/application/category"
 	cmssvc "github.com/serenya/go-cms/internal/application/cms"
+	"github.com/serenya/go-cms/internal/application/identity"
 	"github.com/serenya/go-cms/internal/application/importer"
 	lpsvc "github.com/serenya/go-cms/internal/application/learningpath"
 	lessonsvc "github.com/serenya/go-cms/internal/application/lesson"
@@ -76,12 +78,12 @@ func NewImportHandler(cmsService cmssvc.Service, taskService tasksvc.Service, se
 // POST /api/import/preview
 // Accepts multipart/form-data with field "files" (multiple). Returns parsed preview items.
 func (h *ImportHandler) Preview(c *gin.Context) {
-	// Parse up to 100MB for large ZIP archive uploads
-	_ = c.Request.ParseMultipartForm(100 << 20)
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 105<<20)
+	_ = c.Request.ParseMultipartForm(32 << 20)
 
 	form, err := c.MultipartForm()
 	if err != nil {
-		response.BadRequest(c, fmt.Sprintf("invalid upload payload: %v (ensure multipart form with 'files' or 'file' field)", err))
+		response.BadRequest(c, "invalid upload payload or file too large (ensure multipart form with 'files' or 'file' field)")
 		return
 	}
 
@@ -243,6 +245,7 @@ func (h *ImportHandler) Preview(c *gin.Context) {
 // POST /api/import/confirm
 // Creates all submitted items as DRAFT. Authenticated user becomes the author.
 func (h *ImportHandler) Confirm(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 50<<20)
 	var req dto.ImportConfirmRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
@@ -254,7 +257,7 @@ func (h *ImportHandler) Confirm(c *gin.Context) {
 	}
 
 	userID := middleware.GetUserID(c)
-	isAdminUser := isSuperOrAdmin(c)
+	isAdminUser := middleware.IsAdmin(c)
 	results := make([]dto.ImportConfirmResult, 0, len(req.Items))
 
 	var dbCategories []*entity.Category
@@ -550,18 +553,6 @@ func mapParsedSections(sections []importer.ParsedSection) []dto.ImportSectionIte
 	return out
 }
 
-func isSuperOrAdmin(c *gin.Context) bool {
-	if middleware.IsAdmin(c) {
-		return true
-	}
-	roleVal, _ := c.Get("role")
-	if r, ok := roleVal.(string); ok {
-		rLower := strings.ToLower(r)
-		return rLower == "admin" || rLower == "superadmin" || rLower == "super_admin" || rLower == "super-admin" || rLower == "masteradmin" || rLower == "master_admin"
-	}
-	return false
-}
-
 // importSlug returns the slug an imported item should be created with, or nil to let the
 // repository derive a unique one from the title.
 func importSlug(item dto.ImportConfirmItem) *string {
@@ -591,10 +582,6 @@ func toStructure(sections []dto.ImportSectionItem) []sectionsvc.StructureSection
 	return out
 }
 
-// masterAdminGroups are the group names that make a user a super admin. Plain "Admin" is a
-// regular administrator and is deliberately not in this list.
-var masterAdminGroups = []string{"superadmin", "super_admin", "super-admin", "masteradmin", "master_admin"}
-
 // isSuperAdmin reports whether the caller belongs to a super-admin group. The JWT role is just
 // "admin" for both admins and super admins, so group membership is looked up from the database.
 func (h *ImportHandler) isSuperAdmin(c *gin.Context) bool {
@@ -605,15 +592,7 @@ func (h *ImportHandler) isSuperAdmin(c *gin.Context) bool {
 	if err != nil {
 		return false
 	}
-	for _, g := range groups {
-		name := strings.ToLower(strings.TrimSpace(g.Name))
-		for _, m := range masterAdminGroups {
-			if name == m {
-				return true
-			}
-		}
-	}
-	return false
+	return identity.IsSuperAdmin(groups)
 }
 
 // storeAndRewriteImages saves each image a document references (from the uploaded zip) through

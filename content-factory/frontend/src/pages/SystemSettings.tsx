@@ -3,7 +3,7 @@ import { AlertTriangle, CheckCircle2, Cloud, CloudOff, FolderOpen, Key, Lock, Re
 import { useToast } from "../components/Toast"
 import { useAsync } from "../hooks/useAsync"
 import * as api from "../services/api"
-import { ApiError } from "../services/api"
+import { ApiError, API_BASE_URL, csrfHeaders } from "../services/api"
 import { Button, Card, CardHeader, ErrorState, Field, InlineError, Input, PageHeader, Spinner } from "../components/ui"
 import type { SystemSettingField, SystemSettings, SystemSettingsPayload } from "../services/types"
 import { FIELD_INFO } from "../constants/fieldInfo"
@@ -111,7 +111,7 @@ function GoogleDriveCard() {
   const [projectId, setProjectId] = useState("")
 
   useEffect(() => {
-    fetch("/api/gdrive/status")
+    fetch(`${API_BASE_URL}/api/gdrive/status`)
       .then((r) => r.json())
       .then((d) => setDriveStatus(d))
       .catch(() => setDriveStatus({ enabled: false, configured: false, message: "Could not reach Drive status endpoint." }))
@@ -124,7 +124,7 @@ function GoogleDriveCard() {
     setFiles([])
     setSyncResult(null)
     try {
-      const resp = await fetch(`/api/gdrive/files?folder_url_or_id=${encodeURIComponent(folderUrl.trim())}`)
+      const resp = await fetch(`${API_BASE_URL}/api/gdrive/files?folder_url_or_id=${encodeURIComponent(folderUrl.trim())}`)
       if (!resp.ok) throw new Error((await resp.json()).detail ?? "Failed to list files")
       const data = await resp.json()
       setFiles(data.files ?? [])
@@ -144,9 +144,9 @@ function GoogleDriveCard() {
     setSyncing(true)
     setSyncResult(null)
     try {
-      const resp = await fetch("/api/gdrive/ingest", {
+      const resp = await fetch(`${API_BASE_URL}/api/gdrive/ingest`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeaders("POST") },
         body: JSON.stringify({ folder_url_or_id: folderUrl.trim(), project_id: projectId.trim() }),
       })
       if (!resp.ok) throw new Error((await resp.json()).detail ?? "Ingestion failed")

@@ -1,53 +1,36 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GlobalSearchModal } from './GlobalSearchModal';
+import { suggestResponse } from '@/test/fixtures/search';
 
-vi.mock('@/api/hooks/usePublicCms', () => ({
-  usePublicCmsList: () => ({
-    data: {
-      items: [
-        { id: '1', title: 'Advanced Go Concurrency', type: 'ARTICLE' },
-        { id: '2', title: 'Docker Essentials', type: 'COURSE' },
-      ],
-    },
+vi.mock('@/api/hooks/usePublicSearch', () => ({
+  MIN_SUGGEST_LENGTH: 2,
+  useSearchSuggest: (q: string) => ({
+    data: q.length >= 2 ? suggestResponse : undefined,
+    isFetching: false,
+    isError: false,
   }),
 }));
 
-vi.mock('@/api/hooks/useTopics', () => ({
-  useTopics: () => ({
-    data: [{ id: '1', name: 'Go', slug: 'go' }],
-  }),
-}));
-
-vi.mock('@/api/hooks/useCategories', () => ({
-  useCategories: () => ({
-    data: [{ id: '1', name: 'Backend Engineering', slug: 'backend' }],
-  }),
-}));
-
-function renderComponent() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={queryClient}>
+describe('GlobalSearchModal (Ctrl/Cmd+K search)', () => {
+  it('renders a focused combobox with server suggestions and closes on selection', async () => {
+    const onOpenChange = vi.fn();
+    const user = userEvent.setup();
+    render(
       <MemoryRouter>
-        <GlobalSearchModal open={true} onOpenChange={() => {}} />
-      </MemoryRouter>
-    </QueryClientProvider>
-  );
-}
+        <GlobalSearchModal open={true} onOpenChange={onOpenChange} />
+      </MemoryRouter>,
+    );
 
-describe('GlobalSearchModal (⌘K Spotlight Search)', () => {
-  it('renders search modal input and results capped at 3 per section when open', () => {
-    renderComponent();
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveFocus();
+    await user.type(input, 'oau');
+    expect(await screen.findByRole('option', { name: 'OAuth guide' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Security' })).toBeInTheDocument();
 
-    const input = screen.getByPlaceholderText(/Search courses, articles, topics/i);
-    expect(input).toBeInTheDocument();
-
-    fireEvent.change(input, { target: { value: 'Go' } });
-
-    expect(screen.getByText('Advanced Go Concurrency')).toBeInTheDocument();
-    expect(screen.getByText('Go')).toBeInTheDocument();
+    await user.click(screen.getByRole('option', { name: 'OAuth guide' }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

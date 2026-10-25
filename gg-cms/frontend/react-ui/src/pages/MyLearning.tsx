@@ -24,9 +24,10 @@ import {
   Plus,
   Layers,
   Target,
+  Award,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useMyEnrollments } from '@/api/hooks/useEnrollments';
+import { useMyEnrollments, useSyncLocalProgress } from '@/api/hooks/useEnrollments';
 import { useCmsList } from '@/api/hooks/useCms';
 import { useAuth } from '@/contexts/AuthContext';
 import { EnrollmentDto, CmsResponseDto } from '@/api/types';
@@ -558,6 +559,7 @@ const MyLearning = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: enrollments = [] } = useMyEnrollments();
+  useSyncLocalProgress(true);
   const { data: articlesData } = useCmsList({ type: 'ARTICLE', size: 50 });
   const { data: favouritesData } = useMyFavourites();
 
@@ -628,6 +630,10 @@ const MyLearning = () => {
             </p>
           </div>
 
+          <div className="flex items-center gap-2 shrink-0">
+          <Button size="sm" variant="outline" asChild className="rounded-xl text-xs font-extrabold gap-1.5">
+            <Link to="/certificates"><Award className="w-4 h-4" />My Certificates</Link>
+          </Button>
           <Button
             size="sm"
             onClick={() => setCreateModalOpen(true)}
@@ -636,7 +642,9 @@ const MyLearning = () => {
             <Plus className="w-4 h-4" />
             <span>Create Learning Group</span>
           </Button>
+          </div>
         </div>
+        <p className="text-[11px] text-muted-foreground -mt-3">Learning groups are saved on this device only.</p>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -673,7 +681,7 @@ const MyLearning = () => {
                   <Card
                     key={e.id}
                     className="hover:shadow-sm transition-shadow cursor-pointer"
-                    onClick={() => e.course?.id && navigate(`/course/${e.course.id}`)}
+                    onClick={() => e.course?.id && navigate(`/course/${e.course.id}?learn=true`)}
                   >
                     <CardContent className="p-4 flex items-center gap-4">
                       <div className="flex-1 min-w-0">

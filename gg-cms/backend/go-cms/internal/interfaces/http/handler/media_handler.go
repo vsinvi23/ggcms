@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	settingssvc "github.com/serenya/go-cms/internal/application/settings"
 	"github.com/serenya/go-cms/pkg/config"
+	"github.com/serenya/go-cms/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type MediaHandler struct {
@@ -33,6 +35,26 @@ var defaultAllowedMIMEs = []string{
 	"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 }
 
+const maxUploadCeilingMB = 100
+
+var forbiddenUploadTypes = map[string]struct{}{
+	"text/html":              {},
+	"application/xhtml+xml":  {},
+	"image/svg+xml":          {},
+	"text/xml":               {},
+	"application/xml":        {},
+	"text/javascript":        {},
+	"application/javascript": {},
+}
+
+func isForbiddenUploadType(mt string) bool {
+	mt = strings.ToLower(strings.TrimSpace(mt))
+	if _, ok := forbiddenUploadTypes[mt]; ok {
+		return true
+	}
+	return strings.Contains(mt, "html") || strings.Contains(mt, "svg") || strings.Contains(mt, "javascript") || strings.Contains(mt, "xml")
+}
+
 // POST /api/upload — accepts multipart form with "files" field
 func (h *MediaHandler) Upload(c *gin.Context) {
 	// Determine max size and allowed MIME types from settings
@@ -43,11 +65,14 @@ func (h *MediaHandler) Upload(c *gin.Context) {
 			if n, err := strconv.ParseInt(v, 10, 64); err == nil && n > 0 {
 				maxMB = n
 			}
+			if maxMB > maxUploadCeilingMB {
+				maxMB = maxUploadCeilingMB
+			}
 		}
 		if v, ok := all["upload.allowed_types"]; ok && v != "" {
 			for _, mt := range strings.Split(v, ",") {
 				mt = strings.TrimSpace(mt)
-				if mt != "" {
+				if mt != "" && !isForbiddenUploadType(mt) {
 					allowedMIMEs[mt] = struct{}{}
 				}
 			}
@@ -79,7 +104,7 @@ func (h *MediaHandler) Upload(c *gin.Context) {
 
 	storageProvider, err := h.settingsSvc.GetStorageProvider(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": fmt.Sprintf("storage error: %v", err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "storage error"})
 		return
 	}
 
@@ -102,7 +127,7 @@ func (h *MediaHandler) Upload(c *gin.Context) {
 		mime := http.DetectContentType(sniffBuf[:n])
 		if _, err := f.Seek(0, io.SeekStart); err != nil {
 			f.Close()
-			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": fmt.Sprintf("upload failed: %v", err)})
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "upload failed"})
 			return
 		}
 		// Strip any parameters (e.g. "image/jpeg; charset=utf-8" → "image/jpeg")
@@ -117,7 +142,8 @@ func (h *MediaHandler) Upload(c *gin.Context) {
 		key, publicURL, err := storageProvider.Save(f, fh.Filename, mime, fh.Size)
 		f.Close()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": fmt.Sprintf("upload failed: %v", err)})
+			logger.Error("upload failed", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "upload failed"})
 			return
 		}
 		results = append(results, UploadResult{

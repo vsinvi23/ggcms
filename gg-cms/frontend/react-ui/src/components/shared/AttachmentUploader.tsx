@@ -179,7 +179,10 @@ export function AttachmentUploader({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={() => window.open(attachment.url, '_blank')}
+                      aria-label={`Download ${attachment.name}`}
+                      onClick={() => {
+                        if (/^https?:\/\//i.test(attachment.url)) window.open(attachment.url, '_blank', 'noopener,noreferrer');
+                      }}
                     >
                       <Download className="w-4 h-4" />
                     </Button>

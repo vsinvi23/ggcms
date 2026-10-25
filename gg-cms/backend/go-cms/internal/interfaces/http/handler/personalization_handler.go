@@ -149,7 +149,7 @@ func (h *PersonalizationHandler) GetRecommendations(c *gin.Context) {
 	}
 	cType := c.Query("content_type")
 
-	if mode == personalization.ModeRelated || mode == personalization.ModeNext || contentID > 0 {
+	if contentID > 0 {
 		var uidPtr *uint
 		if userID > 0 {
 			uidPtr = &userID
@@ -176,3 +176,21 @@ func (h *PersonalizationHandler) GetRecommendations(c *gin.Context) {
 	response.OK(c, items)
 }
 
+// GET /api/personalization/feed?limit=10
+// Returns the personalised feed: recId (impression id), continue item, ranked items with reason codes.
+func (h *PersonalizationHandler) GetFeed(c *gin.Context) {
+	userID := middleware.GetUserID(c)
+	limit := 10
+	if l := c.Query("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 50 {
+			limit = parsed
+		}
+	}
+	feed, err := h.svc.Recommend(c.Request.Context(), userID, limit)
+	if err != nil {
+		response.InternalError(c, "failed to compute recommendations")
+		return
+	}
+	c.Header("Cache-Control", "private, max-age=30")
+	response.OK(c, feed)
+}

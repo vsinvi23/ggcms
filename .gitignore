@@ -52,3 +52,26 @@ node_modules/
 # The full .codebase-memory/ (graph.db.zst + artifact.json + .gitattributes) is
 # COMMITTED so teammates bootstrap the code graph from the repo — no local rebuild.
 # The .ai-memory/ markdown docs (graph-derived) are committed too. Nothing ignored.
+
+# ── Hygiene additions ─────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+!*.env.example
+!.env.*.example
+*.env.cloudrun*
+!*.env.cloudrun*.example
+firebase-sa.json
+*service-account*.json
+**/dist/
+!release/ga/**
+!release/dist/**
+**/test-results/
+**/playwright-report/
+**/.e2e-state.json
+rclone-*
+rclone-v*/
+relink.sql
+content/dist/
+server.exe
+logs/

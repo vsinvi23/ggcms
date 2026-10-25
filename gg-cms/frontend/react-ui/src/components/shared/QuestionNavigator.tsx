@@ -13,7 +13,7 @@ export interface QuestionNavigatorProps {
   totalQuestions: number;
   currentIndex: number;
   /** Map of question indices or IDs to boolean/value indicating if attempted */
-  attemptedMap: Record<number | string, any>;
+  attemptedMap: Record<number | string, unknown>;
   onSelectQuestion: (index: number) => void;
   questions?: QuestionItem[];
   title?: string;

@@ -1,4 +1,4 @@
-# Backend API Test Suite (PowerShell)
+﻿# Backend API Test Suite (PowerShell)
 # Run this script to test all Strapi APIs
 
 $BASE_URL = "http://localhost:1337/api"
@@ -9,8 +9,11 @@ $script:TotalTests = 0
 $script:PassedTests = 0
 $script:FailedTests = 0
 
-# JWT token
-$script:JwtToken = ""
+# Session cookies (jwt, refresh_token, csrf_token). Tracked by hand because the server marks them
+# Secure and .NET will not send Secure cookies over plain HTTP.
+$script:Cookies = @{}
+# Password must satisfy the policy (>=12 chars, not common).
+$script:TestPassword = "Tr1cky-Pass-Word-2026"
 $script:UserId = 0
 $script:GroupId = 0
 
@@ -46,6 +49,16 @@ function Write-Failure {
     $script:TotalTests++
 }
 
+function Update-Cookies {
+    param($SetCookie)
+    foreach ($header in @($SetCookie)) {
+        foreach ($m in [regex]::Matches([string]$header, '(?:^|,\s*)(jwt|refresh_token|csrf_token)=([^;]*)')) {
+            if ($m.Groups[2].Value) { $script:Cookies[$m.Groups[1].Value] = $m.Groups[2].Value }
+            else { $script:Cookies.Remove($m.Groups[1].Value) }
+        }
+    }
+}
+
 # Function to make API request
 function Invoke-ApiRequest {
     param(
@@ -59,8 +72,11 @@ function Invoke-ApiRequest {
         "Content-Type" = "application/json"
     }
     
-    if ($Auth) {
-        $headers["Authorization"] = "Bearer $script:JwtToken"
+    if ($script:Cookies.Count -gt 0) {
+        $headers["Cookie"] = (($script:Cookies.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join "; ")
+    }
+    if ($Method -ne "GET" -and $Method -ne "HEAD" -and $script:Cookies.ContainsKey("csrf_token")) {
+        $headers["X-CSRF-Token"] = $script:Cookies["csrf_token"]
     }
     
     try {
@@ -76,8 +92,10 @@ function Invoke-ApiRequest {
             $params["Body"] = ($Body | ConvertTo-Json -Depth 10)
         }
         
-        $response = Invoke-RestMethod @params
-        return $response
+        $web = Invoke-WebRequest @params -UseBasicParsing
+        Update-Cookies $web.Headers["Set-Cookie"]
+        if ($web.Content) { return ($web.Content | ConvertFrom-Json) }
+        return $null
     }
     catch {
         return $_.Exception.Response
@@ -105,52 +123,51 @@ function Test-Server {
 function Test-Authentication {
     Write-Header "Authentication API Tests"
     
-    # TC-AUTH-001: Register new user
+    # TC-AUTH-001: Register new user (202, no session), then log in (session cookies)
     Write-Test "TC-AUTH-001: Register new user"
     $registerData = @{
         username = "testuser"
         email = "testuser@example.com"
-        password = "Test123!"
+        password = $script:TestPassword
+        name = "Test User"
     }
-    
+
     $response = Invoke-ApiRequest -Method "POST" -Endpoint "/auth/local/register" -Body $registerData
-    
-    if ($response.jwt) {
-        $script:JwtToken = $response.jwt
-        $script:UserId = $response.user.id
-        Write-Success "User registered successfully (ID: $script:UserId)"
+
+    if ($response.success) {
+        Write-Success "Registration accepted"
     }
     else {
-        # User might already exist, try login
-        Write-Test "User exists, trying login instead"
-        $loginData = @{
-            identifier = "testuser@example.com"
-            password = "Test123!"
-        }
-        
-        $response = Invoke-ApiRequest -Method "POST" -Endpoint "/auth/local" -Body $loginData
-        
-        if ($response.jwt) {
-            $script:JwtToken = $response.jwt
-            $script:UserId = $response.user.id
-            Write-Success "User logged in successfully (ID: $script:UserId)"
-        }
-        else {
-            Write-Failure "Registration/Login failed" $response
-            return
-        }
+        Write-Failure "Registration failed" $response
     }
-    
+
+    Write-Test "Login after registration"
+    $loginData = @{
+        identifier = "testuser@example.com"
+        password = $script:TestPassword
+    }
+
+    $response = Invoke-ApiRequest -Method "POST" -Endpoint "/auth/local" -Body $loginData
+
+    if ($script:Cookies.ContainsKey("jwt")) {
+        $script:UserId = $response.user.id
+        Write-Success "User logged in successfully (ID: $script:UserId)"
+    }
+    else {
+        Write-Failure "Registration/Login failed" $response
+        return
+    }
+
     # TC-AUTH-002: Login with email
     Write-Test "TC-AUTH-002: Login with email"
     $loginData = @{
         identifier = "testuser@example.com"
-        password = "Test123!"
+        password = $script:TestPassword
     }
     
     $response = Invoke-ApiRequest -Method "POST" -Endpoint "/auth/local" -Body $loginData
     
-    if ($response.jwt) {
+    if ($script:Cookies.ContainsKey("jwt") -and $response.user) {
         Write-Success "Login with email successful"
     }
     else {

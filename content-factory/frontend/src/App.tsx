@@ -14,23 +14,9 @@ import SystemSettings from "./pages/SystemSettings"
 export type Page = "dashboard" | "projects" | "project-detail" | "knowledge" | "generate" | "content" | "system-settings"
 
 // ── Auth guard ───────────────────────────────────────────────────────────────
-// The Content Factory is protected by the same JWT issued by gg-cms at /auth.
-// If no valid token exists in localStorage we redirect to the gg-cms login page.
-// After login the user returns to /factory automatically.
-function isTokenValid(token: string | null): boolean {
-  if (token === "local-test-dev") return true
-  if (!token) return false
-  try {
-    const [, payloadB64] = token.split(".")
-    const payload = JSON.parse(atob(payloadB64))
-    // exp is seconds since epoch
-    return typeof payload.exp === "number" && payload.exp * 1000 > Date.now()
-  } catch {
-    return false
-  }
-}
-
-const TOKEN_KEYS = ["authToken", "token", "auth_token", "jwt", "access_token", "gg_cms_token"]
+// The Content Factory is served behind the gg-cms /factory proxy, which only
+// admits admin sessions (HttpOnly cookie). The console asks gg-cms who the
+// current user is and redirects to the login page when there is no session.
 
 function isLocalTestBypassEnabled(): boolean {
   if (typeof window === "undefined") return false
@@ -41,36 +27,31 @@ function isLocalTestBypassEnabled(): boolean {
   return isLocalHost && (localTestParam || localTestPath)
 }
 
-function getStoredToken(): string | null {
-  for (const key of TOKEN_KEYS) {
-    const val = localStorage.getItem(key) ?? sessionStorage.getItem(key)
-    if (val) return val
-  }
-  return null
-}
-
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false)
   const [authed, setAuthed] = useState(false)
 
   useEffect(() => {
-    const token = getStoredToken()
     if (isLocalTestBypassEnabled()) {
-      localStorage.setItem("authToken", "local-test-dev")
-      sessionStorage.setItem("authToken", "local-test-dev")
       setAuthed(true)
       setChecked(true)
       return
     }
 
-    if (isTokenValid(token)) {
-      setAuthed(true)
-    } else {
-      // Redirect to gg-cms login — after login, the user lands back at /factory
-      const returnUrl = encodeURIComponent(window.location.href)
-      window.location.href = `/auth?redirect=${returnUrl}`
-    }
-    setChecked(true)
+    fetch("/api/users/me", { credentials: "same-origin" })
+      .then((res) => {
+        if (res.ok) {
+          setAuthed(true)
+        } else {
+          const returnUrl = encodeURIComponent(window.location.href)
+          window.location.href = `/auth?redirect=${returnUrl}`
+        }
+      })
+      .catch(() => {
+        const returnUrl = encodeURIComponent(window.location.href)
+        window.location.href = `/auth?redirect=${returnUrl}`
+      })
+      .finally(() => setChecked(true))
   }, [])
 
   if (!checked) {

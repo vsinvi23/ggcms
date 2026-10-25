@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/serenya/go-cms/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type Response struct {
@@ -94,7 +96,8 @@ func NotFound(c *gin.Context, msg string) {
 }
 
 func InternalError(c *gin.Context, msg string) {
-	c.JSON(http.StatusInternalServerError, Response{Success: false, Message: msg})
+	logger.Error("internal error", zap.String("path", c.Request.URL.Path), zap.String("detail", msg))
+	c.JSON(http.StatusInternalServerError, Response{Success: false, Message: "internal server error"})
 }
 
 func Conflict(c *gin.Context, msg string) {

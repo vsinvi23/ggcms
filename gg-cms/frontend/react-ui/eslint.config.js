@@ -23,4 +23,13 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/**/*.test.{ts,tsx}", "src/test/**"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [{ group: ["@/test/*", "**/test/fixtures/*"], message: "Test fixtures must not be imported by production code." }],
+      }],
+    },
+  },
 );

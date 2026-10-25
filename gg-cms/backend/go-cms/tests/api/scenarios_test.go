@@ -8,7 +8,7 @@ package api
 //   - verifies HTTP status AND response body shape at each step
 //
 // Prerequisites: server running on localhost:1337 with BYPASS_RATE_LIMIT=1
-// Admin:  geekadmin@geekgully.com / Geekadmin@2026
+// Admin:  ADMIN_EMAIL / ADMIN_PASSWORD env vars (admin scenarios skip when unset)
 
 import (
 	"fmt"
@@ -30,9 +30,7 @@ func parseUint(s string) uint {
 // newAdminClient returns an admin-authenticated HTTP client.
 func newAdminClient(t *testing.T) *apiClient {
 	t.Helper()
-	c := newClient()
-	c.token = adminToken(t)
-	return c
+	return adminClient(t)
 }
 
 // createCategory creates a category (admin) and registers a cleanup to delete it.

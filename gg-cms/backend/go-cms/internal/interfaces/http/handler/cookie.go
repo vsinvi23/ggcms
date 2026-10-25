@@ -4,29 +4,68 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/serenya/go-cms/internal/application/identity"
 )
 
-const cookieMaxAgeSeconds = 7 * 24 * 60 * 60 // 7 days
+const (
+	accessCookie  = "jwt"
+	refreshCookie = "refresh_token"
+	csrfCookie    = "csrf_token"
+	oauthTxCookie = "oauth_tx"
+	authCookieDir = "/api/auth"
+)
 
-// setAuthCookies sets the HttpOnly "jwt" session cookie and a readable
-// "csrf_token" cookie, then returns the csrf token (in case a caller needs it).
-func setAuthCookies(c *gin.Context, token string) string {
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("jwt", token, cookieMaxAgeSeconds, "/", "", true, true)
+var cookieSettings = struct {
+	secure bool
+	domain string
+}{secure: true}
 
-	csrfToken := generateCSRFToken()
-	c.SetCookie("csrf_token", csrfToken, cookieMaxAgeSeconds, "/", "", true, false)
-	return csrfToken
+// ConfigureAuthCookies sets the Secure flag and optional Domain for every auth
+// cookie. Secure may only be disabled for local plain-HTTP development.
+func ConfigureAuthCookies(secure bool, domain string) {
+	cookieSettings.secure = secure
+	cookieSettings.domain = domain
 }
 
-// clearAuthCookies clears the jwt and csrf_token cookies using the same
-// path/domain/SameSite attributes they were set with.
+func setCookie(c *gin.Context, name, value, path string, maxAge int, httpOnly bool, sameSite http.SameSite) {
+	c.SetSameSite(sameSite)
+	c.SetCookie(name, value, maxAge, path, cookieSettings.domain, cookieSettings.secure, httpOnly)
+}
+
+// setSessionCookies writes the short-lived access cookie, the rotating refresh
+// cookie and a readable CSRF cookie.
+func setSessionCookies(c *gin.Context, t *identity.Tokens) {
+	setCookie(c, accessCookie, t.Access, "/", secondsUntil(t.AccessExpires), true, http.SameSiteLaxMode)
+	setCookie(c, refreshCookie, t.Refresh, authCookieDir, secondsUntil(t.RefreshExpires), true, http.SameSiteStrictMode)
+	setCookie(c, csrfCookie, generateCSRFToken(), "/", secondsUntil(t.RefreshExpires), false, http.SameSiteLaxMode)
+}
+
 func clearAuthCookies(c *gin.Context) {
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("jwt", "", -1, "/", "", true, true)
-	c.SetCookie("csrf_token", "", -1, "/", "", true, false)
+	setCookie(c, accessCookie, "", "/", -1, true, http.SameSiteLaxMode)
+	setCookie(c, refreshCookie, "", authCookieDir, -1, true, http.SameSiteStrictMode)
+	setCookie(c, csrfCookie, "", "/", -1, false, http.SameSiteLaxMode)
+}
+
+func setOAuthTxCookie(c *gin.Context, binding string, ttl time.Duration) {
+	setCookie(c, oauthTxCookie, binding, authCookieDir, int(ttl.Seconds()), true, http.SameSiteLaxMode)
+}
+
+func clearOAuthTxCookie(c *gin.Context) {
+	setCookie(c, oauthTxCookie, "", authCookieDir, -1, true, http.SameSiteLaxMode)
+}
+
+func secondsUntil(t time.Time) int {
+	if s := int(time.Until(t).Seconds()); s > 0 {
+		return s
+	}
+	return 1
+}
+
+func clientMeta(c *gin.Context) identity.Meta {
+	return identity.Meta{UserAgent: c.Request.UserAgent(), IP: c.ClientIP()}
 }
 
 func generateCSRFToken() string {

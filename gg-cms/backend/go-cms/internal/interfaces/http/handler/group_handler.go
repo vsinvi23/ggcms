@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/serenya/go-cms/internal/application/identity"
 	groupsvc "github.com/serenya/go-cms/internal/application/group"
 	"github.com/serenya/go-cms/internal/domain/entity"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
@@ -31,6 +33,9 @@ func (h *GroupHandler) GetAll(c *gin.Context) {
 	items := make([]dto.GroupResponse, len(groups))
 	for i, g := range groups {
 		items[i] = mapGroupToDTO(g)
+		if !middleware.IsAdmin(c) {
+			items[i].Users = []dto.GroupUserResponse{}
+		}
 	}
 	response.StrapiPaged(c, items, total, p.Page, p.Size)
 }
@@ -47,7 +52,11 @@ func (h *GroupHandler) GetByID(c *gin.Context) {
 		response.NotFound(c, "group not found")
 		return
 	}
-	response.OK(c, mapGroupToDTO(group))
+	out := mapGroupToDTO(group)
+	if !middleware.IsAdmin(c) {
+		out.Users = []dto.GroupUserResponse{}
+	}
+	response.OK(c, out)
 }
 
 // POST /api/user-groups
@@ -154,6 +163,10 @@ func (h *GroupHandler) RemoveMember(c *gin.Context) {
 		return
 	}
 	if err := h.service.RemoveMember(c.Request.Context(), groupID, userID); err != nil {
+		if errors.Is(err, identity.ErrLastAdmin) {
+			response.Conflict(c, err.Error())
+			return
+		}
 		response.InternalError(c, err.Error())
 		return
 	}

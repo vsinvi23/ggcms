@@ -3,20 +3,17 @@
  * Covers: list, create, view, edit, submit for review
  */
 import { test, expect, Page } from '@playwright/test';
-import { enableAuthBypass, ensureUserExists } from '../fixtures/auth';
+import { ensureUserExists } from '../fixtures/auth';
 
 const workerId = process.env.PW_WORKER_INDEX || process.env.PLAYWRIGHT_WORKER_INDEX || '0';
 const articleUserEmail = `e2e_articles_${workerId}@test.local`;
 const articleUserPassword = 'Articles@E2E1';
-
-let jwt: string;
 
 test.beforeAll(async () => {
   await ensureUserExists(articleUserEmail, articleUserPassword, `e2e_articles_${workerId}`, 'E2E Articles User');
 });
 
 async function loginUser(page: Page) {
-  await enableAuthBypass(page);
   await page.goto('/auth');
   await page.waitForLoadState('networkidle');
   await page.locator('input[type="email"], input[name="email"], input[placeholder*="email" i]').first().fill(articleUserEmail);

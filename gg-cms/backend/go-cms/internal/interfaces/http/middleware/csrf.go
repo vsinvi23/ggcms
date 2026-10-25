@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"crypto/subtle"
+
 	"github.com/gin-gonic/gin"
 	"github.com/serenya/go-cms/pkg/response"
 )
@@ -13,7 +15,7 @@ func CSRF() gin.HandlerFunc {
 		case "POST", "PUT", "PATCH", "DELETE":
 			cookie, err := c.Cookie("csrf_token")
 			header := c.GetHeader("X-CSRF-Token")
-			if err != nil || cookie == "" || header == "" || header != cookie {
+			if err != nil || cookie == "" || header == "" || subtle.ConstantTimeCompare([]byte(header), []byte(cookie)) != 1 {
 				response.Forbidden(c, "invalid csrf token")
 				c.Abort()
 				return
