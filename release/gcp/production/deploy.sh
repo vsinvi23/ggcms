@@ -54,6 +54,7 @@ fi
 
 PG_PASS=$(gcloud secrets versions access latest --secret=gg-cms-pg-password --project=$PROJECT_ID)
 MONGO_PASS=$(gcloud secrets versions access latest --secret=gg-cms-mongo-password --project=$PROJECT_ID)
+REDIS_PASS=$(gcloud secrets versions access latest --secret=certaxis-redis-password --project=$PROJECT_ID 2>/dev/null || echo "")
 
 echo "▶ Setting up Cloud Run Service Account..."
 SA_NAME="gg-cms-cloudrun-sa"
@@ -93,8 +94,8 @@ fi
 gcloud compute scp --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap release/gcp/production/docker-compose.vm-dbs.yml $VM_NAME:/opt/gg-cms/
 
 echo "▶ Starting Production Databases on VM..."
-ENV_B64=$(echo -e "POSTGRES_PASSWORD=$PG_PASS\nMONGO_PASSWORD=$MONGO_PASS" | base64 | tr -d '\n')
-gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="cd /opt/gg-cms && echo '$ENV_B64' | base64 -d > .env && sudo chown -R 999:999 /opt/gg-cms/certs/mongodb && sudo chown -R 70:70 /opt/gg-cms/certs/postgres && sudo chmod 600 /opt/gg-cms/certs/postgres/server.key && docker compose -f docker-compose.vm-dbs.yml down >/dev/null 2>&1 && docker compose -f docker-compose.vm-dbs.yml up -d >/dev/null 2>&1"
+ENV_B64=$(echo -e "POSTGRES_PASSWORD=$PG_PASS\nMONGO_PASSWORD=$MONGO_PASS\nREDIS_PASSWORD=$REDIS_PASS" | base64 | tr -d '\n')
+gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID --tunnel-through-iap --command="cd /opt/gg-cms && echo '$ENV_B64' | base64 -d > .env && sudo chown -R 999:999 /opt/gg-cms/certs/mongodb && sudo chown -R 70:70 /opt/gg-cms/certs/postgres && sudo chmod 600 /opt/gg-cms/certs/postgres/server.key && docker compose -f docker-compose.vm-dbs.yml up -d >/dev/null 2>&1"
 
 VM_IP=$(gcloud compute instances describe $VM_NAME --zone=$ZONE --project=$PROJECT_ID --format='value(networkInterfaces[0].networkIP)')
 echo "▶ VM Internal IP: $VM_IP"
