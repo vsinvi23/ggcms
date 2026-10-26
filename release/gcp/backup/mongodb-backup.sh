@@ -46,7 +46,7 @@ GDRIVE_REMOTE="gdrive"
 BACKUP_ROOT="backup/geekgully/data/${ENV_TARGET}"
 GDRIVE_MONGO="${GDRIVE_REMOTE}:${BACKUP_ROOT}/mongodb"
 
-MONGO_CONTAINER="gg-cms-mongodb-${ENV_TARGET}"
+MONGO_CONTAINER="gg-cms-mongo-${ENV_TARGET}"
 MONGO_USER="gg_cms_user"
 MONGO_DB="gg_cms"
 
@@ -92,9 +92,6 @@ daily_snapshot() {
       --username="$MONGO_USER" \
       --password="$MONGO_PASS" \
       --authenticationDatabase=admin \
-      --ssl \
-      --sslPEMKeyFile=/certs/server.pem \
-      --sslCAFile=/certs/ca.crt \
       --db="$MONGO_DB" \
       --archive \
       --gzip \

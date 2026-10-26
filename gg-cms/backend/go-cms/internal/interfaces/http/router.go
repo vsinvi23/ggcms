@@ -3,8 +3,6 @@ package http
 import (
 	"log"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -44,7 +42,6 @@ import (
 	"github.com/serenya/go-cms/pkg/config"
 	"github.com/serenya/go-cms/pkg/metrics"
 	"github.com/serenya/go-cms/internal/interfaces/http/dto"
-	"github.com/serenya/go-cms/pkg/response"
 	jwtpkg "github.com/serenya/go-cms/pkg/jwt"
 )
 
@@ -145,34 +142,6 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	uploads := r.Group("/uploads", middleware.UploadHeaders())
 	uploads.StaticFS("/", gin.Dir(cfg.Upload.Dir, false))
 
-	// Reverse proxy /factory and /factory/* to Content Factory Cloud Run service
-	factoryURLStr := cfg.Import.FactoryURL
-	var factoryHandler gin.HandlerFunc
-	if factoryTarget, err := url.Parse(factoryURLStr); err == nil && factoryURLStr != "" && factoryTarget.Host != "" && cfg.Import.FactoryProxySecret != "" {
-		factoryProxy := httputil.NewSingleHostReverseProxy(factoryTarget)
-		originalDirector := factoryProxy.Director
-		factoryProxy.Director = func(req *http.Request) {
-			originalDirector(req)
-			req.Host = factoryTarget.Host
-			req.URL.Scheme = factoryTarget.Scheme
-			req.URL.Host = factoryTarget.Host
-		}
-		factoryProxy.ModifyResponse = func(resp *http.Response) error {
-			resp.Header.Del("Set-Cookie")
-			return nil
-		}
-		factoryHandler = func(c *gin.Context) {
-			token, err := middleware.FactoryServiceToken(cfg.Import.FactoryProxySecret, middleware.GetUserID(c), middleware.GetUserEmail(c))
-			if err != nil {
-				response.InternalError(c, "factory proxy unavailable")
-				return
-			}
-			c.Request.Header.Del("Cookie")
-			c.Request.Header.Del("X-CSRF-Token")
-			c.Request.Header.Set("Authorization", "Bearer "+token)
-			factoryProxy.ServeHTTP(c.Writer, c.Request)
-		}
-	}
 
 	// Set JS and CSS MIME types for static assets if needed
 	r.Use(func(c *gin.Context) {
@@ -237,22 +206,10 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 	// /search-seo:handlers
 	aiH := handler.NewAIHandler(svcs.AI)
 	importH := handler.NewImportHandler(svcs.CMS, svcs.Task, svcs.Section, svcs.Lesson, svcs.Category, svcs.LearningPath, svcs.User, svcs.Settings)
-	factoryImportH := handler.NewFactoryImportHandler(svcs.CMS, svcs.Section, svcs.Lesson, svcs.User, svcs.Category, svcs.Topic, nil, cfg.Admin.Email)
 
 	handler.ConfigureAuthCookies(cfg.Auth.CookieSecure, cfg.Auth.CookieDomain)
 	authMW := middleware.Auth(jwtManager, svcs.Session)
-	factorySecretMW := middleware.FactorySecret(cfg.Import.FactorySyncSecret)
 	adminRecoveryMW := middleware.AdminRecoverySecret(cfg.Recovery.AdminRecoverySecret)
-
-	// Protected AI Content Factory reverse proxy (requires JWT auth + Admin role)
-	if factoryHandler != nil {
-		factoryGroup := r.Group("/factory")
-		factoryGroup.Use(authMW)
-		factoryGroup.Use(middleware.AdminOnly())
-		factoryGroup.Use(middleware.CSRF())
-		factoryGroup.Any("", factoryHandler)
-		factoryGroup.Any("/*filepath", factoryHandler)
-	}
 
 	api := r.Group("/api")
 	{
@@ -333,10 +290,6 @@ func NewRouter(cfg *config.Config, jwtManager *jwtpkg.Manager, svcs Services) (*
 
 		// ----- Review comments (authenticated only — see protected group) -----
 
-		// ----- Factory sync ingest (secret-header auth, NOT JWT) -----
-		// Called machine-to-machine by the Python "content factory" app, which has
-		// no user session — protected by X-Factory-Sync-Secret instead of authMW.
-		api.POST("/import/ingest", middleware.StrictRateLimit(), factorySecretMW, factoryImportH.Ingest)
 
 		// ----- Admin break-glass password recovery (secret-header auth, NOT JWT) -----
 		// For when the master admin is locked out and can't rely on email delivery
