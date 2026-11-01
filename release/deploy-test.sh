@@ -33,7 +33,7 @@ usage() {
   echo "  --cloud                        Deploy test environment to GCP Test infrastructure (default)"
   echo "  --check, --status              Check deltas for test environment without deploying"
   echo "  --force, -f                    Force deployment of all test components"
-  echo "  --component <ui|backend|db|cf> Deploy specified component(s)"
+  echo "  --component <ui|backend|db>    Deploy specified component(s)"
   echo "  --bump <patch|minor|major>     Bump test versions before deployment"
   echo "  --project <id>                 GCP Project ID (default: ggcms-free-tier-vivek)"
   echo "  --region <region>              GCP Region (default: us-central1)"

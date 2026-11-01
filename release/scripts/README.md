@@ -1,6 +1,6 @@
 # Production Deployment Script Package (GCP)
 
-This package contains the unified scripts to run automated sanity testing, generate release builds, and deploy **GG-CMS** and **AI Content Factory** to **Google Cloud Platform (GCP)** under strict environment isolation guidelines.
+This package contains the scripts to run automated sanity testing, generate release builds, and deploy **GG-CMS** to **Google Cloud Platform (GCP)** under strict environment isolation guidelines.
 
 ---
 
@@ -8,10 +8,9 @@ This package contains the unified scripts to run automated sanity testing, gener
 
 | Script Path | Purpose |
 | :--- | :--- |
-| **`release/scripts/deploy-all-prod.sh`** | **Master Production Deployment Script**: Runs test suite, generates GA builds, and deploys both GG-CMS and Content Factory to GCP Cloud Run. |
-| **`release/scripts/run-all-tests.sh`** | **Unified Test Runner**: Executes Go unit tests, Python 123 pytest suite, and frontend SPA builds. |
+| **`release/scripts/deploy-all-prod.sh`** | **Master Production Deployment Script**: Runs test suite, generates GA builds, and deploys GG-CMS to GCP Cloud Run. |
+| **`release/scripts/run-all-tests.sh`** | **Unified Test Runner**: Executes Go unit tests and frontend SPA builds. |
 | **`release/deploy-prod.sh`** | GG-CMS Production Delta Deployment script. |
-| **`content-factory/deploy-prod.sh`** | AI Content Factory Production Deployment script. |
 
 ---
 

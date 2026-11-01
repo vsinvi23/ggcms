@@ -22,7 +22,6 @@ HISTORY_FILE="$LATEST_DIR/deployment-history.json"
 
 CHECK_ONLY=false
 FORCE_DEPLOY=false
-INCLUDE_CONTENT_FACTORY=false
 TARGET_COMPONENTS=()
 BUMP_TYPE=""
 
@@ -32,8 +31,7 @@ usage() {
   echo "Options:"
   echo "  --check, --status              Check deltas between live and local versions without deploying"
   echo "  --force, -f                    Force deployment of all components regardless of version match"
-  echo "  --component <ui|backend|db|cf> Deploy specified component(s)"
-  echo "  --include-content-factory      Enable AI Content Factory deployment (excluded by default)"
+  echo "  --component <ui|backend|db>    Deploy specified component(s)"
   echo "  --bump <patch|minor|major>     Bump versions before deployment"
   echo "  --project <id>                 GCP Project ID (default: ggcms-free-tier-vivek)"
   echo "  --region <region>              GCP Region (default: us-central1)"
@@ -49,10 +47,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --force|-f)
       FORCE_DEPLOY=true
-      shift
-      ;;
-    --include-content-factory)
-      INCLUDE_CONTENT_FACTORY=true
       shift
       ;;
     --component)
@@ -269,8 +263,6 @@ if [[ "$BACKEND_DELTA" == "true" || "$UI_DELTA" == "true" ]]; then
   DEPLOYED_DELTAS+=("backend@v$T_BE" "ui@v$T_UI")
 fi
 
-# Ensure Content Factory service is decommissioned on GCP
-gcloud run services delete content-factory-backend --region="$REGION" --project="$PROJECT_ID" --quiet >/dev/null 2>&1 || true
 
 # --- Step 4: Record Deployment History & Publish Backup Manifest (Gate Step 8 & 9) ---
 echo "▶ Logging deployment execution to $HISTORY_FILE..."
@@ -292,8 +284,7 @@ entry = {
     'components': {
         'ui': '$T_UI',
         'backend': '$T_BE',
-        'db': '$T_DB',
-        'content-factory': '$T_CF'
+        'db': '$T_DB'
     }
 }
 
