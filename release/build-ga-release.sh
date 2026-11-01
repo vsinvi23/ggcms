@@ -256,7 +256,6 @@ cat <<EOF > "$ARCHIVE_DIR/RELEASE-NOTES.md"
 - **React UI**: v$UI_VER
 - **Go Backend**: v$BACKEND_VER
 - **DB Migrations**: v$DB_VER
-- **AI Content Factory**: v$CF_VER
 
 ## Deployment Contract & Security Signature
 - **API Contract Version**: v1
@@ -286,8 +285,7 @@ with open(manifest_path, 'r+') as f:
         'components': {
             'ui': '$UI_VER',
             'backend': '$BACKEND_VER',
-            'db': '$DB_VER',
-            'content-factory': '$CF_VER'
+            'db': '$DB_VER'
         }
     }
     data['releases'].insert(0, entry)

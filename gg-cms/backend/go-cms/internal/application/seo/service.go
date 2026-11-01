@@ -100,7 +100,7 @@ func NewService(repo repository.SEORepository, cfg Config) Service {
 }
 
 func (s *service) Robots() string {
-	return "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /graphql\nDisallow: /factory\nDisallow: /dashboard\nDisallow: /workspace\nDisallow: /auth\n\nSitemap: " +
+	return "User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /graphql\nDisallow: /dashboard\nDisallow: /workspace\nDisallow: /auth\n\nSitemap: " +
 		s.cfg.BaseURL + "/sitemap.xml\n"
 }
 

@@ -59,21 +59,17 @@ echo "============================================================"
 
 # Step 1: Run Sanity & Automated Tests (Skip on --check)
 if [[ -z "$CHECK_FLAG" ]]; then
-  echo "▶ Step 1/4: Running automated sanity test suite..."
+  echo "▶ Step 1/3: Running automated sanity test suite..."
   bash release/scripts/run-all-tests.sh
 fi
 
 # Step 2: Build GA Release Artifacts
-echo "▶ Step 2/4: Generating GG-CMS GA release build..."
+echo "▶ Step 2/3: Generating GG-CMS GA release build..."
 bash release/build-ga-release.sh --env prod $BUMP_FLAG $FORCE_FLAG
 
-echo "▶ Step 3/4: Generating AI Content Factory GA release build..."
-bash content-factory/build-ga-release.sh --env prod $BUMP_FLAG
-
 # Step 3: Trigger Cloud Deployments
-echo "▶ Step 4/4: Triggering Cloud Run deployments..."
+echo "▶ Step 3/3: Triggering Cloud Run deployments..."
 bash release/deploy-prod.sh $CHECK_FLAG $FORCE_FLAG
-bash content-factory/deploy-prod.sh $CHECK_FLAG $FORCE_FLAG
 
 echo "============================================================"
 echo "✅ Production Deployment Package Completed Successfully!"

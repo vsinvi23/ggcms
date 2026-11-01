@@ -81,11 +81,6 @@ test.describe('GG-CMS End-to-End Full UI & Page Validation Suite', () => {
     await page.waitForLoadState('networkidle');
     await expect(page.locator('body')).toBeVisible();
 
-    // Validate Content Factory Page
-    await page.goto('http://localhost:8080/factory');
-    await page.waitForLoadState('networkidle');
-    await expect(page.locator('body')).toBeVisible();
-
     // Validate Settings Page
     await page.goto('http://localhost:8080/settings');
     await page.waitForLoadState('networkidle');

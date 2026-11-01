@@ -44,8 +44,7 @@ func isSensitiveHeader(k string) bool {
 
 func isSensitivePath(path string) bool {
 	return strings.HasPrefix(path, "/api/auth/") ||
-		strings.HasPrefix(path, "/api/admin/") ||
-		strings.HasPrefix(path, "/api/import/ingest")
+		strings.HasPrefix(path, "/api/admin/")
 }
 
 func bodyLoggingAllowed(path string) bool {

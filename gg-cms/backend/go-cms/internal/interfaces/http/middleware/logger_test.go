@@ -21,7 +21,7 @@ func TestRedactBody(t *testing.T) {
 }
 
 func TestSensitiveHeadersAndPaths(t *testing.T) {
-	for _, h := range []string{"Cookie", "Set-Cookie", "X-CSRF-Token", "X-Admin-Recovery-Secret", "X-Factory-Sync-Secret", "Authorization"} {
+	for _, h := range []string{"Cookie", "Set-Cookie", "X-CSRF-Token", "X-Admin-Recovery-Secret", "Authorization"} {
 		if !isSensitiveHeader(h) {
 			t.Errorf("%s should be sensitive", h)
 		}
@@ -29,7 +29,7 @@ func TestSensitiveHeadersAndPaths(t *testing.T) {
 	if isSensitiveHeader("Content-Type") {
 		t.Error("Content-Type is not sensitive")
 	}
-	for _, p := range []string{"/api/auth/local", "/api/admin/recover-password", "/api/import/ingest"} {
+	for _, p := range []string{"/api/auth/local", "/api/admin/recover-password"} {
 		if !isSensitivePath(p) {
 			t.Errorf("%s should be sensitive", p)
 		}

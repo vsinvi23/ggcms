@@ -18,7 +18,6 @@ type Config struct {
 	Admin    AdminConfig
 	OAuth    OAuthConfig
 	TLS      TLSConfig
-	Import   ImportConfig
 	Mailer   MailerConfig
 	Recovery RecoveryConfig
 	Auth     AuthConfig
@@ -111,19 +110,6 @@ type AdminConfig struct {
 	GeekAdminEmail    string
 	GeekAdminPassword string
 	GeekAdminName     string
-}
-
-// ImportConfig holds settings for third-party content ingest (e.g. the Python
-// "content factory" app that POSTs generated articles/courses to /api/import/ingest).
-type ImportConfig struct {
-	// FactorySyncSecret is compared against the X-Factory-Sync-Secret request header.
-	// Required — there is intentionally no default value. If unset, the ingest
-	// endpoint is disabled (every request gets 401) rather than crashing local dev.
-	FactorySyncSecret string
-	// FactoryProxySecret signs the short-lived service token the /factory proxy injects.
-	// Must match the content-factory's FACTORY_PROXY_SECRET. Unset disables the proxy.
-	FactoryProxySecret string
-	FactoryURL         string
 }
 
 // MailerConfig holds SMTP settings for outbound transactional email
@@ -267,11 +253,6 @@ func Load() *Config {
 			ClientCertFile: viper.GetString("TLS_CLIENT_CERT_FILE"),
 			ClientKeyFile:  viper.GetString("TLS_CLIENT_KEY_FILE"),
 		},
-		Import: ImportConfig{
-			FactorySyncSecret:  viper.GetString("FACTORY_SYNC_SECRET"),
-			FactoryProxySecret: viper.GetString("FACTORY_PROXY_SECRET"),
-			FactoryURL:         viper.GetString("CONTENT_FACTORY_URL"),
-		},
 		Mailer: MailerConfig{
 			SMTPHost:     viper.GetString("SMTP_HOST"),
 			SMTPPort:     viper.GetString("SMTP_PORT"),
@@ -330,16 +311,6 @@ func Load() *Config {
 		if p.Enabled && production && !strings.HasPrefix(p.RedirectURL, "https://") {
 			log.Fatalf("%s_REDIRECT_URL must be https in production", name)
 		}
-	}
-
-	if cfg.Import.FactorySyncSecret == "" {
-		// Not fatal — local dev shouldn't have to set this up just to run the server.
-		// The factory-sync middleware rejects every request with 401 while it's unset.
-		log.Println("WARNING: FACTORY_SYNC_SECRET is not set — /api/import/ingest will reject all requests")
-	}
-
-	if cfg.Import.FactoryProxySecret != "" && len(cfg.Import.FactoryProxySecret) < MinJWTSecretBytes {
-		log.Fatalf("FACTORY_PROXY_SECRET must be at least %d bytes", MinJWTSecretBytes)
 	}
 
 	if cfg.Mailer.SMTPHost == "" {

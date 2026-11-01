@@ -2,7 +2,7 @@
   "name": "db-migrations",
   "version": "1.8.0",
   "description": "PostgreSQL Schema Migrations",
-  "last_migration": "001_initial_schema_reset.sql",
-  "updated_at": "2026-10-25T15:33:10Z",
-  "db_schema_hash": "sha256:214b07275e0a2ca38bd4408f1d7daa030308a9b958c281a6a2561097e8a7c5de"
+  "last_migration": "006_ai.sql",
+  "updated_at": "2026-11-01T02:38:22Z",
+  "db_schema_hash": "sha256:e8042882d8bbd48ce233002db9f16c85ebf9b6f382459dc6a9e1148926e3624b"
 }
