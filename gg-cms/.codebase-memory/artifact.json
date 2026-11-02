@@ -1,11 +1,11 @@
 {
     "schema_version": 2,
-    "commit": "c9026a2e1d95798c79cfc1f9ce0cdf0e0adfbccc",
-    "indexed_at": "2026-10-26T02:22:14Z",
+    "commit": "fe956a29d1c520047990537a48cd149257145682",
+    "indexed_at": "2026-11-01T02:48:28Z",
     "project": "Users-vivek-work-Serenyax-Product-Sandbox-ggcms-gg-cms",
-    "nodes": 9236,
-    "edges": 33997,
-    "original_size": 36700160,
-    "compressed_size": 5752002,
+    "nodes": 9204,
+    "edges": 33967,
+    "original_size": 36634624,
+    "compressed_size": 5738900,
     "compression_level": 3
 }
