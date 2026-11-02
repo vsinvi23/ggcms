@@ -1,9 +1,5 @@
 const trimSlash = (s: string) => s.replace(/\/+$/, '');
 
-if (!import.meta.env.VITE_API_BASE_URL && import.meta.env.PROD) {
-  throw new Error('[config] VITE_API_BASE_URL must be set for production builds.');
-}
-
 export const API_BASE_URL = trimSlash(
   import.meta.env.VITE_API_BASE_URL || '/api'
 );

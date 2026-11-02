@@ -101,7 +101,7 @@ VM_IP=$(gcloud compute instances describe $VM_NAME --zone=$ZONE --project=$PROJE
 echo "▶ VM Internal IP: $VM_IP"
 
 echo "▶ Building React UI Frontend..."
-(cd gg-cms/frontend/react-ui && npm run build)
+(cd gg-cms/frontend/react-ui && VITE_API_BASE_URL=/api VITE_APP_ENV=production VITE_APP_NAME="GeekGully" VITE_ENABLE_REGISTRATION=true npm run build)
 rm -rf gg-cms/backend/go-cms/dist
 cp -r gg-cms/frontend/react-ui/dist gg-cms/backend/go-cms/dist
 
